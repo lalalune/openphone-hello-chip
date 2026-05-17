@@ -257,30 +257,11 @@ def cocotb_status() -> Status:
             for entry in targets.values():
                 stats = entry.get("stats", {}) if isinstance(entry, dict) else {}
                 if stats.get("failures") or stats.get("errors") or not stats.get("testcases"):
-                    return Status(
-                        "cocotb",
-                        FAIL,
-                        "cocotb manifest records failures/errors or no testcase",
-                        "make cocotb",
-                        "test_fail",
-                    )
-            return Status(
-                "cocotb",
-                PASS,
-                "per-target cocotb XML artifacts have passing testcases under build/reports/cocotb",
-                "none",
-                "generated_artifact",
-            )
-
+                    return Status("cocotb", FAIL, "cocotb manifest records failures/errors or no testcase", "make cocotb", "test_fail")
+            return Status("cocotb", PASS, "per-target cocotb XML artifacts have passing testcases under build/reports/cocotb", "none", "generated_artifact")
     result = ROOT / "verify/cocotb/results.xml"
     if not result.is_file():
-        return Status(
-            "cocotb",
-            BLOCK,
-            "missing regenerated cocotb manifest or legacy results.xml",
-            "make cocotb",
-            "regen_required",
-        )
+        return Status("cocotb", BLOCK, "missing regenerated cocotb manifest or legacy results.xml", "make cocotb", "regen_required")
     text = result.read_text(errors="ignore")
     if "<failure" in text or "<error" in text or "<testcase" not in text:
         return Status(

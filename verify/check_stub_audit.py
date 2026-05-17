@@ -77,19 +77,14 @@ ALLOWLIST = (
         "QEMU README documents the compatibility alias while the preferred path is firmware.",
     ),
     AllowedFinding(
-        "verify/cocotb/test_plic_claim_threshold.py",
-        "scaffold",
-        "Executable PLIC enable/claim/complete contract test plus skip-flagged future threshold extension.",
-    ),
-    AllowedFinding(
         "verify/cocotb/test_clint_timer_irq.py",
-        "scaffold",
-        "Skip-flagged CLINT contract test, fail-closed via skip until Rocket wrapper provides the CLINT.",
+        "CLINT timer interrupt entry scaffold",
+        "Skipped fail-closed test contract for future CLINT integration.",
     ),
     AllowedFinding(
-        "verify/cocotb/test_reset_domain_cleanup.py",
-        "stale",
-        "Reset-domain cleanup contract test for hello_linux_soc_contract; no silent placeholder.",
+        "verify/cocotb/test_plic_claim_threshold.py",
+        "PLIC enable/threshold/claim scaffold",
+        "Executable PLIC contract test plus documented future threshold extension.",
     ),
 )
 

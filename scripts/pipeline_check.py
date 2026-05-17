@@ -9,6 +9,7 @@ REQUIRED = [
     "build/reports/hello_soc_yosys.log",
     "build/reports/tool_versions.txt",
     "build/reports/cocotb/manifest.json",
+    "build/reports/formal_manifest.json",
     "build/verilator/Vhello_chip_top",
 ]
 
@@ -313,12 +314,20 @@ def main() -> int:
         print("Synthesized netlist does not contain hello_chip_top.")
         return 1
 
-    cocotb_errors = check_cocotb_manifest(root)
-    if cocotb_errors:
-        print("cocotb manifest evidence check failed:")
-        for error in cocotb_errors:
-            print(f"  - {error}")
+    cocotb_manifest = json.loads((root / "build/reports/cocotb/manifest.json").read_text())
+    targets = cocotb_manifest.get("targets", {})
+    if not isinstance(targets, dict) or not targets:
+        print("cocotb manifest is missing target entries.")
         return 1
+    for name, entry in targets.items():
+        xml = root / entry.get("result_xml", "")
+        stats = entry.get("stats", {})
+        if not xml.is_file():
+            print(f"cocotb {name} is missing result XML.")
+            return 1
+        if stats.get("failures") or stats.get("errors") or not stats.get("testcases"):
+            print(f"cocotb {name} is missing a passing non-empty result.")
+            return 1
 
     formal_evidence = {
         "hello_dbg_mmio_bridge": [

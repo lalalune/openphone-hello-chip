@@ -38,7 +38,7 @@ areas:
           - verify/cocotb/hello_tiny_cpu_contract_tb.sv
           - verify/cocotb/test_tiny_cpu_execution.py
         partial_closure_evidence:
-          - docs/rtl/cpu-config-selection.md (Chipyard Rocket RV64GC + SV39 + L1 I/D selection, wrapper layout under rtl/wrappers/, integration steps, Chipyard SHA TODO_PIN_CHIPYARD_SHA)
+          - docs/rtl/cpu-config-selection.md (Chipyard Rocket RV64GC + SV39 + L1 I/D selection, wrapper layout under rtl/wrappers/, pin TODO)
         current_evidence: Tiny single-issue RV contract model supports only a small unprivileged instruction subset and halts on unsupported opcodes, fetch errors, and unaligned word accesses. Selected v0 CPU config is documented in docs/rtl/cpu-config-selection.md; generated RTL not yet imported.
         blocking_gate: Linux-capable SoC, bootable firmware, and product claims must remain blocked while this stub is present.
         closure_evidence: Production RV64 integration with privileged mode, reset/interrupt/timer path, boot ROM handoff, memory map, generated DTS, and executable boot smoke evidence.
@@ -55,10 +55,9 @@ areas:
         partial_closure_evidence:
           - docs/arch/boot-rom-spec.md (reset vector, OTP layout, secure-boot stub algorithm, OpenSBI handoff ABI, debug-lock policy)
           - fw/boot-rom/reset.S (executable RV64 reset stub jumping to OpenSBI entry)
-          - fw/boot-rom/Makefile (tools-checked cross-build producing hello_boot_rom.bin/.hex/.dump)
+          - fw/boot-rom/Makefile (tools-checked build rule producing hello_boot_rom.bin/.hex/.dump)
           - fw/boot-rom/linker.ld (4 KiB ROM aperture at 0x0000_1000)
-          - verify/cocotb/test_plic_claim_threshold.py (PLIC enable/claim/complete contract, plus skip-flagged threshold and priority extensions)
-          - verify/cocotb/test_clint_timer_irq.py (CLINT timer/software-irq scaffolds, skipped until CLINT lands)
+          - verify/cocotb/test_clint_timer_irq.py (CLINT timer/software-irq scaffold, skipped until CLINT lands)
         current_evidence: Boot ROM exposes fixed readable words and a boot-vector contract; the executable reset stub now exists in fw/boot-rom/ and the OpenSBI handoff ABI is specified in docs/arch/boot-rom-spec.md. Pad-level RTL still has no CLINT, PLIC-compatible target, MMU, cache, UART console, or live firmware entry path.
         blocking_gate: QEMU/Renode semantic checks must not be treated as hello-chip boot validation.
         closure_evidence: Firmware ELF boots through the RTL-equivalent address map in simulation or emulation and emits a checked serial transcript.
@@ -73,7 +72,7 @@ areas:
           - scripts/run_rtl_check.sh
         partial_closure_evidence:
           - docs/rtl/cpu-config-selection.md (integration step 7 schedules the rename to hello_tiny_cpu_contract with a one-release alias)
-        current_evidence: The executable model is still named as a stub and is included in normal RTL and synthesis source lists; rename plan documented but not yet executed.
+        current_evidence: The executable model is still named as a stub and is included in normal RTL and synthesis source lists; rename plan now documented but not yet executed.
         blocking_gate: Passing lint/synthesis must not imply that a production CPU subsystem exists.
         closure_evidence: Production-named CPU wrapper with any compatibility alias clearly documented as non-product scaffolding.
         work_order: Preserve the legacy hello_cpu_subsystem_stub wrapper only as a compatibility alias once a production-named CPU wrapper exists.
@@ -277,10 +276,15 @@ areas:
           - rtl/bootrom/hello_bootrom.sv
           - sw/bootrom/hello_qemu_firmware.S
           - scripts/run_qemu.sh
-        current_evidence: ROM returns identity/version words and a debug-visible handoff word. fw/boot-rom now builds a minimal executable RV64 reset scaffold when a local RISC-V toolchain is available.
-        blocking_gate: Firmware, secure boot, OpenSBI, and OS boot gates remain blocked until the scaffold is integrated into an RTL CPU reset path and covered by a transcript.
-        closure_evidence: Executable reset ROM is consumed by RTL or an equivalent emulator target, initializes the required machine state, validates the selected handoff address, and emits checked boot transcript evidence.
-        work_order: Integrate the reset ROM artifact into the CPU reset path and replace the fixed handoff with the selected firmware payload policy.
+        partial_closure_evidence:
+          - docs/arch/boot-rom-spec.md (reset vector, OTP layout, signature-verification stub algorithm, OpenSBI handoff ABI, debug-lock policy)
+          - fw/boot-rom/reset.S (executable RV64 reset stub: hart parking, CSR cleanup, trap shim, jr to OpenSBI entry)
+          - fw/boot-rom/linker.ld (ROM aperture at architectural reset vector 0x0000_1000)
+          - fw/boot-rom/Makefile (riscv64 cross-build with fail-closed tools-check)
+        current_evidence: Contract ROM still returns identity/version words. An executable v0 reset stub now exists under fw/boot-rom/, with build rule and a documented OpenSBI handoff ABI. The stub is not yet wired into any CPU wrapper or exercised under simulation.
+        blocking_gate: Firmware and OS boot gates remain blocked.
+        closure_evidence: Executable reset ROM initializes machine state, validates handoff address, and is covered by RTL or emulator boot transcript checks.
+        work_order: Replace the identity contract ROM with executable reset code that initializes M-mode state and hands off to OpenSBI or equivalent firmware.
   dram:
     current_posture: small_sram_backed_dram_aperture
     local_closures:

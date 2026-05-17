@@ -104,7 +104,9 @@
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
           "placeholder_allowed": false,
-          "min_size_bytes": 4096,
+          "min_size_bytes": 6144,
+          "sha256_pin_status": "regenerate_required",
+          "sha256_pin_note": "Architecture is conv+relu+fc+softmax; pin sha256 after first deterministic generation on a TF-equipped host and replace this status with the digest.",
           "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
           "pipeline_visible": true,
           "release_blocking": true,
@@ -190,7 +192,9 @@
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
           "placeholder_allowed": false,
-          "min_size_bytes": 4096,
+          "min_size_bytes": 6144,
+          "sha256_pin_status": "regenerate_required",
+          "sha256_pin_note": "Architecture is conv+relu+fc+softmax; pin sha256 after first deterministic generation on a TF-equipped host and replace this status with the digest.",
           "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
           "pipeline_visible": true,
           "release_blocking": true,

@@ -429,7 +429,10 @@ def model_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str, Any
     size = path.stat().st_size
     status["size_bytes"] = size
 
-    if expected_sha256 and digest != expected_sha256:
+    if not expected_sha256 and not status["placeholder_allowed"]:
+        status["available"] = False
+        status["blocked_reason"] = "model_sha256_unpinned"
+    elif expected_sha256 and digest != expected_sha256:
         status["available"] = False
         status["blocked_reason"] = "model_sha256_mismatch"
     elif digest in placeholder_sha256 or size < min_size_bytes:
@@ -1185,7 +1188,11 @@ def run_plan_or_real(args: argparse.Namespace) -> int:
 
     report_path = run_dir / "report.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"wrote {display_path(report_path, root)}")
+    try:
+        display_path = report_path.relative_to(root)
+    except ValueError:
+        display_path = report_path
+    print(f"wrote {display_path}")
 
     if any_failed:
         return 1

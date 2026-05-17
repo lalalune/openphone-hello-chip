@@ -1,25 +1,12 @@
 #!/usr/bin/env bash
 # Run the CTS smoke subset against a Cuttlefish riscv64 device.
-#
-# Fails closed if:
-#   - AOSP_TREE is unset or not a built AOSP tree
-#   - cts-tradefed is missing
-#   - adb does not see exactly one ready device
-#
-# Modules and filters are defined in docs/android/cts-vts-smoke-plan.md and
-# kept in sync here. Do NOT add modules that require camera, cellular, audio,
-# Vulkan, biometrics, secure element, or Play services.
+# Fail closed if AOSP_TREE / cts-tradefed / adb device are missing.
+# Modules + filters mirror docs/android/cts-vts-smoke-plan.md.
 
 set -euo pipefail
 
-die() {
-  printf 'run_cts_smoke: %s\n' "$*" >&2
-  exit 2
-}
-
-require_cmd() {
-  command -v "$1" >/dev/null 2>&1 || die "required command not on PATH: $1"
-}
+die() { printf 'run_cts_smoke: %s\n' "$*" >&2; exit 2; }
+require_cmd() { command -v "$1" >/dev/null 2>&1 || die "missing on PATH: $1"; }
 
 AOSP_TREE="${AOSP_TREE:-}"
 ARCHIVE_ROOT="${ARCHIVE_ROOT:-out/cf-riscv64/cts-vts}"
@@ -28,33 +15,23 @@ ARCHIVE="${ARCHIVE_ROOT}/${TIMESTAMP}"
 
 [ -n "${AOSP_TREE}" ] || die "AOSP_TREE must point at a built AOSP riscv64 tree"
 [ -d "${AOSP_TREE}" ] || die "AOSP_TREE does not exist: ${AOSP_TREE}"
-[ -x "${AOSP_TREE}/out/host/linux-x86/cts/android-cts/tools/cts-tradefed" ] \
-  || die "cts-tradefed not built under ${AOSP_TREE}/out/host/linux-x86/cts"
+TRADEFED="${AOSP_TREE}/out/host/linux-x86/cts/android-cts/tools/cts-tradefed"
+[ -x "${TRADEFED}" ] || die "cts-tradefed not built: ${TRADEFED}"
 
 require_cmd adb
-
 DEVICES="$(adb devices | awk 'NR>1 && $2=="device" {print $1}')"
 COUNT="$(printf '%s\n' "${DEVICES}" | grep -c . || true)"
-[ "${COUNT}" = "1" ] \
-  || die "expected exactly 1 ready adb device, found ${COUNT}: ${DEVICES}"
+[ "${COUNT}" = "1" ] || die "expected exactly 1 ready adb device, found ${COUNT}"
 
 mkdir -p "${ARCHIVE}"
-
 {
   echo "timestamp_utc=${TIMESTAMP}"
   echo "aosp_tree=${AOSP_TREE}"
-  ( cd "${AOSP_TREE}" && \
-    if [ -f build/make/core/build_id.mk ]; then
-      grep -E '^BUILD_ID' build/make/core/build_id.mk || true
-    fi )
   adb shell getprop ro.build.id
   adb shell getprop ro.product.cpu.abi
   adb shell getprop sys.boot_completed
 } > "${ARCHIVE}/build-info.txt"
-
 adb shell getprop > "${ARCHIVE}/device-info.txt" || true
-
-TRADEFED="${AOSP_TREE}/out/host/linux-x86/cts/android-cts/tools/cts-tradefed"
 
 set -x
 "${TRADEFED}" run commandAndExit cts \
@@ -84,5 +61,4 @@ if [ -n "${RESULTS_DIR}" ]; then
 else
   echo "WARNING: no tradefed results directory found" >&2
 fi
-
 echo "CTS smoke archive: ${ARCHIVE}"
