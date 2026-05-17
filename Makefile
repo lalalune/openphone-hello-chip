@@ -7,7 +7,7 @@ RTL_TOP := hello_chip_top
 RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
 BUILD := build
 
-.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict project-plan-check product-check product-release-check pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions pipeline-check archive-release clean
+.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict mvp-status-json project-plan-check product-check product-release-check pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions record-tool-versions pipeline-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
@@ -45,6 +45,12 @@ mvp-status:
 
 mvp-status-strict:
 	@$(PYTHON) scripts/check_mvp_status.py --strict
+
+# Emit machine-readable JSON (includes evidence_class per row) for CI artifact
+# capture. Distinguishes PASS / BLOCK (missing tool or external tree) / FAIL.
+mvp-status-json:
+	@mkdir -p build/reports
+	@$(PYTHON) scripts/check_mvp_status.py --json | tee build/reports/mvp_status.json
 
 product-check: pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check pd-signoff-manifest-check real-world-gates-check
 	@$(PYTHON) scripts/product_check.py
@@ -167,6 +173,12 @@ docs-check:
 
 tool-versions:
 	@scripts/tool_versions.sh
+	@scripts/record_tool_versions.sh
+
+# Release-gate focused tool manifest. Fail-soft per tool; entries that are
+# absent are recorded as MISSING so the artifact is always uploadable.
+record-tool-versions:
+	@scripts/record_tool_versions.sh
 
 pipeline-check:
 	@$(PYTHON) scripts/pipeline_check.py
