@@ -77,8 +77,7 @@ def reject_placeholder_files(files: list[Path], label: str, failures: list[str])
         matched = [marker for marker in FORBIDDEN_RELEASE_TEXT_MARKERS if marker in text]
         if matched:
             failures.append(
-                f"{label} contains non-release marker(s): {repo_rel(path)}: "
-                + ", ".join(matched)
+                f"{label} contains non-release marker(s): {repo_rel(path)}: " + ", ".join(matched)
             )
 
 

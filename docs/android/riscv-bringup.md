@@ -112,6 +112,14 @@ sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
 make software-bsp-evidence-check
 ```
 
+For a different external Cuttlefish product or UI launch, set:
+
+```sh
+AOSP_PRODUCT=aosp_cf_riscv64_phone-trunk_staging-userdebug \
+AOSP_CUTTLEFISH_ARGS="--cpus=8 --memory_mb=8192" \
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
+```
+
 ## OpenPhone AOSP Device Tree Runbook
 
 The repo-local device tree is a scaffold intended to be copied or overlaid into
@@ -163,6 +171,13 @@ The `sw/aosp-device/device/openphone/openphone_ai_soc` tree must remain tied to
 `sw/platform/hello_platform_contract.json`. Any HAL, init service, device-tree
 node, or kernel driver added for Android must have a contract entry or an
 explicit stub rationale.
+
+The checked-in `sw/linux/dts/openphone-hello.dts` file is not a complete AP boot
+DTB. For Android/Linux bring-up it must be combined with, or replaced by, the
+selected generated AP DTS containing CPU, memory, timer, interrupt-controller,
+and enabled UART console nodes. Run `python3 scripts/capture_cpu_ap_evidence.py
+dts-audit --run-dtc` against the generated DTS before using it for OpenSBI,
+Linux, or Android boot evidence.
 
 Required v0 surfaces:
 

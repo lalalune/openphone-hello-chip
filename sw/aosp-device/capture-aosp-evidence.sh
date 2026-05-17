@@ -15,6 +15,10 @@ mode=$2
 repo_root=$(CDPATH=; cd -- "$(dirname -- "$0")/../.." && pwd)
 evidence_dir="$repo_root/docs/evidence/android"
 aosp_shell=${AOSP_SHELL:-bash}
+aosp_product=${AOSP_PRODUCT:-openphone_ai_soc-userdebug}
+aosp_cuttlefish_args=${AOSP_CUTTLEFISH_ARGS:---cpus=4 --memory_mb=8192 --gpu_mode=none}
+aosp_adb_timeout_seconds=${AOSP_ADB_TIMEOUT_SECONDS:-180}
+reference_only_boundary=reference_only_not_hello_chip_ap_evidence
 
 if [ ! -f "$aosp/build/envsetup.sh" ] || [ ! -d "$aosp/device" ]; then
 	echo "error: $aosp does not look like an AOSP checkout" >&2
@@ -38,6 +42,11 @@ run_capture() {
 		echo "openphone-evidence: target=aosp artifact=$artifact"
 		echo "openphone-evidence: external_tree=$aosp"
 		echo "openphone-evidence: command=$command_label"
+		case "$artifact" in
+			cuttlefish_riscv64_boot|cts_virtual_device_subset|vts_virtual_device_subset)
+				echo "openphone-evidence: claim_boundary=$reference_only_boundary"
+				;;
+		esac
 		echo "openphone-evidence: started_utc=$start_utc"
 		cd "$aosp"
 		set +e
@@ -81,8 +90,38 @@ case "$mode" in
 		run_capture \
 			cuttlefish_riscv64_boot \
 			"$evidence_dir/cuttlefish_riscv64_boot.log" \
-			"launch_cvd openphone_ai_soc riscv64" \
-			"$aosp_shell" -lc 'launch_cvd -daemon && adb wait-for-device && echo "adb shell true" && adb shell true && echo "adb shell getprop ro.product.cpu.abi" && abi=$(adb shell getprop ro.product.cpu.abi | tr -d "\r") && echo "ro.product.cpu.abi=$abi" && echo "adb shell getprop sys.boot_completed" && boot=$(adb shell getprop sys.boot_completed | tr -d "\r") && echo "sys.boot_completed=$boot" && [ "$abi" = riscv64 ] && [ "$boot" = 1 ]'
+			"source build/envsetup.sh && lunch $aosp_product && launch_cvd $aosp_cuttlefish_args -daemon" \
+			env AOSP_PRODUCT="$aosp_product" AOSP_CUTTLEFISH_ARGS="$aosp_cuttlefish_args" "$aosp_shell" -lc '
+				source build/envsetup.sh &&
+				lunch "$AOSP_PRODUCT" >/dev/null &&
+				cleanup() { stop_cvd >/dev/null 2>&1 || true; } &&
+				trap cleanup EXIT INT TERM &&
+				launch_cvd $AOSP_CUTTLEFISH_ARGS -daemon &&
+				deadline=$((SECONDS + '"$aosp_adb_timeout_seconds"')) &&
+				until adb get-state >/dev/null 2>&1; do
+					if [ "$SECONDS" -ge "$deadline" ]; then
+						echo "openphone-evidence: adb_wait_timeout_seconds='"$aosp_adb_timeout_seconds"'" &&
+						exit 1
+					fi
+					sleep 2
+				done &&
+				echo "adb shell true" &&
+				adb shell true &&
+				echo "adb shell getprop ro.product.cpu.abi" &&
+				abi=$(adb shell getprop ro.product.cpu.abi | tr -d "\r") &&
+				echo "ro.product.cpu.abi=$abi" &&
+				echo "adb shell getprop sys.boot_completed" &&
+				boot= &&
+				while [ "$SECONDS" -lt "$deadline" ]; do
+					boot=$(adb shell getprop sys.boot_completed | tr -d "\r") &&
+					[ "$boot" = 1 ] && break
+					sleep 2
+				done &&
+				echo "sys.boot_completed=$boot" &&
+				mkdir -p out &&
+				adb shell logcat -d -b all > out/openphone-cuttlefish-boot-logcat.txt 2>/dev/null || true
+				[ "$abi" = riscv64 ] && [ "$boot" = 1 ]
+			'
 		;;
 	cts-subset)
 		run_capture \

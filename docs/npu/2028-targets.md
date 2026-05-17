@@ -90,3 +90,38 @@ structure:
 
 The next implementation move is to replace the scalar GEMM prototype with a
 parameterized INT8/INT4 tile model and feed it through a descriptor-ring ABI.
+
+## Evidence Gate
+
+The current repository must stay classified as `L0_RTL_UNIT` for NPU capability
+until a target report supplies all of the following:
+
+| Evidence | Required content |
+| --- | --- |
+| TOPS/MAC counters | `macs_per_inference`, `npu_cycles`, `npu_hz`, `observed_tops`, and `tops_formula` derived from hardware counters |
+| Precision | Actual delegate precision such as INT8, INT4, INT2, FP8, BF16, or FP16 |
+| Dataflow | Named measured dataflow path, not only a GEMM math estimate |
+| Descriptor queue | Queue depth, descriptor head/tail completion, timeout/error behavior, and host runtime submission proof |
+| DMA | Hardware tensor-streaming DMA path and bytes read/written by the NPU workload |
+| Runtime counters | Cycles, MACs, ops, errors, unsupported ops, DMA read bytes, and DMA written bytes from the measured path |
+| Android HAL / NNAPI | AIDL HAL service proof, fail-closed SELinux policy, VTS/CTS results, `hello-npu` accelerator query, total/delegated node counts, zero CPU fallback, and zero unsupported ops |
+| Model binding | Exact model SHA-256 and transcript hashes |
+
+For review, TOPS is bounded by the counter evidence:
+
+```text
+observed_tops <= macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12
+```
+
+The scalar RTL cannot produce phone-class TOPS, sustained power, or Android
+delegate evidence. Passing `scripts/check_npu_2028_targets.py` means the repo
+keeps this distinction explicit; it does not mean the 2028 target is met.
+
+## Next Commands
+
+```sh
+python3 scripts/check_npu_2028_targets.py
+python3 scripts/check_platform_contract.py
+python3 benchmarks/run_benchmarks.py plan --bench tflite_hello_npu --strict-missing
+make npu-2028-target-check platform-contract-check
+```

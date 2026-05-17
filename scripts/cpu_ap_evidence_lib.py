@@ -136,6 +136,129 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
         "CPU/AP evidence manifest capture_helper path drifted",
         errors,
     )
+    expected_linux_gates = {
+        "rv64gc_isa": "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
+        "s_mode_privilege": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
+        "mmu_sv39_or_stronger": "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
+        "clint_timer_software_irq": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
+        "plic_external_irq": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
+        "uart_console": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+        "dtb_linux_boot_contract": "build/chipyard/openphone_rocket/openphone-hello.dts",
+        "opensbi_handoff": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
+        "linux_initramfs_smoke": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+    }
+    gate_matrix = manifest.get("linux_capable_gate_matrix", [])
+    if not isinstance(gate_matrix, list):
+        errors.append("CPU/AP evidence manifest linux_capable_gate_matrix must be a list")
+    else:
+        seen_gates: set[str] = set()
+        for gate in gate_matrix:
+            if not isinstance(gate, dict):
+                errors.append("CPU/AP Linux-capable gate matrix entries must be objects")
+                continue
+            gate_id = gate.get("gate")
+            if not isinstance(gate_id, str):
+                errors.append("CPU/AP Linux-capable gate missing gate id")
+                continue
+            seen_gates.add(gate_id)
+            expected_evidence = expected_linux_gates.get(gate_id)
+            if expected_evidence is None:
+                errors.append(f"CPU/AP Linux-capable gate is not approved: {gate_id}")
+                continue
+            require(
+                gate.get("status") == "blocked",
+                f"CPU/AP Linux-capable gate {gate_id} must remain blocked until evidence passes",
+                errors,
+            )
+            require(
+                gate.get("evidence") == expected_evidence,
+                f"CPU/AP Linux-capable gate {gate_id} evidence path drifted",
+                errors,
+            )
+            for key in ("pass_requires", "fail_if"):
+                values = gate.get(key)
+                if not isinstance(values, list) or not values:
+                    errors.append(f"CPU/AP Linux-capable gate {gate_id} must list {key}")
+        missing_gates = sorted(set(expected_linux_gates) - seen_gates)
+        if missing_gates:
+            errors.append(
+                "CPU/AP evidence manifest missing Linux-capable gates: " + ", ".join(missing_gates)
+            )
+    qemu_reference = manifest.get("qemu_reference_evidence", {})
+    if not isinstance(qemu_reference, dict):
+        errors.append("CPU/AP evidence manifest qemu_reference_evidence must be an object")
+    else:
+        require(
+            qemu_reference.get("status")
+            == "software_reference_only_not_linux_capable_cpu_evidence",
+            "QEMU reference evidence must remain excluded from Linux-capable CPU/AP claims",
+            errors,
+        )
+        require(
+            qemu_reference.get("attempt_log") == "build/reports/qemu_os_boot_attempt.log",
+            "QEMU OS attempt log path drifted",
+            errors,
+        )
+        require(
+            qemu_reference.get("capture_command") == "scripts/run_qemu.sh --check-os",
+            "QEMU OS attempt capture command drifted",
+            errors,
+        )
+        allowed_results = qemu_reference.get("allowed_results", [])
+        if not isinstance(allowed_results, list) or set(allowed_results) != {
+            "BLOCKED",
+            "FAIL",
+            "PASS",
+        }:
+            errors.append("QEMU OS attempt must declare exact BLOCKED/FAIL/PASS states")
+        claim_limit = qemu_reference.get("claim_limit")
+        if not isinstance(claim_limit, str) or "cannot satisfy" not in claim_limit:
+            errors.append("QEMU reference evidence must state it cannot satisfy AP evidence gates")
+    policy = manifest.get("target_policy", {})
+    if not isinstance(policy, dict):
+        errors.append("CPU/AP evidence manifest target_policy must be an object")
+    else:
+        require(
+            policy.get("initial_linux_bringup_claim")
+            == "single_hart_rocket_rv64gc_linux_smoke_only",
+            "CPU/AP target policy must limit the initial Rocket path to Linux smoke",
+            errors,
+        )
+        require(
+            policy.get("phone_2028_ap_claim")
+            == "blocked_until_phone_class_artifacts_and_evidence_pass",
+            "CPU/AP target policy must keep the 2028 phone-class AP claim blocked",
+            errors,
+        )
+        required_phone_items = {
+            "multi_hart_application_cpu_topology_or_documented_equivalent",
+            "riscv_application_profile_and_extension_matrix",
+            "cache_hierarchy_and_coherency_evidence",
+            "mmu_page_table_and_tlb_evidence",
+            "sustained_boot_and_benchmark_evidence",
+            "power_thermal_voltage_frequency_evidence",
+            "android_cts_vts_and_userspace_evidence",
+        }
+        found_phone_items = policy.get("phone_2028_claim_requires", [])
+        if not isinstance(found_phone_items, list):
+            errors.append("CPU/AP target policy phone_2028_claim_requires must be a list")
+        else:
+            missing_phone_items = sorted(required_phone_items - set(found_phone_items))
+            if missing_phone_items:
+                errors.append(
+                    "CPU/AP target policy missing 2028 phone-class blockers: "
+                    + ", ".join(missing_phone_items)
+                )
+        forbidden = policy.get("forbidden_without_evidence", [])
+        if not isinstance(forbidden, list):
+            errors.append("CPU/AP target policy forbidden_without_evidence must be a list")
+        else:
+            for phrase in ("phone-class AP", "Android compatible", "production silicon"):
+                require(
+                    phrase in forbidden,
+                    f"CPU/AP target policy must forbid unsupported claim: {phrase}",
+                    errors,
+                )
 
     artifacts = artifact_specs(manifest)
     required_artifacts = {"generated_src", "verilog", "dts", "simulator"}
@@ -161,7 +284,13 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
             )
 
     transcripts = transcript_specs(manifest)
-    required_transcripts = {"opensbi_boot_log", "linux_boot_log", "trap_timer_irq_log"}
+    required_transcripts = {
+        "opensbi_boot_log",
+        "linux_boot_log",
+        "trap_timer_irq_log",
+        "isa_cache_mmu_log",
+        "ap_benchmark_log",
+    }
     missing_transcripts = sorted(required_transcripts - set(transcripts))
     if missing_transcripts:
         errors.append(
@@ -211,6 +340,27 @@ def text_problems(text: str, spec: dict[str, Any], rel_path: str, *, raw: bool) 
                 f"{rel_path} must contain at least one marker from: " + ", ".join(group)
             )
 
+    return problems
+
+
+def transcript_metadata_problems(text: str, rel_path: str) -> list[str]:
+    problems: list[str] = []
+    expected_manifest = rel(GENERATED_MANIFEST)
+    expected_sha = sha256_path(GENERATED_MANIFEST) if GENERATED_MANIFEST.is_file() else None
+
+    manifest_marker = f"openphone-evidence: generated_manifest={expected_manifest}"
+    if manifest_marker not in text:
+        problems.append(f"{rel_path} must bind to generated manifest {expected_manifest}")
+
+    if expected_sha is None:
+        problems.append(f"{rel_path} cannot be release evidence until {expected_manifest} exists")
+    else:
+        sha_marker = f"openphone-evidence: generated_manifest_sha256={expected_sha}"
+        if sha_marker not in text:
+            problems.append(f"{rel_path} generated_manifest_sha256 must match {expected_manifest}")
+
+    if "openphone-evidence: generated_manifest_sha256=missing" in text:
+        problems.append(f"{rel_path} records a missing generated manifest hash")
     return problems
 
 

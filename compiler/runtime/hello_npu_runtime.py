@@ -12,9 +12,16 @@ class HelloNpuRuntime:
     GEMM_CFG = 0x1002_0020
     GEMM_BASE = 0x1002_0024
     GEMM_STRIDE = 0x1002_0028
-    PERF_CYCLES = 0x1002_002C
-    PERF_MACS = 0x1002_0030
-    PERF_ERRORS = 0x1002_0034
+    PERF_UNSUPPORTED_OPS = 0x1002_002C
+    CMD_PARAM = 0x1002_0030
+    DESC_BASE = 0x1002_0040
+    DESC_HEAD = 0x1002_0044
+    DESC_TAIL = 0x1002_0048
+    DESC_STATUS = 0x1002_004C
+    PERF_CYCLES = 0x1002_0050
+    PERF_MACS = 0x1002_0054
+    PERF_OPS = 0x1002_0058
+    PERF_ERRORS = 0x1002_005C
     SCRATCH = 0x1002_0080
     SCRATCH_BYTES = 64
 
@@ -25,6 +32,7 @@ class HelloNpuRuntime:
     OP_DOT4_S8 = 4
     OP_MAX_U32 = 5
     OP_MIN_U32 = 6
+    OP_DOT8_S4 = 7
     OP_GEMM_S8 = 8
 
     def __init__(self, read32, write32):
@@ -61,6 +69,9 @@ class HelloNpuRuntime:
     def dot4_s8(self, a_packed: int, b_packed: int, acc: int = 0) -> int:
         return self.run(self.OP_DOT4_S8, a_packed, b_packed, acc)
 
+    def dot8_s4(self, a_packed: int, b_packed: int, acc: int = 0) -> int:
+        return self.run(self.OP_DOT8_S4, a_packed, b_packed, acc)
+
     def clear_perf(self):
         self.write32(self.PERF_ERRORS, 1)
 
@@ -68,7 +79,9 @@ class HelloNpuRuntime:
         return {
             "cycles": self.read32(self.PERF_CYCLES),
             "macs": self.read32(self.PERF_MACS),
+            "ops": self.read32(self.PERF_OPS),
             "errors": self.read32(self.PERF_ERRORS),
+            "unsupported_ops": self.read32(self.PERF_UNSUPPORTED_OPS),
         }
 
     def write_scratch(self, offset: int, data: bytes):

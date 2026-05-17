@@ -37,6 +37,11 @@ storage, USB digital boundary, audio, sensors, GPIO, debug
 OpenSBI, U-Boot, Linux, AOSP device support
 ```
 
+The current selected Chipyard/Rocket path is a Linux bring-up stepping stone for
+that target. It must not be treated as a 2028 phone-class AP until the CPU/AP
+evidence manifest closes topology, ISA, cache/coherency, MMU, boot, benchmark,
+power/thermal, Android, and silicon gates.
+
 The hello chip keeps the same contract style while making the first end-to-end flow fast enough to run constantly.
 
 ## Contract scaffold

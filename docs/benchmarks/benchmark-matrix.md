@@ -60,6 +60,15 @@ selected CTS/VTS host-side smoke tests
 - Separate AOSP boot from Android compatibility.
 - Treat web benchmark scores as planning anchors until measured on controlled local reference devices.
 
+## CPU/AP Evidence Boundary
+
+The selected single-hart Rocket path may only produce L3 bring-up evidence after
+generated artifacts, Linux boot, ISA/cache/MMU transcript, and benchmark
+transcript gates pass. It is not enough for a 2028 phone-class AP comparison.
+Phone-class CPU/AP benchmarking also needs sustained runs, controlled clocks,
+memory configuration, thermal state, power method, raw artifact hashes, and an
+explicit claim level in the report.
+
 Primary references:
 
 - SPEC CPU 2017: https://www.spec.org/osg/cpu2017/

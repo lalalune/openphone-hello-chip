@@ -31,6 +31,7 @@ DEFAULT_FORBIDDEN_EVIDENCE_TERMS = [
 EVIDENCE_ITEM_KEYS = {
     "artifact",
     "path",
+    "claim_boundary",
     "capture_command",
     "validation_command",
     "external_artifacts",
@@ -41,6 +42,12 @@ EVIDENCE_ITEM_KEYS = {
 }
 EVIDENCE_PATH_RE = re.compile(r"^docs/evidence/(buildroot|linux|android)/[^/]+\.(log|txt)$")
 STATUS_RE = re.compile(r"^openphone-evidence:\s*status=([^\s]+).*$", re.MULTILINE)
+AOSP_REFERENCE_ONLY_BOUNDARY = "reference_only_not_hello_chip_ap_evidence"
+AOSP_REFERENCE_ONLY_PATHS = {
+    "docs/evidence/android/cuttlefish_riscv64_boot.log",
+    "docs/evidence/android/cts_virtual_device_subset.log",
+    "docs/evidence/android/vts_virtual_device_subset.log",
+}
 
 
 class TargetSpec(TypedDict, total=False):
@@ -308,6 +315,22 @@ def validate_evidence_manifest_schema(data: object, errors: list[str]) -> None:
                 )
             if target == "aosp" and "external_artifacts" not in item:
                 errors.append(f"{item_path}.external_artifacts is required for AOSP evidence")
+            claim_boundary = item.get("claim_boundary")
+            if path in AOSP_REFERENCE_ONLY_PATHS:
+                if claim_boundary != AOSP_REFERENCE_ONLY_BOUNDARY:
+                    errors.append(
+                        f"{item_path}.claim_boundary must be {AOSP_REFERENCE_ONLY_BOUNDARY}"
+                    )
+                required_strings = item.get("required_strings", [])
+                boundary_marker = (
+                    f"openphone-evidence: claim_boundary={AOSP_REFERENCE_ONLY_BOUNDARY}"
+                )
+                if isinstance(required_strings, list) and boundary_marker not in required_strings:
+                    errors.append(f"{item_path}.required_strings must require {boundary_marker}")
+            elif claim_boundary is not None:
+                errors.append(
+                    f"{item_path}.claim_boundary is only valid for reference-only AOSP evidence"
+                )
             if "at_least_one" in item:
                 groups = item.get("at_least_one")
                 if not isinstance(groups, list) or not groups:
@@ -538,6 +561,20 @@ def check_aosp_evidence_manifest(errors: list[str]) -> None:
             errors.append(
                 f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} missing external_artifacts"
             )
+        claim_boundary = item.get("claim_boundary")
+        if path in AOSP_REFERENCE_ONLY_PATHS:
+            if claim_boundary != AOSP_REFERENCE_ONLY_BOUNDARY:
+                errors.append(
+                    f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} must set claim_boundary={AOSP_REFERENCE_ONLY_BOUNDARY}"
+                )
+            if not isinstance(claim, str) or "reference" not in claim.lower():
+                errors.append(
+                    f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} claim must describe reference-only scope"
+                )
+        elif claim_boundary is not None:
+            errors.append(
+                f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} has unexpected claim_boundary"
+            )
         central_item = next(
             (
                 central
@@ -561,6 +598,10 @@ def check_aosp_evidence_manifest(errors: list[str]) -> None:
         ):
             errors.append(
                 f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} external_artifacts does not match central evidence manifest"
+            )
+        if central_item and item.get("claim_boundary") != central_item.get("claim_boundary"):
+            errors.append(
+                f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} claim_boundary does not match central evidence manifest"
             )
 
 
@@ -620,6 +661,11 @@ def validate_evidence_file(item: dict) -> list[str]:
         problems.append(f"{rel} missing openphone-evidence command marker")
     if not ("openphone-evidence: ended_utc=" in text or "openphone-evidence: end_utc=" in text):
         problems.append(f"{rel} missing openphone-evidence end timestamp")
+    claim_boundary = item.get("claim_boundary")
+    if isinstance(claim_boundary, str) and claim_boundary:
+        marker = f"openphone-evidence: claim_boundary={claim_boundary}"
+        if marker not in text:
+            problems.append(f"{rel} missing reference-only claim boundary marker: {marker}")
 
     forbidden = DEFAULT_FORBIDDEN_EVIDENCE_TERMS + item.get("forbidden_strings", [])
     lower = text.lower()

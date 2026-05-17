@@ -273,6 +273,7 @@
         {
           "artifact": "AOSP Cuttlefish riscv64 boot transcript",
           "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
+          "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot",
           "external_artifacts": [
             "out/target/product/openphone_ai_soc/vendor.img",
@@ -282,6 +283,7 @@
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
+            "openphone-evidence: claim_boundary=reference_only_not_hello_chip_ap_evidence",
             "openphone-evidence: command=",
             "openphone-evidence: started_utc=",
             "launch_cvd",
@@ -306,6 +308,7 @@
         {
           "artifact": "Android CTS virtual-device subset transcript",
           "path": "docs/evidence/android/cts_virtual_device_subset.log",
+          "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset",
           "external_artifacts": [
             "Cuttlefish instance adb transport",
@@ -314,6 +317,7 @@
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=cts_virtual_device_subset",
+            "openphone-evidence: claim_boundary=reference_only_not_hello_chip_ap_evidence",
             "openphone-evidence: compatibility_scope=virtual_device_subset",
             "openphone-evidence: started_utc=",
             "openphone-evidence: command=",
@@ -332,6 +336,7 @@
         {
           "artifact": "Android VTS virtual-device subset transcript",
           "path": "docs/evidence/android/vts_virtual_device_subset.log",
+          "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset",
           "external_artifacts": [
             "Cuttlefish instance adb transport",
@@ -340,6 +345,7 @@
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=vts_virtual_device_subset",
+            "openphone-evidence: claim_boundary=reference_only_not_hello_chip_ap_evidence",
             "openphone-evidence: compatibility_scope=virtual_device_subset",
             "openphone-evidence: started_utc=",
             "openphone-evidence: command=",

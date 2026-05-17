@@ -7,7 +7,7 @@ RTL_TOP := hello_chip_top
 RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
 BUILD := build
 
-.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict mvp-status-json chipyard-generator-check chipyard-generated-check cpu-ap-scaffold-check cpu-ap-evidence-check cpu-ap-completion-gate memory-uma-claim-gate npu-2028-target-check project-plan-check product-check product-release-check pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions record-tool-versions pipeline-check archive-release clean
+.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict mvp-status-json mvp-simulator mvp-simulator-check chipyard-generator-check chipyard-generated-check cpu-ap-scaffold-check cpu-ap-evidence-check cpu-ap-evidence-test cpu-ap-completion-gate memory-uma-claim-gate npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check project-plan-check product-check product-release-check pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-os-check qemu-status-test renode-check renode-check-strict renode-status-test android-sim-boot-check android-sim-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions record-tool-versions pipeline-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
@@ -33,10 +33,10 @@ analysis:
 verify-all: lint typecheck smoke analysis cocotb cocotb-contract cocotb-cpu qemu-status-test renode-status-test
 	@echo "verify-all complete"
 
-smoke: lint typecheck docs-check project-plan-check npu-2028-target-check platform-contract-check chipyard-generator-check cpu-ap-scaffold-check cpu-ap-completion-gate bootrom-check stub-audit software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
+smoke: lint typecheck docs-check project-plan-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check chipyard-generator-check cpu-ap-scaffold-check cpu-ap-evidence-test cpu-ap-completion-gate bootrom-check stub-audit software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
 	@echo "smoke complete"
 
-ci-fast: lint typecheck docs-check project-plan-check npu-2028-target-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
+ci-fast: lint typecheck docs-check project-plan-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
 	@echo "ci-fast complete"
 
 ci-local: lint typecheck docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal tool-versions
@@ -70,6 +70,12 @@ mvp-status-json:
 	@mkdir -p build/reports
 	@$(PYTHON) scripts/check_mvp_status.py --json | tee build/reports/mvp_status.json
 
+mvp-simulator:
+	@$(PYTHON) scripts/run_mvp_simulator.py
+
+mvp-simulator-check:
+	@$(PYTHON) scripts/check_mvp_simulator.py
+
 chipyard-generator-check:
 	@$(PYTHON) scripts/check_chipyard_generator_manifest.py
 
@@ -82,6 +88,9 @@ cpu-ap-scaffold-check:
 cpu-ap-evidence-check:
 	@$(PYTHON) scripts/check_cpu_ap_evidence.py --require-evidence
 
+cpu-ap-evidence-test:
+	@$(PYTHON) scripts/test_cpu_ap_evidence.py
+
 cpu-ap-completion-gate:
 	@$(PYTHON) scripts/check_cpu_ap_completion_gate.py
 
@@ -90,6 +99,24 @@ memory-uma-claim-gate:
 
 npu-2028-target-check:
 	@$(PYTHON) scripts/check_npu_2028_targets.py
+
+npu-runtime-contract-check:
+	@$(PYTHON) scripts/check_hello_npu_runtime_contract.py
+
+npu-roadmap-check:
+	@$(PYTHON) scripts/check_npu_roadmap.py
+
+npu-open-scale-model-check:
+	@$(PYTHON) scripts/check_npu_open_scale_model.py
+
+npu-scale-sim-check:
+	@$(PYTHON) scripts/check_npu_scale_sim.py
+
+scale-feasibility-gate:
+	@$(PYTHON) scripts/check_scale_feasibility_gate.py
+
+verification-maturity-matrix-check:
+	@$(PYTHON) scripts/check_verification_maturity_matrix.py
 
 product-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check physical-closure-work-order-check pd-signoff-manifest-check real-world-gates-check memory-uma-claim-gate
 	@$(PYTHON) scripts/product_check.py
@@ -181,6 +208,9 @@ qemu-check: platform-contract-check
 qemu-check-strict: platform-contract-check
 	@REQUIRE_QEMU=1 scripts/run_qemu.sh --check
 
+qemu-os-check: platform-contract-check
+	@scripts/run_qemu.sh --check-os
+
 qemu-status-test:
 	@$(PYTHON) scripts/test_qemu_smoke_status.py
 
@@ -192,6 +222,12 @@ renode-check-strict: platform-contract-check
 
 renode-status-test:
 	@$(PYTHON) scripts/test_renode_status.py
+
+android-sim-boot-check:
+	@scripts/boot_android_simulator.sh --run-cuttlefish --run-cts --run-vts
+
+android-sim-status-test:
+	@$(PYTHON) scripts/test_android_sim_boot_status.py
 
 platform-contract-check:
 	@$(PYTHON) scripts/check_platform_contract.py

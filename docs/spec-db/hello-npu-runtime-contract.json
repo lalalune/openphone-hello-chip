@@ -1,0 +1,96 @@
+{
+  "schema": "openphone.hello_npu_runtime_contract.v1",
+  "as_of": "2026-05-17",
+  "claim_boundary": "prototype_mmio_runtime_contract_only_not_phone_class_ai_accelerator",
+  "current_capability": {
+    "classification": "L0_RTL_UNIT",
+    "rtl": "rtl/npu/hello_npu.sv",
+    "runtime": "compiler/runtime/hello_npu_runtime.py",
+    "software_claim": "MMIO scalar, packed-dot, and bounded scratchpad GEMM prototype only",
+    "not_claimed": [
+      "Android NNAPI acceleration",
+      "AIDL HAL acceleration",
+      "phone-class TOPS",
+      "model compiler backend",
+      "DMA-backed tensor execution",
+      "sustained power or thermal performance"
+    ]
+  },
+  "mmio": {
+    "base": "0x10020000",
+    "registers": {
+      "OP_A": "0x00",
+      "OP_B": "0x04",
+      "RESULT": "0x08",
+      "CTRL_STATUS": "0x0c",
+      "OPCODE": "0x10",
+      "ACC": "0x14",
+      "RESULT_HI": "0x18",
+      "DEBUG": "0x1c",
+      "GEMM_CFG": "0x20",
+      "GEMM_BASE": "0x24",
+      "GEMM_STRIDE": "0x28",
+      "PERF_UNSUPPORTED_OPS": "0x2c",
+      "CMD_PARAM": "0x30",
+      "DESC_BASE": "0x40",
+      "DESC_HEAD": "0x44",
+      "DESC_TAIL": "0x48",
+      "DESC_STATUS": "0x4c",
+      "PERF_CYCLES": "0x50",
+      "PERF_MACS": "0x54",
+      "PERF_OPS": "0x58",
+      "PERF_ERRORS": "0x5c",
+      "SCRATCH": "0x80"
+    },
+    "scratch_bytes": 64,
+    "perf_clear_register": "PERF_ERRORS",
+    "perf_clear_write_value": "0x1"
+  },
+  "opcodes": {
+    "ADD": 0,
+    "SUB": 1,
+    "MUL_LO": 2,
+    "MAC_S16": 3,
+    "DOT4_S8": 4,
+    "MAX_U32": 5,
+    "MIN_U32": 6,
+    "DOT8_S4": 7,
+    "GEMM_S8": 8
+  },
+  "gemm_s8_limits": {
+    "m_max": 3,
+    "n_max": 3,
+    "k_max": 7,
+    "input_dtype": "int8",
+    "accumulator_dtype": "int32",
+    "storage": "64-byte MMIO scratchpad"
+  },
+  "runtime_evidence_requirements": [
+    "Runtime register constants match this manifest",
+    "BSP contract header exposes the same NPU perf offsets",
+    "Architecture documentation names each manifest perf counter",
+    "Descriptor queue registers are reserved only and must not be treated as implemented DMA submission support",
+    "DMA tensor streaming evidence must include bytes_read and bytes_written from the measured NPU path",
+    "Precision support beyond DOT4_S8, DOT8_S4, and GEMM_S8 must remain blocked until the precision matrix and runtime tests identify the measured path",
+    "Verilator GEMM smoke test checks unsupported_ops, cycles, macs, ops, and errors counters",
+    "Android HAL/NNAPI acceleration remains blocked without hello_npu_nnapi.proof.json plus VTS/CTS/SELinux evidence",
+    "Benchmark evidence must bind model hashes, transcript hashes, perf counters, DMA traces, and CPU fallback accounting"
+  ],
+  "target_2028_delta": {
+    "target_spec": "docs/spec-db/npu-2028-target.yaml",
+    "missing_for_phone_class": [
+      "160 dense INT8 peak TOPS target evidence",
+      "80 dense INT8 sustained TOPS target evidence",
+      "512 sparse INT4 peak TOPS target evidence",
+      "FP8, BF16, FP16, and INT2 execution",
+      "64 MiB local SRAM",
+      "20 TB/s local SRAM bandwidth",
+      "180 GB/s external memory bandwidth evidence",
+      "1024-deep command queue",
+      "8 concurrent isolated contexts",
+      "AIDL HAL, VTS, CTS, and SELinux evidence",
+      "MLIR/StableHLO/TFLite/ExecuTorch compiler path",
+      "power and thermal traces"
+    ]
+  }
+}

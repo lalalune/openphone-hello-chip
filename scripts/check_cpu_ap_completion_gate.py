@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 
@@ -34,8 +35,18 @@ def completion_claimed() -> bool:
 
 
 def run_generated_gate() -> int:
-    return subprocess.run(
+    env = os.environ.copy()
+    env["REQUIRE_CHIPYARD_GENERATED"] = "1"
+    generated = subprocess.run(
         [sys.executable, "scripts/check_chipyard_generator_manifest.py", "--require-generated"],
+        cwd=ROOT,
+        env=env,
+        check=False,
+    )
+    if generated.returncode != 0:
+        return generated.returncode
+    return subprocess.run(
+        [sys.executable, "scripts/check_cpu_ap_evidence.py", "--require-evidence"],
         cwd=ROOT,
         check=False,
     ).returncode
@@ -67,14 +78,23 @@ def main() -> int:
     errors: list[str] = []
     evidence_manifest = load_evidence_manifest(errors)
     if not errors:
-        missing_logs = [
-            str(spec["path"])
-            for spec in transcript_specs(evidence_manifest).values()
-            if isinstance(spec.get("path"), str) and not (ROOT / str(spec["path"])).is_file()
-        ]
+        missing_logs = []
+        next_capture = []
+        for spec in transcript_specs(evidence_manifest).values():
+            if isinstance(spec.get("path"), str) and not (ROOT / str(spec["path"])).is_file():
+                missing_logs.append(str(spec["path"]))
+                if isinstance(spec.get("capture_command"), str):
+                    next_capture.append(str(spec["capture_command"]))
         if missing_logs:
             print("  missing CPU/AP evidence logs: " + ", ".join(missing_logs))
-    print("  next: make chipyard-generated-check cpu-ap-evidence-check cpu-ap-completion-gate")
+        if next_capture:
+            print("  capture commands:")
+            for command in next_capture:
+                print(f"    {command}")
+    print(
+        "  next: python3 scripts/check_chipyard_import_preflight.py --require-checkout && "
+        "make chipyard-generated-check cpu-ap-evidence-check cpu-ap-completion-gate"
+    )
     return 0
 
 

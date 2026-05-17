@@ -388,7 +388,63 @@ def renode_status() -> Status:
     )
 
 
+def qemu_os_status() -> Status:
+    status = status_check(
+        "qemu-os-boot",
+        ["scripts/run_qemu.sh", "--check-os"],
+        "STATUS: PASS qemu.os_boot",
+        "make qemu-check-strict",
+    )
+    if status.status == BLOCK:
+        return Status(
+            "qemu-os-boot",
+            BLOCK,
+            status.evidence,
+            "build/import a Linux Image and initrd/rootfs, then run scripts/run_qemu.sh --check-os",
+            "missing_os_payload",
+        )
+    return status
+
+
+def android_sim_status() -> Status:
+    result = subprocess.run(
+        [sys.executable, "scripts/check_android_sim_boot.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    evidence = " ".join(lines)[:220] if lines else "command produced no output"
+    if result.returncode == 0:
+        return Status("android-sim", PASS, evidence, "none", "generated_artifact")
+    if result.returncode == 2:
+        return Status(
+            "android-sim",
+            BLOCK,
+            evidence,
+            "AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish",
+            "external_aosp_blocker",
+        )
+    return Status(
+        "android-sim", FAIL, evidence, "python3 scripts/check_android_sim_boot.py", "test_fail"
+    )
+
+
 def benchmark_status() -> Status:
+    npu_proof = ROOT / "benchmarks/capabilities/hello_npu_nnapi.proof.json"
+    if not npu_proof.is_file():
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "hello-NPU NNAPI capability proof is missing; fail-closed dry-run planning evidence "
+            "only until real benchmark evidence exists; host-smoke benchmark reports cannot "
+            "satisfy MVP NPU benchmark evidence",
+            "python3 benchmarks/run_benchmarks.py plan --bench tflite_hello_npu --strict-missing",
+            "scaffold_only",
+        )
+
     reports = sorted(
         (ROOT / "benchmarks/results").glob("*/report.json"),
         key=lambda path: path.stat().st_mtime,
@@ -558,7 +614,9 @@ def collect_statuses() -> list[Status]:
         ),
         formal_status(),
         qemu_status(),
+        qemu_os_status(),
         renode_status(),
+        android_sim_status(),
         command_status(
             "pd-contract",
             [sys.executable, "scripts/check_pd_preflight.py"],

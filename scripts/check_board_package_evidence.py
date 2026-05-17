@@ -36,6 +36,38 @@ REQUIRED_SOURCE_CONTRACTS = {
     "board_cross_probe",
     "board_fab_notes",
 }
+REQUIRED_SCALING_CHECKLIST_IDS = {
+    "package_pin_budget",
+    "external_lpddr_phy",
+    "cpu_scaling_power",
+    "npu_scaling_power",
+    "board_power_thermal",
+    "board_bringup",
+}
+REQUIRED_SCALING_SCOPE = {
+    "package_pin_budget",
+    "cpu_scaling_power",
+    "npu_scaling_power",
+    "external_lpddr_phy",
+    "board_power_thermal",
+    "board_bringup",
+}
+FORBIDDEN_SCALING_CLAIMS = {
+    "package_ready",
+    "board_fabrication_ready",
+    "lpddr_routing_closed",
+    "thermal_solution_validated",
+    "npu_power_validated",
+    "2028_product_ready",
+}
+REQUIRED_READINESS_MATRIX_IDS = {
+    "lpddr",
+    "power_rails",
+    "thermal",
+    "package_pins",
+    "si_pi",
+    "vendor_fab_evidence",
+}
 REQUIRED_CAPTURE_TEMPLATE_FIELDS = {
     "template",
     "status",
@@ -316,6 +348,117 @@ def validate_capture_template(manifest: dict, failures: list[str]) -> None:
             failures.append(f"{value}: {list_field} must be a non-empty string list")
 
 
+def validate_scaling_assessment(manifest: dict, failures: list[str]) -> None:
+    value = manifest.get("scaling_assessment")
+    if not isinstance(value, str) or not value:
+        failures.append("scaling_assessment: missing repo-relative checklist path")
+        return
+    validate_rel_path("scaling_assessment", value, failures)
+    path = repo_path(value)
+    if not path.is_file():
+        failures.append(f"scaling_assessment: file is missing: {value}")
+        return
+    try:
+        assessment = yaml.safe_load(path.read_text())
+    except yaml.YAMLError as exc:
+        failures.append(f"{value}: invalid YAML: {exc}")
+        return
+    if not isinstance(assessment, dict):
+        failures.append(f"{value}: assessment must be a mapping")
+        return
+    if assessment.get("schema") != "openphone.board_package_scaling_assessment.v1":
+        failures.append(f"{value}: schema must be openphone.board_package_scaling_assessment.v1")
+    if assessment.get("status") != "non_release_assessment":
+        failures.append(f"{value}: status must be non_release_assessment")
+    if assessment.get("release_use") != "prohibited":
+        failures.append(f"{value}: release_use must be prohibited")
+    if assessment.get("source_manifest") != str(MANIFEST.relative_to(ROOT)):
+        failures.append(f"{value}: source_manifest must point at {MANIFEST.relative_to(ROOT)}")
+
+    scope = set(as_string_list(assessment.get("scope")))
+    missing_scope = sorted(REQUIRED_SCALING_SCOPE - scope)
+    if missing_scope:
+        failures.append(f"{value}: missing scope entries: " + ", ".join(missing_scope))
+    forbidden_claims = set(as_string_list(assessment.get("forbidden_claims")))
+    missing_forbidden = sorted(FORBIDDEN_SCALING_CLAIMS - forbidden_claims)
+    if missing_forbidden:
+        failures.append(f"{value}: missing forbidden_claims: " + ", ".join(missing_forbidden))
+    assumptions = as_string_list(assessment.get("assumptions"))
+    if len(assumptions) < 3:
+        failures.append(
+            f"{value}: assumptions must include package, LPDDR, and CPU/NPU power caveats"
+        )
+
+    matrix = assessment.get("readiness_matrix")
+    if not isinstance(matrix, list) or not matrix:
+        failures.append(f"{value}: readiness_matrix must be a non-empty list")
+    else:
+        seen_matrix_ids: set[str] = set()
+        for row in matrix:
+            if not isinstance(row, dict):
+                failures.append(f"{value}: readiness_matrix entries must be mappings")
+                continue
+            row_id = row.get("id")
+            if not isinstance(row_id, str) or not row_id:
+                failures.append(f"{value}: readiness_matrix entry missing id")
+                continue
+            if row_id in seen_matrix_ids:
+                failures.append(f"{value}: duplicate readiness_matrix id {row_id}")
+            seen_matrix_ids.add(row_id)
+            if row.get("status") != "blocked":
+                failures.append(f"{value}.readiness_matrix.{row_id}: status must remain blocked")
+            if row.get("blocks_release_gate") != "board_fabrication_release":
+                failures.append(
+                    f"{value}.readiness_matrix.{row_id}: blocks_release_gate must be board_fabrication_release"
+                )
+            for field in ("product_implication", "package_implication", "board_implication"):
+                if not isinstance(row.get(field), str) or not row[field]:
+                    failures.append(f"{value}.readiness_matrix.{row_id}: missing {field}")
+            if len(as_string_list(row.get("required_evidence"))) < 3:
+                failures.append(
+                    f"{value}.readiness_matrix.{row_id}: required_evidence must list at least three evidence items"
+                )
+        missing_matrix_ids = sorted(REQUIRED_READINESS_MATRIX_IDS - seen_matrix_ids)
+        if missing_matrix_ids:
+            failures.append(
+                f"{value}: missing readiness_matrix ids: " + ", ".join(missing_matrix_ids)
+            )
+
+    checklist = assessment.get("checklist")
+    if not isinstance(checklist, list) or not checklist:
+        failures.append(f"{value}: checklist must be a non-empty list")
+        return
+    seen_ids: set[str] = set()
+    for item in checklist:
+        if not isinstance(item, dict):
+            failures.append(f"{value}: checklist entries must be mappings")
+            continue
+        item_id = item.get("id")
+        if not isinstance(item_id, str) or not item_id:
+            failures.append(f"{value}: checklist entry missing id")
+            continue
+        if item_id in seen_ids:
+            failures.append(f"{value}: duplicate checklist id {item_id}")
+        seen_ids.add(item_id)
+        if item.get("status") != "blocked":
+            failures.append(f"{value}.{item_id}: status must remain blocked")
+        if item.get("blocks_release_gate") != "board_fabrication_release":
+            failures.append(
+                f"{value}.{item_id}: blocks_release_gate must be board_fabrication_release"
+            )
+        for field in ("owner", "implication"):
+            if not isinstance(item.get(field), str) or not item[field]:
+                failures.append(f"{value}.{item_id}: missing {field}")
+        evidence = as_string_list(item.get("required_evidence"))
+        if len(evidence) < 3:
+            failures.append(
+                f"{value}.{item_id}: required_evidence must list at least three evidence items"
+            )
+    missing_ids = sorted(REQUIRED_SCALING_CHECKLIST_IDS - seen_ids)
+    if missing_ids:
+        failures.append(f"{value}: missing checklist ids: " + ", ".join(missing_ids))
+
+
 def validate_evidence_record_requirements(manifest: dict, failures: list[str]) -> None:
     requirements = manifest.get("evidence_record_requirements")
     if not isinstance(requirements, dict):
@@ -551,6 +694,7 @@ def validate_manifest(release: bool, release_blockers: list[str]) -> list[str]:
 
     validate_source_contracts(manifest, failures)
     validate_capture_template(manifest, failures)
+    validate_scaling_assessment(manifest, failures)
     validate_evidence_record_requirements(manifest, failures)
     validate_placeholder_blockers(manifest, failures)
 

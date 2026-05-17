@@ -31,6 +31,88 @@ def load_manifest() -> dict:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
 
+def rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def submodule_problem_details(lines: list[str]) -> dict[str, list[str]]:
+    missing: list[str] = []
+    drifted: list[str] = []
+    conflicts: list[str] = []
+    for line in lines:
+        if not line:
+            continue
+        state = line[0]
+        path = line[1:].strip().split()[1] if len(line[1:].strip().split()) >= 2 else line
+        if state == "-":
+            missing.append(path)
+        elif state == "+":
+            drifted.append(path)
+        elif state == "U":
+            conflicts.append(path)
+    return {"missing": missing, "drifted": drifted, "conflicts": conflicts}
+
+
+def validate_config_sources(
+    selected: dict,
+    checkout: Path,
+    checks: dict[str, object],
+    errors: list[str],
+    blockers: list[str],
+) -> None:
+    sources = selected.get("config_sources", [])
+    if not isinstance(sources, list) or not sources:
+        errors.append("selected_path.config_sources must list the OpenPhoneRocketConfig overlay")
+        return
+
+    source_checks: list[dict[str, object]] = []
+    for entry in sources:
+        if not isinstance(entry, dict):
+            errors.append("selected_path.config_sources entries must be objects")
+            continue
+        source = entry.get("source")
+        destination = entry.get("checkout_destination")
+        if not isinstance(source, str) or not isinstance(destination, str):
+            errors.append("config source entries must include source and checkout_destination")
+            continue
+        source_path = ROOT / source
+        destination_path = checkout / destination
+        record = {
+            "source": source,
+            "checkout_destination": destination,
+            "source_exists": source_path.is_file(),
+            "installed_in_checkout": destination_path.is_file(),
+        }
+        source_checks.append(record)
+        if not source_path.is_file():
+            errors.append(f"missing OpenPhoneRocketConfig source overlay: {source}")
+            continue
+        text = source_path.read_text(encoding="utf-8", errors="ignore")
+        if "package openphone" not in text:
+            errors.append(f"{source} must declare package openphone")
+        if "class OpenPhoneRocketConfig" not in text:
+            errors.append(f"{source} must define class OpenPhoneRocketConfig")
+        if "WithNHugeCores(1)" not in text:
+            errors.append(f"{source} must select one Rocket hart for initial Linux bring-up")
+        if checkout.is_dir() and not destination_path.is_file():
+            blockers.append(
+                "OpenPhoneRocketConfig overlay is not installed in checkout; run "
+                "scripts/bootstrap_chipyard.sh to copy "
+                f"{source} to external/chipyard/{destination}"
+            )
+        elif destination_path.is_file():
+            installed = destination_path.read_text(encoding="utf-8", errors="ignore")
+            if installed != text:
+                errors.append(
+                    "installed OpenPhoneRocketConfig overlay differs from repo source: "
+                    f"external/chipyard/{destination}"
+                )
+    checks["config_sources"] = source_checks
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -70,6 +152,7 @@ def main() -> int:
         },
         "selected_path": {
             "config_name": selected.get("config_name"),
+            "package_name": selected.get("package_name"),
             "core": selected.get("core"),
             "isa": selected.get("isa"),
             "harts": selected.get("harts"),
@@ -81,6 +164,8 @@ def main() -> int:
         errors.append("git is not available")
     else:
         checks["git_available"] = True
+
+    validate_config_sources(selected, checkout, checks, errors, blockers)
 
     if not args.skip_remote and not errors:
         remote = run(
@@ -108,20 +193,29 @@ def main() -> int:
         elif head.stdout.strip() != chipyard["commit"]:
             errors.append(f"checkout HEAD is {head.stdout.strip()}, expected {chipyard['commit']}")
 
-        submodules = run(["git", "submodule", "status", "--recursive"], cwd=checkout)
+        required_submodules = ("generators/rocket-chip", "software/firemarshal")
+        submodules = run(["git", "submodule", "status", *required_submodules], cwd=checkout)
         submodule_lines = [line for line in submodules.stdout.splitlines() if line.strip()]
-        checks["submodule_count"] = len(submodule_lines)
+        checks["required_submodules"] = list(required_submodules)
+        checks["required_submodule_count"] = len(submodule_lines)
+        checks["required_submodule_problems"] = submodule_problem_details(submodule_lines)
         if submodules.returncode != 0:
-            errors.append("could not read Chipyard recursive submodule status")
+            errors.append("could not read required Chipyard recursive submodule status")
         elif not submodule_lines:
-            errors.append("Chipyard checkout has no recursive submodule status output")
+            errors.append("Chipyard checkout has no required recursive submodule status output")
         elif any(line.startswith("-") or line.startswith("+") for line in submodule_lines):
-            errors.append("Chipyard recursive submodules are not initialized at recorded SHAs")
+            details = submodule_problem_details(submodule_lines)
+            for path in details["missing"]:
+                errors.append(f"required Chipyard submodule is not initialized: {path}")
+            for path in details["drifted"]:
+                errors.append(f"required Chipyard submodule is not at recorded SHA: {path}")
+            for path in details["conflicts"]:
+                errors.append(f"required Chipyard submodule has merge conflict: {path}")
 
         for relative in ("generators/rocket-chip", "sims/verilator", "software/firemarshal"):
-            path = checkout / relative
-            checks[f"exists:{relative}"] = path.exists()
-            if not path.exists():
+            checkout_path = checkout / relative
+            checks[f"exists:{relative}"] = checkout_path.exists()
+            if not checkout_path.exists():
                 errors.append(f"Chipyard checkout lacks expected path: {relative}")
 
     evidence["status"] = "fail" if errors else "blocked" if blockers else "pass"
@@ -134,6 +228,10 @@ def main() -> int:
         print("STATUS: FAIL chipyard.import_preflight - pinned checkout validation failed")
         for error in errors:
             print(f"  - {error}")
+        if blockers:
+            print("BLOCKERS:")
+            for blocker in blockers:
+                print(f"  - {blocker}")
         print(f"REPORT: {report_path.relative_to(ROOT)}")
         return 1
 

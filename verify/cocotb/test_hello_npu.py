@@ -47,6 +47,18 @@ async def poll_done(dut, cycles=32):
     raise AssertionError("timeout waiting for NPU operation")
 
 
+async def write_scratch_word(dut, word, value):
+    await write_reg(dut, 0x20 + word, value)
+
+
+async def read_scratch_s32(dut, byte_offset):
+    assert byte_offset % 4 == 0
+    value = await read_reg(dut, 0x20 + byte_offset // 4)
+    if value & 0x8000_0000:
+        return value - 0x1_0000_0000
+    return value
+
+
 async def run_scalar(dut, opcode, op_a, op_b, acc=0):
     await write_reg(dut, 3, 2)
     await write_reg(dut, 0, op_a)
@@ -69,6 +81,13 @@ def pack_s4(values):
     word = 0
     for index, value in enumerate(values):
         word |= (value & 0xF) << (4 * index)
+    return word
+
+
+def pack_bytes(values):
+    word = 0
+    for index, value in enumerate(values):
+        word |= (value & 0xFF) << (8 * index)
     return word
 
 
@@ -140,6 +159,7 @@ async def npu_rejects_invalid_opcode_and_clears_error_irq(dut):
     await write_reg(dut, 3, 1)
     assert await poll_done(dut) == 0x6
     assert int(dut.irq.value) == 1
+    assert await read_reg(dut, 0x0B) == 1
     assert await read_reg(dut, 0x17) == 1
 
     await write_reg(dut, 3, 2)
@@ -187,5 +207,43 @@ async def npu_gemm_invalid_config_reports_error_without_touching_scratch(dut):
     await write_reg(dut, 0x03, 1)
 
     assert await poll_done(dut) == 0x6
+    assert await read_reg(dut, 0x0B) == 1
     assert await read_reg(dut, 0x17) == 1
     assert await read_reg(dut, 0x20) == 0xA5A5_5A5A
+
+    await write_reg(dut, 0x17, 1)
+    assert await read_reg(dut, 0x0B) == 0
+    assert await read_reg(dut, 0x17) == 0
+
+
+@cocotb.test()
+async def npu_gemm_s8_2x2x3_writes_expected_scratch_and_perf(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    # A = [[1, -2, 3], [4, 5, -6]]
+    # B = [[7, -8], [9, 10], [-11, 12]]
+    await write_scratch_word(dut, 0, pack_bytes([1, -2, 3, 4]))
+    await write_scratch_word(dut, 1, pack_bytes([5, -6, 7, -8]))
+    await write_scratch_word(dut, 2, pack_bytes([9, 10, -11, 12]))
+    await write_scratch_word(dut, 3, 0)
+    await write_scratch_word(dut, 4, 0)
+    await write_scratch_word(dut, 5, 0)
+    await write_scratch_word(dut, 6, 0)
+
+    await write_reg(dut, 0x17, 1)
+    await write_reg(dut, 0x08, 2 | (2 << 8) | (3 << 16))
+    await write_reg(dut, 0x09, 0 | (6 << 8) | (12 << 16))
+    await write_reg(dut, 0x0A, 3 | (2 << 8) | (8 << 16))
+    await write_reg(dut, 0x04, 8)
+    await write_reg(dut, 0x03, 1)
+
+    assert await poll_done(dut, cycles=64) == 0x2
+    assert await read_scratch_s32(dut, 12) == -44
+    assert await read_scratch_s32(dut, 16) == 8
+    assert await read_scratch_s32(dut, 20) == 139
+    assert await read_scratch_s32(dut, 24) == -54
+    assert await read_reg(dut, 0x14) == 12
+    assert await read_reg(dut, 0x15) == 12
+    assert await read_reg(dut, 0x16) == 1
+    assert await read_reg(dut, 0x17) == 0

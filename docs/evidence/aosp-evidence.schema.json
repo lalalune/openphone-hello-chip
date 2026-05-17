@@ -45,6 +45,7 @@
             "pattern": "^docs/evidence/android/[^/]+\\.log$"
           },
           "claim": { "type": "string", "minLength": 1 },
+          "claim_boundary": { "type": "string", "minLength": 1 },
           "capture_command": { "type": "string", "minLength": 1 },
           "validation_command": {
             "type": "string",

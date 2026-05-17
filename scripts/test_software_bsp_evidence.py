@@ -36,6 +36,14 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         self.assertNotIn("full CTS pass", claims)
         self.assertNotIn("full VTS pass", claims)
 
+        by_path = {item["path"]: item for item in manifest["evidence"]}
+        for path in check_software_bsp.AOSP_REFERENCE_ONLY_PATHS:
+            self.assertEqual(
+                by_path[path]["claim_boundary"],
+                check_software_bsp.AOSP_REFERENCE_ONLY_BOUNDARY,
+            )
+            self.assertIn("reference", by_path[path]["claim"].lower())
+
     def test_scaffold_only_passes_while_listing_missing_external_logs(self) -> None:
         result = subprocess.run(
             [sys.executable, "scripts/check_software_bsp.py", "all", "--scaffold-only"],
@@ -144,6 +152,46 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         self.assertIn("reports non-PASS evidence status: FAIL", joined)
         self.assertIn("contains forbidden placeholder/failure markers", joined)
         self.assertIn("missing required transcript markers", joined)
+
+    def test_reference_only_android_logs_require_explicit_boundary_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            evidence = temp_root / "docs/evidence/android/cuttlefish_riscv64_boot.log"
+            evidence.parent.mkdir(parents=True)
+            evidence.write_text(
+                "\n".join(
+                    [
+                        "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
+                        "openphone-evidence: command=launch_cvd",
+                        "openphone-evidence: started_utc=2026-05-17T00:00:00Z",
+                        "launch_cvd",
+                        "adb shell",
+                        "ro.product.cpu.abi=riscv64",
+                        "sys.boot_completed=1",
+                        "openphone-evidence: ended_utc=2026-05-17T00:00:01Z",
+                        "openphone-evidence: status=PASS",
+                    ]
+                )
+            )
+            item = {
+                "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
+                "claim_boundary": check_software_bsp.AOSP_REFERENCE_ONLY_BOUNDARY,
+                "min_bytes": 80,
+                "capture_command": "fake",
+                "required_strings": [
+                    "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
+                    "launch_cvd",
+                    "adb shell",
+                    "ro.product.cpu.abi=riscv64",
+                    "sys.boot_completed=1",
+                    "openphone-evidence: status=PASS",
+                ],
+            }
+
+            with mock.patch.object(check_software_bsp, "ROOT", temp_root):
+                problems = check_software_bsp.validate_evidence_file(item)
+
+        self.assertIn("missing reference-only claim boundary marker", "\n".join(problems))
 
 
 if __name__ == "__main__":

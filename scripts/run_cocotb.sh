@@ -54,12 +54,17 @@ COCOTB_TOP="${COCOTB_TOPLEVEL:-hello_chip_top}"
 COCOTB_MOD="${COCOTB_MODULE:-test_hello_chip}"
 COCOTB_BUILD="$REPO_ROOT/build/cocotb/${COCOTB_TOP}_${COCOTB_MOD}"
 COCOTB_LOCK="$REPO_ROOT/build/cocotb/.${COCOTB_TOP}_${COCOTB_MOD}.lock"
+COCOTB_RESULTS_LOCK="$REPO_ROOT/build/cocotb/.results.lock"
+COCOTB_ARCHIVE_NAME="${COCOTB_TOP}_${COCOTB_MOD}"
 mkdir -p "$REPO_ROOT/build/cocotb"
 
 while ! mkdir "$COCOTB_LOCK" 2>/dev/null; do
     sleep 1
 done
-trap 'rmdir "$COCOTB_LOCK" 2>/dev/null || true' EXIT INT TERM
+while ! mkdir "$COCOTB_RESULTS_LOCK" 2>/dev/null; do
+    sleep 1
+done
+trap 'rmdir "$COCOTB_RESULTS_LOCK" "$COCOTB_LOCK" 2>/dev/null || true' EXIT INT TERM
 
 rm -rf "$COCOTB_BUILD" verify/cocotb/results.xml
 
@@ -78,4 +83,7 @@ else
     exit 1
 fi
 
-"$PYTHON_BIN" scripts/check_cocotb_results.py
+"$PYTHON_BIN" scripts/check_cocotb_results.py \
+    --archive-name "$COCOTB_ARCHIVE_NAME" \
+    --top "$COCOTB_TOP" \
+    --module "$COCOTB_MOD"

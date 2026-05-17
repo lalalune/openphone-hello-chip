@@ -95,6 +95,15 @@ def is_json_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def dotted_get(data: dict[str, Any], path: str) -> Any:
+    value: Any = data
+    for part in path.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
+
+
 def load_config(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
         config = json.load(f)
@@ -168,6 +177,17 @@ def validate_config(config: dict[str, Any], path: Path) -> None:
                     if not isinstance(model_path, str) or not model_path:
                         raise ValueError(
                             f"{location} capability proof.required_model_artifacts entries must be non-empty strings"
+                        )
+                if proof.get("required_json_fields") and not isinstance(
+                    proof["required_json_fields"], list
+                ):
+                    raise ValueError(
+                        f"{location} capability proof.required_json_fields must be a list"
+                    )
+                for field_path in proof.get("required_json_fields", []):
+                    if not isinstance(field_path, str) or not field_path:
+                        raise ValueError(
+                            f"{location} capability proof.required_json_fields entries must be non-empty strings"
                         )
                 if proof.get("max_cpu_fallback_percent") is not None and not is_json_number(
                     proof["max_cpu_fallback_percent"]
@@ -481,6 +501,79 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
             errors.append(
                 f"nnapi.unsupported_op_count must be <= {max_unsupported}; got {unsupported_ops}"
             )
+        for field in ("delegated_node_count", "total_node_count"):
+            value = nnapi.get(field)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                errors.append(f"nnapi.{field} must be a non-negative integer")
+        delegated = nnapi.get("delegated_node_count")
+        total = nnapi.get("total_node_count")
+        if isinstance(delegated, int) and isinstance(total, int):
+            if total <= 0:
+                errors.append("nnapi.total_node_count must be greater than zero")
+            elif delegated > total:
+                errors.append("nnapi.delegated_node_count must be <= nnapi.total_node_count")
+
+    for field_path in proof.get("required_json_fields", []):
+        value = dotted_get(data, field_path)
+        if value in (None, "", [], {}):
+            errors.append(f"{field_path} must be present and non-empty")
+
+    if expected_schema == "openphone.hello_npu_nnapi_capability.v1":
+        claim_level = dotted_get(data, "capability.claim_level")
+        if claim_level not in {"L4_DEV_BOARD", "L5_PROTOTYPE_SILICON", "L6_COMPLETE_PHONE"}:
+            errors.append(
+                "capability.claim_level must be L4_DEV_BOARD, L5_PROTOTYPE_SILICON, or L6_COMPLETE_PHONE"
+            )
+
+        precision = dotted_get(data, "capability.precision")
+        if precision not in {"int8", "int4", "int2", "fp8", "bf16", "fp16"}:
+            errors.append("capability.precision must identify a real accelerator precision")
+
+        dma_path = dotted_get(data, "dma.path")
+        if dma_path not in {"hardware_dma", "coherent_dma"}:
+            errors.append("dma.path must be hardware_dma or coherent_dma")
+        for field in ("dma.bytes_read", "dma.bytes_written"):
+            value = dotted_get(data, field)
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                errors.append(f"{field} must be a positive integer")
+
+        dataflow_name = dotted_get(data, "dataflow.name")
+        if not isinstance(dataflow_name, str) or not dataflow_name:
+            errors.append("dataflow.name must be a non-empty string")
+
+        for field in ("measurements.macs_per_inference", "measurements.npu_cycles"):
+            value = dotted_get(data, field)
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                errors.append(f"{field} must be positive integer evidence")
+        for field in ("measurements.npu_hz", "measurements.observed_tops"):
+            value = dotted_get(data, field)
+            if not is_json_number(value) or float(value) <= 0.0:
+                errors.append(f"{field} must be positive numeric evidence")
+
+        macs = dotted_get(data, "measurements.macs_per_inference")
+        cycles = dotted_get(data, "measurements.npu_cycles")
+        hz = dotted_get(data, "measurements.npu_hz")
+        tops = dotted_get(data, "measurements.observed_tops")
+        if (
+            isinstance(macs, int)
+            and not isinstance(macs, bool)
+            and isinstance(cycles, int)
+            and not isinstance(cycles, bool)
+            and is_json_number(hz)
+            and is_json_number(tops)
+            and cycles > 0
+            and hz > 0
+        ):
+            max_tops_from_counters = (macs * 2.0) / (cycles / float(hz)) / 1e12
+            if tops > max_tops_from_counters * 1.05:
+                errors.append("measurements.observed_tops exceeds MAC/cycle/hz-derived upper bound")
+        formula = dotted_get(data, "measurements.tops_formula")
+        if (
+            not isinstance(formula, str)
+            or "mac" not in formula.lower()
+            or "cycle" not in formula.lower()
+        ):
+            errors.append("measurements.tops_formula must state the MAC/cycle based calculation")
 
     model_artifacts = data.get("model_artifacts")
     required_models = proof.get("required_model_artifacts", [])
@@ -538,7 +631,7 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
         for marker in markers:
             if marker not in text:
                 errors.append(
-                    f"transcript {transcript_path.relative_to(root)} must contain {marker!r}"
+                    f"transcript {marker_transcript_path.relative_to(root)} must contain {marker!r}"
                 )
 
     if errors:
@@ -598,6 +691,33 @@ def blocked_assets(statuses: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def parse_metrics(bench: dict[str, Any], output: str) -> tuple[str | None, dict[str, Any]]:
     name = bench["name"]
+    if name == "npu_arch_sim_open_2028":
+        try:
+            start = output.find("{")
+            data = json.loads(output[start:] if start >= 0 else output)
+        except json.JSONDecodeError:
+            return None, {}
+        if data.get("schema") != "openphone.npu_scale_sim.v1":
+            return None, {}
+        summary = data.get("summary", {})
+        config = data.get("config", {})
+        kernels = data.get("kernels", [])
+        if not isinstance(summary, dict) or not isinstance(config, dict) or not kernels:
+            return None, {}
+        return "openphone_npu_scale_sim_v1", {
+            "kernel_count": int(summary.get("kernel_count", 0)),
+            "dense_int8_peak_tops": float(config.get("dense_int8_peak_tops", 0.0)),
+            "int8_macs_per_cycle": int(config.get("int8_macs_per_cycle", 0)),
+            "dma_queue_depth": int(config.get("dma_queue_depth", 0)),
+            "scratchpad_kib": int(config.get("scratchpad_kib", 0)),
+            "total_macs": int(summary.get("total_macs", 0)),
+            "total_bytes_read": int(summary.get("total_bytes_read", 0)),
+            "total_bytes_written": int(summary.get("total_bytes_written", 0)),
+            "min_observed_tops": float(summary.get("min_observed_tops", 0.0)),
+            "max_observed_tops": float(summary.get("max_observed_tops", 0.0)),
+            "min_utilization_percent": float(summary.get("min_utilization_percent", 0.0)),
+        }
+
     if name == "coremark":
         required = re.search(r"Iterations/Sec\s*:\s*([0-9]+(?:\.[0-9]+)?)", output)
         if not required:
@@ -782,6 +902,20 @@ def validate_report(report: dict[str, Any]) -> list[str]:
                     errors.append(
                         f"{prefix} {report.get('claim_level')} passed with non-release dependency {dep.get('name')}"
                     )
+            if result.get("name") == "tflite_hello_npu":
+                metrics = result.get("metrics")
+                if not isinstance(metrics, dict):
+                    errors.append(f"{prefix} tflite_hello_npu passed without parsed metrics")
+                else:
+                    if metrics.get("unsupported_op_count") != 0:
+                        errors.append(f"{prefix} tflite_hello_npu must report zero unsupported ops")
+                    if metrics.get("cpu_fallback_nodes") != 0:
+                        errors.append(f"{prefix} tflite_hello_npu must report zero CPU fallback")
+                    delegated_nodes = metrics.get("nnapi_delegated_nodes")
+                    if not isinstance(delegated_nodes, int) or delegated_nodes <= 0:
+                        errors.append(
+                            f"{prefix} tflite_hello_npu must report delegated NNAPI nodes"
+                        )
         if status == "blocked" and not result.get("blocked_assets"):
             errors.append(f"{prefix} blocked without blocked_assets")
         for asset_index, asset in enumerate(result.get("blocked_assets", [])):

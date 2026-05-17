@@ -32,19 +32,26 @@ This is a tiny RV execution path for hello-chip proof, not a Linux-capable appli
 
 The focused simulation wrapper `verify/cocotb/hello_tiny_cpu_contract_tb.sv` resets the CPU at `0x8000_0000`, preloads the DRAM model through a loader AXI-Lite path, then releases the CPU. The cocotb test `verify/cocotb/test_tiny_cpu_execution.py` proves fetch, execute, DRAM store, interrupt-controller MMIO write, halt, and external IRQ reflection.
 
-## Linux-capable target
+## Linux-capable bring-up target
 
 | Contract item | Target |
 | --- | --- |
 | Generator | Chipyard `1.13.0` commit `69eba860a352343e4ac6b6df0f3638a79a86ec78` |
 | Config | `OpenPhoneRocketConfig` |
-| Core | Single Rocket application hart for first integration |
+| Core | Single Rocket application hart for first integration only |
 | ISA | RV64GC application hart, plus platform-defined management hart if needed |
 | Reset | `reset_pc` points at boot ROM or firmware entry |
 | Interrupts | Timer, software, and external interrupt inputs compatible with OpenSBI/Linux expectations |
 | Memory access | AXI/TileLink-class manager path, represented here by the 32-bit AXI-Lite scaffold |
 | Coherency | Not modeled in the current scaffold |
 | MMU/cache | Not modeled in the current scaffold |
+
+This target is a Linux smoke and software bring-up milestone. A single Rocket
+RV64GC hart, even when generated correctly, is not a 2028 phone-class
+application processor claim. Phone-class AP work needs a separate selected CPU
+topology, cache hierarchy, coherency plan, MMU/TLB validation, sustained
+benchmark and power evidence, Android userspace evidence, and eventual silicon
+evidence.
 
 The Linux-capable CPU/AP requirements gate is
 `docs/arch/linux-capable-cpu-contract.md`. The generator selection gate is

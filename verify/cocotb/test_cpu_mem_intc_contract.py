@@ -51,6 +51,52 @@ async def axil_write32(dut, addr, data, strobe=0xF):
     return resp
 
 
+async def wait_write_response(dut, timeout_cycles=32):
+    for _ in range(timeout_cycles):
+        await Timer(1, units="ns")
+        if int(dut.cpu_bvalid.value):
+            resp = int(dut.cpu_bresp.value)
+            await RisingEdge(dut.clk)
+            return resp
+        await RisingEdge(dut.clk)
+    raise AssertionError("timeout waiting for AXI-Lite write response")
+
+
+async def axil_write32_split(dut, addr, data, *, data_first=False, delay_cycles=3, strobe=0xF):
+    dut.cpu_bready.value = 1
+    dut.cpu_awaddr.value = addr
+    dut.cpu_wdata.value = data
+    dut.cpu_wstrb.value = strobe
+
+    first_valid = dut.cpu_wvalid if data_first else dut.cpu_awvalid
+    first_ready = dut.cpu_wready if data_first else dut.cpu_awready
+    second_valid = dut.cpu_awvalid if data_first else dut.cpu_wvalid
+    second_ready = dut.cpu_awready if data_first else dut.cpu_wready
+
+    first_valid.value = 1
+    while True:
+        await Timer(1, units="ns")
+        if int(first_ready.value):
+            break
+        await RisingEdge(dut.clk)
+
+    await RisingEdge(dut.clk)
+    first_valid.value = 0
+    for _ in range(delay_cycles):
+        await RisingEdge(dut.clk)
+
+    second_valid.value = 1
+    while True:
+        await Timer(1, units="ns")
+        if int(second_ready.value):
+            break
+        await RisingEdge(dut.clk)
+
+    await RisingEdge(dut.clk)
+    second_valid.value = 0
+    return await wait_write_response(dut)
+
+
 async def axil_read32(dut, addr):
     dut.cpu_araddr.value = addr
     dut.cpu_arvalid.value = 1
@@ -95,6 +141,65 @@ async def dram_axil_boundary_round_trips(dut):
     data, resp = await axil_read32(dut, 0x4000_0000)
     assert resp == 3
     assert data == 0xDEAD_BEEF
+
+
+@cocotb.test()
+async def dram_aperture_outside_sram_model_returns_slverr(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert await axil_write32(dut, 0x8000_0000, 0xA5A5_5A5A) == 0
+    data, resp = await axil_read32(dut, 0x8000_0000)
+    assert resp == 0
+    assert data == 0xA5A5_5A5A
+
+    # Inside the software-visible DRAM aperture, but outside the 4 KiB SRAM model.
+    assert await axil_write32(dut, 0x8000_4000, 0x1122_3344) == 2
+    data, resp = await axil_read32(dut, 0x8000_4000)
+    assert resp == 2
+    assert data == 0xDEAD_BEEF
+
+    # Unaligned DRAM-local accesses are also target errors, not decode errors.
+    assert await axil_write32(dut, 0x8000_0002, 0x5566_7788) == 2
+    data, resp = await axil_read32(dut, 0x8000_0002)
+    assert resp == 2
+    assert data == 0xDEAD_BEEF
+
+
+@cocotb.test()
+async def axil_split_write_channels_complete_for_linux_master(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert await axil_write32_split(dut, 0x8000_0020, 0x1357_9BDF, delay_cycles=4) == 0
+    data, resp = await axil_read32(dut, 0x8000_0020)
+    assert resp == 0
+    assert data == 0x1357_9BDF
+
+    assert (
+        await axil_write32_split(
+            dut,
+            0x0C00_0008,
+            0b0101,
+            data_first=True,
+            delay_cycles=5,
+        )
+        == 0
+    )
+    data, resp = await axil_read32(dut, 0x0C00_0008)
+    assert resp == 0
+    assert data & 0b0101 == 0b0101
+
+    assert (
+        await axil_write32_split(
+            dut,
+            0x4000_0000,
+            0xFFFF_0000,
+            data_first=True,
+            delay_cycles=2,
+        )
+        == 3
+    )
 
 
 @cocotb.test()

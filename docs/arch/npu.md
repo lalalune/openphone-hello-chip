@@ -4,6 +4,12 @@ The hello NPU is a small synthesizable datapath behind a single-cycle MMIO
 control interface. Software programs operands, selects an opcode, starts the
 command, then polls `CTRL_STATUS.done` or waits for `irq_npu`.
 
+This block is not a phone-class accelerator. It has no DMA-fed command queue,
+IOMMU, cache coherency, tensor compiler backend, Android NNAPI delegate,
+production SRAM, or sustained TOPS/power evidence. It may be cited only as
+L0 RTL/unit evidence unless a higher-level report supplies the proof artifacts
+listed in `docs/benchmarks/capabilities/README.md`.
+
 ```text
 write OP_A
 write OP_B
@@ -89,7 +95,38 @@ completion interrupt
 performance counters
 ```
 
-Current integration is still an MMIO-visible datapath model. The DMA block
-tracks aligned 32-bit beat issue, byte completion, last source/destination
-addresses, and final write strobe, but it does not yet drive a real memory
-master or feed an NPU scratchpad/command queue.
+Current integration is still an MMIO-visible datapath model. The descriptor
+registers are reserved ABI placeholders only; there is no implemented valid /
+ready descriptor ring, queue-depth enforcement, timeout path, or host runtime
+submission contract. The DMA block tracks aligned 32-bit beat issue, byte
+completion, last source/destination addresses, and final write strobe, but it
+does not yet drive a real memory master or feed an NPU scratchpad/command
+queue.
+
+## Evidence gates
+
+Before any `hello-npu` benchmark is treated as accelerator evidence, the report
+must include:
+
+- exact model SHA-256 and Android/Linux target identity,
+- NNAPI accelerator query showing `hello-npu`,
+- total/delegated NNAPI node count, zero CPU fallback, and zero unsupported ops,
+- precision actually used by the delegate,
+- dataflow name and description from the measured path,
+- DMA path plus bytes read and written by the NPU workload,
+- descriptor queue depth, head/tail completion evidence, and timeout/error
+  behavior for queued commands,
+- MACs per inference, NPU cycles, NPU clock, DMA byte counters, operation/error
+  counters, observed TOPS, and the TOPS formula,
+- Android HAL service, SELinux fail-closed policy, VTS result, and CTS result
+  when any Android accelerator claim is made,
+- transcript hashes for adb, NNAPI query, benchmark output, and DMA trace.
+
+TOPS is a derived review field, not proof by itself:
+
+```text
+observed_tops <= macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12
+```
+
+The current RTL cannot satisfy those gates because its GEMM input/output path is
+the 64-byte MMIO scratchpad, not a hardware DMA tensor path.

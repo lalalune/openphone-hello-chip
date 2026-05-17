@@ -246,6 +246,41 @@ async def reset_unmapped_and_clear_edges(dut):
 
 
 @cocotb.test()
+async def clint_msip_mtimecmp_and_address_decode(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert int(dut.msip_o.value) == 0
+    assert int(dut.mtip_o.value) == 0
+    assert await read32(dut, 0x0200_0000) == 0
+
+    await write32(dut, 0x0200_0000, 1)
+    assert await read32(dut, 0x0200_0000) == 1
+    assert int(dut.msip_o.value) == 1
+
+    await write32(dut, 0x0200_0000, 0)
+    assert await read32(dut, 0x0200_0000) == 0
+    assert int(dut.msip_o.value) == 0
+
+    await write32(dut, 0x0200_BFF8, 0)
+    await write32(dut, 0x0200_BFFC, 0)
+    await write32(dut, 0x0200_4000, 48)
+    await write32(dut, 0x0200_4004, 0)
+    assert await read32(dut, 0x0200_4000) == 48
+    assert await read32(dut, 0x0200_4004) == 0
+
+    saw_mtip = False
+    for _ in range(80):
+        await RisingEdge(dut.clk)
+        saw_mtip = saw_mtip or int(dut.mtip_o.value) == 1
+    assert saw_mtip
+
+    await write32(dut, 0x0200_C000, 0xFFFF_FFFF)
+    assert await read32(dut, 0x0200_C000) == 0xDEAD_BEEF
+    assert await read32(dut, 0x0201_0000) == 0xDEAD_BEEF
+
+
+@cocotb.test()
 async def display_enable_gates_vsync(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     await reset(dut)

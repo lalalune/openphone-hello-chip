@@ -13,6 +13,7 @@ from cpu_ap_evidence_lib import (
     load_json,
     require,
     text_problems,
+    transcript_metadata_problems,
     transcript_specs,
 )
 
@@ -33,6 +34,7 @@ def check_scaffold(errors: list[str]) -> None:
     chipyard = manifest.get("chipyard", {})
     selected = manifest.get("selected_path", {})
     claim_policy = manifest.get("claim_policy", {})
+    phone_target = manifest.get("phone_2028_target_boundary", {})
 
     require(
         "FETCH_REQ" in cpu and "EXECUTE" in cpu,
@@ -101,6 +103,16 @@ def check_scaffold(errors: list[str]) -> None:
         errors,
     )
     require(
+        selected.get("claim_level") == "initial_linux_bringup_only",
+        "single Rocket AP path must be labeled initial Linux bring-up only",
+        errors,
+    )
+    require(
+        phone_target.get("status") == "blocked_not_selected_for_product_claims",
+        "2028 phone-class AP target boundary must remain blocked",
+        errors,
+    )
+    require(
         claim_policy.get("linux_capable_cpu_claim") is False,
         "manifest must not claim Linux boot without evidence",
         errors,
@@ -108,6 +120,16 @@ def check_scaffold(errors: list[str]) -> None:
     require(
         manifest.get("evidence_manifest") == "docs/evidence/cpu-ap-evidence-manifest.json",
         "selected manifest must point to CPU/AP evidence manifest",
+        errors,
+    )
+    require(
+        manifest.get("target_delta_manifest") == "docs/evidence/cpu-ap-2028-target-deltas.json",
+        "selected manifest must point to CPU/AP 2028 target delta manifest",
+        errors,
+    )
+    require(
+        manifest.get("roadmap_manifest") == "docs/evidence/cpu-ap-roadmap.json",
+        "selected manifest must point to CPU/AP roadmap manifest",
         errors,
     )
     require(
@@ -131,6 +153,22 @@ def check_scaffold(errors: list[str]) -> None:
         "mtimecmp",
         "external interrupt claim/complete",
         "firmware-to-kernel handoff",
+        "2028 phone-class",
+        "ISA compliance",
+        "cache hierarchy",
+        "MMU",
+        "CoreMark",
+        "STREAM",
+        "power method",
+        "Exact Linux-Capable Gate States",
+        "rv64gc_isa",
+        "s_mode_privilege",
+        "mmu_sv39_or_stronger",
+        "clint_timer_software_irq",
+        "plic_external_irq",
+        "dtb_linux_boot_contract",
+        "linux_initramfs_smoke",
+        "QEMU `virt` OS boot attempts are useful software-reference evidence only",
     ):
         require(
             token in linux_contract,
@@ -141,6 +179,9 @@ def check_scaffold(errors: list[str]) -> None:
         "No generated Chipyard/Rocket RTL",
         "OpenPhoneRocketConfig",
         "has_cpu=false",
+        "single Rocket RV64GC hart is not a 2028 phone-class AP",
+        "openphone_hello_isa_cache_mmu.log",
+        "openphone_hello_ap_benchmarks.log",
     ):
         require(
             token in blocker,
@@ -164,6 +205,7 @@ def evidence_problems() -> tuple[list[str], list[str]]:
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         problems.extend(text_problems(text, spec, rel_path, raw=False))
+        problems.extend(transcript_metadata_problems(text, rel_path))
     return missing, problems
 
 

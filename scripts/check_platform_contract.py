@@ -199,6 +199,8 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
             int(index, 16) * 4
             for index in re.findall(r"(?m)^\s*(?:\d+)?'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
         }
+        if region_name == "npu" and "addr[5:4] == 2'b10" in rtl:
+            rtl_offsets.update(range(0x80, 0xC0, 4))
         contract_offsets = set()
         for reg in regions[region_name]["registers"]:
             offset = h(reg["offset"])

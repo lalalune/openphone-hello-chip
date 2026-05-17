@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RUN_QEMU = ROOT / "scripts/run_qemu.sh"
 QEMU_ELF = ROOT / "build/qemu/hello_qemu_firmware.elf"
 QEMU_LOG = ROOT / "build/reports/qemu_smoke.log"
+QEMU_MANIFEST = ROOT / "build/reports/qemu_smoke.manifest"
+QEMU_OS_ATTEMPT_LOG = ROOT / "build/reports/qemu_os_boot_attempt.log"
 
 
 def write_executable(path: Path, text: str) -> None:
@@ -29,6 +31,19 @@ def run_check(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
     merged.update(env)
     return subprocess.run(
         [str(RUN_QEMU), "--check"],
+        cwd=ROOT,
+        env=merged,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+
+def run_os_check(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    merged = os.environ.copy()
+    merged.update(env)
+    return subprocess.run(
+        [str(RUN_QEMU), "--check-os"],
         cwd=ROOT,
         env=merged,
         text=True,
@@ -114,6 +129,31 @@ def test_fake_toolchain_and_qemu_pass() -> None:
     assert_contains(result.stdout, "STATUS: PASS qemu.run")
     assert_contains(result.stdout, "STATUS: PASS qemu.check")
     assert_contains(QEMU_LOG.read_text(errors="ignore"), "openphone hello qemu")
+    manifest = QEMU_MANIFEST.read_text(errors="ignore")
+    assert_contains(manifest, "status=PASS")
+    assert_contains(manifest, "check=qemu.run")
+    assert_contains(manifest, "evidence_kind=qemu-executable-transcript")
+    assert_contains(manifest, "banner=openphone hello qemu")
+
+
+def test_os_boot_check_blocks_without_payloads() -> None:
+    result = run_os_check({"PATH": os.environ["PATH"]})
+    if result.returncode != 2:
+        raise AssertionError(
+            f"expected OS boot preflight to block without payloads, got {result.returncode}\n{result.stdout}"
+        )
+    assert_contains(result.stdout, "STATUS: PASS qemu.semantic")
+    assert_contains(result.stdout, "STATUS: BLOCKED qemu.os_boot")
+    assert_contains(result.stdout, "Linux kernel Image")
+    assert_contains(result.stdout, "initrd/rootfs image")
+    assert_contains(result.stdout, "qemu_os_boot_attempt.log")
+    attempt = (
+        QEMU_OS_ATTEMPT_LOG.read_text(errors="ignore") if QEMU_OS_ATTEMPT_LOG.is_file() else ""
+    )
+    assert_contains(attempt, "status=BLOCKED")
+    assert_contains(attempt, "check=qemu.os_boot")
+    assert_contains(attempt, "kernel=missing")
+    assert_contains(attempt, "initrd=missing")
 
 
 def main() -> int:
@@ -122,9 +162,14 @@ def main() -> int:
         test_missing_toolchain_is_strict_blocked,
         test_build_failure_is_fail,
         test_fake_toolchain_and_qemu_pass,
+        test_os_boot_check_blocks_without_payloads,
     ]
     saved = QEMU_ELF.read_bytes() if QEMU_ELF.is_file() else None
     saved_log = QEMU_LOG.read_bytes() if QEMU_LOG.is_file() else None
+    saved_manifest = QEMU_MANIFEST.read_bytes() if QEMU_MANIFEST.is_file() else None
+    saved_os_attempt_log = (
+        QEMU_OS_ATTEMPT_LOG.read_bytes() if QEMU_OS_ATTEMPT_LOG.is_file() else None
+    )
     try:
         for test in tests:
             test()
@@ -140,6 +185,16 @@ def main() -> int:
         else:
             QEMU_LOG.parent.mkdir(parents=True, exist_ok=True)
             QEMU_LOG.write_bytes(saved_log)
+        if saved_manifest is None:
+            QEMU_MANIFEST.unlink(missing_ok=True)
+        else:
+            QEMU_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+            QEMU_MANIFEST.write_bytes(saved_manifest)
+        if saved_os_attempt_log is None:
+            QEMU_OS_ATTEMPT_LOG.unlink(missing_ok=True)
+        else:
+            QEMU_OS_ATTEMPT_LOG.parent.mkdir(parents=True, exist_ok=True)
+            QEMU_OS_ATTEMPT_LOG.write_bytes(saved_os_attempt_log)
     return 0
 
 

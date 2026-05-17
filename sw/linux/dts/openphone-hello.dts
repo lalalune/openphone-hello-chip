@@ -5,6 +5,10 @@
  * This is a source artifact for an external Linux tree. It exposes the MMIO
  * contract from sw/platform/hello_platform_contract.json; it does not claim
  * that an upstream kernel platform or full SoC CPU integration exists.
+ *
+ * This file is not a standalone AP boot DTB. The selected generated AP target
+ * must provide CPU, memory, timer, interrupt-controller, and enabled UART
+ * console nodes before OpenSBI or Linux boot evidence can pass.
  */
 
 /dts-v1/;

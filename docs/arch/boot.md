@@ -40,3 +40,39 @@ U-Boot loads kernel, initramfs, and device tree
 Linux boots with serial console
 Android userspace boots on the same hardware contract
 ```
+
+For the CPU/AP workstream, this full flow is not closed by QEMU, Renode, the
+tiny CPU, or a selected single Rocket manifest. The evidence gate requires real
+generated-target transcripts for OpenSBI, Linux, trap/timer/IRQ behavior,
+ISA/cache/MMU state, and benchmark metadata before any Linux-capable AP claim is
+allowed. Android compatibility remains a separate CTS/VTS/userspace gate.
+
+## Current AP Boot Blockers
+
+The selected AP target is the pinned Chipyard `OpenPhoneRocketConfig` import
+path in `generators/chipyard/openphone-rocket-manifest.json`. It is still
+`selected_not_generated`; `build/chipyard/openphone_rocket/bootstrap-preflight.json`
+records that the checkout exists but recursive Chipyard submodules are not
+initialized at the recorded SHAs. Until that preflight passes, the generated AP
+Verilog, simulator, and boot DTS are absent.
+
+`sw/linux/dts/openphone-hello.dts` is a repo-local hello MMIO peripheral source,
+not the complete AP boot device tree. It currently compiles with `dtc`, but it
+lacks the boot-critical CPU, memory, CLINT/ACLINT timer, PLIC/interrupt
+controller, and enabled UART console nodes that OpenSBI and Linux need. Audit
+the selected generated DTS with:
+
+```sh
+python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc
+```
+
+Audit the checked-in peripheral DTS explicitly with:
+
+```sh
+python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc \
+  --path sw/linux/dts/openphone-hello.dts
+```
+
+Those audits are blockers only; they do not create boot evidence. Real
+OpenSBI/Linux progress still requires generated AP artifacts and external
+transcripts ingested through `scripts/capture_cpu_ap_evidence.py intake`.

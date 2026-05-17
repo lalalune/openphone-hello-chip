@@ -209,9 +209,7 @@ def main() -> int:
         else:
             markers = contains_forbidden_release_marker(root / str(value))
             if markers:
-                blockers.append(
-                    f"{value}: contains non-release marker(s): " + ", ".join(markers)
-                )
+                blockers.append(f"{value}: contains non-release marker(s): " + ", ".join(markers))
 
     bitstream_value = release.get("bitstream_path")
     bitstream_sha = release.get("bitstream_sha256")
@@ -222,9 +220,7 @@ def main() -> int:
     elif not (root / str(bitstream_value)).is_file():
         blockers.append(f"missing FPGA bitstream file: {bitstream_value}")
     elif markers := contains_forbidden_release_marker(root / str(bitstream_value)):
-        blockers.append(
-            f"{bitstream_value}: contains non-release marker(s): " + ", ".join(markers)
-        )
+        blockers.append(f"{bitstream_value}: contains non-release marker(s): " + ", ".join(markers))
     elif is_placeholder(bitstream_sha):
         blockers.append(
             "board/fpga/hello_demo_fpga.yaml: release_evidence.bitstream_sha256 is unassigned"

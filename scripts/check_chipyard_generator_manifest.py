@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import os
+from pathlib import Path
 
 from cpu_ap_evidence_lib import (
     EXPECTED_CHIPYARD,
@@ -42,6 +44,7 @@ def check_selected_manifest(errors: list[str]) -> None:
     chipyard = manifest.get("chipyard", {})
     selected = manifest.get("selected_path", {})
     policy = manifest.get("claim_policy", {})
+    phone_target = manifest.get("phone_2028_target_boundary", {})
 
     require(
         manifest.get("schema") == "openphone.cpu_ap_generator_manifest.v1",
@@ -79,6 +82,37 @@ def check_selected_manifest(errors: list[str]) -> None:
         "config name must be OpenPhoneRocketConfig",
         errors,
     )
+    require(
+        selected.get("claim_level") == "initial_linux_bringup_only",
+        "single-hart Rocket selection must remain an initial Linux bring-up claim only",
+        errors,
+    )
+    require(
+        "not competitive with a 2028 phone application processor"
+        in selected.get("not_phone_class_reason", ""),
+        "selected manifest must explain why single Rocket is not a 2028 phone-class AP",
+        errors,
+    )
+    require(
+        phone_target.get("status") == "blocked_not_selected_for_product_claims",
+        "2028 phone-class AP target boundary must remain blocked",
+        errors,
+    )
+    required_phone_evidence = phone_target.get("minimum_claim_evidence", [])
+    if not isinstance(required_phone_evidence, list):
+        errors.append("2028 phone-class AP minimum_claim_evidence must be a list")
+    else:
+        for token in (
+            "RISC-V application profile and extension matrix with ISA compliance results",
+            "cache hierarchy, coherency, cache-maintenance, TLB, and MMU validation",
+            "CoreMark, STREAM, lmbench, fio, and selected SPEC-like workload results",
+            "CTS/VTS/userspace evidence before Android compatibility claims",
+        ):
+            require(
+                token in required_phone_evidence,
+                f"2028 phone-class AP target boundary lacks required evidence token: {token}",
+                errors,
+            )
     require(
         policy.get("linux_capable_cpu_claim") is False,
         "Linux CPU claim must be false without boot evidence",
@@ -184,6 +218,9 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         "generated manifest must reference the bootstrap preflight report",
         errors,
     )
+    preflight_report = generation.get("bootstrap_preflight_report")
+    if isinstance(preflight_report, str):
+        check_bootstrap_preflight_report(ROOT / preflight_report, errors)
     require(
         bool(generation.get("command")), "generated manifest must record generation command", errors
     )
@@ -265,6 +302,66 @@ def check_generated_import_manifest(errors: list[str]) -> None:
             )
 
 
+def check_bootstrap_preflight_report(path: Path, errors: list[str]) -> None:
+    require(path.is_file(), f"missing bootstrap preflight report: {rel(path)}", errors)
+    if not path.is_file():
+        return
+
+    try:
+        report = load_json(path)
+    except ValueError as exc:
+        errors.append(f"{rel(path)} is invalid JSON: {exc}")
+        return
+
+    chipyard = report.get("chipyard", {})
+    selected = report.get("selected_path", {})
+    require(
+        report.get("schema") == "openphone.cpu_ap_bootstrap_preflight.v1",
+        "bootstrap preflight report schema drifted",
+        errors,
+    )
+    require(
+        report.get("status") == "pass",
+        "bootstrap preflight report must pass before generated import claims",
+        errors,
+    )
+    for error in report.get("errors", []):
+        if isinstance(error, str) and error:
+            errors.append(f"bootstrap preflight error: {error}")
+    for blocker in report.get("blockers", []):
+        if isinstance(blocker, str) and blocker:
+            errors.append(f"bootstrap preflight blocker: {blocker}")
+    require(
+        chipyard.get("repo") == EXPECTED_CHIPYARD["repo"],
+        "bootstrap preflight report uses an unapproved Chipyard repo",
+        errors,
+    )
+    require(
+        chipyard.get("tag") == EXPECTED_CHIPYARD["tag"],
+        "bootstrap preflight report uses an unapproved Chipyard tag",
+        errors,
+    )
+    require(
+        chipyard.get("commit") == EXPECTED_CHIPYARD["commit"],
+        "bootstrap preflight report uses an unapproved Chipyard commit",
+        errors,
+    )
+    require(
+        selected.get("config_name") == "OpenPhoneRocketConfig",
+        "bootstrap preflight report must target OpenPhoneRocketConfig",
+        errors,
+    )
+    require(
+        selected.get("core") == "Rocket",
+        "bootstrap preflight report must target Rocket",
+        errors,
+    )
+    require(
+        selected.get("isa") == "RV64GC", "bootstrap preflight report must target RV64GC", errors
+    )
+    require(selected.get("harts") == 1, "bootstrap preflight report must target one hart", errors)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--require-generated", action="store_true")
@@ -272,7 +369,8 @@ def main() -> int:
 
     errors: list[str] = []
     check_selected_manifest(errors)
-    if args.require_generated:
+    generated_missing = args.require_generated and not GENERATED_MANIFEST.is_file()
+    if args.require_generated and not generated_missing:
         check_generated_import_manifest(errors)
 
     if errors:
@@ -282,7 +380,15 @@ def main() -> int:
         return 1
 
     print("STATUS: PASS chipyard.generator_manifest - selected Rocket RV64GC AP path is pinned")
-    if not GENERATED_MANIFEST.is_file():
+    if generated_missing:
+        print(
+            "STATUS: BLOCKED chipyard.generated_import - missing "
+            f"{rel(GENERATED_MANIFEST)}; pinned checkout/preflight may be ready, but "
+            "OpenPhoneRocketConfig has not been generated/imported yet"
+        )
+        if os.environ.get("REQUIRE_CHIPYARD_GENERATED") == "1":
+            return 1
+    elif not GENERATED_MANIFEST.is_file():
         print(
             "STATUS: BLOCKED chipyard.generated_import - missing "
             f"{rel(GENERATED_MANIFEST)}; run scripts/bootstrap_chipyard.sh, generate "

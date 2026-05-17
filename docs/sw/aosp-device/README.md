@@ -103,6 +103,25 @@ m vendorimage
 The import helper copies only the device tree into an existing AOSP checkout.
 It does not run `repo sync`, download AOSP, or build Android.
 
+The single-command driver for this flow is:
+
+```sh
+AOSP_DIR=/path/to/aosp make android-sim-boot-check
+```
+
+That target imports the device tree, captures `lunch`, `vendorimage`, and
+`checkvintf` evidence, then validates the AOSP evidence manifest. To attempt a
+Cuttlefish boot as well:
+
+```sh
+AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish
+```
+
+`--run-cuttlefish` requires a Linux AOSP environment with Cuttlefish tools on
+`PATH`. On hosts without `launch_cvd`/`cvd`, the script writes
+`build/reports/android_sim_boot.json` with `status=blocked` instead of treating
+missing simulator support as an Android boot failure.
+
 Android compatibility remains blocked separately from AOSP build and boot.
 `sw/aosp-device/evidence_manifest.json` requires bounded CTS and VTS
 virtual-device subset transcripts before any compatibility language is allowed;
@@ -125,6 +144,11 @@ transcripts only; they do not make a boot claim unless the external log contains
 real Cuttlefish/adb output and passes `make software-bsp-evidence-check`. The
 CTS/VTS modes are bounded virtual-device subset captures, not CDD, GMS, or full
 Android compatibility evidence.
+
+The Cuttlefish boot capture defaults to `AOSP_PRODUCT=openphone_ai_soc-userdebug`
+and `AOSP_CUTTLEFISH_ARGS="--cpus=4 --memory_mb=8192 --gpu_mode=none"`.
+Override those environment variables when running a different riscv64
+Cuttlefish product or a home-screen launch.
 
 Required Android boot-evidence inputs are intentionally explicit:
 
@@ -171,9 +195,9 @@ sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset
 make software-bsp-evidence-check
 ```
 
-The Cuttlefish capture requires `ro.product.cpu.abi=riscv64` and either
-`sys.boot_completed=1` or a recorded shell-only success. It is Android
-userspace evidence only; it is not hello_soc hardware ABI proof. The CTS/VTS
+The Cuttlefish capture requires `ro.product.cpu.abi=riscv64` and
+`sys.boot_completed=1`. It is Android userspace evidence only; it is not
+hello_soc hardware ABI proof. The CTS/VTS
 captures are virtual-device subsets only and must not be described as full
 Android compatibility evidence.
 

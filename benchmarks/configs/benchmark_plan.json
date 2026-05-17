@@ -74,6 +74,22 @@
       "timeout_seconds": 600
     },
     {
+      "name": "npu_arch_sim_open_2028",
+      "suite": "OpenPhone deterministic NPU architecture simulator",
+      "version": "local/open-scale-v1",
+      "command": [
+        "python3",
+        "benchmarks/sim/run_npu_scale_sim.py",
+        "--config",
+        "open_2028_first_50tops"
+      ],
+      "requires": ["python3"],
+      "input_dataset": "deterministic GEMM/conv/attention sweep",
+      "primary_metric": "modeled dense INT8 TOPS",
+      "units": "TOPS",
+      "timeout_seconds": 60
+    },
+    {
       "name": "tflite_cpu",
       "suite": "TensorFlow Lite benchmark_model",
       "version": "upstream/local",
@@ -135,13 +151,27 @@
             "accelerator_name": "hello-npu",
             "max_cpu_fallback_percent": 0,
             "max_unsupported_op_count": 0,
+            "required_json_fields": [
+              "capability.claim_level",
+              "capability.precision",
+              "dataflow.name",
+              "dma.path",
+              "dma.bytes_read",
+              "dma.bytes_written",
+              "measurements.macs_per_inference",
+              "measurements.npu_cycles",
+              "measurements.npu_hz",
+              "measurements.observed_tops",
+              "measurements.tops_formula"
+            ],
             "required_model_artifacts": [
               "benchmarks/models/mobile_smoke.tflite"
             ],
             "required_files": [
               "adb_devices",
               "nnapi_accelerator_query",
-              "benchmark_model_nnapi"
+              "benchmark_model_nnapi",
+              "dma_trace"
             ],
             "required_transcript_markers": {
               "adb_devices": ["device"],
@@ -150,7 +180,8 @@
                 "--use_nnapi=true",
                 "--nnapi_accelerator_name=hello-npu",
                 "NNAPI"
-              ]
+              ],
+              "dma_trace": ["hello-npu", "DMA", "bytes_read", "bytes_written"]
             }
           }
         }

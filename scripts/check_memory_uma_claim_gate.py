@@ -18,9 +18,13 @@ CONTRACT_TEST = ROOT / "verify/cocotb/test_cpu_mem_intc_contract.py"
 
 REQUIRED_BLOCKED = {
     "real_dram_controller_phy",
+    "cache_hierarchy_latency",
     "uma_cache_coherency",
+    "android_shared_buffer_uma",
     "iommu_smmu_dma_isolation",
     "memory_qos_bandwidth",
+    "phone_2028_bandwidth_latency",
+    "linux_interrupt_access_map",
 }
 
 REQUIRED_EVIDENCE_BY_CLAIM = {
@@ -28,9 +32,17 @@ REQUIRED_EVIDENCE_BY_CLAIM = {
         "docs/evidence/memory/real_dram_controller_phy_report.json",
         "docs/evidence/memory/dram_training_timing_report.json",
     },
+    "cache_hierarchy_latency": {
+        "docs/evidence/memory/cache_hierarchy_report.json",
+        "docs/evidence/memory/cache_latency_counter_report.json",
+    },
     "uma_cache_coherency": {
         "docs/evidence/memory/uma_coherency_report.json",
         "docs/evidence/memory/shared_buffer_negative_sync_report.json",
+    },
+    "android_shared_buffer_uma": {
+        "docs/evidence/memory/android_dma_buf_coherency_report.json",
+        "docs/evidence/memory/android_shared_buffer_fence_report.json",
     },
     "iommu_smmu_dma_isolation": {
         "docs/evidence/memory/iommu_fault_injection_report.json",
@@ -40,27 +52,120 @@ REQUIRED_EVIDENCE_BY_CLAIM = {
         "docs/evidence/memory/memory_qos_report.json",
         "docs/evidence/memory/contended_bandwidth_latency_report.json",
     },
+    "phone_2028_bandwidth_latency": {
+        "docs/evidence/memory/phone_2028_memory_scorecard.json",
+        "docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json",
+        "docs/evidence/memory/contended_android_memory_trace.json",
+    },
+    "linux_interrupt_access_map": {
+        "docs/evidence/memory/linux_interrupt_access_map_report.json",
+        "docs/evidence/memory/clint_plic_dma_exclusion_report.json",
+    },
+}
+
+REQUIRED_ARTIFACT_SCHEMAS = {
+    "docs/evidence/memory/real_dram_controller_phy_report.json": "openphone.memory.real_dram_controller_phy.v1",
+    "docs/evidence/memory/dram_training_timing_report.json": "openphone.memory.dram_training_timing.v1",
+    "docs/evidence/memory/cache_hierarchy_report.json": "openphone.memory.cache_hierarchy.v1",
+    "docs/evidence/memory/cache_latency_counter_report.json": "openphone.memory.cache_latency_counter.v1",
+    "docs/evidence/memory/uma_coherency_report.json": "openphone.memory.uma_coherency.v1",
+    "docs/evidence/memory/shared_buffer_negative_sync_report.json": "openphone.memory.shared_buffer_negative_sync.v1",
+    "docs/evidence/memory/android_dma_buf_coherency_report.json": "openphone.memory.android_dma_buf_coherency.v1",
+    "docs/evidence/memory/android_shared_buffer_fence_report.json": "openphone.memory.android_shared_buffer_fence.v1",
+    "docs/evidence/memory/iommu_fault_injection_report.json": "openphone.memory.iommu_fault_injection.v1",
+    "docs/evidence/memory/dma_isolation_fault_visibility_report.json": "openphone.memory.dma_isolation_fault_visibility.v1",
+    "docs/evidence/memory/memory_qos_report.json": "openphone.memory.qos.v1",
+    "docs/evidence/memory/contended_bandwidth_latency_report.json": "openphone.memory.contended_bandwidth_latency.v1",
+    "docs/evidence/memory/phone_2028_memory_scorecard.json": "openphone.memory.phone_2028_scorecard.v1",
+    "docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json": "openphone.memory.lpddr_bandwidth_latency_benchmark.v1",
+    "docs/evidence/memory/contended_android_memory_trace.json": "openphone.memory.contended_android_trace.v1",
+    "docs/evidence/memory/linux_interrupt_access_map_report.json": "openphone.memory.linux_interrupt_access_map.v1",
+    "docs/evidence/memory/clint_plic_dma_exclusion_report.json": "openphone.memory.clint_plic_dma_exclusion.v1",
+}
+
+REQUIRED_TARGET_DELTAS = {
+    "dram_controller_phy": "real_dram_controller_phy",
+    "fabric_width_and_outstanding": "memory_qos_bandwidth",
+    "uma_coherency": "uma_cache_coherency",
+    "dma_isolation": "iommu_smmu_dma_isolation",
+    "qos_bandwidth_latency": "memory_qos_bandwidth",
+    "clint_plic_access_map": "linux_interrupt_access_map",
+}
+
+REQUIRED_ROADMAP_PHASES = {
+    "phase0_sram_dma_containment": "current_scaffold",
+    "phase1_capacity_and_counters": "blocked",
+    "phase2_burst_fabric_model": "blocked",
+    "phase3_cache_uma_policy": "blocked",
+    "phase4_iommu_faults": "blocked",
+    "phase5_lpddr_phone_target": "blocked",
+}
+
+REQUIRED_PHASE_TRANSITIONS = [
+    ("phase0_sram_dma_containment", "phase1_capacity_and_counters"),
+    ("phase1_capacity_and_counters", "phase2_burst_fabric_model"),
+    ("phase2_burst_fabric_model", "phase3_cache_uma_policy"),
+    ("phase3_cache_uma_policy", "phase4_iommu_faults"),
+    ("phase4_iommu_faults", "phase5_lpddr_phone_target"),
+]
+
+ROADMAP_PHASE_REQUIRED_TERMS = {
+    "phase0_sram_dma_containment": ("4 KiB", "SRAM-backed", "DMA containment"),
+    "phase1_capacity_and_counters": ("capacity", "per-master", "counters"),
+    "phase2_burst_fabric_model": ("Burst", "outstanding", "ordering"),
+    "phase3_cache_uma_policy": ("Coherent", "cache-maintenance", "shared-buffer"),
+    "phase4_iommu_faults": ("IOMMU/SMMU", "per-device", "faults"),
+    "phase5_lpddr_phone_target": ("LPDDR5X/LPDDR6", "QoS", "bandwidth/latency"),
+}
+
+TARGET_DELTA_REQUIRED_TERMS = {
+    "dram_controller_phy": ("AXI-Lite SRAM", "LPDDR", "training", "refresh"),
+    "fabric_width_and_outstanding": ("Single-beat AXI-Lite", "bursts", "outstanding", "per-master"),
+    "uma_coherency": ("No caches", "Coherent interconnect", "DMA ownership"),
+    "dma_isolation": ("address response", "IOMMU/SMMU", "fault status"),
+    "qos_bandwidth_latency": ("CPU-wins", "QoS", "bandwidth counters", "underflow"),
+    "clint_plic_access_map": ("CLINT/ACLINT", "PLIC/IMSIC", "DMA exclusion", "device-tree"),
 }
 
 REQUIRED_DOC_TOKENS = {
     MEMORY: [
         "SRAM-backed",
         "external DRAM controller and PHY",
+        "Phone-class 2028 target",
+        "LPDDR5X/LPDDR6",
+        "bandwidth and latency",
+        "cache hierarchy",
         "real integration",
         "does not implement a DRAM controller",
         "UMA coherency protocol",
         "IOMMU/SMMU translation",
         "memory QoS",
+        "Linux and Android readiness blockers",
+        "Page fault reporting",
+        "CLINT/PLIC dependencies",
         "must not be used as release evidence",
+        "make memory-uma-claim-gate",
+        "make cocotb-contract",
     ],
     INTERCONNECT: [
         "not an IOMMU",
         "SRAM-backed DRAM model",
+        "not a cache-coherent fabric",
+        "not a QoS arbiter",
+        "Production fabric gates",
+        "page fault reporting",
+        "CLINT/PLIC access map",
         "remain blocked",
     ],
     MEMORY_MAP: [
         "SRAM-backed",
+        "4 KiB",
+        "256 MiB",
         "not an IOMMU or coherency implementation",
+        "Linux access-map dependencies",
+        "CLINT/ACLINT",
+        "PLIC/IMSIC",
+        "page fault reporting",
     ],
 }
 
@@ -70,6 +175,7 @@ FORBIDDEN_POSITIVE_CLAIMS = [
     r"\b(?:IOMMU|SMMU)\s+(?:is\s+)?(?:implemented|validated|proven|enabled)\b",
     r"\bmemory\s+QoS\s+(?:is\s+)?(?:implemented|validated|proven|enabled)\b",
     r"\bcoherent\s+DMA\s+(?:is\s+)?(?:implemented|validated|proven|enabled)\b",
+    r"\bLPDDR(?:5X|6)[-\s]class\s+(?:is\s+)?(?:implemented|validated|proven|enabled)\b",
 ]
 
 
@@ -89,10 +195,33 @@ def valid_relative_path(value: object) -> bool:
     return not path.is_absolute() and ".." not in path.parts
 
 
+def duplicate_top_level_keys(path: Path) -> list[str]:
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for line in path.read_text(errors="ignore").splitlines():
+        if not line or line.startswith((" ", "#")):
+            continue
+        match = re.match(r"^([A-Za-z0-9_./-]+):", line)
+        if not match:
+            continue
+        key = match.group(1)
+        if key in seen and key not in duplicates:
+            duplicates.append(key)
+        seen.add(key)
+    return duplicates
+
+
 def check_gate(errors: list[str]) -> None:
     if not GATE.is_file():
         errors.append(f"missing {GATE.relative_to(ROOT)}")
         return
+
+    duplicates = duplicate_top_level_keys(GATE)
+    require(
+        not duplicates,
+        "memory/UMA gate has duplicate top-level keys: " + ", ".join(duplicates),
+        errors,
+    )
 
     data = yaml.safe_load(GATE.read_text())
     if not isinstance(data, dict):
@@ -136,14 +265,333 @@ def check_gate(errors: list[str]) -> None:
             errors,
         )
 
+    deltas = data.get("target_2028_phone_uma_spec_deltas")
+    require(
+        isinstance(deltas, list) and len(deltas) >= len(REQUIRED_TARGET_DELTAS),
+        "memory/UMA gate must list target_2028_phone_uma_spec_deltas",
+        errors,
+    )
+    delta_by_id = {item.get("id"): item for item in deltas or [] if isinstance(item, dict)}
+    missing_deltas = sorted(set(REQUIRED_TARGET_DELTAS) - set(delta_by_id))
+    require(
+        not missing_deltas,
+        "memory/UMA gate missing target spec deltas: " + ", ".join(missing_deltas),
+        errors,
+    )
+    for delta_id, gate_id in REQUIRED_TARGET_DELTAS.items():
+        delta = delta_by_id.get(delta_id)
+        if not isinstance(delta, dict):
+            continue
+        require(
+            delta.get("evidence_gate") == gate_id,
+            f"{delta_id} must map to evidence gate {gate_id}",
+            errors,
+        )
+        current = delta.get("current")
+        target = delta.get("target")
+        require(
+            isinstance(current, str) and bool(current),
+            f"{delta_id} missing current spec delta",
+            errors,
+        )
+        require(
+            isinstance(target, str) and bool(target),
+            f"{delta_id} missing target spec delta",
+            errors,
+        )
+        combined_delta = f"{current}\n{target}"
+        for term in TARGET_DELTA_REQUIRED_TERMS[delta_id]:
+            require(term in combined_delta, f"{delta_id} spec delta missing term: {term}", errors)
+
     non_goals = "\n".join(data.get("non_goals") or [])
     for token in (
         "Real DRAM controller",
+        "Cache hierarchy",
         "UMA cache coherency",
         "IOMMU/SMMU translation",
         "Memory QoS",
     ):
         require(token in non_goals, f"memory/UMA gate non_goals missing token: {token}", errors)
+
+    target = data.get("phone_2028_target_profile")
+    require(isinstance(target, dict), "memory/UMA gate missing phone_2028_target_profile", errors)
+    if isinstance(target, dict):
+        require(
+            target.get("target_class") == "performance_heavy_android_phone_ap",
+            "phone_2028_target_profile target_class drifted",
+            errors,
+        )
+        require(
+            target.get("claim_level_required") == "L6_COMPLETE_PHONE",
+            "phone 2028 memory claims must require L6_COMPLETE_PHONE",
+            errors,
+        )
+        external = target.get("external_memory")
+        require(
+            isinstance(external, dict), "phone_2028_target_profile missing external_memory", errors
+        )
+        if isinstance(external, dict):
+            acceptable = set(external.get("acceptable_types") or [])
+            require(
+                {"LPDDR5X", "LPDDR6"} <= acceptable, "phone target must list LPDDR5X/LPDDR6", errors
+            )
+            require(
+                isinstance(external.get("capacity_gib_min"), int)
+                and external["capacity_gib_min"] >= 12,
+                "phone target capacity must be at least 12 GiB",
+                errors,
+            )
+            require(
+                isinstance(external.get("peak_bandwidth_gbps_min"), int)
+                and external["peak_bandwidth_gbps_min"] >= 180,
+                "phone target peak bandwidth must be at least 180 GB/s",
+                errors,
+            )
+            require(
+                isinstance(external.get("sustained_bandwidth_gbps_min"), int)
+                and external["sustained_bandwidth_gbps_min"] >= 120,
+                "phone target sustained bandwidth must be at least 120 GB/s",
+                errors,
+            )
+            require(
+                isinstance(external.get("p95_random_read_latency_ns_max"), int)
+                and external["p95_random_read_latency_ns_max"] <= 120,
+                "phone target p95 random-read latency must be at most 120 ns",
+                errors,
+            )
+        cache = target.get("cache_and_sram")
+        require(isinstance(cache, dict), "phone_2028_target_profile missing cache_and_sram", errors)
+        if isinstance(cache, dict):
+            require(
+                isinstance(cache.get("shared_system_cache_mib_min"), int)
+                and cache["shared_system_cache_mib_min"] >= 32,
+                "phone target shared system cache must be at least 32 MiB",
+                errors,
+            )
+            require(
+                cache.get("cpu_cache_hierarchy_required") is True,
+                "phone target must require CPU cache hierarchy",
+                errors,
+            )
+            require(
+                cache.get("coherent_last_level_cache_required") is True,
+                "phone target must require coherent last-level cache",
+                errors,
+            )
+        clients = set(target.get("clients", {}).get("required_contenders") or [])
+        require(
+            {"CPU", "DMA", "NPU", "display", "camera_or_isp", "GPU_or_2D"} <= clients,
+            "phone target missing required memory contention clients",
+            errors,
+        )
+        protection = target.get("protection")
+        require(
+            isinstance(protection, dict), "phone_2028_target_profile missing protection", errors
+        )
+        if isinstance(protection, dict):
+            for key in (
+                "iommu_or_smmu_required",
+                "per_device_dma_domains_required",
+                "kernel_visible_faults_required",
+            ):
+                require(
+                    protection.get(key) is True, f"phone target protection missing {key}", errors
+                )
+        validation = target.get("validation")
+        require(
+            isinstance(validation, dict), "phone_2028_target_profile missing validation", errors
+        )
+        if isinstance(validation, dict):
+            for key in (
+                "requires_real_target_not_host",
+                "requires_measured_bandwidth_latency",
+                "requires_contended_workloads",
+                "requires_thermal_state_and_clocks",
+                "requires_android_shared_buffer_tests",
+                "requires_clint_plic_access_map",
+                "requires_page_fault_reporting_fields",
+            ):
+                require(
+                    validation.get(key) is True, f"phone target validation missing {key}", errors
+                )
+
+    actual = data.get("current_actual_capability")
+    require(isinstance(actual, dict), "memory/UMA gate missing current_actual_capability", errors)
+    if isinstance(actual, dict):
+        require(
+            actual.get("usable_rtl_capacity_bytes") == 4096,
+            "actual RTL capacity must stay explicit at 4096 bytes until real memory exists",
+            errors,
+        )
+        for key in (
+            "cache_hierarchy",
+            "coherency",
+            "iommu_or_smmu",
+            "coherent_dma",
+            "page_fault_reporting",
+            "memory_qos",
+            "dram_phy",
+        ):
+            require(
+                actual.get(key) == "none",
+                f"current_actual_capability must state {key}: none",
+                errors,
+            )
+        require(
+            actual.get("clint_plic_access_map") == "incomplete",
+            "current_actual_capability must state clint_plic_access_map: incomplete",
+            errors,
+        )
+        require(
+            actual.get("measured_bandwidth_gbps") is None
+            and actual.get("measured_latency_ns") is None,
+            "current scaffold must not record phone bandwidth/latency measurements",
+            errors,
+        )
+        require(
+            actual.get("phone_class_status") == "blocked",
+            "current phone-class memory status must remain blocked",
+            errors,
+        )
+
+    phases = data.get("memory_roadmap_phases")
+    require(isinstance(phases, list), "memory/UMA gate must list memory_roadmap_phases", errors)
+    phase_by_id = {item.get("id"): item for item in phases or [] if isinstance(item, dict)}
+    missing_phases = sorted(set(REQUIRED_ROADMAP_PHASES) - set(phase_by_id))
+    require(
+        not missing_phases,
+        "memory roadmap missing phases: " + ", ".join(missing_phases),
+        errors,
+    )
+    seen_phase_ids = [item.get("id") for item in phases or [] if isinstance(item, dict)]
+    require(
+        seen_phase_ids == list(REQUIRED_ROADMAP_PHASES),
+        "memory roadmap phases must stay ordered from SRAM scaffold to LPDDR phone target",
+        errors,
+    )
+    for phase_id, status in REQUIRED_ROADMAP_PHASES.items():
+        phase = phase_by_id.get(phase_id)
+        if not isinstance(phase, dict):
+            continue
+        require(phase.get("status") == status, f"{phase_id} must have status {status}", errors)
+        capability = phase.get("capability")
+        require(
+            isinstance(capability, str) and bool(capability),
+            f"{phase_id} missing capability",
+            errors,
+        )
+        capability_text = capability if isinstance(capability, str) else ""
+        gates = phase.get("measurable_gates")
+        require(
+            isinstance(gates, list) and len(gates) >= 2,
+            f"{phase_id} must list at least two measurable_gates",
+            errors,
+        )
+        gate_items = gates if isinstance(gates, list) else []
+        exit_artifacts = phase.get("exit_artifacts")
+        require(
+            isinstance(exit_artifacts, list) and bool(exit_artifacts),
+            f"{phase_id} must list exit_artifacts",
+            errors,
+        )
+        exit_artifact_items = exit_artifacts if isinstance(exit_artifacts, list) else []
+        combined_phase = (
+            capability_text
+            + "\n"
+            + "\n".join(
+                str(gate.get("pass_criteria", "")) for gate in gate_items if isinstance(gate, dict)
+            )
+        )
+        for term in ROADMAP_PHASE_REQUIRED_TERMS[phase_id]:
+            require(term in combined_phase, f"{phase_id} missing roadmap term: {term}", errors)
+        for gate in gate_items:
+            if not isinstance(gate, dict):
+                errors.append(f"{phase_id} measurable gate must be a mapping")
+                continue
+            require(
+                isinstance(gate.get("name"), str) and gate["name"],
+                f"{phase_id} gate missing name",
+                errors,
+            )
+            require(
+                isinstance(gate.get("pass_criteria"), str) and gate["pass_criteria"],
+                f"{phase_id} gate {gate.get('name', '<unnamed>')} missing pass_criteria",
+                errors,
+            )
+            if phase_id == "phase0_sram_dma_containment":
+                require(
+                    isinstance(gate.get("command"), str) and gate["command"],
+                    f"{phase_id} gate {gate.get('name', '<unnamed>')} must be command-runnable",
+                    errors,
+                )
+            else:
+                artifact = gate.get("artifact")
+                require(
+                    valid_relative_path(artifact),
+                    f"{phase_id} gate {gate.get('name', '<unnamed>')} must list relative artifact",
+                    errors,
+                )
+                if isinstance(artifact, str) and valid_relative_path(artifact):
+                    require(
+                        not (ROOT / artifact).exists(),
+                        f"{phase_id} is blocked but roadmap artifact exists: {artifact}",
+                        errors,
+                    )
+        for artifact in exit_artifact_items:
+            require(
+                valid_relative_path(artifact),
+                f"{phase_id} exit artifact must be relative: {artifact}",
+                errors,
+            )
+
+    transitions = data.get("phase_transition_rules")
+    require(
+        isinstance(transitions, list) and len(transitions) == len(REQUIRED_PHASE_TRANSITIONS),
+        "memory/UMA gate must list one phase_transition_rules entry per transition",
+        errors,
+    )
+    seen_transitions = [
+        (item.get("from"), item.get("to")) for item in transitions or [] if isinstance(item, dict)
+    ]
+    require(
+        seen_transitions == REQUIRED_PHASE_TRANSITIONS,
+        "phase_transition_rules must stay ordered and contiguous from phase0 to phase5",
+        errors,
+    )
+    for transition in transitions or []:
+        if not isinstance(transition, dict):
+            errors.append("phase transition must be a mapping")
+            continue
+        label = f"{transition.get('from', '<missing>')}->{transition.get('to', '<missing>')}"
+        require(
+            transition.get("status") == "blocked", f"{label} transition must remain blocked", errors
+        )
+        artifacts = transition.get("required_exit_artifacts")
+        checks = transition.get("required_checks")
+        require(
+            isinstance(artifacts, list) and len(artifacts) >= 2,
+            f"{label} transition must list required_exit_artifacts",
+            errors,
+        )
+        require(
+            isinstance(checks, list)
+            and len(checks) >= 2
+            and all(isinstance(check, str) and check for check in checks),
+            f"{label} transition must list required_checks",
+            errors,
+        )
+        for artifact in artifacts or []:
+            require(
+                valid_relative_path(artifact),
+                f"{label} artifact must be relative: {artifact}",
+                errors,
+            )
+            if valid_relative_path(artifact):
+                require(
+                    not (ROOT / artifact).exists(),
+                    f"{label} transition is blocked but required artifact exists: {artifact}",
+                    errors,
+                )
 
     blocked = data.get("blocked_real_claims")
     require(isinstance(blocked, list), "memory/UMA gate must list blocked_real_claims", errors)
@@ -192,9 +640,59 @@ def check_gate(errors: list[str]) -> None:
                     errors,
                 )
 
+    schemas = data.get("required_artifact_schemas")
+    require(
+        isinstance(schemas, dict), "memory/UMA gate must list required_artifact_schemas", errors
+    )
+    if isinstance(schemas, dict):
+        for artifact, schema in REQUIRED_ARTIFACT_SCHEMAS.items():
+            require(
+                schemas.get(artifact) == schema,
+                f"required_artifact_schemas missing {artifact}: {schema}",
+                errors,
+            )
+        for artifact in schemas:
+            require(
+                valid_relative_path(artifact),
+                f"required artifact schema key must be a relative repo path: {artifact}",
+                errors,
+            )
+            if valid_relative_path(artifact):
+                require(
+                    not (ROOT / artifact).exists(),
+                    f"artifact schema is for blocked evidence but file exists: {artifact}",
+                    errors,
+                )
+
     rules = "\n".join(data.get("claim_rules") or [])
-    for token in ("must not", "real DRAM", "UMA coherency", "IOMMU/SMMU", "QoS", "executable RTL"):
+    for token in (
+        "must not",
+        "real DRAM",
+        "UMA coherency",
+        "IOMMU/SMMU",
+        "QoS",
+        "executable RTL",
+        "Host benchmark",
+        "cache-maintenance ABI",
+        "CLINT/PLIC access map dependencies",
+        "page fault reporting",
+    ):
         require(token in rules, f"claim rules missing boundary token: {token}", errors)
+
+    next_commands = data.get("next_commands")
+    require(isinstance(next_commands, dict), "memory/UMA gate must list next_commands", errors)
+    if isinstance(next_commands, dict):
+        for key, command in {
+            "local_static_gate": "make memory-uma-claim-gate",
+            "rtl_elaboration": "make rtl-check",
+            "local_contract_sim": "make cocotb-contract",
+            "benchmark_parser_dry_run": "make benchmarks-dry-run",
+        }.items():
+            require(
+                next_commands.get(key) == command,
+                f"next_commands missing {key}: {command}",
+                errors,
+            )
 
 
 def check_docs(errors: list[str]) -> None:
@@ -254,6 +752,11 @@ def check_rtl_and_tests(errors: list[str]) -> None:
     require(
         "dma_non_dram_targets_fault_without_mmio_side_effects" in test,
         "cocotb contract must include DMA non-DRAM containment test",
+        errors,
+    )
+    require(
+        "dram_aperture_outside_sram_model_returns_slverr" in test,
+        "cocotb contract must include DRAM aperture capacity boundary test",
         errors,
     )
     require(

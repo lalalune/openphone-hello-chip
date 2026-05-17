@@ -4,6 +4,7 @@ status: release_blocked
 owner: product_physical_closure
 release_gate: board_fabrication_release
 capture_template: docs/manufacturing/board-package-release-evidence-template.yaml
+scaling_assessment: docs/manufacturing/board-package-2028-scaling-checklist.yaml
 evidence_record_requirements:
   linked_release_gate: board_fabrication_release
   accepted_release_statuses:

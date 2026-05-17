@@ -21,10 +21,34 @@ The proof JSON must use this schema:
   "target": "android-device-or-linux-target-name",
   "generated_by": "validation job command or CI job id",
   "accelerator_name": "hello-npu",
+  "capability": {
+    "claim_level": "L4_DEV_BOARD",
+    "precision": "int8",
+    "operator_set": ["CONV_2D", "DEPTHWISE_CONV_2D", "FULLY_CONNECTED"],
+    "contract_source": "sw/platform/hello_platform_contract.json"
+  },
   "nnapi": {
     "accelerator_name": "hello-npu",
+    "delegated_node_count": 1,
+    "total_node_count": 1,
     "cpu_fallback_percent": 0,
     "unsupported_op_count": 0
+  },
+  "dataflow": {
+    "name": "hardware-measured-dataflow-name",
+    "description": "weight_stationary/output_stationary/other measured path"
+  },
+  "dma": {
+    "path": "hardware_dma",
+    "bytes_read": 1,
+    "bytes_written": 1
+  },
+  "measurements": {
+    "macs_per_inference": 1,
+    "npu_cycles": 1,
+    "npu_hz": 1,
+    "observed_tops": 0.000000000002,
+    "tops_formula": "observed_tops = macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12"
   },
   "model_artifacts": {
     "benchmarks/models/mobile_smoke.tflite": {
@@ -34,7 +58,8 @@ The proof JSON must use this schema:
   "transcripts": {
     "adb_devices": "docs/evidence/android/hello-npu/adb-devices.log",
     "nnapi_accelerator_query": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
-    "benchmark_model_nnapi": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log"
+    "benchmark_model_nnapi": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
+    "dma_trace": "docs/evidence/android/hello-npu/dma-trace.log"
   }
 }
 ```
@@ -45,8 +70,10 @@ non-empty file. A blank marker file is not accepted by
 
 The proof must also bind to the exact checked-in model SHA-256, report the
 `hello-npu` accelerator name in both the top-level proof and `nnapi` object, and
-show zero CPU fallback plus zero unsupported ops. Missing or stale values keep
-`tflite_hello_npu` blocked.
+show zero CPU fallback plus zero unsupported ops. It must also state a real
+target claim level, precision, dataflow, DMA byte counts, MAC count, NPU cycles,
+NPU clock, observed TOPS, and the TOPS formula. Missing, stale, host-only, or
+counter-inconsistent values keep `tflite_hello_npu` blocked.
 
 The current benchmark plan also validates transcript content before treating
 the proof as available:
@@ -55,8 +82,20 @@ the proof as available:
 - `nnapi_accelerator_query` must contain `hello-npu`.
 - `benchmark_model_nnapi` must contain `--use_nnapi=true`,
   `--nnapi_accelerator_name=hello-npu`, and `NNAPI`.
+- `dma_trace` must contain `hello-npu`, `DMA`, `bytes_read`, and
+  `bytes_written`.
 
 These markers are intentionally minimal. They prove the archived logs came from
 the expected NNAPI path, but they are not a substitute for benchmark review. The
 generated report records transcript SHA-256 values so release reviewers can tie
 the proof JSON to the archived logs.
+
+`measurements.observed_tops` is capped by the proof counters:
+
+```text
+observed_tops <= macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12
+```
+
+The harness allows only small rounding slack. Do not report 2028-target TOPS
+from marketing math, simulator wall-clock time, or the current scalar
+`hello_npu` RTL.

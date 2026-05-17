@@ -63,6 +63,13 @@ Immediate work:
 - Keep `make formal` fallback evidence labeled as fallback unless `REQUIRE_SBY=1` is set, and require `REQUIRE_DEEP_FORMAL=1` before treating top-level BMC as more than routine structural coverage.
 - Decide whether week-one RTL work targets the hello debug-MMIO demonstrator or the Linux-capable scaffold; they are different prototypes.
 
+2026-05-17 05:10 PDT heartbeat update:
+
+- Ran the broad local validation stack: `make ci-local`, `make verify-all`, `make smoke`, `make qemu-check-strict`, host-capable `make benchmarks`, strict benchmark planning, and deep formal.
+- Fixed a stale top-level formal address-map predicate: `hello_soc_top` now exposes a CLINT window at `0x0200_0000`, and `verify/formal/hello_soc_top_formal.sv` now treats that window as mapped instead of expecting unmapped `32'hDEAD_BEEF`.
+- `REQUIRE_DEEP_FORMAL=1 make formal` passed after the CLINT predicate fix. This is local formal evidence only, not silicon/FPGA/OS boot evidence.
+- Remaining RTL/verification priorities are protocol-property expansion, coverage reporting, and replacement of the tiny CPU scaffold with generated CPU/AP artifacts plus boot evidence before claiming Linux-capable completion.
+
 ## Workstream B: software, boot, OS, simulation
 
 Primary gaps:

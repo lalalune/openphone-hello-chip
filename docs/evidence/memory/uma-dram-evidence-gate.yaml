@@ -4,11 +4,202 @@ scope:
   - SRAM-backed DRAM model
   - DMA containment scaffold
   - Linux-capable AXI-Lite contract wrapper
+  - Phone-class memory claim boundary
 non_goals:
   - Real DRAM controller, LPDDR/DDR PHY, training, refresh, timing, capacity, or ECC evidence.
+  - Cache hierarchy or system-level SRAM evidence.
   - UMA cache coherency, coherent DMA, snooping, or cache-maintenance ABI evidence.
   - IOMMU/SMMU translation, page-fault reporting, or kernel-visible DMA isolation evidence.
   - Memory QoS, bandwidth counters, latency guarantees, or display/NPU contention evidence.
+
+phone_2028_target_profile:
+  target_class: performance_heavy_android_phone_ap
+  claim_level_required: L6_COMPLETE_PHONE
+  external_memory:
+    acceptable_types:
+      - LPDDR5X
+      - LPDDR6
+    capacity_gib_min: 12
+    peak_bandwidth_gbps_min: 180
+    sustained_bandwidth_gbps_min: 120
+    p95_random_read_latency_ns_max: 120
+  cache_and_sram:
+    shared_system_cache_mib_min: 32
+    cpu_cache_hierarchy_required: true
+    coherent_last_level_cache_required: true
+  clients:
+    required_contenders:
+      - CPU
+      - DMA
+      - NPU
+      - display
+      - camera_or_isp
+      - GPU_or_2D
+  protection:
+    iommu_or_smmu_required: true
+    per_device_dma_domains_required: true
+    kernel_visible_faults_required: true
+  validation:
+    requires_real_target_not_host: true
+    requires_measured_bandwidth_latency: true
+    requires_contended_workloads: true
+    requires_thermal_state_and_clocks: true
+    requires_android_shared_buffer_tests: true
+    requires_clint_plic_access_map: true
+    requires_page_fault_reporting_fields: true
+
+current_actual_capability:
+  storage: 1024 32-bit words in rtl/memory/hello_axi_lite_dram.sv
+  usable_rtl_capacity_bytes: 4096
+  bus_protocol: single-beat AXI-Lite scaffold
+  supported_accesses: aligned 32-bit reads and byte-strobed writes
+  arbitration: fixed CPU-priority mux when CPU and DMA requests collide
+  measured_bandwidth_gbps: null
+  measured_latency_ns: null
+  cache_hierarchy: none
+  coherency: none
+  iommu_or_smmu: none
+  coherent_dma: none
+  page_fault_reporting: none
+  memory_qos: none
+  clint_plic_access_map: incomplete
+  dram_phy: none
+  phone_class_status: blocked
+
+memory_roadmap_phases:
+  - id: phase0_sram_dma_containment
+    status: current_scaffold
+    capability: 4 KiB SRAM-backed AXI-Lite DRAM aperture with DMA containment checks.
+    measurable_gates:
+      - name: static_claim_gate
+        command: python3 scripts/check_memory_uma_claim_gate.py
+        pass_criteria: Gate passes while real DRAM, UMA coherency, IOMMU/SMMU, and QoS claims remain blocked.
+      - name: rtl_elaboration
+        command: make rtl-check
+        pass_criteria: RTL elaborates with hello_axi_lite_dram and hello_linux_soc_contract.
+      - name: containment_sim
+        command: make cocotb-contract
+        pass_criteria: DMA non-DRAM target test and SRAM capacity-boundary test pass when cocotb is available.
+    exit_artifacts:
+      - docs/evidence/memory/uma-dram-evidence-gate.yaml
+  - id: phase1_capacity_and_counters
+    status: blocked
+    capability: Larger parameterized memory model with explicit capacity report and per-master read/write/error counters.
+    measurable_gates:
+      - name: capacity_boundary_report
+        artifact: docs/evidence/memory/capacity_boundary_report.json
+        pass_criteria: Reports implemented bytes, address aperture, in-range OKAY, and out-of-range SLVERR tests.
+      - name: per_master_counter_report
+        artifact: docs/evidence/memory/per_master_counter_report.json
+        pass_criteria: CPU and DMA read/write/error counters increment under directed contention tests.
+    exit_artifacts:
+      - docs/evidence/memory/capacity_boundary_report.json
+      - docs/evidence/memory/per_master_counter_report.json
+  - id: phase2_burst_fabric_model
+    status: blocked
+    capability: Burst-capable interconnect model with outstanding transaction limits and deterministic ordering rules.
+    measurable_gates:
+      - name: burst_ordering_report
+        artifact: docs/evidence/memory/burst_ordering_report.json
+        pass_criteria: Covers bursts, backpressure, ordering domains, and multiple outstanding CPU/DMA transactions.
+      - name: fabric_stress_report
+        artifact: docs/evidence/memory/fabric_stress_report.json
+        pass_criteria: Directed stress keeps responses attributed to the correct master with bounded starvation.
+    exit_artifacts:
+      - docs/evidence/memory/burst_ordering_report.json
+      - docs/evidence/memory/fabric_stress_report.json
+  - id: phase3_cache_uma_policy
+    status: blocked
+    capability: Coherent fabric or explicit non-coherent DMA ownership/cache-maintenance ABI.
+    measurable_gates:
+      - name: uma_coherency_report
+        artifact: docs/evidence/memory/uma_coherency_report.json
+        pass_criteria: CPU, DMA, NPU, display, and GPU/2D shared-buffer positive tests pass.
+      - name: stale_data_negative_report
+        artifact: docs/evidence/memory/shared_buffer_negative_sync_report.json
+        pass_criteria: Missing synchronization is detected or forbidden by the contract.
+    exit_artifacts:
+      - docs/evidence/memory/uma_coherency_report.json
+      - docs/evidence/memory/shared_buffer_negative_sync_report.json
+  - id: phase4_iommu_faults
+    status: blocked
+    capability: IOMMU/SMMU or explicit DMA allowlist with per-device domains and software-visible faults.
+    measurable_gates:
+      - name: iommu_fault_injection
+        artifact: docs/evidence/memory/iommu_fault_injection_report.json
+        pass_criteria: Unauthorized DMA descriptors fault and authorized buffers complete.
+      - name: fault_visibility
+        artifact: docs/evidence/memory/dma_isolation_fault_visibility_report.json
+        pass_criteria: Kernel or runtime-visible status reports master, address, access type, and reset behavior.
+    exit_artifacts:
+      - docs/evidence/memory/iommu_fault_injection_report.json
+      - docs/evidence/memory/dma_isolation_fault_visibility_report.json
+  - id: phase5_lpddr_phone_target
+    status: blocked
+    capability: LPDDR5X/LPDDR6-class phone UMA path with QoS, measured bandwidth/latency, and Android shared-buffer evidence.
+    measurable_gates:
+      - name: lpddr_bandwidth_latency
+        artifact: docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json
+        pass_criteria: Meets or explicitly downgrades phone_2028_target_profile bandwidth and p95 latency thresholds on a real target.
+      - name: contended_android_trace
+        artifact: docs/evidence/memory/contended_android_memory_trace.json
+        pass_criteria: CPU, NPU, display, camera/ISP, DMA, and GPU/2D contention run includes clocks, thermal state, and raw logs.
+      - name: phone_memory_scorecard
+        artifact: docs/evidence/memory/phone_2028_memory_scorecard.json
+        pass_criteria: Summarizes target class, pass/fail per threshold, and links all raw artifacts.
+    exit_artifacts:
+      - docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json
+      - docs/evidence/memory/contended_android_memory_trace.json
+      - docs/evidence/memory/phone_2028_memory_scorecard.json
+
+phase_transition_rules:
+  - from: phase0_sram_dma_containment
+    to: phase1_capacity_and_counters
+    status: blocked
+    required_exit_artifacts:
+      - docs/evidence/memory/capacity_boundary_report.json
+      - docs/evidence/memory/per_master_counter_report.json
+    required_checks:
+      - capacity-boundary positive and negative address tests pass.
+      - CPU and DMA read/write/error counters are present and exercised.
+      - The gate still blocks real DRAM, UMA coherency, IOMMU/SMMU, and QoS claims.
+  - from: phase1_capacity_and_counters
+    to: phase2_burst_fabric_model
+    status: blocked
+    required_exit_artifacts:
+      - docs/evidence/memory/burst_ordering_report.json
+      - docs/evidence/memory/fabric_stress_report.json
+    required_checks:
+      - Burst behavior, backpressure, and ordering domains are specified and tested.
+      - Multiple outstanding CPU and DMA transactions are attributed to the correct master.
+  - from: phase2_burst_fabric_model
+    to: phase3_cache_uma_policy
+    status: blocked
+    required_exit_artifacts:
+      - docs/evidence/memory/uma_coherency_report.json
+      - docs/evidence/memory/shared_buffer_negative_sync_report.json
+    required_checks:
+      - Shared-buffer freshness is proven for every required memory client.
+      - Missing synchronization is detected or forbidden by the contract.
+  - from: phase3_cache_uma_policy
+    to: phase4_iommu_faults
+    status: blocked
+    required_exit_artifacts:
+      - docs/evidence/memory/iommu_fault_injection_report.json
+      - docs/evidence/memory/dma_isolation_fault_visibility_report.json
+    required_checks:
+      - Authorized DMA completes and unauthorized DMA faults.
+      - Fault status is software-visible with master, address, and access type.
+  - from: phase4_iommu_faults
+    to: phase5_lpddr_phone_target
+    status: blocked
+    required_exit_artifacts:
+      - docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json
+      - docs/evidence/memory/contended_android_memory_trace.json
+      - docs/evidence/memory/phone_2028_memory_scorecard.json
+    required_checks:
+      - LPDDR-class bandwidth and latency are measured on a real target.
+      - Contended Android workload evidence includes clocks, thermal state, and raw logs.
 
 current_scaffold_evidence:
   id: sram_backed_dma_containment
@@ -26,6 +217,32 @@ current_scaffold_evidence:
       evidence_class: local_simulation_when_cocotb_available
       blocked_if_missing_tool: cocotb or Verilator/Icarus
 
+target_2028_phone_uma_spec_deltas:
+  - id: dram_controller_phy
+    current: 32-bit AXI-Lite SRAM model and separate top-level dram_mem array.
+    target: LPDDR-class controller/PHY boundary with training, refresh, timing, capacity discovery, ECC/parity policy, and power-state handling.
+    evidence_gate: real_dram_controller_phy
+  - id: fabric_width_and_outstanding
+    current: Single-beat AXI-Lite, no bursts, no IDs, and one read/write response in flight.
+    target: Burst-capable system fabric with multiple outstanding transactions, ordering domains, backpressure coverage, and per-master attribution.
+    evidence_gate: memory_qos_bandwidth
+  - id: uma_coherency
+    current: No caches, no snoops, no coherent DMA, and no cache-maintenance ABI.
+    target: Coherent interconnect or explicit non-coherent DMA ownership/sync contract for CPU, DMA, NPU, display, and GPU/2D clients.
+    evidence_gate: uma_cache_coherency
+  - id: dma_isolation
+    current: DMA containment is DRAM-model address response behavior only.
+    target: IOMMU/SMMU or explicit DMA allowlist with per-device domains, page fault reporting, software-visible fault status, reset behavior, and unauthorized-descriptor tests.
+    evidence_gate: iommu_smmu_dma_isolation
+  - id: qos_bandwidth_latency
+    current: CPU-wins fixed arbitration in the contract wrapper; no QoS registers, counters, or latency budget.
+    target: Programmable or specified QoS policy with bandwidth counters, CPU latency bounds, display underflow evidence, and NPU/display contention tests.
+    evidence_gate: memory_qos_bandwidth
+  - id: clint_plic_access_map
+    current: Interrupt-controller scaffold exists at 0x0C00_0000, but no CLINT/ACLINT window, complete PLIC/IMSIC map, or DMA exclusion evidence exists.
+    target: CLINT/ACLINT and PLIC/IMSIC access map with privilege rules, DMA exclusion, stable interrupt source IDs, device-tree bindings, and negative mutation tests.
+    evidence_gate: linux_interrupt_access_map
+
 blocked_real_claims:
   - id: real_dram_controller_phy
     status: blocked
@@ -37,6 +254,15 @@ blocked_real_claims:
       - DRAM controller and PHY boundary RTL or integrated IP configuration.
       - Timing, refresh, training, capacity, and error-policy evidence.
       - Boot-time memory discovery evidence from the selected software stack.
+  - id: cache_hierarchy_latency
+    status: blocked
+    reason: No CPU cache hierarchy, shared system cache, refill path, miss latency model, or cache performance counters exist in this memory scaffold.
+    evidence_artifacts:
+      - docs/evidence/memory/cache_hierarchy_report.json
+      - docs/evidence/memory/cache_latency_counter_report.json
+    unblock_requires:
+      - Implemented cache hierarchy with documented inclusivity, allocation, eviction, and maintenance policy.
+      - Pointer-chase, cache-thrash, and refill-latency evidence from RTL/FPGA/silicon at a declared clock.
   - id: uma_cache_coherency
     status: blocked
     reason: No cache hierarchy, coherent interconnect, snoop path, or explicit cache-maintenance ABI is implemented.
@@ -46,6 +272,15 @@ blocked_real_claims:
     unblock_requires:
       - Coherency policy covering CPU, DMA, NPU, display, and GPU/2D clients.
       - Positive and negative shared-buffer tests proving fresh data or required sync failure.
+  - id: android_shared_buffer_uma
+    status: blocked
+    reason: Android dma-buf/ION-style shared-buffer freshness, cache maintenance, and fence semantics are not implemented or measured.
+    evidence_artifacts:
+      - docs/evidence/memory/android_dma_buf_coherency_report.json
+      - docs/evidence/memory/android_shared_buffer_fence_report.json
+    unblock_requires:
+      - Kernel-visible shared-buffer ABI with explicit cache sync or hardware coherency policy.
+      - Android userspace and driver tests showing CPU/device producer-consumer correctness with stale-data negative cases.
   - id: iommu_smmu_dma_isolation
     status: blocked
     reason: DMA containment is address-response behavior in the scaffold, not page-table translation or kernel-visible faults.
@@ -55,6 +290,7 @@ blocked_real_claims:
     unblock_requires:
       - IOMMU/SMMU or explicit DMA allowlist implementation.
       - Fault injection evidence proving unauthorized DMA is blocked and reported to software.
+      - Page fault reporting fields for master/client ID, IOVA, translated physical address when available, access type, permissions, syndrome/status, and recovery/reset behavior.
   - id: memory_qos_bandwidth
     status: blocked
     reason: No production arbitration policy, QoS registers, latency budget, or bandwidth counters exist.
@@ -64,9 +300,57 @@ blocked_real_claims:
     unblock_requires:
       - Contended CPU, DMA, NPU, display, and GPU/2D bandwidth tests.
       - Display underflow and CPU latency evidence under sustained memory pressure.
+  - id: phone_2028_bandwidth_latency
+    status: blocked
+    reason: The repo has no real LPDDR target, no phone thermal state, no measured DRAM bandwidth/latency, and no concurrent Android workload evidence.
+    evidence_artifacts:
+      - docs/evidence/memory/phone_2028_memory_scorecard.json
+      - docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json
+      - docs/evidence/memory/contended_android_memory_trace.json
+    unblock_requires:
+      - STREAM, lmbench, pointer-chase, and DMA-copy reports captured on the declared target, not on the host.
+      - Sustained NPU, display, CPU, and camera/GPU contention run with clocks, thermal state, power mode, and raw logs attached.
+      - Evidence that the measured target meets phone_2028_target_profile thresholds or an explicit downgrade of the claim.
+  - id: linux_interrupt_access_map
+    status: blocked
+    reason: The memory/interconnect map does not yet include a complete CLINT/ACLINT plus PLIC/IMSIC access contract, DMA exclusion proof, or Linux device-tree evidence.
+    evidence_artifacts:
+      - docs/evidence/memory/linux_interrupt_access_map_report.json
+      - docs/evidence/memory/clint_plic_dma_exclusion_report.json
+    unblock_requires:
+      - CLINT/ACLINT and PLIC/IMSIC MMIO ranges, privilege access rules, stable interrupt source IDs, and device-tree binding evidence.
+      - Negative tests proving DMA cannot read or mutate timer, software-interrupt, pending, enable, priority, threshold, or claim/complete state.
+
+required_artifact_schemas:
+  docs/evidence/memory/real_dram_controller_phy_report.json: openphone.memory.real_dram_controller_phy.v1
+  docs/evidence/memory/dram_training_timing_report.json: openphone.memory.dram_training_timing.v1
+  docs/evidence/memory/cache_hierarchy_report.json: openphone.memory.cache_hierarchy.v1
+  docs/evidence/memory/cache_latency_counter_report.json: openphone.memory.cache_latency_counter.v1
+  docs/evidence/memory/uma_coherency_report.json: openphone.memory.uma_coherency.v1
+  docs/evidence/memory/shared_buffer_negative_sync_report.json: openphone.memory.shared_buffer_negative_sync.v1
+  docs/evidence/memory/android_dma_buf_coherency_report.json: openphone.memory.android_dma_buf_coherency.v1
+  docs/evidence/memory/android_shared_buffer_fence_report.json: openphone.memory.android_shared_buffer_fence.v1
+  docs/evidence/memory/iommu_fault_injection_report.json: openphone.memory.iommu_fault_injection.v1
+  docs/evidence/memory/dma_isolation_fault_visibility_report.json: openphone.memory.dma_isolation_fault_visibility.v1
+  docs/evidence/memory/memory_qos_report.json: openphone.memory.qos.v1
+  docs/evidence/memory/contended_bandwidth_latency_report.json: openphone.memory.contended_bandwidth_latency.v1
+  docs/evidence/memory/phone_2028_memory_scorecard.json: openphone.memory.phone_2028_scorecard.v1
+  docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json: openphone.memory.lpddr_bandwidth_latency_benchmark.v1
+  docs/evidence/memory/contended_android_memory_trace.json: openphone.memory.contended_android_trace.v1
+  docs/evidence/memory/linux_interrupt_access_map_report.json: openphone.memory.linux_interrupt_access_map.v1
+  docs/evidence/memory/clint_plic_dma_exclusion_report.json: openphone.memory.clint_plic_dma_exclusion.v1
 
 claim_rules:
   - The scaffold may be described only as SRAM-backed DMA containment evidence.
   - Android, AI-throughput, display-smoothness, memory-bandwidth, and tapeout claims require all blocked_real_claims to be unblocked by executable evidence.
   - Passing this gate must not be interpreted as real DRAM, UMA coherency, IOMMU/SMMU, or QoS evidence.
   - Any future checker that promotes this file beyond scaffold_only_real_claims_blocked must require executable RTL, software, and measurement artifacts for every blocked_real_claims entry.
+  - Host benchmark results may exercise parsers, but cannot satisfy phone_2028_target_profile.
+  - A cache-maintenance ABI is a correctness requirement, not a substitute for coherent hardware unless the Android shared-buffer tests prove the required synchronization contract.
+  - Linux/Android readiness also requires CLINT/PLIC access map dependencies and page fault reporting evidence; the current interrupt scaffold is not sufficient.
+
+next_commands:
+  local_static_gate: make memory-uma-claim-gate
+  rtl_elaboration: make rtl-check
+  local_contract_sim: make cocotb-contract
+  benchmark_parser_dry_run: make benchmarks-dry-run

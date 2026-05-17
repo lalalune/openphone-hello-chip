@@ -36,6 +36,12 @@ Not proven:
 - boot ROM execution, OpenSBI handoff, Linux boot, Android boot, UART console,
   or generated DTS consistency.
 
+The single Rocket RV64GC hart is not a 2028 phone-class AP. It is acceptable as
+the first Linux bring-up target only. A phone-class claim remains blocked on a
+selected multi-hart or documented-equivalent CPU topology, ISA compliance,
+cache/coherency/MMU evidence, sustained benchmark data, power/thermal
+measurement, Android userspace evidence, and silicon/board evidence.
+
 ## Selected Open CPU/AP Path
 
 The selected path is a generated Chipyard Rocket RV64GC subsystem. The selection
@@ -62,10 +68,27 @@ generator integration, not on more hand-written tiny-CPU expansion.
   tool versions, artifact paths, and SHA-256 values, and those paths validate
   against `docs/evidence/cpu-ap-evidence-manifest.json`.
 - `make cpu-ap-evidence-check` is expected to fail until real OpenSBI/Linux and
-  trap/timer/IRQ evidence logs exist. Archive real external transcripts with
-  `python3 scripts/capture_cpu_ap_evidence.py intake ...`; the helper only
-  accepts logs containing the manifest-required AP boot/trap markers.
+  trap/timer/IRQ/cache/MMU/benchmark evidence logs exist. Archive real external
+  transcripts with `python3 scripts/capture_cpu_ap_evidence.py intake ...`; the
+  helper only accepts logs containing the manifest-required AP boot/trap/cache
+  and benchmark markers.
 - `make cpu-ap-completion-gate` stays blocked until the selected manifest makes
   a real AP claim and the generated artifacts plus transcripts validate.
 - `sw/platform/hello_platform_contract.json` must remain `has_cpu=false` until
   generated CPU/AP artifacts and boot evidence exist.
+
+Current missing evidence paths:
+
+- `build/evidence/cpu_ap/openphone_hello_opensbi_boot.log`
+- `build/evidence/cpu_ap/openphone_hello_linux_boot.log`
+- `build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log`
+- `build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log`
+- `build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log`
+
+Next CPU/AP commands:
+
+```sh
+make chipyard-generator-check cpu-ap-scaffold-check cpu-ap-completion-gate
+python3 scripts/check_chipyard_import_preflight.py --require-checkout
+make chipyard-generated-check cpu-ap-evidence-check cpu-ap-completion-gate
+```

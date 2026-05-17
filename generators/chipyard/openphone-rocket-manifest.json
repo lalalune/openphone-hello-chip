@@ -13,7 +13,33 @@
     "harts": 1,
     "config_name": "OpenPhoneRocketConfig",
     "package_name": "openphone",
-    "top_wrapper": "openphone_rocket_ap"
+    "top_wrapper": "openphone_rocket_ap",
+    "config_sources": [
+      {
+        "source": "generators/chipyard/openphone/src/main/scala/openphone/OpenPhoneRocketConfig.scala",
+        "checkout_destination": "generators/chipyard/src/main/scala/openphone/OpenPhoneRocketConfig.scala"
+      }
+    ],
+    "claim_level": "initial_linux_bringup_only",
+    "not_phone_class_reason": "A single Rocket RV64GC hart is a boot and integration stepping stone; it is not competitive with a 2028 phone application processor without separate multi-hart, cache, MMU, benchmark, power, thermal, Android, and silicon evidence."
+  },
+  "phone_2028_target_boundary": {
+    "status": "blocked_not_selected_for_product_claims",
+    "minimum_claim_evidence": [
+      "documented application CPU topology and frequency/voltage targets",
+      "RISC-V application profile and extension matrix with ISA compliance results",
+      "cache hierarchy, coherency, cache-maintenance, TLB, and MMU validation",
+      "OpenSBI, U-Boot, Linux, and Android boot transcripts on the selected target",
+      "CoreMark, STREAM, lmbench, fio, and selected SPEC-like workload results",
+      "sustained thermal and power measurement method with raw artifacts",
+      "CTS/VTS/userspace evidence before Android compatibility claims"
+    ],
+    "forbidden_without_evidence": [
+      "phone-class AP",
+      "2028 phone competitive",
+      "Android compatible",
+      "production silicon"
+    ]
   },
   "required_platform_blocks": {
     "reset": "Boot ROM or firmware entry at the hello-chip reset vector",
@@ -38,8 +64,13 @@
   "required_evidence": [
     "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
     "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-    "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log"
+    "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
+    "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
+    "build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log"
   ],
+  "target_delta_manifest": "docs/evidence/cpu-ap-2028-target-deltas.json",
+  "roadmap_manifest": "docs/evidence/cpu-ap-roadmap.json",
+  "rva23_profile_plan": "docs/evidence/cpu-ap-rva23-profile-plan.json",
   "evidence_manifest": "docs/evidence/cpu-ap-evidence-manifest.json",
   "capture_helper": "scripts/capture_cpu_ap_evidence.py",
   "claim_policy": {

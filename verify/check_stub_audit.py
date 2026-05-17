@@ -161,7 +161,7 @@ def check_renode_scaffold() -> list[str]:
         errors,
     )
     require(
-        "0x10000000" in repl and "litex_uart" in repl,
+        "0x10000000" in repl and ("ns16550" in repl or "litex_uart" in repl),
         "Renode REPL must define the qemu-virt UART window.",
         errors,
     )

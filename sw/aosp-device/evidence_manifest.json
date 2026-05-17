@@ -54,7 +54,8 @@
     },
     {
       "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
-      "claim": "AOSP riscv64 virtual-device boot reaches shell or boot-completed state",
+      "claim": "Reference-only AOSP riscv64 virtual-device boot reaches boot-completed state; this is not hello-chip/AP evidence",
+      "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
       "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot",
       "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
       "external_artifacts": [
@@ -65,7 +66,8 @@
     },
     {
       "path": "docs/evidence/android/cts_virtual_device_subset.log",
-      "claim": "A bounded CTS virtual-device subset was run; this is not a CDD or full CTS compatibility claim",
+      "claim": "Reference-only bounded CTS virtual-device subset was run; this is not hello-chip/AP, CDD, or full CTS compatibility evidence",
+      "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
       "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset",
       "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
       "external_artifacts": [
@@ -75,7 +77,8 @@
     },
     {
       "path": "docs/evidence/android/vts_virtual_device_subset.log",
-      "claim": "A bounded VTS virtual-device subset was run; this is not a CDD or full VTS compatibility claim",
+      "claim": "Reference-only bounded VTS virtual-device subset was run; this is not hello-chip/AP, CDD, or full VTS compatibility evidence",
+      "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
       "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset",
       "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
       "external_artifacts": [

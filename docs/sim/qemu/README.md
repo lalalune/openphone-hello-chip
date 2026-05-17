@@ -45,3 +45,24 @@ The next software milestones should add:
 timer test
 DMA/NPU/display MMIO smoke tests using the central contract
 ```
+
+## Linux Payload Smoke
+
+`scripts/run_qemu.sh --check-os` is a bounded qemu-virt Linux payload smoke. It
+is not hello-chip hardware or generated AP evidence. The shortest prebuilt path
+is Debian's riscv64 netboot installer kernel and initrd:
+
+```sh
+python3 scripts/fetch_qemu_linux_payload.py
+scripts/run_qemu.sh --check-os
+```
+
+The fetch helper downloads Debian `linux`, `initrd.gz`, and `SHA256SUMS`, then
+verifies the payload hashes before writing
+`build/qemu/linux_payload/debian-installer-riscv64/manifest.json`.
+`--check-os` auto-discovers those files and archives the bounded QEMU output at
+`build/reports/qemu_os_boot_attempt.log`.
+
+This path may prove that local QEMU can execute a real riscv64 Linux payload on
+`-machine virt`; it still cannot be used as OpenPhone AP, OpenSBI/U-Boot chain,
+BSP driver, or Android evidence.

@@ -30,7 +30,7 @@ PD_INPUTS = [
 ]
 CONFIG_BY_PDK = {
     "sky130A": ROOT / "pd/openlane/config.sky130.json",
-    "gf180mcuD": ROOT / "pd/openlane/config.gf180.json",
+    "gf180mcuC": ROOT / "pd/openlane/config.gf180.json",
 }
 
 
@@ -107,7 +107,7 @@ def check_pdk_environment(
                 f"{display_path(config_path)}: STD_CELL_LIBRARY must be a non-empty string"
             )
 
-    pdk_root = os.environ.get("PDK_ROOT")
+    pdk_root = os.environ.get("PDK_ROOT") or str(ROOT / "external/pdks")
     if not pdk_root:
         if pdk:
             blockers.append(

@@ -243,19 +243,19 @@
           },
           {
             "offset": "0x20",
-            "name": "GEMM_DIMS",
+            "name": "GEMM_CFG",
             "access": "RW",
             "reset": "0x00000000"
           },
           {
             "offset": "0x24",
-            "name": "GEMM_BASES",
+            "name": "GEMM_BASE",
             "access": "RW",
             "reset": "0x00000000"
           },
           {
             "offset": "0x28",
-            "name": "GEMM_STRIDES",
+            "name": "GEMM_STRIDE",
             "access": "RW",
             "reset": "0x00000000"
           },
@@ -316,6 +316,102 @@
           {
             "offset": "0x5C",
             "name": "PERF_ERRORS",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x80",
+            "name": "SCRATCH0",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x84",
+            "name": "SCRATCH1",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x88",
+            "name": "SCRATCH2",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x8C",
+            "name": "SCRATCH3",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x90",
+            "name": "SCRATCH4",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x94",
+            "name": "SCRATCH5",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x98",
+            "name": "SCRATCH6",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x9C",
+            "name": "SCRATCH7",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xA0",
+            "name": "SCRATCH8",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xA4",
+            "name": "SCRATCH9",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xA8",
+            "name": "SCRATCH10",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xAC",
+            "name": "SCRATCH11",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xB0",
+            "name": "SCRATCH12",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xB4",
+            "name": "SCRATCH13",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xB8",
+            "name": "SCRATCH14",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0xBC",
+            "name": "SCRATCH15",
             "access": "RW",
             "reset": "0x00000000"
           }
