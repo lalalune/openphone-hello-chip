@@ -3,26 +3,15 @@ set -eu
 
 # Chipyard pinned reference for reproducible RTL generator builds.
 #
-# TODO(toolchain-ci): replace CHIPYARD_SHA_PLACEHOLDER with the reviewed
-# upstream commit selected per docs/toolchain/reproducibility.md. The repo
-# previously cloned chipyard's default branch which made the toolchain
-# non-reproducible. Until a SHA is selected we hard-fail unless the operator
-# opts in by exporting CHIPYARD_SHA explicitly (e.g. for evaluation builds).
-#
-# To discover candidate SHAs:
-#   git ls-remote https://github.com/ucb-bar/chipyard.git refs/tags/'*'
-# Pick a tagged release, paste its commit hash here, and remove the TODO.
+# Pinned to Chipyard release 1.12.0 (see docs/rtl/cpu-config-selection.md and
+# docs/toolchain/reproducibility.md). Verify by re-running:
+#   git ls-remote https://github.com/ucb-bar/chipyard refs/tags/1.12.0
 
 CHIPYARD_REPO="${CHIPYARD_REPO:-https://github.com/ucb-bar/chipyard.git}"
-CHIPYARD_SHA="${CHIPYARD_SHA:-CHIPYARD_SHA_PLACEHOLDER}"
+CHIPYARD_SHA="${CHIPYARD_SHA:-404c8d361de98a98967f5d7a9bf51cbe8434d4c9}"
 
-if [ "$CHIPYARD_SHA" = "CHIPYARD_SHA_PLACEHOLDER" ]; then
-    cat >&2 <<'EOF'
-bootstrap_chipyard: CHIPYARD_SHA is not pinned.
-  Export CHIPYARD_SHA=<commit> to override for evaluation builds, or replace
-  the placeholder in scripts/bootstrap_chipyard.sh with a reviewed SHA.
-  See docs/toolchain/reproducibility.md.
-EOF
+if [ -z "$CHIPYARD_SHA" ]; then
+    echo "bootstrap_chipyard: CHIPYARD_SHA must be set." >&2
     exit 2
 fi
 
