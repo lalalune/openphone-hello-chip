@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "sw/platform/hello_platform_contract.json"
 GENERATED_HEADER = ROOT / "sw/platform/generated/hello_platform_contract.h"
+LINUX_DRIVER_HEADER = ROOT / "sw/linux/drivers/hello/hello_platform_contract.h"
 
 
 REGION_RTL_NAMES = {
@@ -116,6 +117,19 @@ def check_generated_header(contract: dict, errors: list[str]) -> None:
         errors.append(
             f"{GENERATED_HEADER.relative_to(ROOT)} is stale; regenerate it from "
             f"{CONTRACT_PATH.relative_to(ROOT)}"
+        )
+    if not LINUX_DRIVER_HEADER.is_file():
+        errors.append(f"{LINUX_DRIVER_HEADER.relative_to(ROOT)} is missing")
+        return
+    driver_expected = expected.replace(
+        "/* Generated from sw/platform/hello_platform_contract.json. */",
+        "/* Generated import copy from sw/platform/hello_platform_contract.json. */",
+        1,
+    )
+    if LINUX_DRIVER_HEADER.read_text() != driver_expected:
+        errors.append(
+            f"{LINUX_DRIVER_HEADER.relative_to(ROOT)} is stale; regenerate it from "
+            f"{GENERATED_HEADER.relative_to(ROOT)} for the external Linux import path"
         )
 
 

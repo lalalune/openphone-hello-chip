@@ -27,7 +27,15 @@ SKIP_PARTS = {
 }
 SKIP_SUFFIXES = {".pyc", ".sqlite", ".log", ".xml"}
 TERMS = re.compile(r"\b(stub|placeholder|TODO|FIXME|not implemented|dummy|mock|scaffold)\b", re.IGNORECASE)
-REQUIRED_GAP_AREAS = ("cpu", "interconnect", "display", "dma", "npu")
+REQUIRED_GAP_AREAS = ("cpu", "interconnect", "display", "dma", "npu", "bootrom", "dram", "pass_gates")
+REQUIRED_GAP_CATEGORIES = {
+    "rtl_stub",
+    "incomplete_subsystem",
+    "test_gap",
+    "proof_gap",
+    "misleading_pass_gate",
+}
+REQUIRED_GAP_SEVERITIES = {"critical", "high", "medium", "low"}
 
 
 @dataclass(frozen=True)
@@ -86,6 +94,8 @@ def iter_files() -> list[Path]:
                 continue
             if path.resolve() == Path(__file__).resolve():
                 continue
+            if path == ROOT / "verify/rtl_gap_work_order.yaml":
+                continue
             if any(part in SKIP_PARTS for part in path.parts):
                 continue
             if path.suffix in SKIP_SUFFIXES:
@@ -101,6 +111,8 @@ def check_placeholder_terms() -> list[str]:
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
         except UnicodeDecodeError:
+            continue
+        if path == ROOT / "verify/rtl_gap_work_order.yaml":
             continue
         for lineno, line in enumerate(lines, start=1):
             if not TERMS.search(line):
@@ -150,6 +162,12 @@ def check_gap_work_order() -> list[str]:
         return errors
 
     require(data.get("fail_closed_required") is True, "RTL gap work order must require fail-closed behavior.", errors)
+    audit_doc = data.get("audit_doc")
+    require(isinstance(audit_doc, str) and bool(audit_doc), "RTL gap work order must name audit_doc.", errors)
+    if isinstance(audit_doc, str) and audit_doc:
+        require((ROOT / audit_doc).is_file(), f"RTL gap audit doc missing: {audit_doc}.", errors)
+    required_gap_fields = data.get("required_gap_fields")
+    require(isinstance(required_gap_fields, list) and bool(required_gap_fields), "RTL gap work order must list required_gap_fields.", errors)
     areas = data.get("areas")
     require(isinstance(areas, dict), "RTL gap work order must define an areas mapping.", errors)
     if not isinstance(areas, dict):
@@ -171,8 +189,20 @@ def check_gap_work_order() -> list[str]:
             require(isinstance(gap, dict), f"{area} critical_gaps entries must be mappings.", errors)
             if not isinstance(gap, dict):
                 continue
-            require(gap.get("status") == "open", f"{area}:{gap.get('id', '<missing>')} must remain status=open until closed by RTL and checks.", errors)
-            require(bool(gap.get("work_order")), f"{area}:{gap.get('id', '<missing>')} must include work_order.", errors)
+            gap_id = gap.get("id", "<missing>")
+            if isinstance(required_gap_fields, list):
+                for field in required_gap_fields:
+                    require(bool(gap.get(field)), f"{area}:{gap_id} must include {field}.", errors)
+            require(gap.get("status") == "open", f"{area}:{gap_id} must remain status=open until closed by RTL and checks.", errors)
+            require(gap.get("category") in REQUIRED_GAP_CATEGORIES, f"{area}:{gap_id} has invalid category.", errors)
+            require(gap.get("severity") in REQUIRED_GAP_SEVERITIES, f"{area}:{gap_id} has invalid severity.", errors)
+            affected_paths = gap.get("affected_paths")
+            require(isinstance(affected_paths, list) and bool(affected_paths), f"{area}:{gap_id} must list affected_paths.", errors)
+            if isinstance(affected_paths, list):
+                for affected in affected_paths:
+                    require(isinstance(affected, str) and bool(affected), f"{area}:{gap_id} affected path must be a string.", errors)
+                    if isinstance(affected, str) and affected:
+                        require((ROOT / affected).exists(), f"{area}:{gap_id} affected path does not exist: {affected}.", errors)
     return errors
 
 

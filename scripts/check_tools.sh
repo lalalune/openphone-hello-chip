@@ -3,9 +3,31 @@ set -eu
 
 repo_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 strict=0
-if [ "${1:-}" = "--strict" ]; then
-    strict=1
-fi
+json=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --strict)
+            strict=1
+            ;;
+        --json)
+            json=1
+            ;;
+        -h|--help)
+            cat <<EOF
+usage: scripts/check_tools.sh [--strict] [--json]
+
+  --strict  return non-zero when required fast-path tools or Python packages are missing
+  --json    emit machine-readable tool status instead of the table
+EOF
+            exit 0
+            ;;
+        *)
+            echo "unknown argument: $1" >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
 
 if [ -d "$repo_dir/tools/bin" ]; then
     PATH="$repo_dir/tools/bin:$PATH"
@@ -21,6 +43,12 @@ if [ "$(uname -s)" = "Darwin" ] && [ -d "/Applications/KiCad/KiCad.app/Contents/
 fi
 
 missing_required=0
+records="$(mktemp "${TMPDIR:-/tmp}/openphone-tools.XXXXXX")"
+trap 'rm -f "$records"' EXIT
+
+record_status() {
+    printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$1" "$2" "$3" "$4" "$5" "$6" >>"$records"
+}
 
 check_tool() {
     tool="$1"
@@ -28,14 +56,21 @@ check_tool() {
     gate="$3"
     required="$4"
     if command -v "$tool" >/dev/null 2>&1; then
-        printf "%-22s %-8s %-12s %-28s %s\n" "$tool" "PASS" "$tier" "$gate" "$(command -v "$tool")"
+        path_or_status="$(command -v "$tool")"
+        record_status "$tool" "PASS" "$tier" "$gate" "$path_or_status" "$required"
+        if [ "$json" -eq 0 ]; then
+            printf "%-22s %-8s %-12s %-28s %s\n" "$tool" "PASS" "$tier" "$gate" "$path_or_status"
+        fi
     else
         if [ "$required" = "required" ]; then
             status="FAIL"
         else
             status="BLOCK"
         fi
-        printf "%-22s %-8s %-12s %-28s MISSING\n" "$tool" "$status" "$tier" "$gate"
+        record_status "$tool" "$status" "$tier" "$gate" "MISSING" "$required"
+        if [ "$json" -eq 0 ]; then
+            printf "%-22s %-8s %-12s %-28s MISSING\n" "$tool" "$status" "$tier" "$gate"
+        fi
         if [ "$required" = "required" ]; then
             missing_required=1
         fi
@@ -65,15 +100,23 @@ __import__(sys.argv[1])
 print(importlib.metadata.version(sys.argv[2]))
 PY
 )"
-        printf "%-22s %-8s %-12s %-28s %s\n" "$dist" "PASS" "python" "$gate" "$version"
+        record_status "$dist" "PASS" "python" "$gate" "$version" "required"
+        if [ "$json" -eq 0 ]; then
+            printf "%-22s %-8s %-12s %-28s %s\n" "$dist" "PASS" "python" "$gate" "$version"
+        fi
     else
-        printf "%-22s %-8s %-12s %-28s MISSING\n" "$dist" "FAIL" "python" "$gate"
+        record_status "$dist" "FAIL" "python" "$gate" "MISSING" "required"
+        if [ "$json" -eq 0 ]; then
+            printf "%-22s %-8s %-12s %-28s MISSING\n" "$dist" "FAIL" "python" "$gate"
+        fi
         missing_required=1
     fi
 }
 
-printf "%-22s %-8s %-12s %-28s %s\n" "TOOL" "STATUS" "TIER" "GATE" "PATH_OR_STATUS"
-printf "%-22s %-8s %-12s %-28s %s\n" "----" "------" "----" "----" "--------------"
+if [ "$json" -eq 0 ]; then
+    printf "%-22s %-8s %-12s %-28s %s\n" "TOOL" "STATUS" "TIER" "GATE" "PATH_OR_STATUS"
+    printf "%-22s %-8s %-12s %-28s %s\n" "----" "------" "----" "----" "--------------"
+fi
 
 check_tool python3 fast "repo scripts/docs" required
 check_tool pip3 fast ".venv bootstrap" required
@@ -125,10 +168,16 @@ check_tool sigrok-cli heavy "board signal capture" optional
 
 if [ -x "$repo_dir/.venv/bin/python" ]; then
     python_bin="$repo_dir/.venv/bin/python"
-    printf "%-22s %-8s %-12s %-28s %s\n" ".venv" "PASS" "python" "isolated repo env" "$repo_dir/.venv"
+    record_status ".venv" "PASS" "python" "isolated repo env" "$repo_dir/.venv" "optional"
+    if [ "$json" -eq 0 ]; then
+        printf "%-22s %-8s %-12s %-28s %s\n" ".venv" "PASS" "python" "isolated repo env" "$repo_dir/.venv"
+    fi
 else
     python_bin="$(command -v python3)"
-    printf "%-22s %-8s %-12s %-28s %s\n" ".venv" "BLOCK" "python" "isolated repo env" "MISSING"
+    record_status ".venv" "BLOCK" "python" "isolated repo env" "MISSING" "optional"
+    if [ "$json" -eq 0 ]; then
+        printf "%-22s %-8s %-12s %-28s %s\n" ".venv" "BLOCK" "python" "isolated repo env" "MISSING"
+    fi
 fi
 
 check_python_package cocotb cocotb "cocotb"
@@ -136,7 +185,49 @@ check_python_package pytest pytest "pytest/docs"
 check_python_package numpy numpy "runtime/tests"
 check_python_package yaml PyYAML "yaml checks"
 
+if [ "$json" -eq 1 ]; then
+    python_for_json="$(command -v python3)"
+    "$python_for_json" - "$records" "$strict" "$missing_required" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+records = []
+for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+    name, status, tier, gate, path_or_status, required = line.split("\t")
+    records.append(
+        {
+            "name": name,
+            "status": status,
+            "tier": tier,
+            "gate": gate,
+            "path_or_status": path_or_status,
+            "required": required == "required",
+        }
+    )
+
+summary = {
+    "pass": sum(1 for item in records if item["status"] == "PASS"),
+    "block": sum(1 for item in records if item["status"] == "BLOCK"),
+    "fail": sum(1 for item in records if item["status"] == "FAIL"),
+}
+print(
+    json.dumps(
+        {
+            "schema": "openphone.tool_status.v1",
+            "strict": sys.argv[2] == "1",
+            "missing_required": sys.argv[3] != "0",
+            "summary": summary,
+            "tools": records,
+        },
+        indent=2,
+        sort_keys=True,
+    )
+)
+PY
+fi
+
 if [ "$strict" -eq 1 ] && [ "$missing_required" -ne 0 ]; then
-    echo "Required fast-path tools or Python packages are missing."
+    echo "Required fast-path tools or Python packages are missing." >&2
     exit 1
 fi

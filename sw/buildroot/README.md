@@ -36,12 +36,13 @@ python3 sw/check_bsp_scaffolds.py buildroot
 Expected output:
 
 ```text
-buildroot BSP check passed.
 buildroot: scaffold audit
   local command: make buildroot-check
   expected output: buildroot BSP check passed.
   dependency blocker: external Buildroot checkout and external Linux kernel tarball/tree
   status: clear
+buildroot BSP check failed:
+  - buildroot BSP BLOCKED: missing evidence for external Buildroot image build plus hello MMIO smoke transcript: docs/evidence/buildroot/openphone_hello_defconfig.log, docs/evidence/buildroot/openphone_hello_image_manifest.txt, docs/evidence/buildroot/hello-mmio-smoke.log
 ```
 
 Dependency blocker: a real Buildroot image requires an external Buildroot

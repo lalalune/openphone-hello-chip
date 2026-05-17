@@ -11,11 +11,7 @@
 #include <linux/of.h>
 #include <linux/platform_device.h>
 
-#define HELLO_DMA_BASE 0x10010000u
-#define HELLO_DMA_SRC_OFFSET 0x00u
-#define HELLO_DMA_DST_OFFSET 0x04u
-#define HELLO_DMA_LEN_OFFSET 0x08u
-#define HELLO_DMA_CTRL_STATUS_OFFSET 0x0cu
+#include "hello_platform_contract.h"
 
 struct hello_dma {
 	void __iomem *regs;

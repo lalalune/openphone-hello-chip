@@ -5,8 +5,14 @@ This checklist is for the simple demo chip/board product slice.
 The machine-readable inventory of release-blocking physical, package, SI/PI,
 PDN/current-budget, board-fabrication, and first-article gaps is
 `docs/manufacturing/real-world-verification-gaps.yaml`. Run
-`make real-world-gates-check` before any PD, tapeout, or board-fabrication
-release claim.
+`make physical-closure-work-order-check` and `make real-world-gates-check`
+before any PD, tapeout, or board-fabrication release claim.
+
+The detailed physical/product work order is
+`docs/manufacturing/physical-closure-work-order.yaml`. It is an acceptance
+manifest, not evidence. Do not treat any vendor, foundry, board-house,
+assembly-house, SI/PI, PDN, or lab item as complete until its named artifact is
+archived and the corresponding gate is intentionally unblocked.
 
 ## Tapeout package
 

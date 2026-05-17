@@ -1,9 +1,9 @@
 # Workstream Gap Review
 
-Generated on 2026-05-16 from the project backlog, scaffold audits, and local
-status notes. This is a gap inventory, not a completion report. A workstream may
-have useful scaffolding and still be blocked from any product, silicon, Android,
-or performance claim.
+Generated on 2026-05-17 from the project backlog, scaffold audits, local status
+notes, and tooling/reporting closure review. This is a gap inventory, not a
+completion report. A workstream may have useful scaffolding and still be blocked
+from any product, silicon, Android, or performance claim.
 
 ## Status terms
 
@@ -144,6 +144,80 @@ on hidden local state.
 
 Done means risk language is stricter than the most optimistic implementation
 claim in the repo.
+
+## Tooling/Reporting Closure Review
+
+This section records the local closure work for reporting blind spots, stale
+blockers, source/build evidence confusion, benchmark placeholders, deferred-work
+gaps, and incomplete workstream docs. It is intentionally stricter than the
+normal green checks.
+
+### Build Artifact Versus Source Evidence
+
+| Area | Previous blind spot | Local closure | Remaining blocker |
+|---|---|---|---|
+| MVP generated artifacts | Missing `build/`, `verify/`, or benchmark output could look like the same kind of blocker as a missing external tool. | `scripts/check_mvp_status.py` now labels missing generated outputs as `regen_required` when the tool exists and `tool_blocker` when the tool is absent. | Generated evidence must still be rerun and archived after a clean checkout. |
+| Source scaffolds | Source files and metadata could be enough for a PASS row even when the executable artifact was missing. | Source-only evidence is reported as `source_present`; generated outputs are reported separately as `generated_artifact`. | Add per-subsystem manifest checksums before release archive signoff. |
+| QEMU | Tool presence plus scaffold files could be mistaken for boot proof. | `make mvp-status` only passes QEMU when compiled firmware and `build/reports/qemu_smoke.log` exist; otherwise it reports BLOCK. | Update `scripts/run_qemu.sh` or a wrapper to archive `qemu_smoke.log` instead of using a temp-only log. |
+| Renode | Installed Renode plus model files could be mistaken for an executable transcript. | `make mvp-status` only passes Renode when `build/reports/renode_smoke.log` exists; otherwise it reports BLOCK. | Implement an automated Renode serial transcript check and archive `renode_smoke.log`. |
+| Benchmarks | A dry-run report with no executed workloads could be interpreted as benchmark evidence. | `make mvp-status` keeps dry-run benchmark reports BLOCK as planning evidence only. | Real benchmark runs need tools, target platform metadata, parsed metrics, and artifacts. |
+
+### Reporting Blind Spots Closed Locally
+
+| Blind spot | Closure | Gate |
+|---|---|---|
+| Dry-run benchmark LARP | `benchmarks/run_benchmarks.py` rejects `passed` results in dry-run reports and rejects release-blocking model artifacts that allow placeholders. | `python3 benchmarks/run_benchmarks.py validate-report ...` |
+| Benchmark placeholder model | TFLite results remain blocked on missing or placeholder `benchmarks/models/mobile_smoke.tflite`; the blocker id is stable as `TFLITE_SMOKE_MODEL_MISSING`. | `make benchmarks-dry-run` and `make pipeline-check` |
+| MVP status ambiguity | JSON output now includes `evidence_class` so downstream checks can distinguish source presence, generated artifacts, scaffold-only status, regeneration work, and tool blockers. | `make mvp-status` |
+| Pipeline semantic gaps | `scripts/pipeline_check.py` now checks MVP status semantics and rejects scaffold/tool/source evidence being treated as implementation proof for QEMU, Renode, or benchmarks. | `make pipeline-check` |
+| Workstream doc drift | The pipeline requires this closure section and named remaining work order terms so the gap inventory cannot silently regress to generic prose. | `make pipeline-check` |
+
+### Stale Blockers And Deferred-Work Review
+
+The scoped docs and checks do not treat informal deferred-work markers as
+acceptable release evidence. Existing not-implemented areas are intentionally
+named as Complete gap, Stub, Scaffold, Untested, LARP risk, or Blocked rows. The
+locally closable stale blocker cleanup is to keep every blocker tied to a next
+command and evidence artifact rather than vague future work.
+
+| Blocker class | Current evidence | Required unblock artifact |
+|---|---|---|
+| Regenerated build output | `build/netlist/hello_chip_synth.v`, `build/reports/hello_soc_yosys.log`, `verify/cocotb/results.xml`, `build/verilator/Vhello_chip_top`, formal logs/status files. | Clean rebuild transcript and release manifest checksums. |
+| QEMU software reference | Source scaffold and build script exist. | `build/qemu/hello_qemu_firmware.elf` plus `build/reports/qemu_smoke.log` with the expected serial banner. |
+| Renode software reference | REPL/RESC scaffold exists. | `build/reports/renode_smoke.log` from an automated, bounded Renode run. |
+| TFLite NPU smoke | Generator script exists, but generated model artifact is absent. | Non-placeholder `benchmarks/models/mobile_smoke.tflite` with sha256 pinned in `benchmarks/configs/benchmark_plan.json`. |
+| Phone-level benchmark claims | Matrix and schema exist. | Executed L4-L6 reports with clocks, memory, thermal, power, unsupported op count, CPU fallback percentage, and raw artifacts. |
+
+### Remaining Tooling And Benchmark Work Order
+
+1. Add archival output to QEMU smoke: write the bounded serial transcript to
+   `build/reports/qemu_smoke.log`, keep the temp log only as a fallback, and
+   make `make qemu-check` fail in strict mode when the banner is absent.
+2. Implement automated Renode smoke: build or reuse
+   `build/qemu/hello_qemu_firmware.elf`, run Renode headlessly, assert the
+   `openphone hello qemu` banner, and archive `build/reports/renode_smoke.log`.
+3. Generate or vendor a redistributable `mobile_smoke.tflite`: run
+   `benchmarks/models/generate_mobile_smoke_tflite.py` in a TensorFlow
+   environment or supply an equivalent model, then pin `sha256` and size in the
+   benchmark plan.
+4. Add benchmark parsers: CoreMark, STREAM, lmbench, fio JSON, and TFLite should
+   emit parsed primary metrics in addition to raw stdout logs.
+5. Add benchmark target manifests: every non-dry run should record target board
+   or simulator identity, OS image, kernel, compiler flags, governor, affinity,
+   memory clocks, thermal state, and external power method where applicable.
+6. Split simulator and phone reports mechanically: reject L4-L6 claim levels
+   unless the platform revision is concrete and required hardware evidence is
+   present.
+7. Add release manifest checksums for generated reports, model artifacts,
+   QEMU/Renode transcripts, formal logs, cocotb results, and tool versions.
+8. Pin external bootstrap inputs: replace floating OpenLane2 and Chipyard clone
+   defaults with selected refs or record them as release blockers in the archive.
+9. Create a clean-checkout evidence job: remove `build/` and `verify` generated
+   outputs, rerun the fast reproducible gates, and confirm `make mvp-status`
+   reports only true tool blockers or regenerated artifacts.
+10. Add hardware benchmark gates after a board exists: require sustained loops,
+    external power, thermal logs, and no simulator wall-clock comparisons before
+    any phone-class performance claim.
 
 ## Three-week gate schedule
 

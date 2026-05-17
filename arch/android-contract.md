@@ -16,4 +16,4 @@ QEMU/Renode bring-up uses a separate qemu-virt software reference target. Passin
 | Storage | DMA-style command pattern | SD/eMMC controller first |
 | GPIO/sensors | GPIO and I2C-oriented placeholder | GPIO, I2C sensor hub, input events |
 
-The first AOSP target should live under `sw/aosp-device/device/openphone/openphone_ai_soc` and boot on QEMU/Renode before RTL simulation is expected to run Android-scale workloads. `make aosp-bsp-check` intentionally fails until that target contains real BoardConfig, init, manifest, SELinux, and HAL plumbing tied back to the central contract.
+The first AOSP target should live under `sw/aosp-device/device/openphone/openphone_ai_soc` and boot on QEMU/Renode before RTL simulation is expected to run Android-scale workloads. `make aosp-bsp-check` intentionally fails until that target contains real BoardConfig, init, manifest, SELinux, HAL plumbing tied back to the central contract, and checked-in external build/boot evidence.

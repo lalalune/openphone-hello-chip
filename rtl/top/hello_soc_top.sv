@@ -47,6 +47,8 @@ module hello_soc_top (
     logic [23:0] display_scan_rgb;
     logic display_fb_read_valid;
     logic [31:0] display_fb_read_addr;
+    logic [31:0] display_fb_read_data;
+    logic        display_fb_read_ready;
 
     logic bootrom_sel;
     logic dma_sel;
@@ -61,10 +63,14 @@ module hello_soc_top (
     wire [9:0]  mmio_dram_word = mmio_addr[11:2];
     wire [9:0]  dma_wr_word = dma_m_awaddr[11:2];
     wire [9:0]  dma_rd_word = dma_m_araddr[11:2];
+    wire [9:0]  display_rd_word = display_fb_read_addr[11:2];
     wire        dma_wr_fire = dma_m_awvalid && dma_m_awready && dma_m_wvalid && dma_m_wready;
     wire        dma_rd_fire = dma_m_arvalid && dma_m_arready;
     wire        dma_wr_ok = (dma_m_awaddr[31:12] == 20'h8000_0) && (dma_m_awaddr[1:0] == 2'b00);
     wire        dma_rd_ok = (dma_m_araddr[31:12] == 20'h8000_0) && (dma_m_araddr[1:0] == 2'b00);
+    wire        display_rd_ok = display_fb_read_valid &&
+                                (display_fb_read_addr[31:12] == 20'h8000_0) &&
+                                (display_fb_read_addr[1:0] == 2'b00);
 
     assign word_aligned       = mmio_addr[1:0] == 2'b00;
     assign implemented_window = mmio_addr[11:8] == 4'h0 && word_aligned;
@@ -84,15 +90,15 @@ module hello_soc_top (
         display_scan_x,
         display_scan_y,
         display_scan_fb_addr,
-        display_scan_rgb,
-        display_fb_read_valid,
-        display_fb_read_addr
+        display_scan_rgb
     };
     /* verilator lint_on UNUSEDSIGNAL */
 
     assign dma_m_awready = !dma_m_bvalid;
     assign dma_m_wready  = !dma_m_bvalid;
     assign dma_m_arready = !dma_m_rvalid;
+    assign display_fb_read_ready = display_rd_ok;
+    assign display_fb_read_data  = display_rd_ok ? dram_mem[display_rd_word] : 32'hDEAD_BEEF;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -214,8 +220,8 @@ module hello_soc_top (
         .scan_rgb(display_scan_rgb),
         .fb_read_valid(display_fb_read_valid),
         .fb_read_addr(display_fb_read_addr),
-        .fb_read_data(32'h0),
-        .fb_read_ready(1'b1)
+        .fb_read_data(display_fb_read_data),
+        .fb_read_ready(display_fb_read_ready)
     );
 
     always_comb begin

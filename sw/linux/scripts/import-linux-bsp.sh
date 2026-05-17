@@ -19,6 +19,7 @@ printf 'Import commands:\n'
 printf '  mkdir -p %s/drivers/misc/openphone-hello %s/arch/riscv/boot/dts/openphone\n' "$linux" "$linux"
 printf '  rsync -a %s/drivers/hello/ %s/drivers/misc/openphone-hello/\n' "$bsp" "$linux"
 printf '  cp %s/dts/openphone-hello.dts %s/arch/riscv/boot/dts/openphone/\n' "$bsp" "$linux"
+printf '  cp %s/sw/platform/generated/hello_platform_contract.h %s/drivers/misc/openphone-hello/hello_platform_contract.h\n' "$repo_root" "$linux"
 printf 'Then add these fragments in the external Linux tree:\n'
 printf '  drivers/misc/Kconfig: source "drivers/misc/openphone-hello/Kconfig"\n'
 printf '  drivers/misc/Makefile: obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-hello/\n'

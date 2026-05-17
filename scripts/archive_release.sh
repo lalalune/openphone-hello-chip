@@ -49,6 +49,7 @@ pd/constraints/hello_soc_gf180.sdc
 docs/manufacturing/release-manifest.yaml
 docs/manufacturing/hello-demo-checklist.md
 docs/manufacturing/real-world-verification-gaps.yaml
+docs/manufacturing/physical-closure-work-order.yaml
 docs/toolchain/README.md
 docs/toolchain/headless-cli-audit.md
 docs/spec-db/mobile-sota-2026.yaml
@@ -75,6 +76,7 @@ scripts/check_cocotb_results.py
 scripts/check_mvp_status.py
 scripts/check_project_plan.py
 scripts/check_real_world_gates.py
+scripts/check_physical_closure_work_order.py
 scripts/check_software_bsp.py
 scripts/pipeline_check.py
 scripts/run_cocotb.sh

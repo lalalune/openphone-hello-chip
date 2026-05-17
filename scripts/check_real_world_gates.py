@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GAP_MANIFEST = ROOT / "docs/manufacturing/real-world-verification-gaps.yaml"
 RELEASE_MANIFEST = ROOT / "docs/manufacturing/release-manifest.yaml"
 PD_MANIFEST = ROOT / "pd/signoff/manifest.yaml"
+WORK_ORDER = ROOT / "docs/manufacturing/physical-closure-work-order.yaml"
 
 REQUIRED_GATES = {
     "pd_release",
@@ -162,6 +163,35 @@ def validate_gap_manifest(manifest: dict, failures: list[str]) -> None:
         failures.append("gap manifest has no gap entries for: " + ", ".join(missing_seen_categories))
 
 
+def validate_work_order_link(gaps: dict, failures: list[str]) -> None:
+    if not WORK_ORDER.is_file():
+        failures.append("missing physical closure work order: docs/manufacturing/physical-closure-work-order.yaml")
+        return
+    work_order = load_yaml(WORK_ORDER)
+    if work_order.get("source_gap_manifest") != "docs/manufacturing/real-world-verification-gaps.yaml":
+        failures.append("physical closure work order must link to real-world gap manifest")
+    gap_ids = {
+        gap.get("id")
+        for gap in gaps.get("gaps", [])
+        if isinstance(gap, dict) and isinstance(gap.get("id"), str)
+    }
+    items = work_order.get("items")
+    if not isinstance(items, list):
+        failures.append("physical closure work order must list items")
+        return
+    item_ids = {
+        item.get("id")
+        for item in items
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    missing = sorted(gap_ids - item_ids)
+    extra = sorted(item_ids - gap_ids)
+    if missing:
+        failures.append("physical closure work order missing gap ids: " + ", ".join(missing))
+    if extra:
+        failures.append("physical closure work order contains unknown ids: " + ", ".join(extra))
+
+
 def validate_manifest_consistency(gaps: dict, release: dict, pd: dict, failures: list[str]) -> None:
     validate_gate_map("manufacturing.blocked_gates", release.get("blocked_gates"), failures)
     validate_gate_map("pd.blocked_gates", pd.get("blocked_gates"), failures)
@@ -220,6 +250,7 @@ def main() -> int:
     pd_manifest = load_yaml(PD_MANIFEST)
 
     validate_gap_manifest(gap_manifest, failures)
+    validate_work_order_link(gap_manifest, failures)
     validate_manifest_consistency(gap_manifest, release_manifest, pd_manifest, failures)
 
     if failures:

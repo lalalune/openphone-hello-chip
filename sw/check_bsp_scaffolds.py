@@ -25,6 +25,7 @@ CHECKS = {
             "sw/linux/README.md",
             "sw/linux/scripts/import-linux-bsp.sh",
             "sw/linux/dts/openphone-hello.dts",
+            "sw/linux/drivers/hello/hello_platform_contract.h",
             "sw/linux/drivers/hello/Kconfig",
             "sw/linux/drivers/hello/Makefile",
             "sw/linux/drivers/hello/hello-npu.c",

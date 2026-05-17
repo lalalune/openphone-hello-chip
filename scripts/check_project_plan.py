@@ -13,6 +13,7 @@ REQUIRED = [
     "docs/project/three-week-execution-plan.md",
     "docs/project/workstreams.md",
     "docs/project/critical-gap-review.md",
+    "docs/project/critical-gap-review-2026-05-17.md",
     "docs/project/workstream-gap-review.md",
     "docs/toolchain/README.md",
     "docs/risks/risk-register.md",
@@ -58,6 +59,12 @@ REQUIRED_TERMS = {
         "Workstream A: RTL, CPU, Interconnect, Memory",
         "Workstream E: Phone Product Features Not Started",
         "A scaffold check is never a boot proof",
+    ],
+    "docs/project/critical-gap-review-2026-05-17.md": [
+        "Active Subagent Workstreams",
+        "Highest-Risk Findings",
+        "Workstream A: RTL, CPU, Interconnect, Memory, Display, NPU",
+        "Workstream E: Product Features Not Implemented",
     ],
     "docs/project/workstream-gap-review.md": [
         "Workstream Gap Review",

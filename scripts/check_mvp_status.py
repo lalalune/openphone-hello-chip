@@ -24,6 +24,7 @@ class Status:
     status: str
     evidence: str
     next_step: str
+    evidence_class: str = "unspecified"
 
 
 def rel(path: Path) -> str:
@@ -44,22 +45,99 @@ def command_status(subsystem: str, command: list[str], next_step: str) -> Status
     )
     output = " ".join(line.strip() for line in result.stdout.splitlines() if line.strip())
     evidence = output[:220] if output else "command produced no output"
+    if "release check failed:" in result.stdout or "release gate remains blocked" in result.stdout or "explicitly blocked" in result.stdout:
+        return Status(subsystem, BLOCK, evidence, next_step, "release_blocker")
+    if "BLOCKED:" in result.stdout:
+        return Status(subsystem, BLOCK, evidence, next_step, "tool_blocker")
     if result.returncode == 0:
-        return Status(subsystem, PASS, evidence, "none")
-    return Status(subsystem, FAIL, evidence, next_step)
+        return Status(subsystem, PASS, evidence, "none", "command_pass")
+    return Status(subsystem, FAIL, evidence, next_step, "command_fail")
+
+
+def software_bsp_status() -> Status:
+    result = subprocess.run(
+        [sys.executable, "scripts/check_software_bsp.py", "all", "--scaffold-only"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    output = " ".join(line.strip() for line in result.stdout.splitlines() if line.strip())
+    evidence = output[:220] if output else "command produced no output"
+    if result.returncode != 0:
+        return Status("software-bsp", FAIL, evidence, "make software-bsp-check", "command_fail")
+    if "external evidence blocked" in result.stdout:
+        return Status("software-bsp", BLOCK, evidence, "make software-bsp-evidence-check", "scaffold_only")
+    return Status("software-bsp", PASS, evidence, "none", "command_pass")
+
+
+def status_check(subsystem: str, command: list[str], pass_marker: str, next_step: str) -> Status:
+    result = subprocess.run(
+        command,
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    evidence = " ".join(lines)[:220] if lines else "command produced no output"
+    status_lines = [line for line in lines if line.startswith("STATUS: ")]
+
+    if any(line.startswith("STATUS: FAIL ") for line in status_lines) or result.returncode == 1:
+        return Status(subsystem, FAIL, evidence, next_step, "test_fail")
+    if any(pass_marker in line for line in status_lines):
+        return Status(subsystem, PASS, evidence, "none", "generated_artifact")
+    if any(line.startswith("STATUS: BLOCKED ") for line in status_lines) or result.returncode == 2:
+        return Status(subsystem, BLOCK, evidence, next_step, "tool_blocker")
+    if result.returncode == 0:
+        return Status(subsystem, BLOCK, evidence, next_step, "scaffold_only")
+    return Status(subsystem, FAIL, evidence, next_step, "command_fail")
 
 
 def files_status(subsystem: str, paths: list[str], pass_evidence: str, next_step: str) -> Status:
     missing = [path for path in paths if not (ROOT / path).exists()]
     if missing:
-        return Status(subsystem, BLOCK, "missing: " + ", ".join(missing), next_step)
-    return Status(subsystem, PASS, pass_evidence, "none")
+        return Status(subsystem, BLOCK, "missing source/config artifacts: " + ", ".join(missing), next_step, "missing_source")
+    return Status(subsystem, PASS, pass_evidence, "none", "source_present")
 
 
 def tool_path(*names: str) -> str | None:
     for name in names:
         found = shutil.which(name)
         if found:
+            return found
+    return None
+
+
+def riscv_elf_toolchain() -> str | None:
+    found = tool_path("riscv64-unknown-elf-gcc", "riscv64-elf-gcc", "riscv64-linux-gnu-gcc")
+    if found:
+        return found
+
+    for candidate in ("/opt/homebrew/opt/llvm/bin/clang", "clang"):
+        found = str(Path(candidate)) if Path(candidate).is_file() else shutil.which(candidate)
+        if not found:
+            continue
+        result = subprocess.run(
+            [
+                found,
+                "--target=riscv64-unknown-elf",
+                "-fuse-ld=lld",
+                "-x",
+                "assembler",
+                "-c",
+                "/dev/null",
+                "-o",
+                "/tmp/openphone-riscv-toolchain-test.o",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        Path("/tmp/openphone-riscv-toolchain-test.o").unlink(missing_ok=True)
+        if result.returncode == 0:
             return found
     return None
 
@@ -73,15 +151,25 @@ def artifact_status(
 ) -> Status:
     missing = [path for path in artifacts if not (ROOT / path).is_file()]
     if not missing:
-        return Status(subsystem, PASS, "artifacts present: " + ", ".join(artifacts), "none")
+        return Status(subsystem, PASS, "generated artifacts present: " + ", ".join(artifacts), "none", "generated_artifact")
     found = tool_path(*tool_names)
     if found:
-        return Status(subsystem, BLOCK, "missing artifacts: " + ", ".join(missing), command)
+        return Status(
+            subsystem,
+            BLOCK,
+            "missing regenerated artifacts; tool available at "
+            + found
+            + ": "
+            + ", ".join(missing),
+            command,
+            "regen_required",
+        )
     return Status(
         subsystem,
         BLOCK,
-        blocked_text + "; missing artifacts: " + ", ".join(missing),
+        blocked_text + "; missing generated artifacts: " + ", ".join(missing),
         command,
+        "tool_blocker",
     )
 
 
@@ -89,19 +177,20 @@ def toolchain_status() -> Status:
     required = ["python3", "make", "git"]
     missing = [tool for tool in required if shutil.which(tool) is None]
     if missing:
-        return Status("toolchain-fast-path", FAIL, "missing required tools: " + ", ".join(missing), "make tools")
+        return Status("toolchain-fast-path", FAIL, "missing required tools: " + ", ".join(missing), "make tools", "tool_blocker")
 
     optional_blocks = []
     for group, tools in {
         "rtl": ("verilator", "iverilog"),
         "synth/formal": ("yosys",),
         "qemu": ("qemu-system-riscv64",),
-        "riscv-elf": ("riscv64-unknown-elf-gcc", "riscv64-elf-gcc", "riscv64-linux-gnu-gcc"),
         "renode": ("renode",),
         "pd": ("openlane", "flow.tcl", "docker"),
     }.items():
         if tool_path(*tools) is None:
             optional_blocks.append(group)
+    if riscv_elf_toolchain() is None:
+        optional_blocks.append("riscv-elf")
 
     evidence = "required host tools found"
     if optional_blocks:
@@ -110,18 +199,19 @@ def toolchain_status() -> Status:
             BLOCK,
             evidence + "; blocked optional gates: " + ", ".join(optional_blocks),
             "scripts/check_tools.sh && scripts/tool_versions.sh",
+            "tool_blocker",
         )
-    return Status("toolchain-fast-path", PASS, evidence, "none")
+    return Status("toolchain-fast-path", PASS, evidence, "none", "tool_available")
 
 
 def cocotb_status() -> Status:
     result = ROOT / "verify/cocotb/results.xml"
     if not result.is_file():
-        return Status("cocotb", BLOCK, "missing verify/cocotb/results.xml", "make cocotb")
+        return Status("cocotb", BLOCK, "missing regenerated artifact: verify/cocotb/results.xml", "make cocotb", "regen_required")
     text = result.read_text(errors="ignore")
     if "<failure" in text or "<error" in text or "<testcase" not in text:
-        return Status("cocotb", FAIL, "results.xml contains failures/errors or no testcase", "make cocotb")
-    return Status("cocotb", PASS, "verify/cocotb/results.xml has passing testcases", "none")
+        return Status("cocotb", FAIL, "results.xml contains failures/errors or no testcase", "make cocotb", "test_fail")
+    return Status("cocotb", PASS, "generated artifact verify/cocotb/results.xml has passing testcases", "none", "generated_artifact")
 
 
 def formal_status() -> Status:
@@ -137,7 +227,7 @@ def formal_status() -> Status:
         ROOT / "build/reports/hello_dma_formal_yosys.log",
     ]
     if all(path.is_file() and "PASS" in path.read_text(errors="ignore") for path in sby_status):
-        return Status("formal", PASS, "SymbiYosys status files report PASS", "none")
+        return Status("formal", PASS, "generated SymbiYosys status files report PASS", "none", "generated_artifact")
     failed_status = [
         rel(path)
         for path in sby_status
@@ -149,51 +239,80 @@ def formal_status() -> Status:
         if (path.parent / "ERROR").is_file()
     )
     if failed_status:
-        return Status("formal", FAIL, "SymbiYosys status file reports failure: " + ", ".join(failed_status), "make formal")
+        return Status("formal", FAIL, "SymbiYosys status file reports failure: " + ", ".join(failed_status), "make formal", "test_fail")
     if all(path.is_file() for path in fallback_logs):
-        return Status("formal", PASS, "Yosys formal fallback logs present", "none")
+        return Status("formal", PASS, "generated Yosys formal fallback logs present", "none", "generated_artifact")
     if tool_path("sby", "yosys"):
-        return Status("formal", BLOCK, "formal evidence missing", "make formal")
-    return Status("formal", BLOCK, "formal tools and evidence missing", "make formal inside Docker/Nix")
+        return Status("formal", BLOCK, "missing regenerated formal evidence", "make formal", "regen_required")
+    return Status("formal", BLOCK, "formal tools and generated evidence missing", "make formal inside Docker/Nix", "tool_blocker")
 
 
 def qemu_status() -> Status:
-    required = [
-        "sw/bootrom/hello_qemu_firmware.S",
-        "sw/bootrom/linker.ld",
-        "sim/qemu/README.md",
-    ]
-    missing = [path for path in required if not (ROOT / path).is_file()]
-    if missing:
-        return Status("qemu", FAIL, "missing qemu scaffold: " + ", ".join(missing), "make qemu-check")
-    if not tool_path("qemu-system-riscv64") or not tool_path(
-        "riscv64-unknown-elf-gcc", "riscv64-elf-gcc", "riscv64-linux-gnu-gcc"
-    ):
-        return Status("qemu", BLOCK, "semantic scaffold present; QEMU or RISC-V ELF compiler missing", "make qemu-check")
-    return Status("qemu", PASS, "QEMU and RISC-V ELF toolchain found", "make qemu-check")
+    status = status_check(
+        "qemu",
+        ["scripts/run_qemu.sh", "--check"],
+        "STATUS: PASS qemu.check",
+        "make qemu-check",
+    )
+    if status.status == PASS:
+        smoke_log = ROOT / "build/reports/qemu_smoke.log"
+        if not smoke_log.is_file() or "openphone hello qemu" not in smoke_log.read_text(errors="ignore"):
+            return Status(
+                "qemu",
+                BLOCK,
+                "qemu.check passed but build/reports/qemu_smoke.log is missing the required banner",
+                "make qemu-check",
+                "regen_required",
+            )
+    return status
 
 
 def renode_status() -> Status:
-    required = ["sim/renode/openphone_hello.repl", "sim/renode/openphone_hello.resc", "sim/renode/README.md"]
-    missing = [path for path in required if not (ROOT / path).is_file()]
-    if missing:
-        return Status("renode", FAIL, "missing Renode scaffold: " + ", ".join(missing), "make renode-check")
-    if not tool_path("renode"):
-        return Status("renode", BLOCK, "Renode scaffold present; renode executable missing", "make renode-check")
-    return Status("renode", PASS, "Renode executable and scaffold present", "make renode-check")
+    return status_check(
+        "renode",
+        ["scripts/run_renode.sh", "--check"],
+        "STATUS: PASS renode.check",
+        "make renode-check",
+    )
 
 
 def benchmark_status() -> Status:
     report = ROOT / "benchmarks/results/pipeline-check/report.json"
     if not report.is_file():
-        return Status("benchmarks", BLOCK, "missing pipeline dry-run report", "make benchmarks-dry-run")
+        return Status("benchmarks", BLOCK, "missing regenerated pipeline dry-run report", "make benchmarks-dry-run", "regen_required")
     data = json.loads(report.read_text())
     statuses = {result.get("status") for result in data.get("results", [])}
     if "failed" in statuses or "error" in statuses or "timeout" in statuses:
-        return Status("benchmarks", FAIL, "report has failing benchmark status", "python3 benchmarks/run_benchmarks.py validate-report " + rel(report))
+        return Status("benchmarks", FAIL, "report has failing benchmark status", "python3 benchmarks/run_benchmarks.py validate-report " + rel(report), "test_fail")
+    if data.get("dry_run") is True:
+        return Status("benchmarks", BLOCK, "benchmark report is dry-run planning evidence only", "python3 benchmarks/run_benchmarks.py --strict-missing", "scaffold_only")
     if "blocked" in statuses or "planned_missing_deps" in statuses or "missing_dependencies" in statuses:
-        return Status("benchmarks", BLOCK, "dry-run report records blocked/missing benchmark dependencies", "make benchmarks")
-    return Status("benchmarks", PASS, "benchmark dry-run report has no blocked entries", "none")
+        return Status("benchmarks", BLOCK, "benchmark report records blocked/missing benchmark dependencies", "make benchmarks", "tool_blocker")
+    return Status("benchmarks", PASS, "benchmark report records executed results with no blocked entries", "none", "generated_artifact")
+
+
+def product_status() -> Status:
+    result = subprocess.run(
+        [sys.executable, "scripts/product_check.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    evidence = " ".join(lines)[:220] if lines else "command produced no output"
+    if "product release check failed:" in result.stdout:
+        return Status(
+            "product-package",
+            BLOCK,
+            evidence,
+            "close package/FPGA/KiCad/PD release blockers or keep product claim below fabrication",
+            "release_blocker",
+        )
+    if result.returncode == 0:
+        return Status("product-package", PASS, evidence, "none", "command_pass")
+    return Status("product-package", FAIL, evidence, "make product-check", "command_fail")
 
 
 def collect_statuses() -> list[Status]:
@@ -202,7 +321,7 @@ def collect_statuses() -> list[Status]:
         command_status("architecture-docs", [sys.executable, "scripts/docs_check.py"], "make docs-check"),
         toolchain_status(),
         command_status("platform-contract", [sys.executable, "scripts/check_platform_contract.py"], "make platform-contract-check"),
-        command_status("software-bsp", [sys.executable, "scripts/check_software_bsp.py", "all"], "make software-bsp-check"),
+        software_bsp_status(),
         command_status(
             "real-world-release-gates",
             [sys.executable, "scripts/check_real_world_gates.py"],
@@ -238,7 +357,7 @@ def collect_statuses() -> list[Status]:
         qemu_status(),
         renode_status(),
         command_status("pd-contract", [sys.executable, "scripts/check_pd_preflight.py"], "make pd-contract-check"),
-        command_status("product-package", [sys.executable, "scripts/product_check.py"], "make product-check"),
+        product_status(),
         benchmark_status(),
         artifact_status(
             "release-pipeline",
@@ -265,6 +384,7 @@ def print_json(statuses: list[Status]) -> None:
             "subsystem": item.subsystem,
             "status": item.status.lower(),
             "evidence": item.evidence,
+            "evidence_class": item.evidence_class,
             "next_step": item.next_step,
         }
         for item in statuses

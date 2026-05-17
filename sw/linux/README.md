@@ -9,6 +9,7 @@ sw/linux/drivers/hello/Kconfig
 sw/linux/drivers/hello/Makefile
 sw/linux/scripts/import-linux-bsp.sh
 sw/linux/dts/openphone-hello.dts
+sw/linux/drivers/hello/hello_platform_contract.h
 sw/linux/drivers/hello/hello-npu.c
 sw/linux/drivers/hello/hello-dma.c
 sw/linux/tests/hello-mmio-smoke.c
@@ -37,12 +38,13 @@ python3 sw/check_bsp_scaffolds.py linux
 Expected output:
 
 ```text
-linux BSP check passed.
 linux: scaffold audit
   local command: make linux-bsp-check
   expected output: linux BSP check passed.
   dependency blocker: external Linux kernel checkout plus integration of drivers/misc/openphone-hello
   status: clear
+linux BSP check failed:
+  - linux BSP BLOCKED: missing evidence for external Linux kernel build, DTB validation, and runtime driver smoke transcript: docs/evidence/linux/openphone_hello_kernel_build.log, docs/evidence/linux/openphone_hello_dtb_check.log, docs/evidence/linux/hello-mmio-smoke.log
 ```
 
 Dependency blocker: a real Linux boot/image check requires an external kernel
@@ -60,6 +62,7 @@ sw/linux/scripts/import-linux-bsp.sh /path/to/linux
 mkdir -p /path/to/linux/drivers/misc/openphone-hello
 rsync -a sw/linux/drivers/hello/ /path/to/linux/drivers/misc/openphone-hello/
 cp sw/linux/dts/openphone-hello.dts /path/to/linux/arch/riscv/boot/dts/openphone/
+cp sw/platform/generated/hello_platform_contract.h /path/to/linux/drivers/misc/openphone-hello/hello_platform_contract.h
 ```
 
 Then add these external-tree fragments:

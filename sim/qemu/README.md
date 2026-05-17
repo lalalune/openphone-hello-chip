@@ -25,6 +25,11 @@ and runs a bounded QEMU smoke that expects the UART banner:
 openphone hello qemu
 ```
 
+On a passing executable smoke, the captured serial transcript is archived at
+`build/reports/qemu_smoke.log`. A QEMU status report may be treated as executed
+software-reference evidence only when both `STATUS: PASS qemu.check` and that
+banner-bearing transcript are present.
+
 Each stage prints an actionable `STATUS: PASS`, `STATUS: BLOCKED`, or
 `STATUS: FAIL` line. If the RISC-V toolchain or QEMU is missing, the executable
 smoke is explicitly reported as blocked after the semantic checks pass.

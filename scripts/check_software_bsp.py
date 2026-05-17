@@ -22,6 +22,12 @@ TARGETS = {
             "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke",
         ],
         "contract_terms": ["BR2_EXTERNAL_OPENPHONE_HELLO_PATH", "HELLO_NPU_BASE", "HELLO_DISPLAY_BASE", "HELLO_DMA_BASE"],
+        "evidence": [
+            "docs/evidence/buildroot/openphone_hello_defconfig.log",
+            "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
+            "docs/evidence/buildroot/hello-mmio-smoke.log",
+        ],
+        "evidence_note": "external Buildroot image build plus hello MMIO smoke transcript",
     },
     "linux": {
         "readme": ROOT / "sw/linux/README.md",
@@ -30,11 +36,18 @@ TARGETS = {
             "sw/linux/drivers/hello/Makefile",
             "sw/linux/scripts/import-linux-bsp.sh",
             "sw/linux/dts/openphone-hello.dts",
+            "sw/linux/drivers/hello/hello_platform_contract.h",
             "sw/linux/drivers/hello/hello-npu.c",
             "sw/linux/drivers/hello/hello-dma.c",
             "sw/linux/tests/hello-mmio-smoke.c",
         ],
-        "contract_terms": ["CONFIG_OPENPHONE_HELLO_NPU", "CONFIG_OPENPHONE_HELLO_DMA", "openphone,hello-npu", "openphone,hello-dma", "openphone,hello-display"],
+        "contract_terms": ["CONFIG_OPENPHONE_HELLO_NPU", "CONFIG_OPENPHONE_HELLO_DMA", "openphone,hello-npu", "openphone,hello-dma", "openphone,hello-display", "#include \"hello_platform_contract.h\""],
+        "evidence": [
+            "docs/evidence/linux/openphone_hello_kernel_build.log",
+            "docs/evidence/linux/openphone_hello_dtb_check.log",
+            "docs/evidence/linux/hello-mmio-smoke.log",
+        ],
+        "evidence_note": "external Linux kernel build, DTB validation, and runtime driver smoke transcript",
     },
     "aosp": {
         "readme": ROOT / "sw/aosp-device/README.md",
@@ -50,6 +63,13 @@ TARGETS = {
             "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
         ],
         "contract_terms": ["openphone_ai_soc", "hello_npu", "hwcomposer"],
+        "evidence": [
+            "docs/evidence/android/openphone_ai_soc_lunch.log",
+            "docs/evidence/android/openphone_ai_soc_vendorimage.log",
+            "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+            "docs/evidence/android/cuttlefish_riscv64_boot.log",
+        ],
+        "evidence_note": "external AOSP lunch/vendorimage/VINTF logs plus Cuttlefish or equivalent boot transcript",
     },
 }
 
@@ -83,15 +103,16 @@ def check_aosp_product_glue(errors: list[str]) -> None:
                 errors.append(f"AOSP VINTF manifest missing XML marker {term}")
 
 
-def check_target(name: str) -> list[str]:
+def check_target(name: str) -> tuple[list[str], list[str]]:
     spec = TARGETS[name]
     errors: list[str] = []
+    blockers: list[str] = []
     check_contract(errors)
 
     readme = spec["readme"]
     if not readme.is_file():
         errors.append(f"{readme.relative_to(ROOT)} is missing")
-        return errors
+        return errors, blockers
 
     text = readme.read_text(errors="ignore")
     if "placeholder" in text.lower():
@@ -116,18 +137,35 @@ def check_target(name: str) -> list[str]:
     if name == "aosp":
         check_aosp_product_glue(errors)
 
-    return errors
+    missing_evidence = [path for path in spec.get("evidence", []) if not (ROOT / path).is_file()]
+    if missing_evidence:
+        blockers.append(
+            f"{name} BSP BLOCKED: missing evidence for {spec['evidence_note']}: "
+            + ", ".join(missing_evidence)
+        )
+
+    return errors, blockers
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
+    parser.add_argument(
+        "--scaffold-only",
+        action="store_true",
+        help="Check only repo-local scaffold files and ignore external build/boot evidence.",
+    )
+    parser.add_argument(
+        "--require-evidence",
+        action="store_true",
+        help="Return nonzero when external build/boot evidence logs are missing.",
+    )
     args = parser.parse_args()
 
     names = TARGETS.keys() if args.target == "all" else [args.target]
     failed = False
     for name in names:
-        errors = check_target(name)
+        errors, blockers = check_target(name)
         scaffold = subprocess.run(
             [sys.executable, "sw/check_bsp_scaffolds.py", name],
             cwd=ROOT,
@@ -140,13 +178,21 @@ def main() -> int:
             print(scaffold.stderr, end="", file=sys.stderr)
         if scaffold.returncode:
             errors.append(f"{name} scaffold audit failed")
-        if errors:
+        evidence_required = args.require_evidence and not args.scaffold_only
+        if errors or (blockers and evidence_required):
             failed = True
             print(f"{name} BSP check failed:")
             for error in errors:
                 print(f"  - {error}")
+            if evidence_required:
+                for blocker in blockers:
+                    print(f"  - {blocker}")
         else:
             print(f"{name} BSP check passed.")
+        if blockers:
+            print(f"{name} BSP external evidence blocked:")
+            for blocker in blockers:
+                print(f"  - {blocker}")
 
     return 1 if failed else 0
 

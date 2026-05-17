@@ -14,11 +14,7 @@
 #include <linux/of_address.h>
 #include <linux/platform_device.h>
 
-#define HELLO_NPU_BASE 0x10020000u
-#define HELLO_NPU_OP_A_OFFSET 0x00u
-#define HELLO_NPU_OP_B_OFFSET 0x04u
-#define HELLO_NPU_RESULT_OFFSET 0x08u
-#define HELLO_NPU_CTRL_STATUS_OFFSET 0x0cu
+#include "hello_platform_contract.h"
 
 struct hello_npu {
 	void __iomem *regs;

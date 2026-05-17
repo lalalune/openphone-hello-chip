@@ -77,11 +77,13 @@ All registers are 32-bit little-endian words. Writes to reserved registers are i
 
 | Offset | Name | Access | Description |
 | ---: | --- | --- | --- |
-| `0x00` | `FB_BASE` | RW | Framebuffer base placeholder |
+| `0x00` | `FB_BASE` | RW | Framebuffer base address; top-level scanout currently fetches from the `0x8000_0000` SRAM-backed DRAM aperture |
 | `0x04` | `MODE` | RW | `{height[15:0], width[15:0]}` |
 | `0x08` | `FORMAT` | RW | FourCC-like format value |
 | `0x0C` | `ENABLE` | RW | Bit 0 enables scanout |
 | `0x10` | `VSYNC` | RO | Bit 0 is vsync IRQ level |
+| `0x14` | `UNDERFLOW_COUNT` | RW1C-like | Counts active pixels that could not fetch framebuffer data |
+| `0x18` | `FETCHED_PIXEL_COUNT` | RW1C-like | Counts active pixels fetched from the framebuffer client |
 
 ## Interrupt controller registers
 

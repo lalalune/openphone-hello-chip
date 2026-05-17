@@ -5,6 +5,7 @@ repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 src="$repo_dir/sw/bootrom/hello_qemu_firmware.S"
 linker="$repo_dir/sw/bootrom/linker.ld"
 checked_elf="$repo_dir/build/qemu/hello_qemu_firmware.elf"
+smoke_log="$repo_dir/build/reports/qemu_smoke.log"
 banner="openphone hello qemu"
 load_addr="0x80000000"
 uart_addr="0x10000000"
@@ -43,6 +44,17 @@ find_toolchain() {
         fi
     done
 
+    for cc in /opt/homebrew/opt/llvm/bin/clang clang; do
+        if command -v "$cc" >/dev/null 2>&1; then
+            if "$cc" --target=riscv64-unknown-elf -fuse-ld=lld -x assembler -c /dev/null -o /tmp/openphone-riscv-toolchain-test.o >/dev/null 2>&1; then
+                rm -f /tmp/openphone-riscv-toolchain-test.o
+                printf '%s\n' "$cc"
+                return 0
+            fi
+            rm -f /tmp/openphone-riscv-toolchain-test.o
+        fi
+    done
+
     return 1
 }
 
@@ -52,6 +64,7 @@ BLOCKED: no RISC-V ELF toolchain found on PATH.
 Install one of:
   - Ubuntu/Debian: apt-get install gcc-riscv64-unknown-elf
   - Other systems: riscv64-unknown-elf-gcc or riscv64-elf-gcc
+  - macOS/Homebrew LLVM: /opt/homebrew/opt/llvm/bin/clang with lld
 Or set RISCV_CC to a compatible compiler.
 EOF
 }
@@ -109,7 +122,13 @@ build_firmware() {
     }
 
     mkdir -p "$repo_dir/build/qemu"
-    if ! "$cc" -nostdlib -nostartfiles -ffreestanding \
+    if [ "$(basename "$cc")" = "clang" ]; then
+        set -- "$cc" --target=riscv64-unknown-elf -fuse-ld=lld
+    else
+        set -- "$cc"
+    fi
+
+    if ! "$@" -nostdlib -nostartfiles -ffreestanding \
         -march=rv64imac -mabi=lp64 \
         -Wl,-T,"$linker" -Wl,--build-id=none \
         -o "$checked_elf" "$src"; then
@@ -139,13 +158,18 @@ run_bounded_smoke() {
     wait "$qemu_pid" >/dev/null 2>&1 || true
 
     if grep -q "$banner" "$log"; then
-        status_line "PASS" "qemu.run" "bounded smoke saw '$banner'"
+        mkdir -p "$repo_dir/build/reports"
+        cp "$log" "$smoke_log"
+        status_line "PASS" "qemu.run" "bounded smoke saw '$banner'; archived ${smoke_log#$repo_dir/}"
         rm -f "$log"
         return 0
     fi
 
+    mkdir -p "$repo_dir/build/reports"
+    cp "$log" "$smoke_log"
     status_line "FAIL" "qemu.run" "bounded smoke did not see '$banner'"
-    echo "QEMU log: $log"
+    echo "QEMU log: $smoke_log"
+    rm -f "$log"
     return 1
 }
 

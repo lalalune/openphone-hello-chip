@@ -17,6 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RUN_QEMU = ROOT / "scripts/run_qemu.sh"
 QEMU_ELF = ROOT / "build/qemu/hello_qemu_firmware.elf"
+QEMU_LOG = ROOT / "build/reports/qemu_smoke.log"
 
 
 def write_executable(path: Path, text: str) -> None:
@@ -108,6 +109,7 @@ def test_fake_toolchain_and_qemu_pass() -> None:
     assert_contains(result.stdout, "STATUS: PASS qemu.build")
     assert_contains(result.stdout, "STATUS: PASS qemu.run")
     assert_contains(result.stdout, "STATUS: PASS qemu.check")
+    assert_contains(QEMU_LOG.read_text(errors="ignore"), "openphone hello qemu")
 
 
 def main() -> int:
@@ -118,6 +120,7 @@ def main() -> int:
         test_fake_toolchain_and_qemu_pass,
     ]
     saved = QEMU_ELF.read_bytes() if QEMU_ELF.is_file() else None
+    saved_log = QEMU_LOG.read_bytes() if QEMU_LOG.is_file() else None
     try:
         for test in tests:
             test()
@@ -128,6 +131,11 @@ def main() -> int:
         else:
             QEMU_ELF.parent.mkdir(parents=True, exist_ok=True)
             QEMU_ELF.write_bytes(saved)
+        if saved_log is None:
+            QEMU_LOG.unlink(missing_ok=True)
+        else:
+            QEMU_LOG.parent.mkdir(parents=True, exist_ok=True)
+            QEMU_LOG.write_bytes(saved_log)
     return 0
 
 

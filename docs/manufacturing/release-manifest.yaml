@@ -1,6 +1,7 @@
 release: openphone_hello_demo
 status: pipeline_scaffold
 real_world_gap_manifest: docs/manufacturing/real-world-verification-gaps.yaml
+physical_closure_work_order: docs/manufacturing/physical-closure-work-order.yaml
 blocked_gates:
   pd_release:
     blocked: true
@@ -73,6 +74,7 @@ required_artifacts:
     - fw/board-smoke/tests/smoke_plan.md
     - docs/manufacturing/hello-demo-checklist.md
     - docs/manufacturing/real-world-verification-gaps.yaml
+    - docs/manufacturing/physical-closure-work-order.yaml
   generated:
     - build/netlist/hello_chip_synth.v
     - build/reports/hello_soc_yosys.log

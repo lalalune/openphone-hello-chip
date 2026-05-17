@@ -7,7 +7,7 @@ RTL_TOP := hello_chip_top
 RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
 BUILD := build
 
-.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict project-plan-check product-check pinout-check fpga-check wifi-interface-check padframe-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check docs-check tool-versions pipeline-check archive-release clean
+.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict project-plan-check product-check pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions pipeline-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
@@ -46,8 +46,8 @@ mvp-status:
 mvp-status-strict:
 	@$(PYTHON) scripts/check_mvp_status.py --strict
 
-product-check: pinout-check fpga-check wifi-interface-check padframe-check pd-signoff-manifest-check real-world-gates-check
-	@$(PYTHON) scripts/product_check.py
+product-check: pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check pd-signoff-manifest-check real-world-gates-check
+	@$(PYTHON) scripts/product_check.py --release
 
 project-plan-check:
 	@$(PYTHON) scripts/check_project_plan.py
@@ -64,13 +64,16 @@ wifi-interface-check:
 padframe-check:
 	@$(PYTHON) scripts/check_padframe_contract.py
 
+physical-closure-work-order-check:
+	@$(PYTHON) scripts/check_physical_closure_work_order.py
+
 real-world-gates-check:
 	@$(PYTHON) scripts/check_real_world_gates.py
 
 pd-preflight-check:
 	@$(PYTHON) scripts/check_pd_preflight.py
 
-pd-contract-check: padframe-check pd-preflight-check pd-signoff-manifest-check real-world-gates-check
+pd-contract-check: padframe-check physical-closure-work-order-check pd-preflight-check pd-signoff-manifest-check real-world-gates-check
 	@echo "pd contract checks complete"
 
 pd-signoff-manifest-check:
@@ -127,6 +130,12 @@ qemu-status-test:
 renode-check: platform-contract-check
 	@scripts/run_renode.sh --check
 
+renode-check-strict: platform-contract-check
+	@REQUIRE_RENODE=1 scripts/run_renode.sh --check
+
+renode-status-test:
+	@$(PYTHON) scripts/test_renode_status.py
+
 platform-contract-check:
 	@$(PYTHON) scripts/check_platform_contract.py
 
@@ -146,6 +155,9 @@ bsp-scaffold-check:
 
 software-bsp-check:
 	@$(PYTHON) scripts/check_software_bsp.py all
+
+software-bsp-evidence-check:
+	@$(PYTHON) scripts/check_software_bsp.py all --require-evidence
 
 docs-check:
 	@$(PYTHON) scripts/docs_check.py

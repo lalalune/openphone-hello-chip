@@ -111,6 +111,8 @@ def validate_config(config: dict[str, Any], path: Path) -> None:
             for bool_key in ("pipeline_visible", "release_blocking"):
                 if bool_key in asset and not isinstance(asset[bool_key], bool):
                     raise ValueError(f"{location} model_artifacts {bool_key} must be a boolean")
+            if asset.get("placeholder_allowed") is True and asset.get("release_blocking", True) is True:
+                raise ValueError(f"{location} release-blocking model artifacts must not allow placeholders")
             if "generator" in asset:
                 generator = asset["generator"]
                 if not isinstance(generator, dict) or not isinstance(generator.get("command"), list):
@@ -290,6 +292,8 @@ def validate_report(report: dict[str, Any]) -> list[str]:
         status = result.get("status")
         if status not in VALID_RESULT_STATUSES:
             errors.append(f"{prefix}.status {status!r} is not valid")
+        if report.get("dry_run") is True and status == "passed":
+            errors.append(f"{prefix} dry-run report must not contain passed results")
         if status == "passed":
             if result.get("missing_dependencies"):
                 errors.append(f"{prefix} passed with missing_dependencies")

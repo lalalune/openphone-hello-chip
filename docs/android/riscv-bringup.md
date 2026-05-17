@@ -268,12 +268,13 @@ Every Android bring-up report must include:
 Repo-local expected output before external AOSP work:
 
 ```text
-aosp BSP check passed.
 aosp: scaffold audit
   local command: make aosp-bsp-check
   expected output: aosp BSP check passed.
   dependency blocker: external AOSP checkout with riscv64/Cuttlefish host dependencies and HAL binaries
   status: clear
+aosp BSP check failed:
+  - aosp BSP BLOCKED: missing evidence for external AOSP lunch/vendorimage/VINTF logs plus Cuttlefish or equivalent boot transcript: docs/evidence/android/openphone_ai_soc_lunch.log, docs/evidence/android/openphone_ai_soc_vendorimage.log, docs/evidence/android/openphone_ai_soc_checkvintf.log, docs/evidence/android/cuttlefish_riscv64_boot.log
 ```
 
 Sources:

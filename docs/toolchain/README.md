@@ -24,6 +24,11 @@ paths, first-line version strings, selected Python environment, Python package
 versions, and SHA-256 hashes for `requirements.txt`, `Dockerfile`, and
 `flake.nix`.
 
+The benchmark and simulator critical-gap inventory is maintained in
+`docs/toolchain/benchmark-simulator-critical-gap-audit.md`. It enumerates
+missing benchmark tools/assets, fake or fallback simulator paths, strict versus
+non-strict gate behavior, reproducibility dependencies, and GUI/non-CLI risks.
+
 ## Python environment policy
 
 The reproducible local path is a repo-owned virtualenv:

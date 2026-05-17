@@ -44,11 +44,16 @@ If an active pixel is not ready, `scan_rgb` is driven black for that pixel and
 `UNDERFLOW_COUNT` increments. Successful active-pixel reads increment
 `FETCHED_PIXEL_COUNT`.
 
-The top-level hello-chip scope currently ties the framebuffer client to a
-ready, zero-data source so the external contract remains deterministic while the
-shared memory/interconnect scanout port is still pending. Verification drives
-the display client with a memory-coupled model to prove line/pixel addressing,
-XR24 conversion, active/vsync timing, and underflow status behavior.
+The top-level hello-chip scope connects the framebuffer client to the
+debug-visible SRAM-backed DRAM aperture at `0x8000_0000`. In-aperture aligned
+read addresses return the corresponding framebuffer word; out-of-aperture or
+unaligned active scanout addresses deassert `fb_read_ready`, drive black for
+that pixel, and increment `UNDERFLOW_COUNT`. Verification covers both the
+standalone client contract and the top-level memory-coupled scanout path.
+
+This is still a one-word-at-a-time SRAM model, not a production display memory
+client. A real shared memory/interconnect scanout port still needs buffering,
+latency tolerance, bandwidth coverage, and format expansion beyond `XR24`.
 
 The first Linux driver should treat this as a simple framebuffer or DRM/KMS
 scanout device. Android should initially use software rendering and a minimal

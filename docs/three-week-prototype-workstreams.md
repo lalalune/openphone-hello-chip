@@ -23,10 +23,11 @@ Treating QEMU/Renode success as proof of the hello-chip ABI is invalid until an 
 
 Primary gaps:
 
+- Detailed RTL/SoC gap inventory is maintained in `docs/project/rtl-soc-critical-gap-audit.md` and enforced as open machine-readable work orders by `verify/rtl_gap_work_order.yaml`.
 - No real CPU, cache/MMU, memory controller, or shared-memory path in pad-level RTL.
-- DMA has no memory master read/write interface.
+- DMA has a prototype AXI-Lite memory master, but no production memory hierarchy, coherency policy, long-burst coverage, or throughput evidence.
 - NPU is register-datapath only: no descriptors, queue, scratchpad, tensor layout, or backpressure.
-- Display generates a pattern rather than fetching framebuffer memory.
+- Display has a top-level SRAM-backed framebuffer read path, but no production framebuffer client, panel PHY/DSI bridge, format conversion pipeline, or hardware-in-loop evidence.
 - Formal is shallow BMC and misses AXI-Lite, DRAM, interrupt controller, display, reset, and CPU-contract wrappers.
 
 Immediate work:
@@ -34,6 +35,7 @@ Immediate work:
 - Add randomized cocotb/reference-model coverage for all NPU opcodes, DMA edge cases, display timing, and AXI-Lite stalls.
 - Add protocol assertions or an open AXI-Lite property set for interconnect, DRAM, and interrupt controller.
 - Add coverage summaries for opcodes, MMIO regions, response codes, IRQs, and AXI timing permutations.
+- Keep `make formal` fallback evidence labeled as fallback unless `REQUIRE_SBY=1` is set, and require `REQUIRE_DEEP_FORMAL=1` before treating top-level BMC as more than routine structural coverage.
 - Decide whether week-one RTL work targets the hello debug-MMIO demonstrator or the Linux-capable scaffold; they are different prototypes.
 
 ## Workstream B: software, boot, OS, simulation

@@ -55,12 +55,13 @@ python3 sw/check_bsp_scaffolds.py aosp
 Expected output:
 
 ```text
-aosp BSP check passed.
 aosp: scaffold audit
   local command: make aosp-bsp-check
   expected output: aosp BSP check passed.
   dependency blocker: external AOSP checkout with riscv64/Cuttlefish host dependencies and HAL binaries
   status: clear
+aosp BSP check failed:
+  - aosp BSP BLOCKED: missing evidence for external AOSP lunch/vendorimage/VINTF logs plus Cuttlefish or equivalent boot transcript: docs/evidence/android/openphone_ai_soc_lunch.log, docs/evidence/android/openphone_ai_soc_vendorimage.log, docs/evidence/android/openphone_ai_soc_checkvintf.log, docs/evidence/android/cuttlefish_riscv64_boot.log
 ```
 
 Dependency blocker: a real Android build requires an external AOSP checkout,
@@ -141,4 +142,5 @@ make docs-check
 ```
 
 `docs-check` does not currently inspect this AOSP tree directly, so
-`aosp-bsp-check` is the primary local guard for this ownership area.
+`aosp-bsp-check` is the primary local guard for this ownership area. It must
+remain BLOCKED until external AOSP build and boot evidence is checked in.

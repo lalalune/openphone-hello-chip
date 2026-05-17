@@ -259,3 +259,29 @@ async def display_enable_gates_vsync(dut):
         await RisingEdge(dut.clk)
         seen = seen or int(dut.irq_vsync.value) == 1
     assert seen
+
+
+@cocotb.test()
+async def display_fetches_top_level_dram_framebuffer(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    for idx, pixel in enumerate((0x00112233, 0x00445566, 0x00778899, 0x00AABBCC)):
+        await write32(dut, 0x8000_0000 + idx * 4, pixel)
+
+    await write32(dut, 0x1003_0000, 0x8000_0000)
+    await write32(dut, 0x1003_0004, (1 << 16) | 4)
+    await write32(dut, 0x1003_0014, 1)
+    await write32(dut, 0x1003_0018, 1)
+    await write32(dut, 0x1003_000C, 1)
+
+    seen_rgb = set()
+    for _ in range(8):
+        await Timer(1, units="ns")
+        if int(dut.u_display.scan_active.value) and int(dut.u_display.fb_read_ready.value):
+            seen_rgb.add(int(dut.u_display.scan_rgb.value))
+        await RisingEdge(dut.clk)
+
+    assert seen_rgb & {0x112233, 0x445566, 0x778899, 0xAABBCC}
+    assert await read32(dut, 0x1003_0014) == 0
+    assert await read32(dut, 0x1003_0018) >= 4
