@@ -2,14 +2,10 @@
 /*
  * OpenPhone hello display: simple-framebuffer compatible glue.
  *
- * The hello-chip display engine is a scan-out block driven from registers at
- * HELLO_DISPLAY_BASE. This driver does not implement DRM/KMS yet; instead it
- * programs FB_BASE / MODE / FORMAT / ENABLE from device tree properties and
- * relies on simplefb (compatible "simple-framebuffer") in the same DT node
- * (or a sibling node) to expose the framebuffer to userspace as /dev/fb0.
- *
- * That split lets a future DRM driver replace this glue without forcing the
- * BSP smoke tools or hwcomposer stub to change.
+ * Programs FB_BASE / MODE / FORMAT / ENABLE from device tree properties and
+ * relies on simplefb (compatible "simple-framebuffer") in a sibling DT node
+ * to expose /dev/fb0 to userspace. A future DRM/KMS driver can replace this
+ * glue without breaking the userspace contract.
  */
 
 #include <linux/io.h>
@@ -74,7 +70,6 @@ static int openphone_hello_display_probe(struct platform_device *pdev)
 	d->dev = &pdev->dev;
 	platform_set_drvdata(pdev, d);
 
-	/* Read defaults from DT, fall back to platform-contract reset values. */
 	if (of_property_read_u32(pdev->dev.of_node, "openphone,mode", &d->mode))
 		d->mode = 0x01E00280u;
 	if (of_property_read_u32(pdev->dev.of_node, "openphone,format",
