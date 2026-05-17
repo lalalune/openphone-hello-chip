@@ -1,15 +1,50 @@
-# Init scaffold for the OpenPhone hello AOSP target.
-# External AOSP integration must provide the hello_npu HAL binary.
+# Init v0 scaffold for openphone_ai_soc (Android).
+#
+# Backing contract: sw/platform/hello_platform_contract.json
+# Backing kernel node: /dev/hello-npu (provided by drivers/misc/openphone-hello).
+#
+# Policy:
+#   - The hello_npu HAL only starts when vendor.hello_npu.ready=1. This
+#     property is set by a future board-specific gate (e.g. probe success in
+#     the kernel driver pushed by a vendor.init action). Until then, the HAL
+#     remains stopped so vendorimage cannot silently advertise an unbacked
+#     service.
+#   - The hwcomposer HAL is the only graphics HAL declared. There is no
+#     surfaceflinger override and no GLES library mapping.
+#   - No audio, camera, radio, BT, WiFi, sensors, or thermal services.
+
+on early-init
+    # Ensure vendor.hello_npu.ready starts not-ready, even if a stale
+    # persisted value would otherwise auto-start the HAL.
+    setprop vendor.hello_npu.ready 0
 
 on post-fs
-    mkdir /dev/hello 0755 system system
+    # /dev/hello-npu is created by the kernel misc-device driver. Init only
+    # enforces user-space ownership and mode for the HAL.
+    chown system system /dev/hello-npu
+    chmod 0660 /dev/hello-npu
+    # Vendor scratch directory for the HAL (no persistent state in v0).
+    mkdir /mnt/vendor/hello_npu 0770 system system
 
-service vendor.hello_npu /vendor/bin/hw/hello_npu.default
+service vendor.hwcomposer-2-4 /vendor/bin/hw/android.hardware.graphics.composer@2.4-service.openphone_ai_soc
+    interface android.hardware.graphics.composer@2.4::IComposer default
+    class hal animation
+    user system
+    group graphics drmrpc
+    capabilities SYS_NICE
+    onrestart restart surfaceflinger
+    writepid /dev/cpuset/system-background/tasks
+
+service vendor.hello_npu /vendor/bin/hw/vendor.openphone.hello_npu@1.0-service
+    interface vendor.openphone.hello_npu@1.0::IHelloNpu default
     class hal
     user system
-    group system graphics
+    group system
     disabled
     oneshot
 
 on property:vendor.hello_npu.ready=1
     start vendor.hello_npu
+
+on property:vendor.hello_npu.ready=0
+    stop vendor.hello_npu
