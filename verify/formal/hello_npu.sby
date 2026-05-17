@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc
+
+[script]
+read -formal hello_npu.sv hello_npu_formal.sv
+prep -top hello_npu_formal
+
+[files]
+rtl/npu/hello_npu.sv
+verify/formal/hello_npu_formal.sv

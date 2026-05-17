@@ -1,0 +1,11 @@
+using sysbus
+
+cpu: CPU.RiscV64 @ sysbus
+    cpuType: "rv64gc"
+    timeProvider: empty
+
+mem: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x100000
+
+uart: UART.LiteX_UART @ sysbus 0x10000000
+    IRQ -> cpu@1

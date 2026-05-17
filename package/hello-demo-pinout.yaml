@@ -1,0 +1,72 @@
+chip: openphone_hello_demo
+package: qfn64_placeholder
+io_voltage: 3.3V
+core_voltage: 1.8V
+notes:
+  - Placeholder package for product and PCB planning.
+  - Real foundry pad cells, ESD rules, package, and bond diagram must replace this before fabrication.
+pins:
+  - {pin: 1, name: VDDIO0, direction: power, pad_type: power, voltage_domain: io, reset: na, pull: none, drive: na, board_net: +3V3}
+  - {pin: 2, name: VSSIO0, direction: ground, pad_type: ground, voltage_domain: io, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 3, name: VDDCORE0, direction: power, pad_type: power, voltage_domain: core, reset: na, pull: none, drive: na, board_net: +1V8}
+  - {pin: 4, name: VSSCORE0, direction: ground, pad_type: ground, voltage_domain: core, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 5, name: CLK_IN, direction: input, pad_type: clock, voltage_domain: io, reset: input, pull: none, drive: na, board_net: OSC_CLK}
+  - {pin: 6, name: RST_N, direction: input, pad_type: schmitt_input, voltage_domain: io, reset: low, pull: up, drive: na, board_net: RESET_N}
+  - {pin: 7, name: DBG_VALID, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_VALID}
+  - {pin: 8, name: DBG_WRITE, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_WRITE}
+  - {pin: 9, name: DBG_ADDR0, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_ADDR0}
+  - {pin: 10, name: DBG_ADDR1, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_ADDR1}
+  - {pin: 11, name: DBG_ADDR2, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_ADDR2}
+  - {pin: 12, name: DBG_ADDR3, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_ADDR3}
+  - {pin: 13, name: DBG_WDATA0, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_WDATA0}
+  - {pin: 14, name: DBG_WDATA1, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_WDATA1}
+  - {pin: 15, name: DBG_WDATA2, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_WDATA2}
+  - {pin: 16, name: DBG_WDATA3, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_WDATA3}
+  - {pin: 17, name: DBG_RDATA0, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: MCU_DBG_RDATA0}
+  - {pin: 18, name: DBG_RDATA1, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: MCU_DBG_RDATA1}
+  - {pin: 19, name: DBG_RDATA2, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: MCU_DBG_RDATA2}
+  - {pin: 20, name: DBG_RDATA3, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: MCU_DBG_RDATA3}
+  - {pin: 21, name: DBG_READY, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: MCU_DBG_READY}
+  - {pin: 22, name: IRQ_TIMER, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: TP_IRQ_TIMER}
+  - {pin: 23, name: IRQ_DMA, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: TP_IRQ_DMA}
+  - {pin: 24, name: IRQ_NPU, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: TP_IRQ_NPU}
+  - {pin: 25, name: IRQ_VSYNC, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: TP_IRQ_VSYNC}
+  - {pin: 26, name: GPIO0, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED0}
+  - {pin: 27, name: GPIO1, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED1}
+  - {pin: 28, name: GPIO2, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED2}
+  - {pin: 29, name: GPIO3, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED3}
+  - {pin: 30, name: GPIO4, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED4}
+  - {pin: 31, name: GPIO5, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED5}
+  - {pin: 32, name: GPIO6, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED6}
+  - {pin: 33, name: GPIO7, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 8mA, board_net: LED7}
+  - {pin: 34, name: TEST_MODE, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: TEST_MODE}
+  - {pin: 35, name: JTAG_TCK, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: JTAG_TCK}
+  - {pin: 36, name: JTAG_TMS, direction: input, pad_type: digital_input, voltage_domain: io, reset: high, pull: up, drive: na, board_net: JTAG_TMS}
+  - {pin: 37, name: JTAG_TDI, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: up, drive: na, board_net: JTAG_TDI}
+  - {pin: 38, name: JTAG_TDO, direction: output, pad_type: digital_output, voltage_domain: io, reset: low, pull: none, drive: 4mA, board_net: JTAG_TDO}
+  - {pin: 39, name: DBG_LAUNCH, direction: input, pad_type: digital_input, voltage_domain: io, reset: low, pull: down, drive: na, board_net: MCU_DBG_LAUNCH}
+  - {pin: 40, name: NC1, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 41, name: NC2, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 42, name: NC3, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 43, name: VDDIO1, direction: power, pad_type: power, voltage_domain: io, reset: na, pull: none, drive: na, board_net: +3V3}
+  - {pin: 44, name: VSSIO1, direction: ground, pad_type: ground, voltage_domain: io, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 45, name: VDDCORE1, direction: power, pad_type: power, voltage_domain: core, reset: na, pull: none, drive: na, board_net: +1V8}
+  - {pin: 46, name: VSSCORE1, direction: ground, pad_type: ground, voltage_domain: core, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 47, name: VDDIO2, direction: power, pad_type: power, voltage_domain: io, reset: na, pull: none, drive: na, board_net: +3V3}
+  - {pin: 48, name: VSSIO2, direction: ground, pad_type: ground, voltage_domain: io, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 49, name: VDDCORE2, direction: power, pad_type: power, voltage_domain: core, reset: na, pull: none, drive: na, board_net: +1V8}
+  - {pin: 50, name: VSSCORE2, direction: ground, pad_type: ground, voltage_domain: core, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 51, name: NC4, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 52, name: NC5, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 53, name: NC6, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 54, name: NC7, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 55, name: VDDIO3, direction: power, pad_type: power, voltage_domain: io, reset: na, pull: none, drive: na, board_net: +3V3}
+  - {pin: 56, name: VSSIO3, direction: ground, pad_type: ground, voltage_domain: io, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 57, name: VDDCORE3, direction: power, pad_type: power, voltage_domain: core, reset: na, pull: none, drive: na, board_net: +1V8}
+  - {pin: 58, name: VSSCORE3, direction: ground, pad_type: ground, voltage_domain: core, reset: na, pull: none, drive: na, board_net: GND}
+  - {pin: 59, name: NC8, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 60, name: NC9, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 61, name: NC10, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 62, name: NC11, direction: nc, pad_type: no_connect, voltage_domain: none, reset: na, pull: none, drive: na, board_net: NC}
+  - {pin: 63, name: VDDIO4, direction: power, pad_type: power, voltage_domain: io, reset: na, pull: none, drive: na, board_net: +3V3}
+  - {pin: 64, name: VSSIO4, direction: ground, pad_type: ground, voltage_domain: io, reset: na, pull: none, drive: na, board_net: GND}

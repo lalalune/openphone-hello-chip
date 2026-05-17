@@ -1,0 +1,28 @@
+name: hello-chip
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  docker-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build tool image
+        run: docker build -t openphone-soc-tools .
+      - name: Run hello-chip regression
+        run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make clean ci-fast
+      - name: Check generated pipeline artifacts
+        run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make tool-versions && docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools python3 scripts/pipeline_check.py
+      - name: Upload regression artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hello-chip-regression
+          path: |
+            build/reports
+            build/netlist
+            verify/cocotb/results.xml
+            verify/formal/*/status
+            verify/formal/*/logfile.txt

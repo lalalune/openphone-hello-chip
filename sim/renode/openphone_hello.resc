@@ -1,0 +1,4 @@
+mach create "openphone-hello"
+machine LoadPlatformDescription @sim/renode/openphone_hello.repl
+showAnalyzer uart
+start

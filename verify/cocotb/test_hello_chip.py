@@ -1,0 +1,121 @@
+import cocotb
+from cocotb.clock import Clock
+from cocotb.triggers import RisingEdge, Timer
+
+
+async def reset(dut):
+    dut.RST_N.value = 0
+    dut.DBG_VALID.value = 0
+    dut.DBG_LAUNCH.value = 0
+    dut.DBG_WRITE.value = 0
+    dut.DBG_ADDR.value = 0
+    dut.DBG_WDATA.value = 0
+    dut.TEST_MODE.value = 0
+    dut.JTAG_TCK.value = 0
+    dut.JTAG_TMS.value = 0
+    dut.JTAG_TDI.value = 0
+    await Timer(1, units="ns")
+    for _ in range(4):
+        await RisingEdge(dut.CLK_IN)
+    dut.RST_N.value = 1
+    for _ in range(4):
+        await RisingEdge(dut.CLK_IN)
+
+
+async def dbg_pulse(dut, addr, data=0, write=False, launch=False):
+    dut.DBG_ADDR.value = addr
+    dut.DBG_WDATA.value = data
+    dut.DBG_WRITE.value = int(write)
+    dut.DBG_LAUNCH.value = int(launch)
+    dut.DBG_VALID.value = 1
+    await RisingEdge(dut.CLK_IN)
+    dut.DBG_VALID.value = 0
+    dut.DBG_WRITE.value = 0
+    dut.DBG_LAUNCH.value = 0
+    await RisingEdge(dut.CLK_IN)
+
+
+async def load_addr(dut, addr):
+    for idx in range(8):
+        await dbg_pulse(dut, idx, (addr >> (4 * idx)) & 0xF, True)
+
+
+async def load_wdata(dut, data):
+    for idx in range(8):
+        await dbg_pulse(dut, 8 + idx, (data >> (4 * idx)) & 0xF, True)
+
+
+async def write32(dut, addr, data):
+    await load_addr(dut, addr)
+    await load_wdata(dut, data)
+    await dbg_pulse(dut, 0, 0, True, True)
+
+
+async def read32(dut, addr):
+    await load_addr(dut, addr)
+    await dbg_pulse(dut, 0, 0, False, True)
+    value = 0
+    for idx in range(8):
+        await dbg_pulse(dut, idx, 0, False)
+        value |= int(dut.DBG_RDATA.value) << (4 * idx)
+    return value
+
+
+@cocotb.test()
+async def chip_debug_bridge_bootrom_gpio_npu(dut):
+    cocotb.start_soon(Clock(dut.CLK_IN, 10, units="ns").start())
+    await reset(dut)
+
+    assert await read32(dut, 0x0000_0000) == 0x4F50_534F
+    assert await read32(dut, 0x0000_0004) == 0x4348_4950
+
+    await write32(dut, 0x1000_0008, 0xA5)
+    assert await read32(dut, 0x1000_0008) == 0xA5
+    assert int(dut.GPIO.value) == 0xA5
+
+    await write32(dut, 0x1002_0000, 17)
+    await write32(dut, 0x1002_0004, 25)
+    await write32(dut, 0x1002_000C, 1)
+    for _ in range(4):
+        await RisingEdge(dut.CLK_IN)
+    assert await read32(dut, 0x1002_0008) == 42
+    assert int(dut.IRQ_NPU.value) == 1
+
+
+@cocotb.test()
+async def chip_interrupt_smoke(dut):
+    cocotb.start_soon(Clock(dut.CLK_IN, 10, units="ns").start())
+    await reset(dut)
+
+    await write32(dut, 0x1000_0010, 8)
+    for _ in range(10):
+        await RisingEdge(dut.CLK_IN)
+    assert int(dut.IRQ_TIMER.value) == 1
+
+    await write32(dut, 0x1001_0008, 64)
+    await write32(dut, 0x1001_000C, 1)
+    for _ in range(6):
+        await RisingEdge(dut.CLK_IN)
+    assert int(dut.IRQ_DMA.value) == 1
+
+    await write32(dut, 0x1003_000C, 1)
+    seen = False
+    for _ in range(260):
+        await RisingEdge(dut.CLK_IN)
+        seen = seen or int(dut.IRQ_VSYNC.value) == 1
+    assert seen
+
+
+@cocotb.test()
+async def chip_rejects_unimplemented_alias_offsets(dut):
+    cocotb.start_soon(Clock(dut.CLK_IN, 10, units="ns").start())
+    await reset(dut)
+
+    assert await read32(dut, 0x1002_0100) == 0xDEAD_BEEF
+    assert await read32(dut, 0x1002_0001) == 0xDEAD_BEEF
+
+    await write32(dut, 0x1000_0014, 0xFFFF_FFFF)
+    before = await read32(dut, 0x1000_000C)
+    await write32(dut, 0x1000_0014, 0x0000_0000)
+    after = await read32(dut, 0x1000_000C)
+    assert after >= before

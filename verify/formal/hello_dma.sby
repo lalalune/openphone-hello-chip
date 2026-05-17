@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc
+
+[script]
+read -formal hello_dma.sv hello_dma_formal.sv
+prep -top hello_dma_formal
+
+[files]
+rtl/dma/hello_dma.sv
+verify/formal/hello_dma_formal.sv

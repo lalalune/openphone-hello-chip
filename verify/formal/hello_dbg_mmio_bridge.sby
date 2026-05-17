@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 16
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal -sv hello_dbg_mmio_bridge.sv hello_dbg_mmio_bridge_formal.sv
+prep -top hello_dbg_mmio_bridge_formal
+
+[files]
+rtl/debug/hello_dbg_mmio_bridge.sv
+verify/formal/hello_dbg_mmio_bridge_formal.sv

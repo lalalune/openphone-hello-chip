@@ -1,0 +1,42 @@
+release: openphone_hello_demo
+status: pipeline_scaffold
+required_artifacts:
+  rtl:
+    - rtl/top/hello_chip_top.sv
+    - rtl/debug/hello_dbg_mmio_bridge.sv
+    - rtl/clock/hello_reset_sync.sv
+    - rtl/top/hello_soc_top.sv
+    - rtl/bootrom/hello_bootrom.sv
+    - rtl/peripherals/hello_peripherals.sv
+    - rtl/dma/hello_dma.sv
+    - rtl/npu/hello_npu.sv
+    - rtl/display/hello_display.sv
+  verification:
+    - verify/cocotb/test_hello_chip.py
+    - verify/formal/hello_dbg_mmio_bridge.sby
+    - verify/formal/hello_dbg_mmio_bridge_formal.sv
+    - verify/formal/hello_soc_top.sby
+    - verify/formal/hello_soc_top_formal.sv
+    - verify/formal/hello_dma.sby
+    - verify/formal/hello_dma_formal.sv
+    - verify/formal/hello_npu.sby
+    - verify/formal/hello_npu_formal.sv
+  product:
+    - package/hello-demo-pinout.yaml
+    - package/hello-demo-package.md
+    - package/hello-demo-pad-ring.md
+    - pd/pin_order.cfg
+    - pd/constraints/hello_soc.sdc
+    - pd/constraints/hello_soc_gf180.sdc
+    - pd/padframe/hello_demo_padframe.md
+    - board/README.md
+    - fw/board-smoke/tests/smoke_plan.md
+  generated:
+    - build/netlist/hello_chip_synth.v
+    - build/reports/hello_soc_yosys.log
+    - build/reports/tool_versions.txt
+    - verify/cocotb/results.xml
+known_waivers:
+  - The MVP is a padless digital macro/top wrapper, not a foundry padframe-inclusive standalone chip.
+  - OpenLane/OpenROAD signoff artifacts are required before any tapeout claim.
+  - The NPU, DMA, and display blocks are behavioral contract stubs, not production IP.

@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import re
+import sys
+
+
+VECTOR_PIN_RE = re.compile(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)(\d+)$")
+
+
+def parse_pinout(path: Path) -> set[str]:
+    pins: set[str] = set()
+    for line in path.read_text().splitlines():
+        match = re.search(r"name:\s*([A-Za-z0-9_]+)", line)
+        if not match:
+            continue
+        name = match.group(1)
+        if name.startswith(("VDD", "VSS", "NC")):
+            continue
+        vector = VECTOR_PIN_RE.match(name)
+        if vector:
+            pins.add(vector.group(1))
+        else:
+            pins.add(name)
+    return pins
+
+
+def parse_ports(path: Path) -> set[str]:
+    text = path.read_text()
+    module = re.search(r"module\s+hello_chip_top\s*\((.*?)\);", text, re.S)
+    if not module:
+        raise SystemExit("hello_chip_top module header not found")
+    ports: set[str] = set()
+    for raw in module.group(1).splitlines():
+        raw = raw.split("//", 1)[0].strip().rstrip(",")
+        if not raw:
+            continue
+        name = raw.split()[-1]
+        name = name.split("[", 1)[0]
+        ports.add(name)
+    return ports
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[2]
+    pinout = parse_pinout(root / "package/hello-demo-pinout.yaml")
+    ports = parse_ports(root / "rtl/top/hello_chip_top.sv")
+
+    missing_ports = sorted(pinout - ports)
+    extra_ports = sorted(ports - pinout)
+
+    if missing_ports or extra_ports:
+        if missing_ports:
+            print("Pinout names missing from hello_chip_top:")
+            for name in missing_ports:
+                print(f"  - {name}")
+        if extra_ports:
+            print("hello_chip_top ports missing from pinout:")
+            for name in extra_ports:
+                print(f"  - {name}")
+        return 1
+
+    print("pinout matches hello_chip_top ports")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

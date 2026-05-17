@@ -1,0 +1,25 @@
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc
+
+[script]
+read -formal hello_bootrom.sv
+read -formal hello_peripherals.sv
+read -formal hello_dma.sv
+read -formal hello_npu.sv
+read -formal hello_display.sv
+read -formal hello_soc_top.sv
+read -formal hello_soc_top_formal.sv
+prep -top hello_soc_top_formal
+
+[files]
+rtl/bootrom/hello_bootrom.sv
+rtl/peripherals/hello_peripherals.sv
+rtl/dma/hello_dma.sv
+rtl/npu/hello_npu.sv
+rtl/display/hello_display.sv
+rtl/top/hello_soc_top.sv
+verify/formal/hello_soc_top_formal.sv

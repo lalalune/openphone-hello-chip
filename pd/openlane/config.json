@@ -1,0 +1,22 @@
+{
+  "DESIGN_NAME": "hello_chip_top",
+  "VERILOG_FILES": [
+    "dir::../../rtl/top/hello_chip_top.sv",
+    "dir::../../rtl/clock/hello_reset_sync.sv",
+    "dir::../../rtl/debug/hello_dbg_mmio_bridge.sv",
+    "dir::../../rtl/top/hello_soc_top.sv",
+    "dir::../../rtl/bootrom/hello_bootrom.sv",
+    "dir::../../rtl/peripherals/hello_peripherals.sv",
+    "dir::../../rtl/dma/hello_dma.sv",
+    "dir::../../rtl/npu/hello_npu.sv",
+    "dir::../../rtl/display/hello_display.sv"
+  ],
+  "CLOCK_PORT": "CLK_IN",
+  "CLOCK_PERIOD": 20,
+  "SYNTH_READ_BLACKBOX_LIB": false,
+  "FP_SIZING": "absolute",
+  "DIE_AREA": "0 0 600 600",
+  "FP_CORE_UTIL": 35,
+  "PL_TARGET_DENSITY": 0.45,
+  "RUN_HEURISTIC_DIODE_INSERTION": true
+}

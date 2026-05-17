@@ -1,0 +1,27 @@
+{
+  "DESIGN_NAME": "hello_chip_top",
+  "PDK": "sky130A",
+  "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+  "VERILOG_FILES": [
+    "dir::../../rtl/top/hello_chip_top.sv",
+    "dir::../../rtl/clock/hello_reset_sync.sv",
+    "dir::../../rtl/debug/hello_dbg_mmio_bridge.sv",
+    "dir::../../rtl/top/hello_soc_top.sv",
+    "dir::../../rtl/bootrom/hello_bootrom.sv",
+    "dir::../../rtl/peripherals/hello_peripherals.sv",
+    "dir::../../rtl/dma/hello_dma.sv",
+    "dir::../../rtl/npu/hello_npu.sv",
+    "dir::../../rtl/display/hello_display.sv"
+  ],
+  "CLOCK_PORT": "CLK_IN",
+  "CLOCK_PERIOD": 20,
+  "SIGNOFF_SDC_FILE": "dir::../constraints/hello_soc.sdc",
+  "FP_PIN_ORDER_CFG": "dir::../pin_order.cfg",
+  "FP_SIZING": "absolute",
+  "DIE_AREA": "0 0 650 650",
+  "CORE_AREA": "35 35 615 615",
+  "FP_CORE_UTIL": 35,
+  "PL_TARGET_DENSITY": 0.45,
+  "RT_MAX_LAYER": "met5",
+  "RUN_HEURISTIC_DIODE_INSERTION": true
+}
