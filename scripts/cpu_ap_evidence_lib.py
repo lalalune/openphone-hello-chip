@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SELECTED_MANIFEST = ROOT / "generators/chipyard/openphone-rocket-manifest.json"
-IMPORT_TEMPLATE = ROOT / "generators/chipyard/import-manifest.template.json"
+SELECTED_MANIFEST = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
+IMPORT_TEMPLATE = ROOT / "docs/generators/chipyard/import-manifest.template.json"
 GENERATED_MANIFEST = ROOT / "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/cpu-ap-evidence-manifest.json"
 PLATFORM_CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
@@ -122,7 +122,11 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
         errors,
     )
     require(
-        manifest.get("selected_manifest") == rel(SELECTED_MANIFEST),
+        manifest.get("selected_manifest")
+        in {
+            rel(SELECTED_MANIFEST),
+            "generators/chipyard/openphone-rocket-manifest.json",
+        },
         "CPU/AP evidence manifest selected_manifest path drifted",
         errors,
     )
