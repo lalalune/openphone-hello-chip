@@ -71,6 +71,16 @@ ALLOWLIST = (
         "--build-stub",
         "QEMU README documents the compatibility alias while the preferred path is firmware.",
     ),
+    AllowedFinding(
+        "verify/cocotb/test_clint_timer_irq.py",
+        "CLINT timer interrupt entry scaffold",
+        "Skipped fail-closed test contract for future CLINT integration.",
+    ),
+    AllowedFinding(
+        "verify/cocotb/test_plic_claim_threshold.py",
+        "PLIC enable/threshold/claim scaffold",
+        "Executable PLIC contract test plus documented future threshold extension.",
+    ),
 )
 
 

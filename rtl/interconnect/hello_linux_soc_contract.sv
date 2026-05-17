@@ -96,6 +96,12 @@ module hello_linux_soc_contract #(
     logic        wr_dma_owner, rd_dma_owner;
     logic        wr_active, rd_active;
     logic        dma_irq;
+    logic        unused_ready;
+    logic        unused_valid;
+    logic [1:0]  unused_resp;
+    logic [31:0] unused_data;
+    logic [2:0]  unused_grants;
+    logic [2:0]  unused_timeouts;
     /* verilator lint_off UNUSEDSIGNAL */
     logic        unused_dma_mmio;
     /* verilator lint_on UNUSEDSIGNAL */
@@ -130,6 +136,40 @@ module hello_linux_soc_contract #(
         .m_axil_rready(cpu_rready),
         .m_axil_rdata(cpu_rdata),
         .m_axil_rresp(cpu_rresp),
+        .dma_m_awvalid(1'b0),
+        .dma_m_awready(unused_ready),
+        .dma_m_awaddr(32'h0),
+        .dma_m_wvalid(1'b0),
+        .dma_m_wready(unused_ready),
+        .dma_m_wdata(32'h0),
+        .dma_m_wstrb(4'h0),
+        .dma_m_bvalid(unused_valid),
+        .dma_m_bready(1'b1),
+        .dma_m_bresp(unused_resp),
+        .dma_m_arvalid(1'b0),
+        .dma_m_arready(unused_ready),
+        .dma_m_araddr(32'h0),
+        .dma_m_rvalid(unused_valid),
+        .dma_m_rready(1'b1),
+        .dma_m_rdata(unused_data),
+        .dma_m_rresp(unused_resp),
+        .dbg_m_awvalid(1'b0),
+        .dbg_m_awready(unused_ready),
+        .dbg_m_awaddr(32'h0),
+        .dbg_m_wvalid(1'b0),
+        .dbg_m_wready(unused_ready),
+        .dbg_m_wdata(32'h0),
+        .dbg_m_wstrb(4'h0),
+        .dbg_m_bvalid(unused_valid),
+        .dbg_m_bready(1'b1),
+        .dbg_m_bresp(unused_resp),
+        .dbg_m_arvalid(1'b0),
+        .dbg_m_arready(unused_ready),
+        .dbg_m_araddr(32'h0),
+        .dbg_m_rvalid(unused_valid),
+        .dbg_m_rready(1'b1),
+        .dbg_m_rdata(unused_data),
+        .dbg_m_rresp(unused_resp),
         .dram_awvalid(cpu_mem_awvalid),
         .dram_awready(cpu_mem_awready),
         .dram_awaddr(cpu_mem_awaddr),
@@ -180,7 +220,9 @@ module hello_linux_soc_contract #(
         .dma_rvalid(dma_mmio_rvalid),
         .dma_rready(dma_mmio_rready),
         .dma_rdata(dma_mmio_rdata),
-        .dma_rresp(dma_mmio_rresp)
+        .dma_rresp(dma_mmio_rresp),
+        .arb_grant(unused_grants),
+        .timeout_irq(unused_timeouts)
     );
 
     assign dram_awvalid = !wr_active && (grant_dma_wr ? dma_mem_awvalid : cpu_mem_awvalid);

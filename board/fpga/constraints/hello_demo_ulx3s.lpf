@@ -10,8 +10,8 @@
 # header pins on the GPIO connector. If a future revision changes the
 # pin map these comments are the assumption to revisit.
 #
-# This file is the bring-up baseline. Replace any pin marked TODO
-# before a release bitstream is signed off.
+# This file is the bring-up baseline. Pin assignments are planning defaults
+# and must be revalidated before a release bitstream is signed off.
 
 ############################
 # Clock and reset

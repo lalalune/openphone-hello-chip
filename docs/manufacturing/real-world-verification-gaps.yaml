@@ -1,6 +1,7 @@
 verification_scope: pd_package_si_pi_board_manufacturing
 status: release_blocked
 owner: product_physical_closure
+last_updated: 2026-05-17
 evidence_root: docs/manufacturing/evidence
 release_gates:
   pd_release:
@@ -33,6 +34,9 @@ required_gap_categories:
   - pdn_current_budget
   - board_fabrication
   - manufacturing_test
+  - rtl_peripherals
+  - bringup_characterization
+  - rf_compliance
 gaps:
   - id: routed_pd_signoff
     category: physical_design
@@ -44,6 +48,7 @@ gaps:
       - Final routed GDS or OASIS from the selected PDK flow.
       - Final DEF, gate netlist, and SDC for the same run.
       - Clean or waived DRC, LVS, antenna, and STA reports from one run directory.
+
   - id: selected_pdk_corner_record
     category: physical_design
     release_gate: pd_release
@@ -53,6 +58,7 @@ gaps:
     required_evidence:
       - Selected PDK, standard-cell library, RC corner, voltage, temperature, and timing mode record.
       - Tool version record for OpenLane/OpenROAD, Magic/KLayout, Netgen, and STA.
+
   - id: foundry_io_padframe_release
     category: padframe
     release_gate: tapeout_release
@@ -63,6 +69,7 @@ gaps:
       - Foundry IO, power, ground, corner, and ESD cell list.
       - Padframe-inclusive DRC and LVS reports.
       - Approved pad-ring placement and power-domain strategy.
+
   - id: package_vendor_drawing
     category: package
     release_gate: tapeout_release
@@ -72,6 +79,7 @@ gaps:
     required_evidence:
       - Package vendor drawing with dimensions, tolerances, exposed pad data, and pin-1 orientation.
       - Package material and assembly constraints.
+
   - id: bond_diagram_release
     category: package
     release_gate: tapeout_release
@@ -81,6 +89,7 @@ gaps:
     required_evidence:
       - Bond diagram mapping die pads to package pins.
       - Cross-probe report proving package, padframe, RTL, and board net names agree.
+
   - id: package_electrical_model
     category: signal_integrity
     release_gate: tapeout_release
@@ -90,6 +99,7 @@ gaps:
     required_evidence:
       - IBIS, SPICE, S-parameter, or package parasitic model for clock, reset, debug, GPIO, and supplies.
       - Model provenance and version record.
+
   - id: board_stackup_and_return_paths
     category: signal_integrity
     release_gate: board_fabrication_release
@@ -97,8 +107,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - Released PCB stackup with impedance targets.
+      - Released PCB stackup with impedance targets (50Ω single-ended on L1/L4 over 0.2mm dielectric to L2 GND).
       - Return-path and reference-plane review for clock, reset, debug, GPIO, IRQ, and JTAG nets.
+
   - id: board_signal_integrity_report
     category: signal_integrity
     release_gate: board_fabrication_release
@@ -108,6 +119,7 @@ gaps:
     required_evidence:
       - Board-level SI simulation or review for clock, reset, debug nibble, GPIO, IRQ, and JTAG nets.
       - Accepted overshoot, undershoot, ringing, setup, and hold margins.
+
   - id: power_integrity_report
     category: power_integrity
     release_gate: board_fabrication_release
@@ -115,8 +127,9 @@ gaps:
     evidence_manifest: pd/signoff/manifest.yaml
     local_check: scripts/check_pd_signoff.py
     required_evidence:
-      - Rail impedance and decoupling review for VDDCORE and VDDIO.
+      - Rail impedance and decoupling review for VDDCORE (TPS62150, 0.8V) and VDDIO (TLV74033/TLV74018, 3.3V/1.8V).
       - Return-current and plane-continuity review.
+
   - id: post_route_power_budget
     category: pdn_current_budget
     release_gate: tapeout_release
@@ -126,6 +139,7 @@ gaps:
     required_evidence:
       - Post-route power report for selected workloads and clocks.
       - VDDCORE and VDDIO static, dynamic, peak, and margin current budget.
+
   - id: ir_drop_em_report
     category: pdn_current_budget
     release_gate: tapeout_release
@@ -133,8 +147,9 @@ gaps:
     evidence_manifest: pd/signoff/manifest.yaml
     local_check: scripts/check_pd_signoff.py
     required_evidence:
-      - IR-drop and EM reports for selected corners.
-      - Waivers or redesign actions for any exceeded limits.
+      - IR-drop and EM reports for selected corners (TT 25°C, SS 125°C).
+      - Waivers or redesign actions for any exceeded limits (IR drop >5% VDD, EM >foundry limit).
+
   - id: board_current_limit_plan
     category: pdn_current_budget
     release_gate: board_fabrication_release
@@ -142,8 +157,9 @@ gaps:
     evidence_manifest: pd/signoff/manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - Bench supply current limits for first article bring-up.
-      - Fuse, regulator, and thermal current-limit review for VDDCORE and VDDIO.
+      - Bench supply current limits for first article bring-up (100mA initial, per rail).
+      - Fuse, regulator (TPS62150, TLV74033, TLV74018), and thermal current-limit review for VDDCORE and VDDIO.
+
   - id: board_footprint_release
     category: board_fabrication
     release_gate: board_fabrication_release
@@ -151,8 +167,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - PCB symbol and footprint generated from the package vendor drawing.
+      - PCB symbol and footprint generated from the package vendor drawing (not placeholder QFN64 assumptions).
       - Pin-1, courtyard, paste, solder mask, and assembly-layer review.
+
   - id: kicad_project_release
     category: board_fabrication
     release_gate: board_fabrication_release
@@ -160,8 +177,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - KiCad project, schematic, and PCB files checked in under board/kicad/hello-demo.
+      - KiCad project, schematic (5-page hierarchy), and PCB files checked in under board/kicad/hello-demo.
       - Headless ERC, DRC, plot, Gerber, drill, BOM, and position export transcripts.
+
   - id: footprint_source_checksum
     category: board_fabrication
     release_gate: board_fabrication_release
@@ -169,8 +187,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - Checksum or immutable revision for the package-vendor drawing used to generate the footprint.
+      - SHA-256 checksum or immutable revision for the package-vendor drawing used to generate the footprint.
       - Cross-probe report proving package pin numbers, KiCad symbol pins, footprint pads, and board nets match.
+
   - id: assembly_dfm_review
     category: board_fabrication
     release_gate: board_fabrication_release
@@ -178,8 +197,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - Assembly-house DFM review for package, stencil, reflow, inspection, and rework constraints.
-      - Fabrication notes approved by the board vendor.
+      - Assembly-house DFM review for QFN package, 0.15mm stencil, SAC305 reflow (peak 245°C), inspection (AOI + X-ray), and rework constraints.
+      - Fabrication notes approved by the board vendor (IPC Class 2, ENIG surface finish).
+
   - id: first_article_smoke_limits
     category: manufacturing_test
     release_gate: board_fabrication_release
@@ -187,5 +207,141 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - First-article power-on limits, expected rail currents, and stop conditions.
-      - Oscillator, reset, debug, JTAG, IRQ, and GPIO smoke-test record.
+      - First-article power-on limits (100mA per rail initial limit), expected rail currents, and stop conditions (>85°C surface temperature or overcurrent latch).
+      - Oscillator (24 MHz), reset (MAX823L 140ms pulse), debug (JTAG IDCODE), IRQ, GPIO, and UART smoke-test record.
+
+  # RTL peripheral gaps — partially addressed by new work order items (2026-05-17)
+
+  - id: uart_rtl_and_test
+    category: rtl_peripherals
+    release_gate: pd_release
+    status: open
+    evidence_manifest: pd/signoff/manifest.yaml
+    local_check: scripts/check_pd_signoff.py
+    required_evidence:
+      - hello_uart.sv implementing 8N1 UART with programmable baud divisor, RX/TX FIFOs, error status, and RX interrupt.
+      - cocotb test covering baud programming, loopback, FIFO, framing error, and interrupt; results_uart.xml with 0 failures.
+    work_order_item: uart_rtl_implementation
+
+  - id: clint_rtl_and_formal
+    category: rtl_peripherals
+    release_gate: pd_release
+    status: open
+    evidence_manifest: pd/signoff/manifest.yaml
+    local_check: scripts/check_pd_signoff.py
+    required_evidence:
+      - hello_clint.sv implementing RISC-V CLINT (mtime, mtimecmp, msip) per SiFive CLINT specification.
+      - Formal proof of monotonic mtime, correct MTIP assertion, and msip behavior; SBY transcript with PASS for all properties.
+    work_order_item: clint_rtl_implementation
+
+  - id: security_lifecycle_rtl
+    category: rtl_peripherals
+    release_gate: tapeout_release
+    status: open
+    evidence_manifest: pd/signoff/manifest.yaml
+    local_check: scripts/check_pd_signoff.py
+    required_evidence:
+      - hello_lifecycle_ctrl.sv implementing UNLOCKED/LOCKED/CLOSED FSM with OTP model.
+      - Updated hello_bootrom.sv gating boot on lifecycle state.
+      - cocotb test covering all three states and all illegal transition attempts.
+    work_order_item: security_lifecycle_controller
+
+  - id: opensbi_platform_bringup
+    category: rtl_peripherals
+    release_gate: tapeout_release
+    status: open
+    evidence_manifest: pd/signoff/manifest.yaml
+    local_check: scripts/check_pd_signoff.py
+    required_evidence:
+      - sw/opensbi/platform/hello/ directory with platform.c, config.mk, and platform.h matching hello_platform_contract.json.
+      - Simulated boot transcript (Renode or QEMU, clearly labeled) showing OpenSBI banner and handoff.
+    work_order_item: opensbi_platform_code
+
+  - id: linux_dts_build
+    category: rtl_peripherals
+    release_gate: tapeout_release
+    status: open
+    evidence_manifest: pd/signoff/manifest.yaml
+    local_check: scripts/check_pd_signoff.py
+    required_evidence:
+      - sw/linux/arch/riscv/boot/dts/hello/hello_soc.dts with CPU, memory, CLINT, UART, and chosen nodes.
+      - dtbs_check passing with 0 schema errors against upstream Linux DT schema.
+    work_order_item: linux_dts_dtb_build
+
+  # Bring-up characterization gaps — new entries (2026-05-17)
+
+  - id: isp_bringup_csi_phy
+    category: bringup_characterization
+    release_gate: board_fabrication_release
+    status: open
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    required_evidence:
+      - CSI-2 PHY characterization on first silicon: lane-to-lane skew measurement (target < 100ps between differential pairs), HS clock frequency verification at target rate (e.g., 400 MHz for a 800 Mbps lane), LP/HS transition timing captured on oscilloscope.
+      - Camera sensor (e.g., OV5647 or IMX219 on CSI adapter board) streaming test: V4L2 device node appears, at least one frame captured without CRC errors.
+      - Note: ISP block is a non-goal for v0 (see risk register); this gap covers the PHY characterization only, not full ISP bring-up.
+    notes: >
+      ISP computational photography and HAL3 are explicit v0 non-goals. This gap covers only
+      the physical layer characterization needed to confirm CSI PHY integrity on first silicon.
+      UVC/simple camera path per the risk register mitigation is the v0 target.
+
+  - id: audio_codec_i2s_timing
+    category: bringup_characterization
+    release_gate: board_fabrication_release
+    status: open
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    required_evidence:
+      - I2S bus timing verification between SoC I2S master and audio codec (e.g., PCM5102A or ES8388) on evaluation board: BCLK frequency matches configured sample rate (e.g., 48kHz * 64 = 3.072 MHz BCLK), LRCLK period matches frame size, DATA setup/hold meets codec requirements.
+      - Logic analyzer capture of BCLK, LRCLK, and DOUT during a sine wave playback; capture archived as .sal or .csv.
+      - ALSA/AOSP audio HAL successfully plays a 1 kHz 0 dBFS sine wave without underruns (measure SNDR >= 60 dB on audio analyzer or sound card ADC).
+    notes: >
+      Audio codec bring-up requires the audio peripheral to be implemented beyond its current
+      stub state. This gap tracks the physical verification step that occurs after RTL completion
+      and first-silicon bring-up.
+
+  - id: pmic_sequencing_verification
+    category: bringup_characterization
+    release_gate: board_fabrication_release
+    status: open
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    required_evidence:
+      - Oscilloscope capture of power-on rail sequencing on first article: VDDIO_3V3 ramp, VDDIO_1V8 ramp (follows 3.3V LDO chain), VDDCORE ramp (TPS62150 startup), nRST deassertion (140ms after VDDIO_3V3 stable), all captured on a single time base with >= 4-channel oscilloscope.
+      - Measurement shows VDDIO_1V8 starts rising no earlier than VDDIO_3V3 reaches 3.0V; VDDCORE ramp rate <= 2 ms from 0V to 0.8V; nRST deassertion occurs after all rails are within ±5% of target.
+      - Power-off sequencing capture: nRST asserts before VDDCORE falls below 0.7V; all rails discharge to < 0.1V within 500ms of input power removal.
+      - Capture archived as oscilloscope screenshot and raw waveform file (.csv or oscilloscope native format).
+
+  - id: thermal_characterization
+    category: bringup_characterization
+    release_gate: board_fabrication_release
+    status: open
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    required_evidence:
+      - Sustained workload thermal measurement: run NPU GEMM smoke workload (or equivalent synthetic CPU loop) for >= 10 minutes at ambient temperature 25°C; measure SoC package surface temperature with thermocouple or IR camera at 1-minute intervals.
+      - Report: peak junction temperature estimate (package surface + θJC from package datasheet * measured power dissipation), ambient, airflow (natural convection baseline), and current draw from bench supply during workload.
+      - Pass criteria: package surface temperature stabilizes and does not continue rising after 5 minutes; estimated junction temperature < 85°C at 25°C ambient with no forced cooling; if > 85°C, document thermal mitigation (heatspreader, airflow) needed.
+      - Thermal image or thermocouple log file archived.
+    notes: >
+      Thermal characterization is not possible before first silicon is received. This gap
+      documents the required measurement procedure and pass criteria for the first article
+      bring-up record. The power and thermal risk is tracked in the risk register.
+
+  - id: rf_compliance_wifi
+    category: rf_compliance
+    release_gate: board_fabrication_release
+    status: open
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    required_evidence:
+      - WiFi module TX power measurement: connect evaluation board running WiFi (external module per risk register — no integrated baseband) to a spectrum analyzer via calibrated attenuator; measure transmit power at the antenna connector or antenna port in 2.4 GHz and 5 GHz bands.
+      - Pass criteria: TX power within the module's certified maximum (per module FCC ID certificate); no harmonics exceeding FCC Part 15 limits (Section 15.247: <= 30 dBm EIRP at 2.4 GHz; verify against module cert).
+      - FCC Part 15 radiated emissions pre-scan: measure radiated emissions from the evaluation board (SoC + WiFi module + board) in a semi-anechoic chamber or using a LISN/near-field scan for preliminary compliance screening.
+      - Note: Full FCC certification is out of scope for v0 evaluation board; pre-scan is required to identify gross violations before product development.
+      - Capture: spectrum analyzer screenshots for 2.4 GHz and 5 GHz channels during TX burst; near-field scan or chamber measurement report.
+    notes: >
+      The integrated cellular baseband, carrier certification, and GMS certification are
+      explicit v0 non-goals per the risk register. This gap covers only WiFi TX power
+      verification and a preliminary FCC Part 15 scan for the external WiFi module path.
+      Full FCC/IC/CE certification is a later product milestone.

@@ -21,4 +21,20 @@ config OPENPHONE_HELLO_DMA
 	  Binds the openphone,hello-dma MMIO node and exports a read-only sysfs
 	  contract file for fast BSP validation.
 
+config OPENPHONE_HELLO_CLINT_TIMER
+	tristate "OpenPhone hello CLINT timer driver"
+	depends on GENERIC_CLOCKEVENTS
+	help
+	  Clocksource and clock_event_device backed by the hello chip CLINT
+	  mtime/mtimecmp registers (hello,clint-1.0).  Provides the Linux
+	  scheduler tick and high-resolution timer for the single hello hart.
+
+config OPENPHONE_HELLO_PLIC
+	tristate "OpenPhone hello PLIC interrupt controller driver"
+	depends on IRQ_DOMAIN
+	help
+	  IRQ domain driver for the hello_interrupt_controller.sv PLIC-style
+	  block (hello,plic-1.0).  Exposes up to 8 interrupt sources (timer,
+	  DMA, NPU, display) as Linux virtual IRQs via an irq_domain.
+
 endif

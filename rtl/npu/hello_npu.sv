@@ -304,3 +304,4 @@ module hello_npu (
         endcase
     end
 endmodule
+// TEST_MARKER
