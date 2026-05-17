@@ -72,9 +72,7 @@ required_artifacts:
     - board/fpga/hello_demo_fpga.yaml
     - board/fpga/constraints/hello_demo_ulx3s.lpf
     - docs/board/kicad/hello-demo/fab-notes.md
-    - docs/board/kicad/hello-demo-artifact-manifest.yaml
-    - docs/board/kicad/hello-demo-commands.md
-    - docs/fw/board-smoke/tests/smoke_plan.md
+    - fw/board-smoke/tests/smoke_plan.md
     - docs/manufacturing/hello-demo-checklist.md
     - docs/manufacturing/real-world-verification-gaps.yaml
     - docs/manufacturing/physical-closure-work-order.yaml

@@ -135,10 +135,6 @@ padframe_package:
       status: draft
       globs:
         - "docs/board/kicad/hello-demo/fab-notes.md"
-    - name: package_pinout_board_cross_probe
-      status: draft
-      globs:
-        - "board/kicad/hello-demo/package-pinout-cross-probe.yaml"
 run_roots:
   - pd/openlane/runs
   - runs

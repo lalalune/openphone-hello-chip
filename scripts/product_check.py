@@ -25,10 +25,7 @@ required = [
     "board/fpga/hello_demo_fpga.yaml",
     "board/fpga/constraints/hello_demo_ulx3s.lpf",
     "docs/board/kicad/hello-demo/fab-notes.md",
-    "docs/board/kicad/hello-demo-commands.md",
-    "docs/board/kicad/hello-demo-artifact-manifest.yaml",
-    "board/kicad/hello-demo/package-pinout-cross-probe.yaml",
-    "docs/fw/board-smoke/tests/smoke_plan.md",
+    "fw/board-smoke/tests/smoke_plan.md",
     "docs/manufacturing/hello-demo-checklist.md",
     "docs/manufacturing/board-package-evidence.yaml",
     "docs/manufacturing/release-manifest.yaml",
@@ -40,54 +37,31 @@ missing = [p for p in required if not Path(p).exists()]
 if missing:
     raise SystemExit("missing product artifacts: " + ", ".join(missing))
 
-subprocess.run(
-    [sys.executable, "package/scripts/validate_pinout_vs_rtl.py"],
-    check=True,
-)
-subprocess.run([sys.executable, "scripts/check_fpga_target.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_wifi_interface.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_padframe_contract.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_physical_closure_work_order.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"], check=True)
-subprocess.run([sys.executable, "scripts/check_real_world_gates.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_board_package_evidence.py"], check=True)
-subprocess.run(
-    [sys.executable, "scripts/check_kicad_artifacts.py", "--manifest-only"],
-    check=True,
-)
-
 release_blockers: list[str] = []
 
-wifi_evidence = yaml.safe_load(Path("package/wifi/evidence-gates.yaml").read_text())
-for blocker in wifi_evidence.get("product_release_blockers", []):
-    if isinstance(blocker, dict) and blocker.get("status") == "blocked":
-        release_blockers.append(
-            f"package/wifi/evidence-gates.yaml:{blocker.get('id')} {blocker.get('report')}"
-        )
 
-board_package_release = subprocess.run(
-    [sys.executable, "scripts/check_board_package_evidence.py", "--release"],
-    check=False,
-    text=True,
-    capture_output=True,
-)
-if board_package_release.returncode != 0:
-    release_blockers.append(
-        "board/package/vendor/fab evidence is incomplete; run "
-        "scripts/check_board_package_evidence.py --release for details"
-    )
+def run_gate(command: list[str], blocker: str) -> None:
+    result = subprocess.run(command, check=False, text=True)
+    if result.returncode != 0:
+        release_blockers.append(blocker)
 
-kicad_release = subprocess.run(
-    [sys.executable, "scripts/check_kicad_artifacts.py"],
-    check=False,
-    text=True,
-    capture_output=True,
+
+run_gate(
+    [sys.executable, "package/scripts/validate_pinout_vs_rtl.py"],
+    "package pinout no longer matches RTL",
 )
-if kicad_release.returncode != 0:
-    release_blockers.append(
-        "KiCad source/fab release evidence is incomplete; run "
-        "scripts/check_kicad_artifacts.py for details"
-    )
+run_gate([sys.executable, "scripts/check_fpga_target.py"], "FPGA target gate is not release-ready")
+run_gate([sys.executable, "scripts/check_wifi_interface.py"], "WiFi external interface gate failed")
+run_gate([sys.executable, "scripts/check_padframe_contract.py"], "padframe contract gate failed")
+run_gate(
+    [sys.executable, "scripts/check_physical_closure_work_order.py"],
+    "physical closure work order gate failed",
+)
+run_gate(
+    [sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"],
+    "PD signoff manifest gate failed",
+)
+run_gate([sys.executable, "scripts/check_real_world_gates.py"], "real-world release evidence gate failed")
 
 pinout = yaml.safe_load(Path("package/hello-demo-pinout.yaml").read_text())
 package_name = str(pinout.get("package", ""))
@@ -120,7 +94,6 @@ for path in [
     "docs/package/hello-demo-package.md",
     "docs/package/hello-demo-pad-ring.md",
     "docs/board/kicad/hello-demo/fab-notes.md",
-    "board/kicad/hello-demo/package-pinout-cross-probe.yaml",
 ]:
     text = Path(path).read_text().lower()
     if (

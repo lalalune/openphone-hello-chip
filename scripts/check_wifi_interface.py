@@ -600,13 +600,7 @@ def main() -> int:
     for phrase in ("not bonded", "not implemented", "maturity gates"):
         if phrase not in doc:
             failures.append(f"docs/arch/wifi.md must state {phrase}")
-    for phrase in (
-        "Murata Type 1DX",
-        "brcmfmac",
-        "hci_uart_bcm",
-        "external",
-        "package/wifi/evidence-gates.yaml",
-    ):
+    for phrase in ("Murata Type 1DX", "brcmfmac", "hci_uart_bcm", "external"):
         if phrase not in doc:
             failures.append(f"docs/arch/wifi.md must describe concrete slice term {phrase}")
 

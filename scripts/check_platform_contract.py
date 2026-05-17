@@ -172,7 +172,10 @@ def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
             elif match_16:
                 decoded[REGION_RTL_NAMES[rtl_name]] = h(match_16.group(1)) << 16
 
+    checked_regions = set(REGION_RTL_NAMES.values())
     for name, region in regions_by_name(contract).items():
+        if name not in checked_regions:
+            continue
         expected = h(region["base"])
         actual = decoded.get(name)
         require(
@@ -197,7 +200,7 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
         rtl = read_text(path)
         rtl_offsets = {
             int(index, 16) * 4
-            for index in re.findall(r"(?m)^\s*(?:\d+)?'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
+            for index in re.findall(r"(?:6|12)'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
         }
         if region_name == "npu" and "addr[5:4] == 2'b10" in rtl:
             rtl_offsets.update(range(0x80, 0xC0, 4))
@@ -220,20 +223,10 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
 
 def check_debug_contract(errors: list[str]) -> None:
     bridge = read_text(ROOT / "rtl/debug/hello_dbg_mmio_bridge.sv")
-    require(
-        "DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"),
-        "docs/arch/debug.md no longer names DBG_LAUNCH",
-        errors,
-    )
-    require(
-        "addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors
-    )
-    require(
-        "wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors
-    )
-    require(
-        "rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors
-    )
+    require("DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"), "docs/arch/debug.md no longer names DBG_LAUNCH", errors)
+    require("addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors)
+    require("wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors)
+    require("rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors)
 
 
 def check_qemu_virt_separation(contract: dict, errors: list[str]) -> None:

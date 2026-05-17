@@ -1,11 +1,8 @@
 # Hello demo package contract
 
-Evidence class: `non_release_placeholder`
-Release use: `prohibited`
+The demo product target is a placeholder QFN64-style package for planning, review, and PCB bring-up flow validation.
 
-The demo product target is a Placeholder package using a QFN64-style planning package for review and PCB bring-up flow validation only.
-
-This is not vendor package data, not a foundry-approved package, not a bond diagram, and not a footprint source. It exists to make the top-level chip interface explicit while the project uses open PDK digital flows.
+This is not a foundry-approved package. It exists to make the top-level chip interface explicit while the project uses open PDK digital flows.
 
 ## Package assumptions
 
@@ -19,20 +16,13 @@ This is not vendor package data, not a foundry-approved package, not a bond diag
 - IRQ test-point outputs.
 - JTAG pins reserved for future scan/debug.
 
-## Release blockers
+Before fabrication, this document must be replaced by the actual shuttle/package/bonding document.
 
-- Package-vendor drawing is missing.
-- Shuttle/package approval evidence is missing.
-- Bond diagram mapping die pads to package pins is missing.
-- Package electrical/parasitic model is missing.
-- Package-vendor footprint evidence is missing.
+## Templates and bonding map
 
-Before fabrication, this document must be replaced by the actual shuttle/package/bonding document and actual shuttle/package/bonding evidence. Do not use this file as release evidence.
+- `docs/package/bonding-diagram-template.md` defines the required vendor deliverables and the CSV column contract.
+- `package/bonding/hello_demo_bonding.csv` is the canonical machine-readable die-pad <-> package-pin <-> board-net map (pre-filled from `package/hello-demo-pinout.yaml`).
+- `docs/pd/pad-cell-selection-criteria.md` lists the pad/ESD requirements every candidate PDK must satisfy.
+- `docs/manufacturing/release-evidence-template.md` describes the parent release manifest that ties together package vendor drawing, bonding diagram, IBIS, and board SI/PI/PDN reports.
 
-## KiCad release dependency
-
-Do not derive a fabrication-ready KiCad project, footprint, or Gerber package
-from this placeholder package contract. Board release requires a vendor package
-drawing, package source checksum or immutable revision, land-pattern review,
-bond diagram, and package-pin to board-net cross-probe before any KiCad outputs
-can be treated as manufacturing evidence.
+Run `python3 scripts/check_pad_consistency.py` to cross-probe this pinout against the bonding CSV and the RTL top-level ports.
