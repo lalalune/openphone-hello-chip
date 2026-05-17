@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -254,7 +254,7 @@ def main() -> int:
 
     report = {
         "schema": "openphone.cpu_ap_chipyard_verilator_preflight.v1",
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "status": "fail" if errors else "blocked" if blockers else "pass",
         "manifest": rel(MANIFEST),
         "checkout": rel(CHECKOUT),

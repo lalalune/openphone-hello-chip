@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import subprocess
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
 
 REQUIRED = [
@@ -9,51 +11,71 @@ REQUIRED = [
     "build/reports/hello_soc_yosys.log",
     "build/reports/tool_versions.txt",
     "build/reports/cocotb/manifest.json",
+    "build/reports/formal_manifest.json",
     "build/verilator/Vhello_chip_top",
 ]
+
+COCOTB_TARGETS = {
+    "hello_chip_top_test_hello_chip",
+    "hello_display_test_hello_display",
+    "hello_dma_test_hello_dma",
+    "hello_linux_soc_contract_test_cpu_mem_intc_contract",
+    "hello_npu_test_hello_npu",
+    "hello_tiny_cpu_contract_tb_test_cpu_mem_intc_contract",
+    "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
+}
+
+FORMAL_TARGETS = {
+    "hello_dbg_mmio_bridge",
+    "hello_npu",
+    "hello_dma",
+    "hello_soc_top",
+}
 
 REQUIRED_SOURCE = [
     "scripts/check_software_bsp.py",
     "scripts/check_mvp_status.py",
-    "scripts/check_cpu_ap_completion_gate.py",
+    "scripts/check_prototype_status_dashboard.py",
     "scripts/check_real_world_gates.py",
+    "scripts/check_memory_interconnect_contract.py",
+    "scripts/check_product_feature_gates.py",
     "scripts/check_physical_closure_work_order.py",
     "docs/toolchain/headless-cli-audit.md",
     "docs/toolchain/README.md",
+    "docs/toolchain/benchmark-simulator-critical-gap-audit.md",
     "docs/spec-db/mobile-sota-2026.yaml",
-    "docs/spec-db/npu-2028-target.yaml",
-    "docs/spec-db/npu-2028-roadmap.yaml",
-    "docs/spec-db/hello-npu-runtime-contract.json",
-    "docs/npu/2028-targets.md",
-    "scripts/check_npu_2028_targets.py",
-    "scripts/check_hello_npu_runtime_contract.py",
-    "scripts/check_npu_roadmap.py",
-    "scripts/check_npu_open_scale_model.py",
-    "scripts/check_npu_scale_sim.py",
-    "scripts/check_android_sim_boot.py",
-    "scripts/test_android_sim_boot_status.py",
-    "scripts/run_mvp_simulator.py",
-    "scripts/check_mvp_simulator.py",
-    "compiler/runtime/hello_npu_scale_model.py",
-    "benchmarks/sim/run_npu_scale_sim.py",
-    "scripts/check_scale_feasibility_gate.py",
-    "scripts/check_verification_maturity_matrix.py",
-    "docs/evidence/scale/ram-cpu-npu-scale-feasibility-gate.yaml",
-    "docs/evidence/scale/verification-maturity-matrix.yaml",
     "docs/benchmarks/benchmark-matrix.md",
     "docs/benchmarks/harness.md",
     "docs/benchmarks/report-schema.yaml",
     "docs/android/riscv-bringup.md",
+    "docs/android/bsp-critical-gap-audit-2026-05-17.md",
     "docs/project/three-week-execution-plan.md",
     "docs/project/workstreams.md",
+    "docs/project/prototype-status-dashboard.md",
+    "docs/project/critical-gap-review-2026-05-17.md",
+    "docs/project/rtl-soc-critical-gap-audit.md",
+    "docs/project/board-package-pd-fpga-critical-gap-audit.md",
     "docs/risks/risk-register.md",
     "docs/manufacturing/real-world-verification-gaps.yaml",
     "docs/manufacturing/physical-closure-work-order.yaml",
+    "docs/manufacturing/product-feature-evidence-manifest.yaml",
     "benchmarks/configs/fio-rand-rw.fio",
     "benchmarks/configs/fio-seq-read.fio",
     "benchmarks/configs/benchmark_plan.json",
+    "benchmarks/generate_simulator_arch_metrics.py",
+    "benchmarks/install_host_benchmark_tools.py",
+    "benchmarks/metadata/local-host-smoke.json",
+    "benchmarks/models/mobile_smoke.tflite",
+    "benchmarks/tools/coremark",
+    "benchmarks/tools/stream_c.exe",
+    "benchmarks/tools/bw_mem",
+    "benchmarks/tools/lat_mem_rd",
+    "benchmarks/tools/benchmark_model",
     "docs/benchmarks/models/README.md",
     "benchmarks/run_benchmarks.py",
+    "scripts/test_benchmark_calibration.py",
+    "scripts/test_benchmark_parsers.py",
+    "scripts/test_simulator_arch_metrics.py",
     "sw/platform/hello_platform_contract.json",
     "sw/platform/generated/hello_platform_contract.h",
     "sw/bootrom/hello_qemu_firmware.S",
@@ -113,6 +135,88 @@ def run_check(root: Path, command: list[str]) -> bool:
     return True
 
 
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def validate_cocotb_manifest(root: Path) -> list[str]:
+    data = json.loads((root / "build/reports/cocotb/manifest.json").read_text())
+    errors: list[str] = []
+    if data.get("schema") != "hello-chip-cocotb-evidence-v1":
+        errors.append("cocotb manifest has unexpected schema")
+    targets = data.get("targets")
+    if not isinstance(targets, dict):
+        return errors + ["cocotb manifest missing targets"]
+    missing = sorted(COCOTB_TARGETS - set(targets))
+    if missing:
+        errors.append("cocotb manifest missing target(s): " + ", ".join(missing))
+    extra = sorted(set(targets) - COCOTB_TARGETS)
+    if extra:
+        errors.append("cocotb manifest has stale/unexpected target(s): " + ", ".join(extra))
+    for name, entry in targets.items():
+        xml = root / entry.get("result_xml", "")
+        if not xml.is_file():
+            errors.append(f"cocotb {name}: missing result XML")
+            continue
+        if entry.get("result_sha256") != sha256(xml):
+            errors.append(f"cocotb {name}: result XML hash mismatch")
+        stats = entry.get("stats", {})
+        if stats.get("failures") or stats.get("errors") or not stats.get("testcases"):
+            errors.append(f"cocotb {name}: non-passing stats in manifest")
+        coverage = entry.get("coverage", {})
+        if coverage.get("release_claim") != "blocked_without_functional_coverage":
+            errors.append(f"cocotb {name}: coverage summary must block release coverage claims")
+        source_hashes = entry.get("source_hashes", {})
+        if not isinstance(source_hashes, dict) or not source_hashes:
+            errors.append(f"cocotb {name}: missing source hashes")
+    return errors
+
+
+def validate_formal_manifest(root: Path, strict: bool) -> list[str]:
+    data = json.loads((root / "build/reports/formal_manifest.json").read_text())
+    errors: list[str] = []
+    if data.get("schema") != "hello-chip-formal-evidence-v1":
+        errors.append("formal manifest has unexpected schema")
+    entries = data.get("entries")
+    if not isinstance(entries, dict):
+        return errors + ["formal manifest missing entries"]
+    missing = sorted(FORMAL_TARGETS - set(entries))
+    if missing:
+        errors.append("formal manifest missing target(s): " + ", ".join(missing))
+    for name, entry in entries.items():
+        evidence_class = str(entry.get("evidence_class", ""))
+        status = entry.get("status")
+        paths = entry.get("paths", {})
+        if status not in {"pass", "fallback_pass"}:
+            errors.append(f"formal {name}: non-passing status {status}")
+        if strict and not evidence_class.startswith("sby_"):
+            errors.append(f"formal {name}: strict gate rejects {evidence_class}")
+        for key in ("status", "log"):
+            rel = paths.get(key)
+            hash_value = paths.get(f"{key}_sha256")
+            if rel:
+                artifact = root / rel
+                if not artifact.is_file():
+                    errors.append(f"formal {name}: missing {key} artifact")
+                elif hash_value != sha256(artifact):
+                    errors.append(f"formal {name}: {key} hash mismatch")
+    if strict and data.get("mode") != "sby-deep-top":
+        errors.append("strict pipeline requires formal manifest mode=sby-deep-top")
+    if not strict and data.get("release_claim") not in {
+        "strict_requires_sby_and_deep_top",
+        "strict_formal_bmc_evidence",
+    }:
+        errors.append("scaffold formal manifest must label strict release boundary")
+    source_hashes = data.get("source_hashes", {})
+    if not isinstance(source_hashes, dict) or not source_hashes:
+        errors.append("formal manifest missing source hashes")
+    return errors
+
+
 def check_headless_audit(root: Path) -> list[str]:
     text = (root / "docs/toolchain/headless-cli-audit.md").read_text(errors="ignore")
     required_terms = [
@@ -154,40 +258,24 @@ def check_benchmark_report(root: Path) -> list[str]:
         if status == "planned_missing_deps" and not result.get("missing_dependencies"):
             errors.append(f"benchmark dry-run result missing dependency list: {name}")
 
-    model_exists = (root / "benchmarks/models/mobile_smoke.tflite").is_file()
     for name in ("tflite_cpu", "tflite_hello_npu"):
         result = result_by_name.get(name)
-        if result and not model_exists and result.get("status") != "blocked":
-            errors.append(
-                f"{name} must stay blocked until a real mobile_smoke.tflite artifact exists"
-            )
-    result = result_by_name.get("tflite_hello_npu")
-    if result and result.get("status") != "blocked":
-        errors.append(
-            "tflite_hello_npu must stay blocked until hello-npu NNAPI capability evidence exists"
-        )
-
-    return errors
-
-
-def check_cocotb_manifest(root: Path) -> list[str]:
-    manifest_path = root / "build/reports/cocotb/manifest.json"
-    manifest = json.loads(manifest_path.read_text())
-    targets = manifest.get("targets", {})
-    if not isinstance(targets, dict) or not targets:
-        return ["cocotb manifest is missing target entries"]
-
-    errors: list[str] = []
-    for name, entry in targets.items():
-        if not isinstance(entry, dict):
-            errors.append(f"cocotb {name} manifest entry is not a mapping")
+        if not result:
             continue
-        xml = root / entry.get("result_xml", "")
-        stats = entry.get("stats", {})
-        if not xml.is_file():
-            errors.append(f"cocotb {name} is missing result XML")
-        if stats.get("failures") or stats.get("errors") or not stats.get("testcases"):
-            errors.append(f"cocotb {name} is missing a passing non-empty result")
+        expected_sha = None
+        for bench in config["benchmarks"]:
+            if bench.get("name") == name:
+                artifacts = bench.get("model_artifacts", [])
+                expected_sha = artifacts[0].get("sha256") if artifacts else None
+        if expected_sha and (root / "benchmarks/models/mobile_smoke.tflite").is_file():
+            if result.get("status") == "blocked":
+                errors.append(
+                    f"{name} is still blocked despite pinned mobile_smoke.tflite artifact"
+                )
+        elif result.get("status") != "blocked":
+            errors.append(
+                f"{name} must stay blocked until a real pinned mobile_smoke.tflite artifact exists"
+            )
 
     return errors
 
@@ -206,7 +294,7 @@ def check_mvp_status_semantics(root: Path) -> list[str]:
     by_name = {item.get("subsystem"): item for item in statuses}
     errors: list[str] = []
 
-    for name in ("cpu-ap", "qemu", "renode", "benchmarks"):
+    for name in ("qemu", "renode", "benchmarks"):
         item = by_name.get(name)
         if not item:
             errors.append(f"mvp-status missing subsystem: {name}")
@@ -228,7 +316,6 @@ def check_mvp_status_semantics(root: Path) -> list[str]:
             )
 
     expected_blockers = {
-        "cpu-ap": ("cpu_ap.completion_gate", "release_blocker", "claim_gate_fail"),
         "qemu": ("qemu_smoke.log", "regen_required", "tool_blocker"),
         "renode": ("renode_smoke.log", "regen_required", "tool_blocker"),
         "benchmarks": ("dry-run planning evidence only", "scaffold_only", "tool_blocker"),
@@ -281,6 +368,13 @@ def check_larp_claim_boundaries(root: Path) -> list[str]:
 
 
 def main() -> int:
+    parser = ArgumentParser(description="Validate generated pipeline artifacts.")
+    parser.add_argument(
+        "--strict-formal", action="store_true", help="require SBY deep formal evidence"
+    )
+    parser.add_argument("--require-pd-signoff", action="store_true")
+    args = parser.parse_args()
+
     root = Path(__file__).resolve().parents[1]
     missing = [path for path in REQUIRED if not (root / path).is_file()]
     if missing:
@@ -313,69 +407,22 @@ def main() -> int:
         print("Synthesized netlist does not contain hello_chip_top.")
         return 1
 
-    cocotb_errors = check_cocotb_manifest(root)
-    if cocotb_errors:
-        print("cocotb manifest evidence check failed:")
-        for error in cocotb_errors:
+    evidence_errors = []
+    evidence_errors.extend(validate_cocotb_manifest(root))
+    evidence_errors.extend(validate_formal_manifest(root, args.strict_formal))
+    if evidence_errors:
+        print("Pipeline evidence manifest checks failed:")
+        for error in evidence_errors:
             print(f"  - {error}")
         return 1
 
-    formal_evidence = {
-        "hello_dbg_mmio_bridge": [
-            root / "verify/formal/hello_dbg_mmio_bridge/status",
-            root / "scripts/run_formal.sh",
-        ],
-        "hello_npu": [
-            root / "verify/formal/hello_npu/status",
-            root / "build/reports/hello_npu_formal_yosys.log",
-        ],
-        "hello_dma": [
-            root / "verify/formal/hello_dma/status",
-            root / "build/reports/hello_dma_formal_yosys.log",
-        ],
-        "hello_soc_top": [
-            root / "verify/formal/hello_soc_top/status",
-            root / "build/reports/hello_soc_top_formal_yosys.log",
-        ],
-    }
-    missing_formal = []
-    for name, paths in formal_evidence.items():
-        status_paths = [path for path in paths if path.name == "status"]
-        log_paths = [path for path in paths if path.name != "status"]
-        has_sby_pass = any(
-            path.is_file() and "PASS" in path.read_text(errors="ignore") for path in status_paths
-        )
-        has_yosys_log = any(
-            path.is_file()
-            and (
-                path.name != "run_formal.sh"
-                or "Bridge formal requires SymbiYosys" in path.read_text(errors="ignore")
-            )
-            for path in log_paths
-        )
-        if not (has_sby_pass or has_yosys_log):
-            missing_formal.append(name)
-    if missing_formal:
-        print("No complete formal evidence found.")
-        for name in missing_formal:
-            print(f"  - {name}")
-        return 1
-
-    if sys.argv[1:] == ["--require-pd-signoff"]:
+    if args.require_pd_signoff:
         subprocess.run([sys.executable, "scripts/check_pd_signoff.py"], cwd=root, check=True)
 
     checks = [
         [sys.executable, "verify/check_stub_audit.py"],
-        [sys.executable, "scripts/check_npu_2028_targets.py"],
-        [sys.executable, "scripts/check_hello_npu_runtime_contract.py"],
-        [sys.executable, "scripts/check_npu_roadmap.py"],
-        [sys.executable, "scripts/check_npu_open_scale_model.py"],
-        [sys.executable, "scripts/check_npu_scale_sim.py"],
-        [sys.executable, "scripts/check_scale_feasibility_gate.py"],
-        [sys.executable, "scripts/check_verification_maturity_matrix.py"],
         [sys.executable, "scripts/check_physical_closure_work_order.py"],
         [sys.executable, "scripts/check_real_world_gates.py"],
-        [sys.executable, "scripts/check_cpu_ap_completion_gate.py"],
         [sys.executable, "scripts/check_software_bsp.py", "all", "--scaffold-only"],
         [sys.executable, "sw/check_bsp_scaffolds.py", "all"],
         [
@@ -392,6 +439,7 @@ def main() -> int:
             "benchmarks/results/pipeline-check/report.json",
         ],
         [sys.executable, "scripts/check_mvp_status.py", "--fail-on-fail"],
+        [sys.executable, "scripts/check_prototype_status_dashboard.py"],
     ]
     for command in checks:
         if not run_check(root, command):

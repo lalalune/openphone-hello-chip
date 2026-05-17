@@ -101,6 +101,7 @@ def test_build_failure_is_fail() -> None:
 
 
 def test_fake_toolchain_and_qemu_pass() -> None:
+    QEMU_ELF.unlink(missing_ok=True)
     with tempfile.TemporaryDirectory() as td:
         bindir = Path(td)
         cc = bindir / "fake-riscv-gcc"
@@ -205,6 +206,7 @@ def main() -> int:
             QEMU_ELF.unlink(missing_ok=True)
         else:
             QEMU_ELF.parent.mkdir(parents=True, exist_ok=True)
+            QEMU_ELF.unlink(missing_ok=True)
             QEMU_ELF.write_bytes(saved)
         if saved_log is None:
             QEMU_LOG.unlink(missing_ok=True)

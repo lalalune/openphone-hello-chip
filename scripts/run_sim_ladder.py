@@ -55,7 +55,19 @@ def run_step(step: dict[str, Any]) -> dict[str, Any]:
         for artifact in artifacts
         if isinstance(artifact, str) and not (ROOT / artifact).exists()
     ]
-    status = "pass" if result.returncode == 0 and not missing else "fail"
+    output = result.stdout
+    blocked_markers = (
+        "cocotb is not installed",
+        "No cocotb simulator found",
+        "verilator: not found",
+        "No such file or directory",
+    )
+    if result.returncode == 0 and not missing:
+        status = "pass"
+    elif any(marker in output for marker in blocked_markers):
+        status = "blocked"
+    else:
+        status = "fail"
     return {
         "name": step["name"],
         "command": command,
@@ -89,7 +101,9 @@ def main() -> int:
     tmp.replace(REPORT)
 
     if manifest["status"] != "pass":
-        print(f"Simulation ladder failed; wrote {REPORT.relative_to(ROOT)}")
+        has_failure = any(item["status"] == "fail" for item in results)
+        label = "failed" if has_failure else "blocked"
+        print(f"Simulation ladder {label}; wrote {REPORT.relative_to(ROOT)}")
         for item in results:
             print(f"  - {item['name']}: {item['status']}")
             if item["status"] != "pass":
@@ -99,7 +113,10 @@ def main() -> int:
                 for line in log_tail[-10:]:
                     print(f"    {line}")
                 break
-        return 1
+        if has_failure:
+            return 1
+        print("STATUS: BLOCKED sim_ladder - missing local RTL simulation dependency")
+        return 2
 
     print(f"Simulation ladder passed; wrote {REPORT.relative_to(ROOT)}")
     return 0

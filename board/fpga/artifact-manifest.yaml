@@ -1,0 +1,67 @@
+manifest: hello_demo_fpga_bitstream_evidence
+schema: docs/manufacturing/schemas/artifact-manifest.schema.yaml
+status: scaffold
+release_gate: board_fabrication_release
+policy:
+  preflight: Validate the FPGA release contract and expected evidence paths without requiring a bitstream.
+  release: Require board revision, concrete LPF assignments, bitstream outputs, timing, route, pack logs, and tool versions.
+assumptions:
+  demo_board: Radiona/FER ULX3S 85F
+  fpga_part: LFE5U-85F-6BG381C
+  nextpnr_device: 85k
+  package: CABGA381
+  clock: 25 MHz ULX3S onboard oscillator
+artifact_groups:
+  target_contract:
+    owner: fpga_closure
+    status: draft
+    artifacts:
+      - name: fpga_target_contract
+        status: draft
+        globs:
+          - board/fpga/hello_demo_fpga.yaml
+      - name: pin_constraints
+        status: draft
+        globs:
+          - board/fpga/constraints/hello_demo_ulx3s.lpf
+  bitstream_release:
+    owner: fpga_closure
+    status: missing
+    cli_commands:
+      synth: yosys -p "read_verilog -sv rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv; synth_ecp5 -top hello_chip_top -json board/fpga/build/hello_demo_fpga.json"
+      place_route: nextpnr-ecp5 --85k --package CABGA381 --freq 25 --json board/fpga/build/hello_demo_fpga.json --lpf board/fpga/constraints/hello_demo_ulx3s.lpf --textcfg board/fpga/build/hello_demo_fpga.config --report board/fpga/reports/hello_demo_nextpnr.json
+      pack: ecppack --svf board/fpga/build/hello_demo_fpga.svf board/fpga/build/hello_demo_fpga.config board/fpga/build/hello_demo_fpga.bit
+      tool_versions: yosys -V && nextpnr-ecp5 --version && ecppack --version && openFPGALoader --version
+      program_sram: openFPGALoader -b ulx3s board/fpga/build/hello_demo_fpga.bit
+    artifacts:
+      - name: bitstream
+        status: missing
+        globs:
+          - board/fpga/build/**/*.bit
+          - board/fpga/build/**/*.svf
+      - name: nextpnr_timing_report
+        status: missing
+        clean_regex: "(?i)(timing\\s+(pass(?:ed)?|met)|max\\s+frequency|critical\\s+path)"
+        fail_regex: "(?i)(timing\\s+(fail(?:ed)?|not\\s+met)|negative\\s+slack|error)"
+        globs:
+          - board/fpga/reports/**/*timing*.rpt
+          - board/fpga/reports/**/*timing*.txt
+      - name: nextpnr_route_report
+        status: missing
+        clean_regex: "(?i)(routing\\s+(pass(?:ed)?|complete)|checksum|device\\s+utilization)"
+        fail_regex: "(?i)(routing\\s+failed|unrouted|error)"
+        globs:
+          - board/fpga/reports/**/*nextpnr*.log
+          - board/fpga/reports/**/*route*.rpt
+      - name: ecppack_transcript
+        status: missing
+        clean_regex: "(?i)(ecppack|bitstream|checksum)"
+        fail_regex: "(?i)(error|fail(?:ed)?)"
+        globs:
+          - board/fpga/reports/**/*ecppack*.log
+          - board/fpga/reports/**/*pack*.log
+      - name: fpga_tool_versions
+        status: missing
+        globs:
+          - board/fpga/reports/**/*tool*version*.txt
+          - board/fpga/reports/tool_versions.txt

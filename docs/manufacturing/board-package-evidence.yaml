@@ -49,17 +49,17 @@ placeholder_blockers:
   - id: placeholder_package_pinout
     file: package/hello-demo-pinout.yaml
     required_text:
-      - qfn64_placeholder
-      - Non-release placeholder package
+      - hello_demo_qfn64_planning_r0
+      - Non-release demo package contract
   - id: draft_package_contract
     file: docs/package/hello-demo-package.md
     required_text:
-      - not a foundry-approved package
-      - actual shuttle/package/bonding evidence
+      - local planning data only
+      - package vendor/foundry evidence
   - id: kicad_placeholder_notes
     file: docs/board/kicad/hello-demo/fab-notes.md
     required_text:
-      - Package is placeholder-only
+      - "Evidence class: `non_release_demo_planning`"
       - Footprint is not derived from a package vendor drawing
       - No SI/PI analysis has been performed
 artifact_groups:
@@ -104,30 +104,30 @@ artifact_groups:
           - source_sha256
   kicad_sources:
     owner: board_closure
-    status: missing
+    status: draft
     artifacts:
       - name: kicad_project
         release_blocker_id: kicad_project
-        release_blocker: KiCad project is missing under board/kicad/hello-demo.
-        status: missing
+        release_blocker: KiCad project is draft planning source, not release-checked fabrication evidence.
+        status: draft
         globs:
           - board/kicad/hello-demo/*.kicad_pro
       - name: kicad_schematic
         release_blocker_id: kicad_schematic
-        release_blocker: KiCad schematic is missing under board/kicad/hello-demo.
-        status: missing
+        release_blocker: KiCad schematic is draft planning source, not release-checked fabrication evidence.
+        status: draft
         globs:
           - board/kicad/hello-demo/*.kicad_sch
       - name: kicad_pcb
         release_blocker_id: kicad_pcb
-        release_blocker: KiCad PCB is missing under board/kicad/hello-demo.
-        status: missing
+        release_blocker: KiCad PCB is draft planning source, not release-checked fabrication evidence.
+        status: draft
         globs:
           - board/kicad/hello-demo/*.kicad_pcb
       - name: vendor_derived_footprint
         release_blocker_id: vendor_derived_footprint
-        release_blocker: Vendor-derived KiCad footprint is missing; do not fabricate from placeholder package data.
-        status: missing
+        release_blocker: Vendor-derived KiCad footprint is missing; the local planning footprint is not fabrication evidence.
+        status: draft
         globs:
           - board/kicad/hello-demo/**/*.pretty/*.kicad_mod
         required_metadata:

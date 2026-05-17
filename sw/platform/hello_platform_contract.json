@@ -462,6 +462,21 @@
             "name": "FETCHED_PIXEL_COUNT",
             "access": "RW",
             "reset": "0x00000000"
+          },
+          {
+            "offset": "0x1C",
+            "name": "LINE_STRIDE_BYTES",
+            "access": "RO"
+          },
+          {
+            "offset": "0x20",
+            "name": "FRAME_BYTE_COUNT_LO",
+            "access": "RO"
+          },
+          {
+            "offset": "0x24",
+            "name": "FRAME_BYTE_COUNT_HI",
+            "access": "RO"
           }
         ]
       },

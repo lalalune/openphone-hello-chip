@@ -1,6 +1,7 @@
 # Interconnect contract
 
 `rtl/interconnect/hello_axi_lite_interconnect.sv` is the first synthesizable interconnect scaffold for the Linux-capable SoC contract. It connects one CPU-side AXI-Lite manager port to DRAM, interrupt-controller, and DMA-control target ports. `rtl/interconnect/hello_linux_soc_contract.sv` also arbitrates the prototype DMA AXI-Lite master onto the same DRAM model used by CPU-side traffic.
+`rtl/interconnect/hello_axi_lite_interconnect.sv` is the first synthesizable interconnect scaffold for the Linux-capable SoC contract. It connects one CPU-side AXI-Lite manager port to DRAM and interrupt-controller target ports.
 
 ## Decode map
 
@@ -48,3 +49,6 @@ A Linux/Android-capable interconnect must make the following contracts executabl
 | DRAM/LPDDR path | Attach a real DRAM controller/PHY or integrated IP boundary with measured LPDDR bandwidth/latency evidence; the current SRAM model cannot satisfy this gate. |
 
 Phone-class 2028 memory claims remain blocked until `docs/evidence/memory/uma-dram-evidence-gate.yaml` is intentionally replaced or satisfied with real DRAM, cache hierarchy, UMA/coherency, IOMMU/SMMU, and contended bandwidth and latency artifacts.
+The contract wrapper uses CPU-wins arbitration when CPU and DMA requests target the same AXI-Lite path. DMA and CPU accesses must stay inside a bounded physical-address allowlist, and unsupported access paths fail closed.
+
+No release, Android, AI-throughput, display-smoothness, or memory-bandwidth claim may rely on this scaffold until a real interconnect, memory controller, cache coherency, IOMMU, and QoS implementation has checked evidence.

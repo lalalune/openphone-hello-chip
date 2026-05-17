@@ -67,6 +67,17 @@ benchmarks/configs/fio-seq-read.fio
 docs/benchmarks/models/README.md
 benchmarks/run_benchmarks.py
 docs/board/README.md
+benchmarks/install_host_benchmark_tools.py
+benchmarks/metadata/local-host-smoke.json
+benchmarks/models/mobile_smoke.tflite
+benchmarks/tools/coremark
+benchmarks/tools/stream_c.exe
+benchmarks/tools/bw_mem
+benchmarks/tools/lat_mem_rd
+benchmarks/tools/benchmark_model
+docs/benchmarks/models/README.md
+benchmarks/run_benchmarks.py
+board/README.md
 docs/board/fpga/README.md
 board/fpga/hello_demo_fpga.yaml
 board/fpga/constraints/hello_demo_ulx3s.lpf

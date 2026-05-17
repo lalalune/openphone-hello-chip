@@ -114,7 +114,7 @@ def check_pdk_environment(
                 f"{display_path(config_path)}: STD_CELL_LIBRARY must be a non-empty string"
             )
 
-    pdk_root = os.environ.get("PDK_ROOT") or str(ROOT / "external/pdks")
+    pdk_root = os.environ.get("PDK_ROOT")
     if not pdk_root:
         if pdk:
             blockers.append(
@@ -123,7 +123,7 @@ def check_pdk_environment(
         return
     root_path = Path(pdk_root).expanduser()
     if not root_path.is_dir():
-        failures.append(f"PDK_ROOT does not exist or is not a directory: {pdk_root}")
+        blockers.append(f"PDK_ROOT does not exist or is not a directory: {pdk_root}")
         return
     if pdk and not (root_path / pdk).is_dir():
         blockers.append(

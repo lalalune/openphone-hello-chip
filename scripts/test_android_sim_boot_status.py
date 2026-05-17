@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -18,9 +19,12 @@ def assert_contains(text: str, expected: str) -> None:
 
 
 def run(command: list[str]) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env.pop("AOSP_DIR", None)
     return subprocess.run(
         command,
         cwd=ROOT,
+        env=env,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -42,6 +46,20 @@ def test_boot_script_blocks_without_aosp_dir() -> None:
         raise AssertionError("android sim report must be blocked without AOSP_DIR")
     if "not hello-chip hardware ABI proof" not in data.get("claim_boundary", ""):
         raise AssertionError("android sim report must keep the hello-chip ABI boundary explicit")
+    for key in ("run_qemu", "run_renode"):
+        if not isinstance(data.get(key), bool):
+            raise AssertionError(f"android sim report must include boolean {key}")
+    if data.get("evidence_manifest") != "docs/android/bsp-log-evidence-manifest.json":
+        raise AssertionError("android sim report must reference the BSP log evidence manifest")
+    required = data.get("required_evidence", [])
+    for path in (
+        "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
+        "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+        "docs/evidence/android/qemu_riscv64_smoke.log",
+        "docs/evidence/android/renode_hello_soc_smoke.log",
+    ):
+        if path not in required:
+            raise AssertionError(f"android sim report missing required evidence category {path}")
 
 
 def test_checker_reports_blocked_report() -> None:
@@ -56,10 +74,32 @@ def test_checker_reports_blocked_report() -> None:
     assert_contains(result.stdout, "AOSP_DIR")
 
 
+def test_checker_rejects_pass_without_required_aosp_evidence() -> None:
+    blocked = json.loads(REPORT.read_text()) if REPORT.is_file() else None
+    if blocked is None or blocked.get("status") != "blocked":
+        test_boot_script_blocks_without_aosp_dir()
+        blocked = json.loads(REPORT.read_text())
+    blocked["status"] = "pass"
+    blocked["reason"] = "synthetic pass report for checker coverage"
+    blocked["next_step"] = "none"
+    REPORT.write_text(json.dumps(blocked, indent=2))
+    result = run([sys.executable, str(CHECK)])
+    if result.returncode != 1:
+        raise AssertionError(
+            f"expected checker to reject pass without evidence, got {result.returncode}\n{result.stdout}"
+        )
+    assert_contains(result.stdout, "Android simulator boot failed")
+    assert_contains(result.stdout, "pass report")
+
+
 def main() -> int:
     saved = REPORT.read_bytes() if REPORT.is_file() else None
     try:
-        for test in (test_boot_script_blocks_without_aosp_dir, test_checker_reports_blocked_report):
+        for test in (
+            test_boot_script_blocks_without_aosp_dir,
+            test_checker_reports_blocked_report,
+            test_checker_rejects_pass_without_required_aosp_evidence,
+        ):
             test()
             print(f"PASS {test.__name__}")
     finally:

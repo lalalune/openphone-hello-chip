@@ -7,11 +7,15 @@ flow:
   place_route: nextpnr-ecp5
   pack: ecppack
 board:
-  class: ulx3s_style
+  class: ulx3s_85f
+  selected_demo_board: Radiona/FER ULX3S 85F
+  selected_demo_board_role: stage1_hello_demo_mmio
   exact_revision: unassigned
   exact_revision_evidence: unassigned
-  ecp5_device: unassigned
-  ecp5_package: unassigned
+  ecp5_device: LFE5U-85F-6BG381C
+  ecp5_package: CABGA381
+  open_toolchain_device: 85k
+  open_toolchain_package: CABGA381
 clock:
   port: CLK_IN
   nominal_frequency_hz: 25000000
@@ -47,6 +51,7 @@ constraints:
   final_lpf: unassigned
   bitstream_release_blocked_until_pins_assigned: true
   required_locate_assignments: 35
+  preliminary_pin_assignment_source: emard/ulx3s doc/constraints/ulx3s_v20.lpf
   pin_assignment_source: unassigned
 release_evidence:
   manifest: board/fpga/release_manifest.yaml

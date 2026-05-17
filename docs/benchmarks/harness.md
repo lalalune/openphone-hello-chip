@@ -183,6 +183,35 @@ unrelated `stream` utility with the memory benchmark.
 
 ## Installing Or Supplying Benchmarks
 
+For local dependency smoke testing, use the repository venv path:
+
+```sh
+make venv
+.venv/bin/python -m pip install tensorflow
+make benchmark-tools
+PATH="$PWD/.venv/bin:$PATH" .venv/bin/python benchmarks/run_benchmarks.py run \
+  --bench coremark \
+  --bench stream \
+  --bench lmbench_bw_mem \
+  --bench lmbench_lat_mem_rd \
+  --bench fio_seq_read \
+  --bench fio_rand_rw \
+  --bench tflite_cpu \
+  --report-id local-host-tools-pass \
+  --platform openphone-local-host \
+  --platform-revision venv-tools \
+  --claim-level L2_ARCH_SIM \
+  --metadata benchmarks/metadata/local-host-smoke.json \
+  --strict-missing
+```
+
+The venv tools under `benchmarks/tools/` are host smoke wrappers. They prove the
+harness can execute and parse each benchmark family on this workstation; they
+are not target-board, prototype-silicon, or complete-phone performance evidence.
+`tflite_hello_npu` must still fail until a real `hello-npu` NNAPI path exists,
+and `simulator_arch_metrics` must still reject QEMU liveness-only data as
+calibrated benchmark evidence.
+
 | Benchmark | What the harness expects | How to provide it |
 |---|---|---|
 | CoreMark | `coremark` on `PATH` | Build EEMBC CoreMark for the target compiler and install or copy the executable into the benchmark user's `PATH`. `scripts/install_coremark_stream_tools.sh --coremark-src <dir> --only coremark` installs to `tools/bin/coremark`. |

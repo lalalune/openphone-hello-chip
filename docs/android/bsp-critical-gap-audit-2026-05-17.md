@@ -9,7 +9,7 @@ product files under `sw/aosp-device/device/openphone/openphone_ai_soc`.
 The repository contains useful Android/Linux/Buildroot scaffolds, but no
 checked-in evidence that any Linux, Buildroot, AOSP, Cuttlefish, QEMU, or Renode
 image has booted with this BSP. Treat all software BSP status as BLOCKED until
-the required external-tree logs and boot transcripts are committed.
+the required external-tree logs and smoke transcripts are committed.
 
 `sw/check_bsp_scaffolds.py` remains a source-presence audit. It can be clear
 while the real BSP is blocked. `scripts/check_software_bsp.py` is the gate that
@@ -25,8 +25,8 @@ marker validation.
 | U-Boot | `docs/sw/u-boot/README.md` is documentation-only. | No board port, defconfig, SPL/U-Boot image, boot media, or device-tree handoff. |
 | Buildroot | `sw/buildroot` is a `BR2_EXTERNAL` skeleton with defconfig, fragment, and rootfs smoke script. | No external Buildroot checkout, no `linux-external.tar.xz`, no kernel/rootfs image, no runtime log. |
 | Linux | `sw/linux` has importable NPU/DMA driver sources and DTS. | No external kernel checkout integration, no compiled modules, no DTB build, no boot log, no `/dev/hello-npu` smoke. |
-| AOSP | `sw/aosp-device` has product, BoardConfig, device makefile, init, VINTF, fstab, sepolicy, kernel fragment, and DTS scaffolds. | No external AOSP checkout build, no `vendor.img`, no VINTF result, no Android boot transcript. |
-| Android compatibility | `sw/aosp-device/evidence_manifest.json` lists bounded CTS/VTS subset evidence requirements. | No CTS, VTS, or CDD compatibility logs are checked in; no Android compatibility claim is allowed. |
+| AOSP | `sw/aosp-device` has product, BoardConfig, device makefile, init, VINTF, fstab, sepolicy, kernel fragment, and DTS scaffolds. | No external AOSP checkout build, no `vendor.img`, no VINTF result, no SELinux build/neverallow result, and no Cuttlefish/QEMU/Renode smoke transcript accepted by the strict gate. |
+| Android compatibility | `sw/aosp-device/evidence_manifest.json` lists CTS/VTS scope-intake evidence requirements. | No CTS, VTS, CDD, or Android compatibility logs are checked in; no Android compatibility claim is allowed. |
 | WiFi/Bluetooth | Linux DTS has disabled SDIO/UART nodes for a Murata/CYW4343W-class shape. | No SDIO host, UART, GPIO/pinctrl, power sequencing, RF path, firmware loading, or runtime evidence. |
 
 ## HAL stubs and Android gaps
@@ -52,15 +52,17 @@ Required but absent:
 - HAL implementation tree for `hwcomposer.openphone_ai_soc`.
 - Built Linux `Image`, DTB, modules, and boot log.
 - Built Buildroot rootfs/kernel image and `hello-mmio-smoke` transcript.
-- Built AOSP `vendor.img`, installed-files manifest, VINTF output, and boot log.
+- Built AOSP `vendor.img`, installed-files manifest, VINTF output, SELinux
+  policy output, neverallow output, CTS/VTS scope-intake log, and virtual-device
+  smoke logs.
 
 ## Boot and simulator evidence gaps
 
 | Target | Current evidence | Required evidence before PASS |
 |---|---|---|
-| AOSP Cuttlefish riscv64 | Runbook only. | `docs/evidence/android/cuttlefish_riscv64_boot.log` with `adb shell`, `ro.product.cpu.abi=riscv64`, and shell or `sys.boot_completed=1` proof. |
-| OpenPhone AOSP product | Product files only. | `openphone_ai_soc_lunch.log`, `openphone_ai_soc_vendorimage.log`, `openphone_ai_soc_checkvintf.log`, and installed-files evidence. |
-| Android compatibility subset | Manifest only. | `cts_virtual_device_subset.log` and `vts_virtual_device_subset.log` from real Tradefed commands; these are still not full CDD/CTS/VTS certification. |
+| AOSP Cuttlefish riscv64 | Legacy `cuttlefish_riscv64_boot.log` may exist from capture tooling, but it is not the strict gate file. | `docs/evidence/android/cuttlefish_riscv64_smoke.log` with provenance, no boot/compatibility claim markers, `ro.product.cpu.abi=riscv64`, `openphone_ai_soc`, and real Cuttlefish/adb smoke output. |
+| OpenPhone AOSP product | Product files only plus any archived lunch log. | `openphone_ai_soc_lunch.log`, `openphone_ai_soc_vendorimage.log`, `openphone_ai_soc_checkvintf.log`, `openphone_ai_soc_sepolicy_build.log`, `openphone_ai_soc_selinux_neverallow.log`, and installed-files/policy evidence. |
+| Android compatibility scope | Manifest only; legacy `cts_virtual_device_subset.log` and `vts_virtual_device_subset.log` are aliases when capture tooling creates them. | `openphone_ai_soc_cts_vts_plan.log` from real CTS/VTS build, list, or bounded smoke-scope intake commands; this is still not full CDD/CTS/VTS certification. |
 | QEMU virt | Semantic qemu-virt checks and optional smoke path exist, but qemu-virt is not hello-chip ABI proof. | Bounded QEMU UART transcript for software reference, plus separate hello-chip MMIO proof before hardware claims. |
 | Renode | Reference platform/check path only; docs state executable smoke is blocked without transcript. | Renode serial transcript loading the real firmware ELF and capturing the expected banner. |
 | hello_soc RTL/Linux | No CPU-capable hello_soc boot path. | CPU, RAM, UART, timer, interrupt controller, OpenSBI handoff, Linux boot log, and MMIO smoke. |
@@ -88,7 +90,8 @@ Still missing:
 ## Machine-readable BLOCK gates
 
 `scripts/check_software_bsp.py` now requires these evidence files through
-`docs/evidence/software-bsp-evidence-manifest.json`:
+`docs/android/bsp-log-evidence-manifest.json` and
+`docs/android/bsp-artifact-manifest.json`:
 
 | Target | Evidence files |
 |---|---|
@@ -96,12 +99,17 @@ Still missing:
 | Linux | `docs/evidence/linux/openphone_hello_kernel_build.log`, `docs/evidence/linux/openphone_hello_dtb_check.log`, `docs/evidence/linux/hello-mmio-smoke.log` |
 | OpenSBI | `docs/evidence/linux/opensbi_openphone_build.log`, `docs/evidence/linux/opensbi_fw_dynamic_handoff.log` |
 | U-Boot | `docs/evidence/linux/u_boot_openphone_build.log`, `docs/evidence/linux/u_boot_opensbi_boot_chain.log` |
-| AOSP / Android | `docs/evidence/android/openphone_ai_soc_lunch.log`, `docs/evidence/android/openphone_ai_soc_vendorimage.log`, `docs/evidence/android/openphone_ai_soc_checkvintf.log`, `docs/evidence/android/cuttlefish_riscv64_boot.log`, `docs/evidence/android/cts_virtual_device_subset.log`, `docs/evidence/android/vts_virtual_device_subset.log` |
+| AOSP / Android | `docs/evidence/android/openphone_ai_soc_lunch.log`, `docs/evidence/android/openphone_ai_soc_vendorimage.log`, `docs/evidence/android/openphone_ai_soc_checkvintf.log`, `docs/evidence/android/openphone_ai_soc_sepolicy_build.log`, `docs/evidence/android/openphone_ai_soc_selinux_neverallow.log`, `docs/evidence/android/openphone_ai_soc_cts_vts_plan.log`, `docs/evidence/android/cuttlefish_riscv64_smoke.log`, `docs/evidence/android/qemu_riscv64_smoke.log`, `docs/evidence/android/renode_hello_soc_smoke.log` |
 
 Until those files exist with real command transcripts, `make software-bsp-check`
 prints BLOCKED status and `make software-bsp-evidence-check` fails. Placeholder
 logs, failed transcripts, templates, and files missing required command/pass
 markers are rejected.
+
+Backward-compatible aliases from `sw/aosp-device/capture-aosp-evidence.sh` are
+`cuttlefish_riscv64_boot.log`, `cts_virtual_device_subset.log`, and
+`vts_virtual_device_subset.log`. They may be retained with reports, but they are
+not the full AOSP gate required by `scripts/check_software_bsp.py`.
 
 Capture entry points:
 
@@ -109,4 +117,4 @@ Capture entry points:
 - Linux: `sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux kernel-build|dtb-check|smoke`
 - OpenSBI: `sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build|handoff`
 - U-Boot: `sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot build|boot-chain`
-- AOSP: `sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch|vendorimage|checkvintf|cuttlefish-boot|cts-subset|vts-subset`
+- AOSP: `sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch|vendorimage|checkvintf|cuttlefish-boot|cts-subset|vts-subset`, plus `python3 scripts/intake_android_evidence.py --target aosp --from-dir /path/to/logs --install` for the strict nine-log gate

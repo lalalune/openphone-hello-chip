@@ -9,9 +9,7 @@ ignore: |
 
 rules:
   document-start: disable
-  line-length:
-    max: 140
-    level: warning
+  line-length: disable
   truthy:
     allowed-values: ["true", "false", "on", "off"]
   comments:

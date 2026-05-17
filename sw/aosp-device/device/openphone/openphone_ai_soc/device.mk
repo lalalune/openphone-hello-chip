@@ -11,8 +11,7 @@ PRODUCT_MANUFACTURER := OpenPhone
 
 PRODUCT_COPY_FILES += \
     device/openphone/openphone_ai_soc/init.openphone.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.openphone.rc \
-    device/openphone/openphone_ai_soc/fstab.openphone:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.openphone \
-    device/openphone/openphone_ai_soc/manifest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/openphone_hello.xml
+    device/openphone/openphone_ai_soc/fstab.openphone:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.openphone
 
 # HAL packages are intentionally not enabled in the repo-local scaffold.
 # Enable these only in an external AOSP tree after source or reviewed prebuilts
@@ -23,6 +22,17 @@ PRODUCT_COPY_FILES += \
 #   android.hardware.graphics.composer@2.4-service
 #   hwcomposer.openphone_ai_soc
 #   hello_npu.default
+# HAL package names are intentionally not listed until source or prebuilts are
+# imported into the external AOSP tree. Keeping these out of PRODUCT_PACKAGES
+# prevents vendorimage from passing with misleading, unimplemented services.
+#
+# Future external-tree packages:
+#   hwcomposer.openphone_ai_soc
+#   hello_npu.default
+#
+# WiFi/Bluetooth packages, permissions, overlays, supplicant/hostapd configs,
+# and Android feature XML are intentionally absent until the external module
+# has host-controller, firmware, regulatory, and framework evidence.
 
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=OpenPhone \

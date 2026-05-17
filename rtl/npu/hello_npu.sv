@@ -338,13 +338,29 @@ module hello_npu (
             6'h11: rdata = {29'h0, desc_head};
             6'h12: rdata = {29'h0, desc_tail};
             6'h13: rdata = {29'h0, desc_busy, desc_head == 3'h7, desc_head == desc_tail};
-            6'h14: rdata = perf_cycles;
-            6'h15: rdata = perf_macs;
-            6'h16: rdata = perf_ops;
-            6'h17: rdata = perf_errors;
-            default: begin
-                if (addr[5:4] == 2'b10) begin
-                    rdata = scratch[addr[3:0]];
+                    6'h14: rdata = perf_cycles;
+                    6'h15: rdata = perf_macs;
+                    6'h16: rdata = perf_ops;
+                    6'h17: rdata = perf_errors;
+                    6'h20: rdata = scratch[0];
+                    6'h21: rdata = scratch[1];
+                    6'h22: rdata = scratch[2];
+                    6'h23: rdata = scratch[3];
+                    6'h24: rdata = scratch[4];
+                    6'h25: rdata = scratch[5];
+                    6'h26: rdata = scratch[6];
+                    6'h27: rdata = scratch[7];
+                    6'h28: rdata = scratch[8];
+                    6'h29: rdata = scratch[9];
+                    6'h2a: rdata = scratch[10];
+                    6'h2b: rdata = scratch[11];
+                    6'h2c: rdata = scratch[12];
+                    6'h2d: rdata = scratch[13];
+                    6'h2e: rdata = scratch[14];
+                    6'h2f: rdata = scratch[15];
+                    default: begin
+                        if (addr[5:4] == 2'b10) begin
+                            rdata = scratch[addr[3:0]];
                 end else begin
                     rdata = 32'h0;
                 end

@@ -2,8 +2,11 @@
 set -eu
 
 if ! command -v yosys >/dev/null 2>&1; then
-    echo "Yosys missing. Use Docker/Nix or install Yosys."
-    exit 1
+    echo "STATUS: BLOCKED synth.yosys - Yosys missing. Use Docker/Nix or install Yosys."
+    if [ "${REQUIRE_YOSYS:-0}" = "1" ]; then
+        exit 2
+    fi
+    exit 0
 fi
 
 mkdir -p build/reports build/netlist

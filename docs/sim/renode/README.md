@@ -39,6 +39,14 @@ enough on its own: if `renode` is missing, `renode --version` cannot run, or the
 firmware ELF is absent, intake remains `STATUS: BLOCKED`.
 
 The expected UART banner contract is:
+`scripts/run_renode.sh --check` is fail-closed. It checks that the platform and
+documentation match the qemu-virt contract, then reports executable smoke as
+`STATUS: BLOCKED` unless a real Renode serial transcript path exists. The
+expected UART transcript artifact is
+`build/renode/openphone_hello_uart.transcript`, the expected smoke manifest
+artifact is `build/renode/openphone_hello_smoke.json`, and the QEMU reference
+transcript artifact is `build/reports/qemu_smoke.log`. A future passing smoke
+must load `build/qemu/hello_qemu_firmware.elf` and capture the UART banner:
 
 ```text
 openphone hello qemu
@@ -53,3 +61,5 @@ hash, bind it to the firmware hash, record the Renode executable/version
 preflight, point at the banner contract, and repeat the required banner. Until a
 real transcript is captured by Renode or ingested from a real Renode serial run,
 Renode status may be described only as reference-only or blocked, not booted.
+Until that transcript is automated and checked in, Renode status may be
+described only as reference-only or blocked, not booted.

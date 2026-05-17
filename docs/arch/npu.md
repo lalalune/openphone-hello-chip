@@ -23,6 +23,7 @@ read RESULT
 `OPCODE` is read/write; readback returns the programmed low 4 bits. `RESULT_HI`
 contains the high word for `MUL_LO` and sign-extension for signed 32-bit
 `MAC_S16`/`DOT4_S8`/`DOT8_S4` results.
+`MAC_S16`/`DOT4_S8` results.
 
 Implemented opcodes:
 
@@ -76,6 +77,9 @@ Additional registers:
 | `0x54` | `PERF_MACS` | signed INT8 MAC operations issued |
 | `0x58` | `PERF_OPS` | accepted operation counter |
 | `0x5c` | `PERF_ERRORS` | rejected commands/configurations; write bit 0 to clear all perf counters |
+| `0x2c` | `PERF_CYCLES` | cycles spent in GEMM active state |
+| `0x30` | `PERF_MACS` | signed INT8 MAC operations issued |
+| `0x34` | `PERF_ERRORS` | rejected commands/configurations |
 | `0x80`-`0xbc` | `SCRATCH[0..15]` | 16 little-endian 32-bit scratchpad words |
 
 For row-major `A[M][K]`, `B[K][N]`, and `C[M][N]`, use `A_STRIDE = K`,
@@ -130,3 +134,7 @@ observed_tops <= macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12
 
 The current RTL cannot satisfy those gates because its GEMM input/output path is
 the 64-byte MMIO scratchpad, not a hardware DMA tensor path.
+Current integration is still an MMIO-visible datapath model. The DMA block
+tracks aligned 32-bit beat issue, byte completion, last source/destination
+addresses, and final write strobe, but it does not yet drive a real memory
+master or feed an NPU scratchpad/command queue.

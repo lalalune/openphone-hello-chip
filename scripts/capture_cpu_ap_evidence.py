@@ -49,7 +49,7 @@ DTS_BOOT_REQUIREMENTS = {
 
 
 def utc_now() -> str:
-    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def load_manifest_or_exit() -> dict:

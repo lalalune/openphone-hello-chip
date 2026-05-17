@@ -23,7 +23,8 @@ VERILOG_SOURCES := \
 
 TOPLEVEL ?= hello_chip_top
 MODULE ?= test_hello_chip
+PYTHON ?= python3
 
 EXTRA_ARGS += -Wall
 
-include $(shell cocotb-config --makefiles)/Makefile.sim
+include $(shell $(PYTHON) -m cocotb.config --makefiles)/Makefile.sim

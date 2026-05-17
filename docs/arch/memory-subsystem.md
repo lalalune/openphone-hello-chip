@@ -115,3 +115,6 @@ make benchmarks-dry-run
 ```
 
 Only the first three can validate the current RTL scaffold. `make benchmarks-dry-run` validates parser wiring and missing-tool handling; it is not phone-class memory evidence.
+Real DRAM, PHY timing, refresh, training, ECC, cache coherency, IOMMU/SMMU, and QoS are not implemented by the current scaffold. This is a real memory controller boundary only: the checked-in model is SRAM-backed, has no cache coherency, no IOMMU, and no QoS.
+
+Any software or product claim that depends on a real memory hierarchy must fail closed until controller, PHY, coherency, IOMMU, and QoS evidence is checked in.

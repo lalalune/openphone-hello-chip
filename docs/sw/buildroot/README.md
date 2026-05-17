@@ -55,7 +55,7 @@ Evidence intake is defined by
 `make software-bsp-evidence-check`. A file existing under `docs/evidence` is
 not enough: the transcript must include the `openphone-evidence` header/footer,
 the exact command marker, and the target-specific pass markers. Templates,
-placeholders, failed transcripts, and too-small files are rejected.
+substitute-only logs, failed transcripts, and too-small files are rejected.
 
 ## External Buildroot import
 

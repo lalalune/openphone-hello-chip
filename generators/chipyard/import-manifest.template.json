@@ -5,6 +5,9 @@
     "repo": "https://github.com/ucb-bar/chipyard.git",
     "tag": "1.13.0",
     "commit": "69eba860a352343e4ac6b6df0f3638a79a86ec78",
+    "remote": "https://github.com/ucb-bar/chipyard.git",
+    "tag": "1.13.0",
+    "commit": "69eba86",
     "recursive_submodules_recorded": false,
     "submodules": []
   },

@@ -59,7 +59,7 @@ scripts/run_qemu.sh --check-os
 
 The fetch helper downloads Debian `linux`, `initrd.gz`, and `SHA256SUMS`, then
 verifies the payload hashes before writing
-`build/qemu/linux_payload/debian-installer-riscv64/manifest.json`.
+`build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/manifest.json`.
 `--check-os` auto-discovers those files and archives the bounded QEMU output at
 `build/reports/qemu_os_boot_attempt.log`. It also writes a structured status
 manifest at `build/reports/qemu_os_boot_attempt.json` with the required claim

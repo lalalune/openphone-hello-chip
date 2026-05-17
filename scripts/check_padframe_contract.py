@@ -18,7 +18,7 @@ REQUIRED_RELEASE_GATES = {
     "package_release",
     "board_fabrication_release",
 }
-NON_RELEASE_EVIDENCE_CLASS = "non_release_placeholder"
+NON_RELEASE_EVIDENCE_CLASSES = {"non_release_placeholder", "non_release_demo_planning"}
 PROHIBITED_RELEASE_USE = "prohibited"
 REQUIRED_CROSS_PROBE_SCOPE = {
     "package_pinout": "package/hello-demo-pinout.yaml",
@@ -62,8 +62,11 @@ def validate_cross_probe(root: Path, path: Path, expected_pins: int) -> list[str
     data = yaml.safe_load(path.read_text())
     if not isinstance(data, dict):
         return [f"{path.relative_to(root)}: cross-probe manifest must be a mapping"]
-    if data.get("status") != NON_RELEASE_EVIDENCE_CLASS:
-        failures.append(f"{path.relative_to(root)}: status must be non_release_placeholder")
+    if data.get("status") not in NON_RELEASE_EVIDENCE_CLASSES:
+        failures.append(
+            f"{path.relative_to(root)}: status must be one of "
+            + ", ".join(sorted(NON_RELEASE_EVIDENCE_CLASSES))
+        )
     if data.get("release_use") != PROHIBITED_RELEASE_USE:
         failures.append(f"{path.relative_to(root)}: release_use must be prohibited")
 
@@ -108,12 +111,18 @@ def main() -> int:
     allowed = contract["allowed"]
     failures: list[str] = []
 
-    if contract.get("evidence_class") != NON_RELEASE_EVIDENCE_CLASS:
-        failures.append("padframe contract must declare evidence_class: non_release_placeholder")
+    if contract.get("evidence_class") not in NON_RELEASE_EVIDENCE_CLASSES:
+        failures.append(
+            "padframe contract must declare evidence_class: "
+            + " or ".join(sorted(NON_RELEASE_EVIDENCE_CLASSES))
+        )
     if contract.get("release_use") != PROHIBITED_RELEASE_USE:
         failures.append("padframe contract must declare release_use: prohibited")
-    if pinout.get("evidence_class") != NON_RELEASE_EVIDENCE_CLASS:
-        failures.append("package pinout must declare evidence_class: non_release_placeholder")
+    if pinout.get("evidence_class") not in NON_RELEASE_EVIDENCE_CLASSES:
+        failures.append(
+            "package pinout must declare evidence_class: "
+            + " or ".join(sorted(NON_RELEASE_EVIDENCE_CLASSES))
+        )
     if pinout.get("release_use") != PROHIBITED_RELEASE_USE:
         failures.append("package pinout must declare release_use: prohibited")
     pinout_blockers = pinout.get("release_blockers")

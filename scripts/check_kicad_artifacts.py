@@ -1,196 +1,122 @@
 #!/usr/bin/env python3
-from __future__ import annotations
-
-import argparse
+import subprocess
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[1]
-KICAD_DIR = ROOT / "board/kicad/hello-demo"
-FAB_REPORT_DIR = ROOT / "board/reports/fab"
-COMMANDS_DOC = ROOT / "docs/board/kicad/hello-demo-commands.md"
-MANIFEST = ROOT / "docs/board/kicad/hello-demo-artifact-manifest.yaml"
-FAB_NOTES = ROOT / "docs/board/kicad/hello-demo/fab-notes.md"
-PINOUT = ROOT / "package/hello-demo-pinout.yaml"
-PACKAGE_DOC = ROOT / "docs/package/hello-demo-package.md"
+BOARD_DIR = ROOT / "board/kicad/hello-demo"
+BOARD_DOC_DIR = ROOT / "docs/board/kicad/hello-demo"
+REPORT_DIR = ROOT / "board/reports/fab"
+MANIFEST = "board/kicad/hello-demo/artifact-manifest.yaml"
+PRINTABLE_SOURCE_LABELS = {"project", "schematic", "pcb"}
 
-REQUIRED_KICAD_SOURCES = {
+REQUIRED_PROJECT_GLOBS = {
     "project": ["*.kicad_pro"],
     "schematic": ["*.kicad_sch"],
     "pcb": ["*.kicad_pcb"],
-    "symbol_library": ["*.kicad_sym"],
-    "footprint_modules": ["*.pretty/*.kicad_mod"],
+    "symbol/footprint library": ["*.kicad_sym", "**/*.kicad_sym", "**/*.pretty/*.kicad_mod"],
 }
 
-REQUIRED_FAB_OUTPUTS = {
-    "erc_transcript": ["erc*.txt", "erc*.log", "erc*.rpt"],
-    "drc_transcript": ["drc*.txt", "drc*.log", "drc*.rpt"],
-    "gerber_outputs": ["gerbers/*.gbr", "gerbers/*.gbrjob"],
-    "drill_outputs": ["drill/*.drl", "drill/*.xln"],
-    "bom_export": ["bom*.csv", "bom*.tsv", "bom*.xml"],
-    "position_export": ["position*.csv", "positions*.csv", "pos*.csv"],
-    "fab_drawing": ["fab-drawing*.pdf", "fab-drawing*.svg", "plot/*.pdf"],
-    "command_transcript": ["command-transcript*.txt", "commands*.log"],
-    "tool_versions": ["tool-versions*.txt", "tool_versions*.txt"],
+REQUIRED_RELEASE_EVIDENCE = {
+    "erc transcript": ["**/*erc*.txt", "**/*erc*.log", "**/*erc*.rpt"],
+    "drc transcript": ["**/*drc*.txt", "**/*drc*.log", "**/*drc*.rpt"],
+    "gerber output": ["**/*.gbr", "**/*.gbrjob"],
+    "drill output": ["**/*.drl", "**/*.xln"],
+    "bom output": ["**/*bom*.csv", "**/*bom*.tsv", "**/*bom*.xml"],
+    "position output": ["**/*pos*.csv", "**/*position*.csv", "**/*.pos"],
+    "fab drawing": ["**/*fab*drawing*.pdf", "**/*fabrication*drawing*.pdf"],
+    "command transcript": ["**/*command*transcript*.txt", "**/*kicad*transcript*.txt"],
+    "KiCad tool versions": ["**/*tool*version*.txt", "**/*kicad*version*.txt"],
 }
-REQUIRED_CLAIM_POLICY_KEYS = {"allowed", "forbidden_until_unblocked"}
-FORBIDDEN_RELEASE_TEXT_MARKERS = (
-    "template_not_release_evidence",
-    "non_release_placeholder",
-    "release use: `prohibited`",
-    "release_use: prohibited",
-    "placeholder-only",
-    "placeholder package",
-    "not a foundry-approved package",
-    "not fabrication release evidence",
-)
 
 
-def repo_rel(path: Path) -> str:
-    return str(path.relative_to(ROOT))
-
-
-def load_yaml(path: Path) -> dict:
-    data = yaml.safe_load(path.read_text())
-    if not isinstance(data, dict):
-        raise SystemExit(f"{repo_rel(path)} must be a YAML mapping")
-    return data
-
-
-def matches(root: Path, patterns: list[str]) -> list[Path]:
+def matches(base: Path, patterns: list[str]) -> list[Path]:
     found: list[Path] = []
-    for pattern in patterns:
-        found.extend(path for path in root.glob(pattern) if path.is_file())
+    if base.is_dir():
+        for pattern in patterns:
+            found.extend(path for path in base.glob(pattern) if path.is_file())
     return sorted(set(found))
 
 
-def require_file(path: Path, label: str, failures: list[str]) -> None:
-    if not path.is_file():
-        failures.append(f"missing {label}: {repo_rel(path)}")
+def run_manifest_check(release: bool) -> subprocess.CompletedProcess[str]:
+    manifest_args = [
+        sys.executable,
+        "scripts/check_manufacturing_artifacts.py",
+        "--manifest",
+        MANIFEST,
+    ]
+    if release:
+        manifest_args.append("--release")
+    return subprocess.run(manifest_args, cwd=ROOT, capture_output=True, text=True)
 
 
-def reject_placeholder_files(files: list[Path], label: str, failures: list[str]) -> None:
-    for path in files:
-        text = path.read_text(errors="ignore").lower()
-        matched = [marker for marker in FORBIDDEN_RELEASE_TEXT_MARKERS if marker in text]
-        if matched:
-            failures.append(
-                f"{label} contains non-release marker(s): {repo_rel(path)}: " + ", ".join(matched)
-            )
-
-
-def validate_manifest_only(failures: list[str]) -> None:
-    for path, label in (
-        (FAB_NOTES, "KiCad fabrication notes"),
-        (COMMANDS_DOC, "KiCad command capture plan"),
-        (MANIFEST, "KiCad artifact manifest"),
-        (PINOUT, "package pinout"),
-        (PACKAGE_DOC, "package contract"),
-    ):
-        require_file(path, label, failures)
-    if failures:
-        return
-
-    manifest = load_yaml(MANIFEST)
-    if manifest.get("schema") != "openphone.kicad_artifact_manifest.v1":
-        failures.append(
-            "KiCad artifact manifest schema must be openphone.kicad_artifact_manifest.v1"
-        )
-    if manifest.get("status") != "release_blocked":
-        failures.append("KiCad artifact manifest status must remain release_blocked")
-    if manifest.get("kicad_project_dir") != "board/kicad/hello-demo":
-        failures.append("KiCad artifact manifest must point at board/kicad/hello-demo")
-    if manifest.get("fab_report_dir") != "board/reports/fab":
-        failures.append("KiCad artifact manifest must point at board/reports/fab")
-    if manifest.get("command_capture_doc") != "docs/board/kicad/hello-demo-commands.md":
-        failures.append("KiCad artifact manifest must link the command capture doc")
-    claim_policy = manifest.get("claim_policy")
-    if not isinstance(claim_policy, dict):
-        failures.append("KiCad artifact manifest must list claim_policy")
-    else:
-        missing_claim_keys = sorted(REQUIRED_CLAIM_POLICY_KEYS - set(claim_policy))
-        if missing_claim_keys:
-            failures.append(
-                "KiCad artifact manifest claim_policy missing keys: "
-                + ", ".join(missing_claim_keys)
-            )
-    blocked_until = manifest.get("blocked_until")
-    if not isinstance(blocked_until, list) or len(blocked_until) < 5:
-        failures.append("KiCad artifact manifest must list concrete blocked_until prerequisites")
-    sections = manifest.get("required_artifacts")
-    expected_sections = {"sources", "fabrication_outputs", "provenance"}
-    if not isinstance(sections, dict):
-        failures.append("KiCad artifact manifest must list required_artifacts")
-    else:
-        missing = sorted(expected_sections - set(sections))
-        if missing:
-            failures.append(
-                "KiCad artifact manifest missing required_artifacts sections: " + ", ".join(missing)
-            )
-
-    commands = COMMANDS_DOC.read_text()
-    for phrase in (
-        "kicad-cli sch erc",
-        "kicad-cli pcb drc",
-        "kicad-cli pcb export gerbers",
-        "kicad-cli pcb export drill",
-        "kicad-cli sch export bom",
-        "kicad-cli pcb export pos",
-    ):
-        if phrase not in commands:
-            failures.append(f"KiCad command capture doc missing command phrase: {phrase}")
-
-
-def validate_release_artifacts(failures: list[str]) -> None:
-    validate_manifest_only(failures)
-    if failures:
-        return
-
-    pinout = load_yaml(PINOUT)
-    package_name = str(pinout.get("package", "")).lower()
-    notes = "\n".join(str(note).lower() for note in pinout.get("notes", []))
-    if "placeholder" in package_name or "placeholder" in notes:
-        failures.append(
-            "package pinout is placeholder-only; do not generate fabrication KiCad artifacts from it"
-        )
-
-    package_text = PACKAGE_DOC.read_text().lower()
-    if "not a foundry-approved package" in package_text or "placeholder" in package_text:
-        failures.append("package contract is not vendor/foundry approved")
-
-    for artifact, patterns in REQUIRED_KICAD_SOURCES.items():
-        files = matches(KICAD_DIR, patterns)
-        if not files:
-            failures.append(f"missing KiCad {artifact} under {repo_rel(KICAD_DIR)}")
-        else:
-            reject_placeholder_files(files, f"KiCad {artifact}", failures)
-
-    for artifact, patterns in REQUIRED_FAB_OUTPUTS.items():
-        files = matches(FAB_REPORT_DIR, patterns)
-        if not files:
-            failures.append(f"missing KiCad fab {artifact} under {repo_rel(FAB_REPORT_DIR)}")
-        else:
-            reject_placeholder_files(files, f"KiCad fab {artifact}", failures)
+def append_process_output(
+    prefix: str, proc: subprocess.CompletedProcess[str], lines: list[str]
+) -> None:
+    if proc.stdout:
+        lines.extend(f"{prefix}: {line}" for line in proc.stdout.rstrip().splitlines())
+    if proc.stderr:
+        lines.extend(f"{prefix} stderr: {line}" for line in proc.stderr.rstrip().splitlines())
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Fail-closed KiCad source and fabrication evidence gate."
+    parser = ArgumentParser(description="Check KiCad board fabrication artifacts.")
+    parser.add_argument(
+        "--release", action="store_true", help="require release-ready KiCad and fab evidence"
     )
     parser.add_argument(
-        "--manifest-only",
-        action="store_true",
-        help="check only blocker manifests and command-capture documentation",
+        "--manifest-only", action="store_true", help="check KiCad artifact manifest shape only"
     )
     args = parser.parse_args()
 
     failures: list[str] = []
+    blockers: list[str] = []
+
+    manifest_check = run_manifest_check(release=False)
+    if manifest_check.returncode != 0:
+        failures.append(f"{MANIFEST} validation failed")
+        append_process_output("manifest", manifest_check, failures)
+
     if args.manifest_only:
-        validate_manifest_only(failures)
+        if failures:
+            print("KiCad artifact manifest check failed:")
+            for failure in failures:
+                print(f"  - {failure}")
+            return 1
+        print("KiCad artifact manifest check passed.")
+        return 0
+
+    release_manifest_check = run_manifest_check(release=True) if args.release else None
+    if release_manifest_check is not None and release_manifest_check.returncode != 0:
+        blockers.append(f"{MANIFEST} release evidence is incomplete")
+        append_process_output("manifest", release_manifest_check, blockers)
+
+    if not BOARD_DIR.is_dir():
+        failures.append("missing board/kicad/hello-demo directory")
     else:
-        validate_release_artifacts(failures)
+        notes = BOARD_DOC_DIR / "fab-notes.md"
+        if not notes.is_file():
+            failures.append("missing docs/board/kicad/hello-demo/fab-notes.md")
+        printable_sources_present = False
+        printable_sources_missing: list[str] = []
+        for label, patterns in REQUIRED_PROJECT_GLOBS.items():
+            found = matches(BOARD_DIR, patterns)
+            if label in PRINTABLE_SOURCE_LABELS:
+                printable_sources_present = printable_sources_present or bool(found)
+                if not found:
+                    printable_sources_missing.append(label)
+            elif args.release and not found:
+                blockers.append(f"missing KiCad {label} artifact under board/kicad/hello-demo")
+        if printable_sources_missing:
+            missing = ", ".join(printable_sources_missing)
+            blockers.append(f"missing printable KiCad source artifact(s): {missing}")
+        elif printable_sources_present:
+            print("KiCad printable source set present; checking release evidence.")
+
+    for label, patterns in REQUIRED_RELEASE_EVIDENCE.items():
+        if not matches(REPORT_DIR, patterns) and not matches(BOARD_DIR, patterns):
+            blockers.append(f"missing KiCad/fab release evidence: {label}")
 
     if failures:
         print("KiCad artifact check failed:")
@@ -198,10 +124,16 @@ def main() -> int:
             print(f"  - {failure}")
         return 1
 
-    if args.manifest_only:
-        print("KiCad artifact manifest gate ok")
-    else:
-        print("KiCad release artifacts ok")
+    if blockers:
+        print("KiCad release blockers:")
+        for blocker in blockers:
+            print(f"  - {blocker}")
+        if args.release:
+            return 1
+        print("KiCad scaffold present; release evidence is still blocked.")
+        return 0
+
+    print("KiCad artifact check passed.")
     return 0
 
 

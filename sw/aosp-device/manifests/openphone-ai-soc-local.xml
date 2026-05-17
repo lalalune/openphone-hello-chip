@@ -2,11 +2,12 @@
 <manifest>
   <!--
     Local-manifest seed for AOSP repo workspaces that mirror this repository.
-    Set the remote fetch URL to the parent location of this repo before use, or
-    use sw/aosp-device/import-aosp-device.sh for a plain local checkout.
+    Replace the remote fetch URL with the parent directory or Git remote for
+    this repository before use. For a plain local checkout, prefer
+    sw/aosp-device/import-aosp-device.sh.
   -->
-  <remote name="openphone-local" fetch="file:///Users/shawwalters/Desktop" />
-  <project name="npu_experiment"
+  <remote name="openphone-local" fetch="file:///REPLACE_WITH_OPENPHONE_REPO_PARENT" />
+  <project name="openphone-hello-chip"
            path="external/openphone-ai-soc"
            remote="openphone-local"
            revision="HEAD">

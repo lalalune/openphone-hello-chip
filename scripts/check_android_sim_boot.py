@@ -2,17 +2,15 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "build/reports/android_sim_boot.json"
-MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
-REFERENCE_ONLY_BOUNDARY = "reference_only_not_hello_chip_ap_evidence"
-REFERENCE_ONLY_EVIDENCE = {
-    "docs/evidence/android/cuttlefish_riscv64_boot.log",
-    "docs/evidence/android/cts_virtual_device_subset.log",
-    "docs/evidence/android/vts_virtual_device_subset.log",
-}
+LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
+
+sys.path.insert(0, str(ROOT / "scripts"))
+import check_software_bsp  # noqa: E402
 
 VALID_STATUSES = {"pass", "blocked", "failed"}
 REQUIRED_REPORT_FIELDS = {
@@ -21,10 +19,17 @@ REQUIRED_REPORT_FIELDS = {
     "reason": str,
     "next_step": str,
     "aosp_dir": str,
+    "aosp_product": str,
     "run_cuttlefish": bool,
     "run_cts": bool,
     "run_vts": bool,
+    "run_qemu": bool,
+    "run_renode": bool,
     "require_full_evidence": bool,
+    "evidence_manifest": str,
+    "software_bsp_checker": str,
+    "required_evidence": list,
+    "attempted_evidence": list,
     "host_requirements": dict,
     "claim_boundary": str,
 }
@@ -32,18 +37,39 @@ REQUIRED_REPORT_FIELDS = {
 
 def main() -> int:
     errors: list[str] = []
-    if not MANIFEST.is_file():
-        return report("failed", [f"missing {MANIFEST.relative_to(ROOT)}"])
+    required_evidence = check_software_bsp.TARGETS["aosp"]["evidence"]
+    build_only_evidence = [
+        path
+        for path in required_evidence
+        if path
+        not in {
+            "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+            "docs/evidence/android/cuttlefish_riscv64_smoke.log",
+            "docs/evidence/android/qemu_riscv64_smoke.log",
+            "docs/evidence/android/renode_hello_soc_smoke.log",
+        }
+    ]
+    if not LOG_EVIDENCE_MANIFEST.is_file():
+        return report("failed", [f"missing {LOG_EVIDENCE_MANIFEST.relative_to(ROOT)}"])
     try:
-        manifest = json.loads(MANIFEST.read_text())
+        manifest = json.loads(LOG_EVIDENCE_MANIFEST.read_text())
     except json.JSONDecodeError as exc:
-        return report("failed", [f"{MANIFEST.relative_to(ROOT)} is invalid JSON: {exc}"])
+        return report(
+            "failed", [f"{LOG_EVIDENCE_MANIFEST.relative_to(ROOT)} is invalid JSON: {exc}"]
+        )
 
-    if manifest.get("android_boot_claim") != "blocked_until_all_required_evidence_passes":
-        errors.append("AOSP evidence manifest must keep Android boot claims blocked by default")
-    required_evidence = manifest.get("required_for_android_boot_claim")
-    if not isinstance(required_evidence, list) or not required_evidence:
-        errors.append("AOSP evidence manifest must list required boot evidence")
+    if manifest.get("claim_boundary") != "expected_future_log_markers_only_not_boot_evidence":
+        errors.append("AOSP log evidence manifest must keep the expected-future-log boundary")
+    manifest_logs = manifest.get("logs", {})
+    if not isinstance(manifest_logs, dict):
+        errors.append("AOSP log evidence manifest logs must be an object")
+        manifest_logs = {}
+    missing_manifest_specs = [path for path in required_evidence if path not in manifest_logs]
+    if missing_manifest_specs:
+        errors.append(
+            "AOSP log evidence manifest missing required specs: "
+            + ", ".join(missing_manifest_specs)
+        )
 
     if not REPORT.is_file():
         return report(
@@ -70,11 +96,28 @@ def main() -> int:
     status = data.get("status")
     if status not in VALID_STATUSES:
         errors.append(f"android sim report status {status!r} is invalid")
+    if data.get("evidence_manifest") != "docs/android/bsp-log-evidence-manifest.json":
+        errors.append(
+            "android sim report must reference docs/android/bsp-log-evidence-manifest.json"
+        )
+    if data.get("software_bsp_checker") != "scripts/check_software_bsp.py aosp --require-evidence":
+        errors.append("android sim report must reference the strict AOSP BSP evidence checker")
+    if data.get("required_evidence") != required_evidence:
+        errors.append("android sim report required_evidence must match check_software_bsp.py aosp")
+    attempted = data.get("attempted_evidence")
+    if data.get("require_full_evidence") is True and attempted != required_evidence:
+        errors.append("full android sim report must attempt every required AOSP evidence category")
+    if data.get("require_full_evidence") is False and attempted != build_only_evidence:
+        errors.append(
+            "build-only android sim report must stop before virtual-device smoke and compatibility evidence"
+        )
     boundary = data.get("claim_boundary", "")
     if "not hello-chip hardware ABI proof" not in boundary:
         errors.append(
-            "android sim report must separate Cuttlefish/qemu-virt from hello-chip ABI proof"
+            "android sim report must separate Android virtual-device evidence from hello-chip ABI proof"
         )
+    if "compatibility claim" not in boundary:
+        errors.append("android sim report must avoid full Android compatibility claims")
     host_requirements = data.get("host_requirements", {})
     if isinstance(host_requirements, dict):
         if not isinstance(host_requirements.get("host_os"), str):
@@ -86,17 +129,27 @@ def main() -> int:
             errors.append("android sim report host_requirements.missing must be a string list")
 
     if status == "pass":
-        for path in required_evidence or []:
-            evidence = ROOT / path
-            if not evidence.is_file() or evidence.stat().st_size == 0:
-                errors.append(f"pass report is missing required evidence {path}")
-            elif "openphone-evidence: status=PASS" not in evidence.read_text(errors="ignore"):
-                errors.append(f"required evidence {path} does not record PASS")
-            elif path in REFERENCE_ONLY_EVIDENCE:
-                text = evidence.read_text(errors="ignore")
-                marker = f"openphone-evidence: claim_boundary={REFERENCE_ONLY_BOUNDARY}"
-                if marker not in text:
-                    errors.append(f"required reference-only evidence {path} is missing {marker}")
+        bsp_report = check_software_bsp.target_report("aosp")
+        if bsp_report["errors"]:
+            errors.extend(f"AOSP BSP evidence error: {error}" for error in bsp_report["errors"])
+        missing_evidence = bsp_report["missing_evidence"]
+        if missing_evidence:
+            errors.extend(
+                f"pass report is missing required evidence {item['path']}({item['blocker_code']})"
+                for item in missing_evidence
+            )
+        if bsp_report["evidence_status"] != "PASS":
+            errors.append(
+                f"pass report cannot clear while AOSP evidence_status={bsp_report['evidence_status']}"
+            )
+    elif status == "blocked" and data.get("require_full_evidence") is False:
+        attempted_paths = data.get("attempted_evidence", [])
+        forbidden_build_only = sorted(set(attempted_paths) - set(build_only_evidence))
+        if forbidden_build_only:
+            errors.append(
+                "build-only blocked report attempted virtual-device or compatibility evidence: "
+                + ", ".join(forbidden_build_only)
+            )
 
     if errors:
         severity = "blocked" if status == "blocked" else "failed"

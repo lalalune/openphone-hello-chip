@@ -122,7 +122,7 @@ STEPS = [
         "claim": "local RTL simulation ladder",
         "command": [sys.executable, "scripts/run_sim_ladder.py"],
         "pass_markers": ["Simulation ladder passed"],
-        "block_markers": [],
+        "block_markers": ["STATUS: BLOCKED sim_ladder"],
     },
 ]
 

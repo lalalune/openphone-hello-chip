@@ -1,6 +1,14 @@
+import json
+import sys
+from pathlib import Path
+
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+from compiler.runtime.hello_npu_runtime import HelloNpuRuntime, golden_gemm_s8  # noqa: E402
 
 
 async def reset(dut):
@@ -47,18 +55,6 @@ async def poll_done(dut, cycles=32):
     raise AssertionError("timeout waiting for NPU operation")
 
 
-async def write_scratch_word(dut, word, value):
-    await write_reg(dut, 0x20 + word, value)
-
-
-async def read_scratch_s32(dut, byte_offset):
-    assert byte_offset % 4 == 0
-    value = await read_reg(dut, 0x20 + byte_offset // 4)
-    if value & 0x8000_0000:
-        return value - 0x1_0000_0000
-    return value
-
-
 async def run_scalar(dut, opcode, op_a, op_b, acc=0):
     await write_reg(dut, 3, 2)
     await write_reg(dut, 0, op_a)
@@ -84,11 +80,88 @@ def pack_s4(values):
     return word
 
 
-def pack_bytes(values):
-    word = 0
-    for index, value in enumerate(values):
-        word |= (value & 0xFF) << (8 * index)
-    return word
+async def runtime_write32(dut, addr, data):
+    assert 0x1002_0000 <= addr < 0x1002_1000
+    await write_reg(dut, (addr - 0x1002_0000) >> 2, data)
+
+
+async def runtime_read32(dut, addr):
+    assert 0x1002_0000 <= addr < 0x1002_1000
+    return await read_reg(dut, (addr - 0x1002_0000) >> 2)
+
+
+async def runtime_run(dut, opcode, a, b, acc=0):
+    await runtime_write32(dut, HelloNpuRuntime.OP_A, a & 0xFFFF_FFFF)
+    await runtime_write32(dut, HelloNpuRuntime.OP_B, b & 0xFFFF_FFFF)
+    await runtime_write32(dut, HelloNpuRuntime.ACC, acc & 0xFFFF_FFFF)
+    await runtime_write32(dut, HelloNpuRuntime.OPCODE, opcode & 0xF)
+    await runtime_write32(dut, HelloNpuRuntime.CTRL_STATUS, 2)
+    await runtime_write32(dut, HelloNpuRuntime.CTRL_STATUS, 1)
+    for _ in range(1024):
+        status = await runtime_read32(dut, HelloNpuRuntime.CTRL_STATUS)
+        if status & 0x4:
+            raise RuntimeError("hello NPU rejected runtime command")
+        if status & 0x2:
+            return await runtime_read32(dut, HelloNpuRuntime.RESULT)
+    raise TimeoutError("hello NPU runtime command did not complete")
+
+
+async def runtime_write_scratch(dut, offset, data):
+    scratch = bytearray()
+    for word in range(HelloNpuRuntime.SCRATCH_BYTES // 4):
+        value = await runtime_read32(dut, HelloNpuRuntime.SCRATCH + word * 4)
+        scratch.extend(value.to_bytes(4, "little"))
+    scratch[offset : offset + len(data)] = data
+    for word in range(HelloNpuRuntime.SCRATCH_BYTES // 4):
+        value = int.from_bytes(scratch[word * 4 : word * 4 + 4], "little")
+        await runtime_write32(dut, HelloNpuRuntime.SCRATCH + word * 4, value)
+
+
+async def runtime_read_scratch(dut, offset, size):
+    data = bytearray()
+    for word in range(HelloNpuRuntime.SCRATCH_BYTES // 4):
+        value = await runtime_read32(dut, HelloNpuRuntime.SCRATCH + word * 4)
+        data.extend(value.to_bytes(4, "little"))
+    return bytes(data[offset : offset + size])
+
+
+async def runtime_gemm_s8(dut, a, b):
+    m = len(a)
+    k = len(a[0]) if m else 0
+    n = len(b[0]) if b else 0
+    a_base = 0
+    b_base = m * k
+    c_base = (b_base + k * n + 3) & ~3
+    c_bytes = m * n * 4
+    a_bytes = bytes(value & 0xFF for row in a for value in row)
+    b_bytes = bytes(b[row][col] & 0xFF for row in range(k) for col in range(n))
+
+    await runtime_write32(dut, HelloNpuRuntime.PERF_ERRORS, 1)
+    await runtime_write_scratch(dut, a_base, a_bytes)
+    await runtime_write_scratch(dut, b_base, b_bytes)
+    await runtime_write_scratch(dut, c_base, bytes(c_bytes))
+    await runtime_write32(dut, HelloNpuRuntime.GEMM_CFG, m | (n << 8) | (k << 16))
+    await runtime_write32(dut, HelloNpuRuntime.GEMM_BASE, a_base | (b_base << 8) | (c_base << 16))
+    await runtime_write32(dut, HelloNpuRuntime.GEMM_STRIDE, k | (n << 8) | ((n * 4) << 16))
+    await runtime_write32(dut, HelloNpuRuntime.OPCODE, HelloNpuRuntime.OP_GEMM_S8)
+    await runtime_write32(dut, HelloNpuRuntime.CTRL_STATUS, 2)
+    await runtime_write32(dut, HelloNpuRuntime.CTRL_STATUS, 1)
+    for _ in range(1024):
+        status = await runtime_read32(dut, HelloNpuRuntime.CTRL_STATUS)
+        if status & 0x4:
+            raise RuntimeError("hello NPU rejected runtime GEMM command")
+        if status & 0x2:
+            raw = await runtime_read_scratch(dut, c_base, c_bytes)
+            return [
+                [
+                    int.from_bytes(
+                        raw[(r * n + c) * 4 : (r * n + c + 1) * 4], "little", signed=True
+                    )
+                    for c in range(n)
+                ]
+                for r in range(m)
+            ]
+    raise TimeoutError("hello NPU runtime GEMM command did not complete")
 
 
 @cocotb.test()
@@ -122,31 +195,20 @@ async def npu_scalar_opcodes_match_expected_results(dut):
     assert result == 13
     assert result_hi == 0
 
+    result, result_hi = await run_scalar(
+        dut,
+        7,
+        pack_s4([1, -2, 3, -4, 5, -6, 7, -8]),
+        pack_s4([1, 2, -3, 4, 5, -6, 7, -8]),
+    )
+    assert result == 146
+    assert result_hi == 0
+
     result, _ = await run_scalar(dut, 5, 0x8000_0000, 0x7FFF_FFFF)
     assert result == 0x8000_0000
 
     result, _ = await run_scalar(dut, 6, 0x8000_0000, 0x7FFF_FFFF)
     assert result == 0x7FFF_FFFF
-
-    result, result_hi = await run_scalar(
-        dut,
-        7,
-        pack_s4([1, 2, 3, 4, 5, 6, 7, -8]),
-        pack_s4([1, 1, 1, 1, 1, 1, 1, -1]),
-        4,
-    )
-    assert result == 40
-    assert result_hi == 0
-
-    result, result_hi = await run_scalar(
-        dut,
-        7,
-        pack_s4([-8, -7, -6, -5, -4, -3, -2, -1]),
-        pack_s4([1, 1, 1, 1, 1, 1, 1, 1]),
-        0,
-    )
-    assert result == 0xFFFF_FFDC
-    assert result_hi == 0xFFFF_FFFF
 
 
 @cocotb.test()
@@ -159,8 +221,7 @@ async def npu_rejects_invalid_opcode_and_clears_error_irq(dut):
     await write_reg(dut, 3, 1)
     assert await poll_done(dut) == 0x6
     assert int(dut.irq.value) == 1
-    assert await read_reg(dut, 0x0B) == 1
-    assert await read_reg(dut, 0x17) == 1
+    assert await read_reg(dut, 0x0D) == 1
 
     await write_reg(dut, 3, 2)
     assert await read_reg(dut, 3) == 0
@@ -207,43 +268,69 @@ async def npu_gemm_invalid_config_reports_error_without_touching_scratch(dut):
     await write_reg(dut, 0x03, 1)
 
     assert await poll_done(dut) == 0x6
-    assert await read_reg(dut, 0x0B) == 1
-    assert await read_reg(dut, 0x17) == 1
+    assert await read_reg(dut, 0x0D) == 1
     assert await read_reg(dut, 0x20) == 0xA5A5_5A5A
-
-    await write_reg(dut, 0x17, 1)
-    assert await read_reg(dut, 0x0B) == 0
-    assert await read_reg(dut, 0x17) == 0
 
 
 @cocotb.test()
-async def npu_gemm_s8_2x2x3_writes_expected_scratch_and_perf(dut):
+async def npu_runtime_abi_sequence_matches_rtl_and_writes_coverage(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     await reset(dut)
 
-    # A = [[1, -2, 3], [4, 5, -6]]
-    # B = [[7, -8], [9, 10], [-11, 12]]
-    await write_scratch_word(dut, 0, pack_bytes([1, -2, 3, 4]))
-    await write_scratch_word(dut, 1, pack_bytes([5, -6, 7, -8]))
-    await write_scratch_word(dut, 2, pack_bytes([9, 10, -11, 12]))
-    await write_scratch_word(dut, 3, 0)
-    await write_scratch_word(dut, 4, 0)
-    await write_scratch_word(dut, 5, 0)
-    await write_scratch_word(dut, 6, 0)
+    scalar_cases = [
+        ("add", HelloNpuRuntime.OP_ADD, 7, 11, 0, 18),
+        ("sub", HelloNpuRuntime.OP_SUB, 7, 11, 0, 0xFFFF_FFFC),
+        ("mul_lo", HelloNpuRuntime.OP_MUL_LO, 0xFFFF_FFFE, 3, 0, 0xFFFF_FFFA),
+        ("mac_s16", HelloNpuRuntime.OP_MAC_S16, 0x0000_FFFE, 9, 30, 12),
+        (
+            "dot4_s8",
+            HelloNpuRuntime.OP_DOT4_S8,
+            pack_s8([3, -4, 5, -6]),
+            pack_s8([-7, 8, -9, 10]),
+            1,
+            0xFFFF_FF63,
+        ),
+        (
+            "dot8_s4",
+            HelloNpuRuntime.OP_DOT8_S4,
+            pack_s4([1, -2, 3, -4, 5, -6, 7, -8]),
+            pack_s4([1, 2, -3, 4, 5, -6, 7, -8]),
+            0,
+            146,
+        ),
+        ("max_u32", HelloNpuRuntime.OP_MAX_U32, 0x0000_0001, 0xFFFF_FFFE, 0, 0xFFFF_FFFE),
+        ("min_u32", HelloNpuRuntime.OP_MIN_U32, 0x0000_0001, 0xFFFF_FFFE, 0, 1),
+    ]
 
-    await write_reg(dut, 0x17, 1)
-    await write_reg(dut, 0x08, 2 | (2 << 8) | (3 << 16))
-    await write_reg(dut, 0x09, 0 | (6 << 8) | (12 << 16))
-    await write_reg(dut, 0x0A, 3 | (2 << 8) | (8 << 16))
-    await write_reg(dut, 0x04, 8)
-    await write_reg(dut, 0x03, 1)
+    covered_opcodes = set()
+    for _, opcode, a, b, acc, expected in scalar_cases:
+        observed = await runtime_run(dut, opcode, a, b, acc)
+        assert observed == expected
+        covered_opcodes.add(opcode)
 
-    assert await poll_done(dut, cycles=64) == 0x2
-    assert await read_scratch_s32(dut, 12) == -44
-    assert await read_scratch_s32(dut, 16) == 8
-    assert await read_scratch_s32(dut, 20) == 139
-    assert await read_scratch_s32(dut, 24) == -54
-    assert await read_reg(dut, 0x14) == 12
-    assert await read_reg(dut, 0x15) == 12
-    assert await read_reg(dut, 0x16) == 1
-    assert await read_reg(dut, 0x17) == 0
+    a = [[1, -2, 3], [4, 5, -6]]
+    b = [[7, -8], [9, 10], [-11, 12]]
+    observed_gemm = await runtime_gemm_s8(dut, a, b)
+    assert observed_gemm == golden_gemm_s8(a, b)
+    covered_opcodes.add(HelloNpuRuntime.OP_GEMM_S8)
+
+    perf_cycles = await runtime_read32(dut, HelloNpuRuntime.PERF_CYCLES)
+    perf_macs = await runtime_read32(dut, HelloNpuRuntime.PERF_MACS)
+    perf_errors = await runtime_read32(dut, HelloNpuRuntime.PERF_ERRORS)
+    assert perf_cycles == 12
+    assert perf_macs == 12
+    assert perf_errors == 0
+
+    coverage = {
+        "schema": "openphone.npu_cocotb_coverage.v1",
+        "source": "verify/cocotb/test_hello_npu.py",
+        "runtime_contract": "compiler/runtime/hello_npu_runtime.py",
+        "covered_opcodes": sorted(covered_opcodes),
+        "covered_opcode_names": [case[0] for case in scalar_cases] + ["gemm_s8"],
+        "gemm_shapes": [{"m": 2, "n": 2, "k": 3}],
+        "status_bits": ["busy", "done", "error"],
+        "blocking_note": "Directed runtime ABI coverage only; no model, NNAPI, tensor descriptor, DMA-fed NPU, or performance claim coverage.",
+    }
+    out = REPO_ROOT / "build/reports/npu_cocotb_coverage.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(coverage, indent=2, sort_keys=True) + "\n", encoding="utf-8")

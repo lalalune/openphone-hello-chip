@@ -6,6 +6,8 @@ cd "$REPO_DIR"
 
 MANIFEST="${CHIPYARD_MANIFEST:-generators/chipyard/openphone-rocket-manifest.json}"
 CHECKOUT="${CHIPYARD_CHECKOUT:-external/chipyard}"
+SUBMODULE_JOBS="${CHIPYARD_SUBMODULE_JOBS:-1}"
+SUBMODULE_RETRIES="${CHIPYARD_SUBMODULE_RETRIES:-3}"
 
 CHIPYARD_REPO="${CHIPYARD_REPO:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["chipyard"]["repo"])' "$MANIFEST")}"
 CHIPYARD_TAG="${CHIPYARD_TAG:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["chipyard"]["tag"])' "$MANIFEST")}"
@@ -29,8 +31,39 @@ if [ "$tag_sha" != "$CHIPYARD_SHA" ]; then
     exit 1
 fi
 git checkout --detach "$CHIPYARD_SHA"
-git submodule update --init --recursive generators/rocket-chip
-git submodule update --init \
+
+cleanup_broken_submodule() {
+    path=$1
+    if [ ! -d "$path" ]; then
+        return 0
+    fi
+    if git -C "$path" rev-parse --verify HEAD >/dev/null 2>&1; then
+        return 0
+    fi
+    echo "bootstrap_chipyard: removing interrupted submodule checkout: $path" >&2
+    git submodule deinit -f "$path" >/dev/null 2>&1 || true
+    rm -rf "$path" ".git/modules/$path"
+}
+
+submodule_update_retry() {
+    attempt=1
+    while [ "$attempt" -le "$SUBMODULE_RETRIES" ]; do
+        git submodule sync --recursive
+        if git submodule update --init --recursive --jobs "$SUBMODULE_JOBS" "$@"; then
+            return 0
+        fi
+        cleanup_broken_submodule "generators/rocket-chip/dependencies/chisel"
+        cleanup_broken_submodule "generators/rocket-chip/dependencies/diplomacy"
+        cleanup_broken_submodule "generators/rocket-chip/dependencies/hardfloat"
+        echo "bootstrap_chipyard: submodule update failed; retry $attempt/$SUBMODULE_RETRIES" >&2
+        attempt=$((attempt + 1))
+        sleep "$attempt"
+    done
+    git submodule update --init --recursive --jobs "$SUBMODULE_JOBS" "$@"
+}
+
+submodule_update_retry generators/rocket-chip
+submodule_update_retry \
     tools/cde \
     tools/firrtl2 \
     tools/install-circt \

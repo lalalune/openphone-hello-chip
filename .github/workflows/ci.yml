@@ -15,6 +15,8 @@ jobs:
         run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make lint typecheck
       - name: Run hello-chip regression
         run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make clean ci-fast
+      - name: Run evidence boundary regression
+        run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make evidence-regression-test
       - name: Check generated pipeline artifacts
         run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make tool-versions && docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools python3 scripts/pipeline_check.py
       - name: Record release-gate tool manifest
@@ -25,6 +27,9 @@ jobs:
         if: always()
         continue-on-error: true
         run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make mvp-status-json
+      - name: Show release evidence gate command
+        run: |
+          echo "Release evidence gate is separate from scaffold CI: make ci-release-evidence"
       - name: Upload regression artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -35,5 +40,8 @@ jobs:
             build/reports
             build/netlist
             verify/cocotb/results.xml
+            verify/cocotb/results/*.xml
+            build/reports/cocotb
+            build/reports/formal_manifest.json
             verify/formal/*/status
             verify/formal/*/logfile.txt

@@ -11,6 +11,10 @@
       "input_dataset": "default",
       "primary_metric": "CoreMark/MHz",
       "units": "score_per_mhz",
+      "parser": "coremark_v1",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["coremark_per_mhz"],
+      "required_calibration_assets": ["clock_source", "power_meter", "coremark_binary"],
       "timeout_seconds": 300
     },
     {
@@ -23,6 +27,10 @@
       "input_dataset": "default arrays",
       "primary_metric": "Triad bandwidth",
       "units": "MB/s",
+      "parser": "stream_v5",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["triad_mb_per_s"],
+      "required_calibration_assets": ["clock_source", "power_meter", "stream_binary", "memory_model"],
       "timeout_seconds": 300
     },
     {
@@ -35,6 +43,10 @@
       "input_dataset": "64M read",
       "primary_metric": "memory bandwidth",
       "units": "MB/s",
+      "parser": "lmbench_bw_mem",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["bandwidth_mb_per_s"],
+      "required_calibration_assets": ["clock_source", "power_meter", "lmbench_binary", "memory_model"],
       "timeout_seconds": 300
     },
     {
@@ -47,6 +59,10 @@
       "input_dataset": "64M stride sweep",
       "primary_metric": "memory latency",
       "units": "ns",
+      "parser": "lmbench_lat_mem_rd",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["max_latency_ns"],
+      "required_calibration_assets": ["clock_source", "power_meter", "lmbench_binary", "memory_model"],
       "timeout_seconds": 300
     },
     {
@@ -55,10 +71,15 @@
       "version": "upstream/local",
       "command": ["fio", "--output-format=json", "benchmarks/configs/fio-seq-read.fio"],
       "requires": ["fio"],
+      "required_files": ["benchmarks/configs/fio-seq-read.fio"],
       "install": "Install fio from the target OS package manager or build it for the target and place fio on PATH.",
       "input_dataset": "128MiB sequential read file",
       "primary_metric": "read bandwidth",
       "units": "KiB/s",
+      "parser": "fio_json_v3",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["read_bw_kib_s"],
+      "required_calibration_assets": ["clock_source", "power_meter", "fio_binary", "storage_target"],
       "timeout_seconds": 600
     },
     {
@@ -67,10 +88,15 @@
       "version": "upstream/local",
       "command": ["fio", "--output-format=json", "benchmarks/configs/fio-rand-rw.fio"],
       "requires": ["fio"],
+      "required_files": ["benchmarks/configs/fio-rand-rw.fio"],
       "install": "Install fio from the target OS package manager or build it for the target and place fio on PATH.",
       "input_dataset": "128MiB 4KiB random read/write file",
       "primary_metric": "IOPS",
       "units": "iops",
+      "parser": "fio_json_v3",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["read_iops", "write_iops"],
+      "required_calibration_assets": ["clock_source", "power_meter", "fio_binary", "storage_target"],
       "timeout_seconds": 600
     },
     {
@@ -87,6 +113,9 @@
       "input_dataset": "deterministic GEMM/conv/attention sweep",
       "primary_metric": "modeled dense INT8 TOPS",
       "units": "TOPS",
+      "parser": "openphone_npu_scale_sim_v1",
+      "provenance": "simulator",
+      "required_metrics": ["min_observed_tops", "max_observed_tops", "min_utilization_percent"],
       "timeout_seconds": 60
     },
     {
@@ -103,6 +132,7 @@
       "model_artifacts": [
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
+          "sha256": "669fcdfaf0569b368000832a2794abe9689ce9b3a90f52ce992ee5d29ab9055a",
           "placeholder_allowed": false,
           "min_size_bytes": 4096,
           "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
@@ -125,6 +155,10 @@
       "input_dataset": "mobile_smoke.tflite synthetic input",
       "primary_metric": "inference latency",
       "units": "us",
+      "parser": "tflite_benchmark_model",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["avg_latency_us"],
+      "required_calibration_assets": ["clock_source", "power_meter", "tflite_benchmark_model", "tflite_model"],
       "timeout_seconds": 600
     },
     {
@@ -189,6 +223,7 @@
       "model_artifacts": [
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
+          "sha256": "669fcdfaf0569b368000832a2794abe9689ce9b3a90f52ce992ee5d29ab9055a",
           "placeholder_allowed": false,
           "min_size_bytes": 4096,
           "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
@@ -211,6 +246,32 @@
       "input_dataset": "mobile_smoke.tflite synthetic input",
       "primary_metric": "inference latency",
       "units": "us",
+      "parser": "tflite_benchmark_model",
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metrics": ["avg_latency_us", "unsupported_op_count", "cpu_fallback_percent"],
+      "required_calibration_assets": ["clock_source", "power_meter", "tflite_benchmark_model", "tflite_model", "nnapi_driver"],
+      "metric_gates": [
+        {"metric": "unsupported_op_count", "op": "==", "value": 0},
+        {"metric": "cpu_fallback_percent", "op": "<=", "value": 0}
+      ],
+      "timeout_seconds": 600
+    },
+    {
+      "name": "simulator_arch_metrics",
+      "suite": "OpenPhone simulator metrics",
+      "version": "v1",
+      "command": ["cat", "benchmarks/results/simulator-arch-metrics.json"],
+      "requires": ["cat"],
+      "required_files": ["benchmarks/results/simulator-arch-metrics.json"],
+      "install": "Run python3 benchmarks/generate_simulator_arch_metrics.py after make qemu-check, or export richer simulator metrics as JSON at benchmarks/results/simulator-arch-metrics.json. This is simulator-only evidence and must not contain phone-comparable wall-clock scores.",
+      "input_dataset": "simulator metrics JSON",
+      "primary_metric": "target_cycles",
+      "units": "cycles",
+      "parser": "simulator_metrics_v1",
+      "provenance": "simulator",
+      "required_metadata": ["software", "clocks", "memory", "calibration"],
+      "required_metrics": ["target_cycles", "simulated_frequency_hz", "ipc"],
+      "required_calibration_assets": ["simulator_config", "simulator_counter_export"],
       "timeout_seconds": 600
     }
   ]

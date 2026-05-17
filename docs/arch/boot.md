@@ -4,12 +4,14 @@
 
 The hello chip debug-visible boot ROM is an identity/contract ROM used by
 simulation and synthesis checks:
+The hello chip boot ROM is an identity ROM used by simulation and synthesis checks:
 
 ```text
 0x0000_0000 = "OPSO"
 0x0000_0004 = "CHIP"
 0x0000_0008 = contract version 1
 0x0000_000C = current reset-scaffold handoff word
+0x0000_000C = boot vector placeholder
 ```
 
 The package-level hello chip still uses the package debug nibble bridge as its board-smoke bus master. The machine-readable software contract is `sw/platform/hello_platform_contract.json`; generated software constants live in `sw/platform/generated/hello_platform_contract.h`.
@@ -32,6 +34,14 @@ must define reset ROM ownership, boot SRAM base/size/lifetime, DRAM
 initialization and training, cacheability attributes for ROM/SRAM/DRAM/MMIO,
 and the OpenSBI handoff record that proves Linux sees initialized memory rather
 than the current SRAM-backed test aperture.
+The identity ROM remains a contract ROM for the package debug path, not a full firmware ROM. A production boot handoff still needs ROM code that sets up M-mode state and jumps to OpenSBI or another firmware payload.
+
+Secure boot is not implemented. A production chain must authenticate a
+signature, enforce rollback indexes, select A/B slots, validate recovery/OTA,
+and fail closed before mutable firmware runs.
+
+Exact gate terms: authenticate a signature; enforce rollback indexes; select
+A/B slots; validate recovery/OTA; fail closed before mutable firmware.
 
 QEMU and Renode do not model this ABI yet. They are qemu-virt software reference targets for early firmware scaffolding, with their own CPU, RAM, and UART contract.
 

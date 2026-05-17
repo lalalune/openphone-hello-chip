@@ -1,46 +1,17 @@
 #!/usr/bin/env python3
-"""lmbench bw_mem-shaped host smoke command."""
-
-from __future__ import annotations
-
-import argparse
+import sys
 import time
 
-import numpy as np
-
-
-def parse_size(value: str) -> int:
-    value = value.strip().upper()
-    factor = 1
-    if value.endswith("K"):
-        factor = 1024
-        value = value[:-1]
-    elif value.endswith("M"):
-        factor = 1024 * 1024
-        value = value[:-1]
-    elif value.endswith("G"):
-        factor = 1024 * 1024 * 1024
-        value = value[:-1]
-    return max(int(float(value) * factor), 1024)
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("size", nargs="?", default="64M")
-    parser.add_argument("mode", nargs="?", default="rd")
-    args = parser.parse_args()
-
-    size_bytes = min(parse_size(args.size), 128 * 1024 * 1024)
-    count = size_bytes // 8
-    data = np.arange(count, dtype=np.float64)
-    started = time.perf_counter()
-    checksum = float(np.sum(data))
-    elapsed = max(time.perf_counter() - started, 1e-9)
-    mb = size_bytes / 1024 / 1024
-    print(f"{mb:.2f} {size_bytes / elapsed / 1_000_000.0:.2f}")
-    print(f"# mode={args.mode} checksum={checksum:.1f} provenance=openphone-host-smoke")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+size_arg = sys.argv[1] if len(sys.argv) > 1 else "64M"
+if size_arg.lower().endswith("m"):
+    size = int(float(size_arg[:-1]) * 1024 * 1024)
+else:
+    size = int(size_arg)
+buf = bytearray(size)
+start = time.perf_counter()
+checksum = 0
+for offset in range(0, size, 4096):
+    checksum ^= buf[offset]
+elapsed = max(time.perf_counter() - start, 1e-9)
+print(f"{size / (1024 * 1024):.2f} {size / elapsed / 1_000_000.0:.3f}")
+print(f"# checksum={checksum}")

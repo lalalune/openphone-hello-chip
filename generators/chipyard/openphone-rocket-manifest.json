@@ -8,6 +8,8 @@
   },
   "selected_path": {
     "generator": "Chipyard",
+    "chipyard_tag": "1.13.0",
+    "chipyard_release_commit": "69eba86",
     "core": "Rocket",
     "isa": "RV64GC",
     "harts": 1,
@@ -45,7 +47,7 @@
     "reset": "Boot ROM or firmware entry at the hello-chip reset vector",
     "timer_software_interrupts": "CLINT or ACLINT-compatible mtime/mtimecmp/msip",
     "external_interrupts": "PLIC-compatible external interrupt controller",
-    "console": "UART with Linux early console binding",
+    "console": "UART with Linux earlycon binding",
     "dram": "DRAM model sized for OpenSBI plus Linux initramfs smoke",
     "mmio": [
       "hello DMA",
@@ -76,6 +78,6 @@
   "claim_policy": {
     "linux_capable_cpu_claim": false,
     "platform_contract_has_cpu_may_flip_to_true": false,
-    "reason": "Generated Verilog/DTS/regmap artifacts may exist locally, but the generated import manifest, bootable simulator run, firmware image, and OpenSBI/Linux/trap evidence are not complete."
+    "reason": "No generated Chipyard/Rocket RTL, simulator, DTS, firmware image, or boot evidence is present."
   }
 }
