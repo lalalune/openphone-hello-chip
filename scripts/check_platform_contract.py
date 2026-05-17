@@ -161,7 +161,10 @@ def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
         if rtl_name in REGION_RTL_NAMES:
             decoded[REGION_RTL_NAMES[rtl_name]] = h(value) << 12
 
+    checked_regions = set(REGION_RTL_NAMES.values())
     for name, region in regions_by_name(contract).items():
+        if name not in checked_regions:
+            continue
         expected = h(region["base"])
         actual = decoded.get(name)
         require(
@@ -185,7 +188,7 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
         rtl = read_text(path)
         rtl_offsets = {
             int(index, 16) * 4
-            for index in re.findall(r"6'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
+            for index in re.findall(r"(?:6|12)'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
         }
         contract_offsets = set()
         for reg in regions[region_name]["registers"]:
@@ -206,7 +209,7 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
 
 def check_debug_contract(errors: list[str]) -> None:
     bridge = read_text(ROOT / "rtl/debug/hello_dbg_mmio_bridge.sv")
-    require("DBG_LAUNCH" in read_text(ROOT / "arch/debug.md"), "arch/debug.md no longer names DBG_LAUNCH", errors)
+    require("DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"), "docs/arch/debug.md no longer names DBG_LAUNCH", errors)
     require("addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors)
     require("wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors)
     require("rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors)

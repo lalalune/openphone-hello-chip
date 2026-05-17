@@ -131,7 +131,7 @@ path" names the command path that `scripts/check_tools.sh` and
 
 | Tool | Command-line entrypoint | Install path | Current repo command | GUI-free status | Missing dependencies / blockers | Next automation step |
 | --- | --- | --- | --- | --- | --- | --- |
-| KiCad / `kicad-cli` | `kicad-cli` | `PATH`, `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`, distro package, or Homebrew cask | No make target; only `board/kicad/hello-demo/fab-notes.md` placeholder is referenced | Headless-capable for ERC/DRC/plot/export once a real project exists | No checked-in `.kicad_pro`, schematic, PCB, or fab outputs | Add a `scripts/check_kicad_project.sh` gate after package pins and board revision are assigned. |
+| KiCad / `kicad-cli` | `kicad-cli` | `PATH`, `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`, distro package, or Homebrew cask | No make target; only `docs/board/kicad/hello-demo/fab-notes.md` placeholder is referenced | Headless-capable for ERC/DRC/plot/export once a real project exists | No checked-in `.kicad_pro`, schematic, PCB, or fab outputs | Add a `scripts/check_kicad_project.sh` gate after package pins and board revision are assigned. |
 | Yosys | `yosys`, `yosys-smtbmc` | Docker apt, Nix shell, OSS CAD Suite, or `PATH` | `make synth`, `scripts/run_yosys.sh`; fallback formal in `scripts/run_formal.sh` | Headless-ready and part of smoke when installed | Optional locally; release evidence needs exact version and input hashes | Keep synthesis/formal logs under `build/reports` and pin OSS CAD Suite or Docker inputs. |
 | Verilator | `verilator` | Docker apt, Nix shell, OSS CAD Suite, or `PATH` | `make rtl-check`, `make verilator`, cocotb via `scripts/run_cocotb.sh` | Headless-ready and part of fast RTL evidence | Optional locally; cocotb prefers Verilator and falls back to Icarus | Archive lint/elaboration logs and promote version capture into release manifest. |
 | cocotb | `cocotb-config`, Python import `cocotb` | repo `.venv/bin`, Docker `/opt/openphone-venv/bin`, Nix Python env, or user `PATH` | `make cocotb`, `make cocotb-contract`, `make cocotb-cpu` | Headless-ready through make and simulator backends | Repo-local `.venv` may be missing; needs Verilator or Icarus | Make `.venv` the default local evidence path and archive `results.xml`. |
@@ -207,7 +207,7 @@ make pd-signoff-check
 
 ## FPGA scaffold
 
-The owned FPGA target is documented in `board/fpga/README.md` with contract data in `board/fpga/hello_demo_fpga.yaml`.
+The owned FPGA target is documented in `docs/board/fpga/README.md` with contract data in `board/fpga/hello_demo_fpga.yaml`.
 
 Run:
 

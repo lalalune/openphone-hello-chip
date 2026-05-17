@@ -81,7 +81,7 @@ pdn_current_budget:
     - name: board_current_limit_plan
       status: draft
       globs:
-        - "board/kicad/hello-demo/fab-notes.md"
+        - "docs/board/kicad/hello-demo/fab-notes.md"
         - "docs/manufacturing/hello-demo-checklist.md"
 padframe_package:
   status: blocked
@@ -95,17 +95,17 @@ padframe_package:
       status: draft
       globs:
         - "pd/padframe/hello_demo_padframe.yaml"
-        - "pd/padframe/hello_demo_padframe.md"
+        - "docs/pd/padframe/hello_demo_padframe.md"
     - name: package_pinout
       status: draft
       globs:
         - "package/hello-demo-pinout.yaml"
-        - "package/hello-demo-package.md"
-        - "package/hello-demo-pad-ring.md"
+        - "docs/package/hello-demo-package.md"
+        - "docs/package/hello-demo-pad-ring.md"
     - name: board_footprint_notes
       status: draft
       globs:
-        - "board/kicad/hello-demo/fab-notes.md"
+        - "docs/board/kicad/hello-demo/fab-notes.md"
 run_roots:
   - pd/openlane/runs
   - runs

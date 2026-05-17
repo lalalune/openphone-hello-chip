@@ -133,15 +133,15 @@ def main() -> int:
         if term not in gate_text:
             failures.append(f"maturity gates must mention {term}")
 
-    doc = (root / "arch/wifi.md").read_text()
+    doc = (root / "docs/arch/wifi.md").read_text()
     if "package/wifi-external-interface.yaml" not in doc:
-        failures.append("arch/wifi.md must reference the machine-readable WiFi contract")
+        failures.append("docs/arch/wifi.md must reference the machine-readable WiFi contract")
     for phrase in ("not bonded", "not implemented", "maturity gates"):
         if phrase not in doc:
-            failures.append(f"arch/wifi.md must state {phrase}")
+            failures.append(f"docs/arch/wifi.md must state {phrase}")
     for phrase in ("Murata Type 1DX", "brcmfmac", "hci_uart_bcm", "external"):
         if phrase not in doc:
-            failures.append(f"arch/wifi.md must describe concrete slice term {phrase}")
+            failures.append(f"docs/arch/wifi.md must describe concrete slice term {phrase}")
 
     dts = (root / "sw/linux/dts/openphone-hello.dts").read_text()
     for phrase in ("mmc-pwrseq-simple", "brcm,bcm4329-fmac", "brcm,bcm43438-bt", "status = \"disabled\""):

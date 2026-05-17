@@ -10,7 +10,7 @@
 | `0x8000_0000` - `0x8FFF_FFFF` | DRAM aperture | `hello_axi_lite_dram` model |
 | Other | Decode error | AXI-Lite `DECERR`, read data `0xDEAD_BEEF` |
 
-The existing hello-chip top remains a separate single-cycle MMIO validation design with its own map in `arch/memory-map.md`. The AXI-Lite contract wrapper is `rtl/interconnect/hello_linux_soc_contract.sv` and is used by contract-level cocotb tests.
+The existing hello-chip top remains a separate single-cycle MMIO validation design with its own map in `docs/arch/memory-map.md`. The AXI-Lite contract wrapper is `rtl/interconnect/hello_linux_soc_contract.sv` and is used by contract-level cocotb tests.
 
 ## Current limitations
 

@@ -1,6 +1,6 @@
 # Android/Linux/BSP critical gap audit - 2026-05-17
 
-Scope: `sw/**`, `arch/android-contract.md`, `docs/android/riscv-bringup.md`,
+Scope: `sw/**`, `docs/arch/android-contract.md`, `docs/android/riscv-bringup.md`,
 `scripts/check_software_bsp.py`, `sw/check_bsp_scaffolds.py`, and the AOSP
 product files under `sw/aosp-device/device/openphone/openphone_ai_soc`.
 

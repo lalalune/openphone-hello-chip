@@ -57,20 +57,20 @@ required_artifacts:
     - verify/formal/hello_npu_formal.sv
   product:
     - package/hello-demo-pinout.yaml
-    - package/hello-demo-package.md
-    - package/hello-demo-pad-ring.md
+    - docs/package/hello-demo-package.md
+    - docs/package/hello-demo-pad-ring.md
     - package/wifi-external-interface.yaml
     - pd/pin_order.cfg
     - pd/constraints/hello_soc.sdc
     - pd/constraints/hello_soc_gf180.sdc
-    - pd/padframe/hello_demo_padframe.md
+    - docs/pd/padframe/hello_demo_padframe.md
     - pd/padframe/hello_demo_padframe.yaml
     - pd/signoff/manifest.yaml
-    - board/README.md
-    - board/fpga/README.md
+    - docs/board/README.md
+    - docs/board/fpga/README.md
     - board/fpga/hello_demo_fpga.yaml
     - board/fpga/constraints/hello_demo_ulx3s.lpf
-    - board/kicad/hello-demo/fab-notes.md
+    - docs/board/kicad/hello-demo/fab-notes.md
     - fw/board-smoke/tests/smoke_plan.md
     - docs/manufacturing/hello-demo-checklist.md
     - docs/manufacturing/real-world-verification-gaps.yaml

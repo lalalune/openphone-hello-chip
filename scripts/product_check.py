@@ -11,18 +11,18 @@ args = parser.parse_args()
 
 required = [
     "package/hello-demo-pinout.yaml",
-    "package/hello-demo-package.md",
-    "package/hello-demo-pad-ring.md",
+    "docs/package/hello-demo-package.md",
+    "docs/package/hello-demo-pad-ring.md",
     "package/wifi-external-interface.yaml",
-    "pd/padframe/hello_demo_padframe.md",
+    "docs/pd/padframe/hello_demo_padframe.md",
     "pd/padframe/hello_demo_padframe.yaml",
     "pd/pin_order.cfg",
     "pd/signoff/manifest.yaml",
-    "board/README.md",
-    "board/fpga/README.md",
+    "docs/board/README.md",
+    "docs/board/fpga/README.md",
     "board/fpga/hello_demo_fpga.yaml",
     "board/fpga/constraints/hello_demo_ulx3s.lpf",
-    "board/kicad/hello-demo/fab-notes.md",
+    "docs/board/kicad/hello-demo/fab-notes.md",
     "fw/board-smoke/tests/smoke_plan.md",
     "docs/manufacturing/hello-demo-checklist.md",
     "docs/manufacturing/release-manifest.yaml",
@@ -34,18 +34,31 @@ missing = [p for p in required if not Path(p).exists()]
 if missing:
     raise SystemExit("missing product artifacts: " + ", ".join(missing))
 
-subprocess.run(
-    [sys.executable, "package/scripts/validate_pinout_vs_rtl.py"],
-    check=True,
-)
-subprocess.run([sys.executable, "scripts/check_fpga_target.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_wifi_interface.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_padframe_contract.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_physical_closure_work_order.py"], check=True)
-subprocess.run([sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"], check=True)
-subprocess.run([sys.executable, "scripts/check_real_world_gates.py"], check=True)
-
 release_blockers: list[str] = []
+
+
+def run_gate(command: list[str], blocker: str) -> None:
+    result = subprocess.run(command, check=False, text=True)
+    if result.returncode != 0:
+        release_blockers.append(blocker)
+
+
+run_gate(
+    [sys.executable, "package/scripts/validate_pinout_vs_rtl.py"],
+    "package pinout no longer matches RTL",
+)
+run_gate([sys.executable, "scripts/check_fpga_target.py"], "FPGA target gate is not release-ready")
+run_gate([sys.executable, "scripts/check_wifi_interface.py"], "WiFi external interface gate failed")
+run_gate([sys.executable, "scripts/check_padframe_contract.py"], "padframe contract gate failed")
+run_gate(
+    [sys.executable, "scripts/check_physical_closure_work_order.py"],
+    "physical closure work order gate failed",
+)
+run_gate(
+    [sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"],
+    "PD signoff manifest gate failed",
+)
+run_gate([sys.executable, "scripts/check_real_world_gates.py"], "real-world release evidence gate failed")
 
 pinout = yaml.safe_load(Path("package/hello-demo-pinout.yaml").read_text())
 package_name = str(pinout.get("package", ""))
@@ -54,9 +67,9 @@ if "placeholder" in package_name.lower() or "placeholder" in pinout_notes.lower(
     release_blockers.append("package pinout still declares a placeholder package")
 
 for path in [
-    "package/hello-demo-package.md",
-    "package/hello-demo-pad-ring.md",
-    "board/kicad/hello-demo/fab-notes.md",
+    "docs/package/hello-demo-package.md",
+    "docs/package/hello-demo-pad-ring.md",
+    "docs/board/kicad/hello-demo/fab-notes.md",
 ]:
     text = Path(path).read_text().lower()
     if (
