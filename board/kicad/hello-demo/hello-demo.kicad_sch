@@ -1,0 +1,230 @@
+(kicad_sch
+  (version 20231120)
+  (generator "eeschema")
+  (generator_version "7.0")
+  (paper "A3")
+  (title_block
+    (title "Hello Demo Evaluation Board")
+    (date "2026-05-17")
+    (rev "v0.1")
+    (company "OpenPhone")
+    (comment 1 "RISC-V SoC evaluation board")
+    (comment 2 "100mm x 80mm 4-layer FR4")
+    (comment 3 "hello_chip_top.sv: CLK_IN RST_N DBG_* JTAG_* IRQ_* GPIO[7:0]")
+  )
+  (lib_symbols
+    (symbol "power:VDD"
+      (power)
+      (pin_names (offset 0))
+      (exclude_from_sim no)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -0.254 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "Value" "VDD"
+        (at 0 3.556 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (symbol "VDD_0_1"
+        (polyline
+          (pts (xy -0.762 1.143) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 0) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 2.54) (xy 0.762 1.143))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "VDD_1_1"
+        (pin power_in line
+          (at 0 0 90)
+          (length 0)
+          (name "~" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27))))
+        )
+      )
+    )
+    (symbol "power:GND"
+      (power)
+      (pin_names (offset 0))
+      (exclude_from_sim no)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -1.778 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "Value" "GND"
+        (at 0 -3.81 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (symbol "GND_0_1"
+        (polyline
+          (pts (xy 0 0) (xy 0 -1.778) (xy 1.27 -1.778))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 -1.778) (xy -1.27 -1.778))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 1.016 -2.032) (xy -1.016 -2.032))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0.762 -2.286) (xy -0.762 -2.286))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0.508 -2.54) (xy -0.508 -2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "GND_1_1"
+        (pin power_in line
+          (at 0 0 270)
+          (length 0)
+          (name "~" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27))))
+        )
+      )
+    )
+    (symbol "power:PWR_FLAG"
+      (power)
+      (pin_names (offset 0))
+      (exclude_from_sim no)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#FLG"
+        (at 0 -3.81 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "Value" "PWR_FLAG"
+        (at 0 3.81 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (symbol "PWR_FLAG_0_1"
+        (pin power_out line
+          (at 0 0 90)
+          (length 0)
+          (name "pwr" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27))))
+        )
+      )
+    )
+  )
+
+  (sheet
+    (at 20 20)
+    (size 60 40)
+    (fields_autoplaced yes)
+    (stroke (width 0) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "a1b2c3d4-0001-0001-0001-000000000001")
+    (property "Sheetname" "SoC"
+      (at 20 18 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "soc.kicad_sch"
+      (at 20 61 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+  )
+
+  (sheet
+    (at 20 75)
+    (size 60 40)
+    (fields_autoplaced yes)
+    (stroke (width 0) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "a1b2c3d4-0002-0002-0002-000000000002")
+    (property "Sheetname" "Power"
+      (at 20 73 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "power.kicad_sch"
+      (at 20 116 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+  )
+
+  (sheet
+    (at 100 20)
+    (size 60 40)
+    (fields_autoplaced yes)
+    (stroke (width 0) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "a1b2c3d4-0003-0003-0003-000000000003")
+    (property "Sheetname" "Oscillator_Reset"
+      (at 100 18 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "osc_reset.kicad_sch"
+      (at 100 61 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+  )
+
+  (sheet
+    (at 100 75)
+    (size 60 40)
+    (fields_autoplaced yes)
+    (stroke (width 0) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "a1b2c3d4-0004-0004-0004-000000000004")
+    (property "Sheetname" "Debug_IO"
+      (at 100 73 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "debug_io.kicad_sch"
+      (at 100 116 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+  )
+
+  (text "Hello Demo Evaluation Board - Root Sheet\nSee sub-sheets for Power, Oscillator/Reset, Debug/IO\nhello_chip_top.sv ports: CLK_IN, RST_N, DBG_[VALID/LAUNCH/WRITE/ADDR/WDATA/RDATA/READY],\n  JTAG_[TCK/TMS/TDI/TDO], TEST_MODE, IRQ_[TIMER/DMA/NPU/VSYNC], GPIO[7:0]"
+    (at 20 140)
+    (effects (font (size 1.5 1.5)))
+    (uuid "bb000001-0000-0000-0000-000000000001")
+  )
+
+  (no_connect (at 0 0) (uuid "nc000001-0000-0000-0000-000000000001"))
+)
