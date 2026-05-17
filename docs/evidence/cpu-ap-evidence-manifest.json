@@ -224,6 +224,7 @@
       "manifest_key": "simulator",
       "sha256_key": "simulator_sha256",
       "kind": "file_or_directory",
+      "requires_executable": true,
       "claim": "Simulator or simulator run directory built from the pinned generated AP."
     }
   },

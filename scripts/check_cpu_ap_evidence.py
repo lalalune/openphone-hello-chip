@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
+import sys
 
 from cpu_ap_evidence_lib import (
     EXPECTED_CHIPYARD,
@@ -23,6 +25,20 @@ def read(path: str) -> str:
 
 
 def check_scaffold(errors: list[str]) -> None:
+    linux_gate = subprocess.run(
+        [sys.executable, "scripts/check_linux_hardware_contract_gate.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    require(
+        linux_gate.returncode == 0,
+        "Linux hardware contract gate failed:\n" + linux_gate.stdout.rstrip(),
+        errors,
+    )
+
     evidence_manifest = load_evidence_manifest(errors)
     cpu = read("rtl/cpu/hello_cpu_subsystem_stub.sv")
     test = read("verify/cocotb/test_tiny_cpu_execution.py")

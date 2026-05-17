@@ -15,6 +15,7 @@ STEPS = [
     {
         "name": "android_sim_boot",
         "tier": "os_boot",
+        "scope": "android_reference",
         "claim": "Android simulator boot evidence",
         "command": [
             "scripts/boot_android_simulator.sh",
@@ -28,6 +29,7 @@ STEPS = [
     {
         "name": "android_sim_report_check",
         "tier": "os_boot",
+        "scope": "android_reference",
         "claim": "validated Android simulator boot report",
         "command": [sys.executable, "scripts/check_android_sim_boot.py"],
         "pass_markers": ["Android simulator boot check passed"],
@@ -36,7 +38,8 @@ STEPS = [
     {
         "name": "qemu_os_boot",
         "tier": "os_boot",
-        "claim": "QEMU OS boot to init/login",
+        "scope": "qemu_virt_reference",
+        "claim": "QEMU qemu-virt reference OS boot to init/login; not hello-chip/AP evidence",
         "command": ["scripts/run_qemu.sh", "--check-os"],
         "pass_markers": ["STATUS: PASS qemu.os_boot"],
         "block_markers": ["STATUS: BLOCKED qemu.os_boot"],
@@ -44,14 +47,25 @@ STEPS = [
     {
         "name": "cpu_ap_linux_evidence",
         "tier": "os_prereq",
+        "scope": "our_chip_prereq",
         "claim": "CPU/AP Linux evidence prerequisites",
         "command": [sys.executable, "scripts/check_cpu_ap_evidence.py", "--require-evidence"],
         "pass_markers": ["STATUS: PASS cpu_ap.linux_evidence"],
         "block_markers": ["STATUS: BLOCKED cpu_ap.linux_evidence"],
     },
     {
+        "name": "chipyard_verilator_preflight",
+        "tier": "os_prereq",
+        "scope": "our_chip_prereq",
+        "claim": "Chipyard Verilator environment can generate OpenPhoneRocketConfig",
+        "command": [sys.executable, "scripts/check_chipyard_verilator_preflight.py"],
+        "pass_markers": ["STATUS: PASS chipyard.verilator_preflight"],
+        "block_markers": ["STATUS: BLOCKED chipyard.verilator_preflight"],
+    },
+    {
         "name": "chipyard_generated_ap",
         "tier": "os_prereq",
+        "scope": "our_chip_prereq",
         "claim": "generated CPU/AP simulator input",
         "command": [
             sys.executable,
@@ -59,19 +73,34 @@ STEPS = [
             "--require-generated",
         ],
         "pass_markers": ["STATUS: PASS chipyard.generated_import"],
-        "block_markers": ["STATUS: BLOCKED chipyard.generated_import"],
+        "block_markers": [
+            "STATUS: BLOCKED chipyard.generated_import",
+            "Verilator preflight blocker:",
+            "missing generated import manifest:",
+        ],
     },
     {
-        "name": "chipyard_verilator_preflight",
+        "name": "chipyard_payload_path",
         "tier": "os_prereq",
-        "claim": "Chipyard Verilator environment can generate OpenPhoneRocketConfig",
-        "command": [sys.executable, "scripts/check_chipyard_verilator_preflight.py"],
-        "pass_markers": ["STATUS: PASS chipyard.verilator_preflight"],
-        "block_markers": ["STATUS: BLOCKED chipyard.verilator_preflight"],
+        "scope": "our_chip_prereq",
+        "claim": "generated Chipyard DTS/artifacts are ready for the external OpenSBI/U-Boot/Linux payload path; not RTL boot evidence",
+        "command": [sys.executable, "scripts/check_chipyard_payload_path.py"],
+        "pass_markers": ["STATUS: PASS chipyard.payload_path"],
+        "block_markers": ["STATUS: BLOCKED chipyard.payload_path"],
+    },
+    {
+        "name": "chipyard_verilator_linux_smoke",
+        "tier": "os_boot",
+        "scope": "our_chip_os_boot",
+        "claim": "OpenSBI/Linux smoke on generated OpenPhoneRocketConfig Verilator simulator",
+        "command": [sys.executable, "scripts/check_chipyard_verilator_linux_smoke.py"],
+        "pass_markers": ["STATUS: PASS chipyard.verilator_linux_smoke"],
+        "block_markers": ["STATUS: BLOCKED chipyard.verilator_linux_smoke"],
     },
     {
         "name": "qemu_firmware_smoke",
         "tier": "firmware_smoke",
+        "scope": "qemu_virt_reference",
         "claim": "QEMU qemu-virt firmware serial smoke",
         "command": ["scripts/run_qemu.sh", "--check"],
         "pass_markers": ["STATUS: PASS qemu.check"],
@@ -80,6 +109,7 @@ STEPS = [
     {
         "name": "renode_firmware_smoke",
         "tier": "firmware_smoke",
+        "scope": "qemu_virt_reference",
         "claim": "Renode qemu-virt firmware serial smoke",
         "command": ["scripts/run_renode.sh", "--check"],
         "pass_markers": ["STATUS: PASS renode.check"],
@@ -88,6 +118,7 @@ STEPS = [
     {
         "name": "local_rtl_sim_ladder",
         "tier": "rtl_sim",
+        "scope": "our_chip_rtl_sim",
         "claim": "local RTL simulation ladder",
         "command": [sys.executable, "scripts/run_sim_ladder.py"],
         "pass_markers": ["Simulation ladder passed"],
@@ -136,6 +167,7 @@ def run_step(step: dict[str, Any]) -> dict[str, Any]:
     return {
         "name": step["name"],
         "tier": step["tier"],
+        "scope": step["scope"],
         "claim": step["claim"],
         "command": command,
         "status": status,
@@ -160,7 +192,12 @@ def blocked_items(results: list[dict[str, object]]) -> list[dict[str, object]]:
         tail = item.get("log_tail", [])
         detail = ""
         if isinstance(tail, list) and tail:
-            detail = str(tail[-1])
+            status_lines = [
+                str(line)
+                for line in tail
+                if str(line).startswith("STATUS: BLOCKED ") or str(line).startswith("BLOCKED:")
+            ]
+            detail = status_lines[-1] if status_lines else str(tail[-1])
         command = item.get("command", [])
         if not isinstance(command, list):
             command = []
@@ -180,6 +217,15 @@ def failed_items(results: list[dict[str, object]]) -> list[dict[str, object]]:
     for item in results:
         if item.get("status") != "fail":
             continue
+        tail = item.get("log_tail", [])
+        detail = ""
+        if isinstance(tail, list) and tail:
+            status_lines = [
+                str(line)
+                for line in tail
+                if str(line).startswith("STATUS: FAIL ") or str(line).startswith("FAIL:")
+            ]
+            detail = status_lines[-1] if status_lines else str(tail[-1])
         command = item.get("command", [])
         if not isinstance(command, list):
             command = []
@@ -187,6 +233,7 @@ def failed_items(results: list[dict[str, object]]) -> list[dict[str, object]]:
             {
                 "name": item.get("name"),
                 "tier": item.get("tier"),
+                "detail": detail,
                 "next_command": " ".join(str(part) for part in command),
             }
         )
@@ -212,9 +259,25 @@ def main() -> int:
         code = 0
 
     best = best_executable_evidence(results)
-    os_boot_passed = any(
-        item.get("tier") == "os_boot" and item.get("status") == "pass" for item in results
+    qemu_reference_os_boot_passed = any(
+        item.get("name") == "qemu_os_boot" and item.get("status") == "pass" for item in results
     )
+    android_reference_os_boot_passed = any(
+        item.get("scope") == "android_reference" and item.get("status") == "pass"
+        for item in results
+    )
+    on_chip_os_boot_passed = any(
+        item.get("scope") == "our_chip_os_boot" and item.get("status") == "pass" for item in results
+    )
+    on_chip_blockers = [
+        item
+        for item in blocked_items(results)
+        if any(
+            result.get("name") == item.get("name")
+            and result.get("scope") in {"our_chip_prereq", "our_chip_os_boot"}
+            for result in results
+        )
+    ]
 
     report = {
         "schema": "openphone.mvp_simulator.v1",
@@ -222,10 +285,14 @@ def main() -> int:
         "strongest_attempted": "os_boot",
         "best_executable_evidence": best["name"] if best else "none",
         "best_executable_tier": best["tier"] if best else "none",
-        "os_boot_claim": bool(os_boot_passed),
+        "os_boot_claim": bool(on_chip_os_boot_passed),
+        "on_chip_os_boot_claim": bool(on_chip_os_boot_passed),
+        "reference_qemu_virt_os_boot_claim": bool(qemu_reference_os_boot_passed),
+        "reference_android_os_boot_claim": bool(android_reference_os_boot_passed),
+        "blockers_to_on_chip_os_boot": on_chip_blockers,
         "remaining_blockers": blocked_items(results),
         "failures": failed_items(results),
-        "claim_boundary": "Simulator MVP tries OS boot first, then OS prerequisites, firmware smoke, and RTL sim evidence. OS boot may be claimed only when an executable boot reaches init/login or validated Android boot evidence passes. It is not a fabrication or phone-class performance claim.",
+        "claim_boundary": "Simulator MVP separates qemu-virt/reference OS boot from OS running on generated OpenPhone AP/hello-chip RTL. qemu_os_boot may be claimed only as reference_qemu_virt_os_boot_claim. OS on our chip may be claimed only when on_chip_os_boot_claim is true from generated AP/Linux evidence; qemu-virt and Android simulator evidence do not satisfy that claim. It is not a fabrication or phone-class performance claim.",
         "results": results,
     }
     tmp = REPORT.with_suffix(".json.tmp")
@@ -238,7 +305,10 @@ def main() -> int:
         f"  best_executable_evidence: {report['best_executable_evidence']} "
         f"({report['best_executable_tier']})"
     )
-    print(f"  os_boot_claim: {str(report['os_boot_claim']).lower()}")
+    print(
+        f"  reference_qemu_virt_os_boot_claim: {str(report['reference_qemu_virt_os_boot_claim']).lower()}"
+    )
+    print(f"  on_chip_os_boot_claim: {str(report['on_chip_os_boot_claim']).lower()}")
     for item in results:
         print(f"  - {item['name']}: {item['status']}")
     return code

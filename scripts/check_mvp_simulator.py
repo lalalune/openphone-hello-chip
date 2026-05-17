@@ -14,6 +14,8 @@ REQUIRED_STEPS = {
     "qemu_os_boot",
     "cpu_ap_linux_evidence",
     "chipyard_verilator_preflight",
+    "chipyard_payload_path",
+    "chipyard_verilator_linux_smoke",
     "android_sim_boot",
     "android_sim_report_check",
 }
@@ -38,12 +40,22 @@ def main() -> int:
         errors.append(
             "claim boundary must separate simulator MVP from fabrication/performance claims"
         )
-    if "OS boot may be claimed only" not in boundary:
-        errors.append("claim boundary must restrict OS boot claims to executable boot evidence")
+    if "OS on our chip may be claimed only when on_chip_os_boot_claim is true" not in boundary:
+        errors.append(
+            "claim boundary must restrict our-chip OS boot claims to generated AP evidence"
+        )
     if data.get("strongest_attempted") != "os_boot":
         errors.append("strongest_attempted must record os_boot")
     if not isinstance(data.get("os_boot_claim"), bool):
         errors.append("os_boot_claim must be bool")
+    if not isinstance(data.get("on_chip_os_boot_claim"), bool):
+        errors.append("on_chip_os_boot_claim must be bool")
+    if not isinstance(data.get("reference_qemu_virt_os_boot_claim"), bool):
+        errors.append("reference_qemu_virt_os_boot_claim must be bool")
+    if not isinstance(data.get("reference_android_os_boot_claim"), bool):
+        errors.append("reference_android_os_boot_claim must be bool")
+    if data.get("os_boot_claim") != data.get("on_chip_os_boot_claim"):
+        errors.append("os_boot_claim must remain an alias for on_chip_os_boot_claim")
     if not isinstance(data.get("best_executable_evidence"), str):
         errors.append("best_executable_evidence must be string")
     if data.get("best_executable_tier") not in {
@@ -56,6 +68,8 @@ def main() -> int:
         errors.append("best_executable_tier is invalid")
     if not isinstance(data.get("remaining_blockers"), list):
         errors.append("remaining_blockers must be list")
+    if not isinstance(data.get("blockers_to_on_chip_os_boot"), list):
+        errors.append("blockers_to_on_chip_os_boot must be list")
     if not isinstance(data.get("failures"), list):
         errors.append("failures must be list")
 
@@ -75,17 +89,50 @@ def main() -> int:
             errors.append(f"results[{index}] status is invalid")
         if item.get("tier") not in {"os_boot", "os_prereq", "firmware_smoke", "rtl_sim"}:
             errors.append(f"results[{index}] tier is invalid")
+        if item.get("scope") not in {
+            "qemu_virt_reference",
+            "android_reference",
+            "our_chip_prereq",
+            "our_chip_os_boot",
+            "our_chip_rtl_sim",
+        }:
+            errors.append(f"results[{index}] scope is invalid")
         if not isinstance(item.get("claim"), str) or not item["claim"]:
             errors.append(f"results[{index}] claim must be non-empty string")
         if not isinstance(item.get("command"), list) or not item["command"]:
             errors.append(f"results[{index}] command must be a non-empty list")
         if not isinstance(item.get("returncode"), int):
             errors.append(f"results[{index}] returncode must be int")
-    if data.get("os_boot_claim") is True and not any(
-        isinstance(item, dict) and item.get("tier") == "os_boot" and item.get("status") == "pass"
+    if data.get("on_chip_os_boot_claim") is True and not any(
+        isinstance(item, dict)
+        and item.get("scope") == "our_chip_os_boot"
+        and item.get("status") == "pass"
         for item in results
     ):
-        errors.append("os_boot_claim true without passing OS boot result")
+        errors.append("on_chip_os_boot_claim true without passing our-chip OS boot result")
+    if data.get("reference_qemu_virt_os_boot_claim") is True and not any(
+        isinstance(item, dict)
+        and item.get("name") == "qemu_os_boot"
+        and item.get("scope") == "qemu_virt_reference"
+        and item.get("status") == "pass"
+        for item in results
+    ):
+        errors.append("reference_qemu_virt_os_boot_claim true without passing qemu_os_boot")
+    if data.get("on_chip_os_boot_claim") is False:
+        blocker_names = {
+            item.get("name")
+            for item in data.get("blockers_to_on_chip_os_boot", [])
+            if isinstance(item, dict)
+        }
+        missing_blockers = {
+            "cpu_ap_linux_evidence",
+            "chipyard_payload_path",
+            "chipyard_verilator_linux_smoke",
+        } - blocker_names
+        if missing_blockers:
+            errors.append(
+                "blockers_to_on_chip_os_boot missing: " + ", ".join(sorted(missing_blockers))
+            )
 
     if errors:
         print("MVP simulator check failed:")
@@ -99,6 +146,12 @@ def main() -> int:
         return 0
     if status == "blocked":
         print("MVP simulator check blocked")
+        if data.get("on_chip_os_boot_claim") is False:
+            print("  on_chip_os_boot_claim: false")
+            print("  blockers_to_on_chip_os_boot:")
+            for item in data.get("blockers_to_on_chip_os_boot", []):
+                if isinstance(item, dict):
+                    print(f"    - {item.get('name')}: {item.get('detail', 'blocked')}")
         for item in results:
             if item.get("status") == "blocked":
                 print(f"  - {item.get('name')}: blocked")

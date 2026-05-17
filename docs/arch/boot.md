@@ -27,6 +27,12 @@ device tree, or prove OS boot. `make bootrom-check` builds the ELF/bin/hex
 artifact when a local RISC-V toolchain is available and otherwise reports the
 executable artifact stage as blocked after semantic checks pass.
 
+The Linux memory-system handoff is therefore blocked. A production boot path
+must define reset ROM ownership, boot SRAM base/size/lifetime, DRAM
+initialization and training, cacheability attributes for ROM/SRAM/DRAM/MMIO,
+and the OpenSBI handoff record that proves Linux sees initialized memory rather
+than the current SRAM-backed test aperture.
+
 QEMU and Renode do not model this ABI yet. They are qemu-virt software reference targets for early firmware scaffolding, with their own CPU, RAM, and UART contract.
 
 ## Full SoC target

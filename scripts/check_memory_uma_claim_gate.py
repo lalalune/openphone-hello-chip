@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -15,10 +16,27 @@ MEMORY_MAP = ROOT / "docs/arch/memory-map.md"
 DRAM_RTL = ROOT / "rtl/memory/hello_axi_lite_dram.sv"
 CONTRACT_RTL = ROOT / "rtl/interconnect/hello_linux_soc_contract.sv"
 CONTRACT_TEST = ROOT / "verify/cocotb/test_cpu_mem_intc_contract.py"
+GENERATED_MEMMAP = (
+    ROOT
+    / "build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.memmap.json"
+)
+GENERATED_DTS = (
+    ROOT
+    / "build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts"
+)
+GENERATED_VERILOG = ROOT / "build/chipyard/openphone_rocket/openphone_rocket_ap.v"
+GENERATED_FIR = (
+    ROOT
+    / "build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.fir"
+)
+GENERATED_SIMULATOR = ROOT / "build/chipyard/openphone_rocket/simulator/simulator"
 
 REQUIRED_BLOCKED = {
+    "reset_rom_boot_memory_handoff",
     "real_dram_controller_phy",
     "cache_hierarchy_latency",
+    "axi_tl_interconnect_contract",
+    "cacheability_noncoherent_dma_policy",
     "uma_cache_coherency",
     "android_shared_buffer_uma",
     "iommu_smmu_dma_isolation",
@@ -28,6 +46,10 @@ REQUIRED_BLOCKED = {
 }
 
 REQUIRED_EVIDENCE_BY_CLAIM = {
+    "reset_rom_boot_memory_handoff": {
+        "docs/evidence/memory/reset_rom_boot_sram_handoff_report.json",
+        "docs/evidence/memory/opensbi_dram_handoff_transcript.json",
+    },
     "real_dram_controller_phy": {
         "docs/evidence/memory/real_dram_controller_phy_report.json",
         "docs/evidence/memory/dram_training_timing_report.json",
@@ -35,6 +57,14 @@ REQUIRED_EVIDENCE_BY_CLAIM = {
     "cache_hierarchy_latency": {
         "docs/evidence/memory/cache_hierarchy_report.json",
         "docs/evidence/memory/cache_latency_counter_report.json",
+    },
+    "axi_tl_interconnect_contract": {
+        "docs/evidence/memory/axi_tl_interconnect_contract_report.json",
+        "docs/evidence/memory/fabric_bridge_ordering_report.json",
+    },
+    "cacheability_noncoherent_dma_policy": {
+        "docs/evidence/memory/cacheability_attribute_map_report.json",
+        "docs/evidence/memory/noncoherent_dma_sync_abi_report.json",
     },
     "uma_cache_coherency": {
         "docs/evidence/memory/uma_coherency_report.json",
@@ -64,10 +94,16 @@ REQUIRED_EVIDENCE_BY_CLAIM = {
 }
 
 REQUIRED_ARTIFACT_SCHEMAS = {
+    "docs/evidence/memory/reset_rom_boot_sram_handoff_report.json": "openphone.memory.reset_rom_boot_sram_handoff.v1",
+    "docs/evidence/memory/opensbi_dram_handoff_transcript.json": "openphone.memory.opensbi_dram_handoff.v1",
     "docs/evidence/memory/real_dram_controller_phy_report.json": "openphone.memory.real_dram_controller_phy.v1",
     "docs/evidence/memory/dram_training_timing_report.json": "openphone.memory.dram_training_timing.v1",
     "docs/evidence/memory/cache_hierarchy_report.json": "openphone.memory.cache_hierarchy.v1",
     "docs/evidence/memory/cache_latency_counter_report.json": "openphone.memory.cache_latency_counter.v1",
+    "docs/evidence/memory/axi_tl_interconnect_contract_report.json": "openphone.memory.axi_tl_interconnect_contract.v1",
+    "docs/evidence/memory/fabric_bridge_ordering_report.json": "openphone.memory.fabric_bridge_ordering.v1",
+    "docs/evidence/memory/cacheability_attribute_map_report.json": "openphone.memory.cacheability_attribute_map.v1",
+    "docs/evidence/memory/noncoherent_dma_sync_abi_report.json": "openphone.memory.noncoherent_dma_sync_abi.v1",
     "docs/evidence/memory/uma_coherency_report.json": "openphone.memory.uma_coherency.v1",
     "docs/evidence/memory/shared_buffer_negative_sync_report.json": "openphone.memory.shared_buffer_negative_sync.v1",
     "docs/evidence/memory/android_dma_buf_coherency_report.json": "openphone.memory.android_dma_buf_coherency.v1",
@@ -84,8 +120,11 @@ REQUIRED_ARTIFACT_SCHEMAS = {
 }
 
 REQUIRED_TARGET_DELTAS = {
+    "reset_rom_boot_sram_handoff": "reset_rom_boot_memory_handoff",
     "dram_controller_phy": "real_dram_controller_phy",
+    "axi_tl_system_fabric": "axi_tl_interconnect_contract",
     "fabric_width_and_outstanding": "memory_qos_bandwidth",
+    "cacheability_noncoherent_dma_policy": "cacheability_noncoherent_dma_policy",
     "uma_coherency": "uma_cache_coherency",
     "dma_isolation": "iommu_smmu_dma_isolation",
     "qos_bandwidth_latency": "memory_qos_bandwidth",
@@ -119,8 +158,15 @@ ROADMAP_PHASE_REQUIRED_TERMS = {
 }
 
 TARGET_DELTA_REQUIRED_TERMS = {
+    "reset_rom_boot_sram_handoff": ("identity ROM", "boot SRAM", "DRAM initialization", "OpenSBI"),
     "dram_controller_phy": ("AXI-Lite SRAM", "LPDDR", "training", "refresh"),
+    "axi_tl_system_fabric": ("AXI-Lite", "AXI4", "TileLink", "ordering domains"),
     "fabric_width_and_outstanding": ("Single-beat AXI-Lite", "bursts", "outstanding", "per-master"),
+    "cacheability_noncoherent_dma_policy": (
+        "cacheability attributes",
+        "non-coherent",
+        "cache-maintenance ABI",
+    ),
     "uma_coherency": ("No caches", "Coherent interconnect", "DMA ownership"),
     "dma_isolation": ("address response", "IOMMU/SMMU", "fault status"),
     "qos_bandwidth_latency": ("CPU-wins", "QoS", "bandwidth counters", "underflow"),
@@ -130,11 +176,15 @@ TARGET_DELTA_REQUIRED_TERMS = {
 REQUIRED_DOC_TOKENS = {
     MEMORY: [
         "SRAM-backed",
+        "reset ROM",
+        "boot SRAM",
         "external DRAM controller and PHY",
         "Phone-class 2028 target",
         "LPDDR5X/LPDDR6",
         "bandwidth and latency",
         "cache hierarchy",
+        "cacheability",
+        "non-coherent",
         "real integration",
         "does not implement a DRAM controller",
         "UMA coherency protocol",
@@ -144,6 +194,12 @@ REQUIRED_DOC_TOKENS = {
         "Page fault reporting",
         "CLINT/PLIC dependencies",
         "must not be used as release evidence",
+        "Generated AP memory audit",
+        "memory@80000000",
+        "0x80000000",
+        "256 MiB",
+        "SimDRAM",
+        "not boot evidence",
         "make memory-uma-claim-gate",
         "make cocotb-contract",
     ],
@@ -152,6 +208,10 @@ REQUIRED_DOC_TOKENS = {
         "SRAM-backed DRAM model",
         "not a cache-coherent fabric",
         "not a QoS arbiter",
+        "AXI4",
+        "TileLink",
+        "cacheability",
+        "non-coherent",
         "Production fabric gates",
         "page fault reporting",
         "CLINT/PLIC access map",
@@ -159,6 +219,8 @@ REQUIRED_DOC_TOKENS = {
     ],
     MEMORY_MAP: [
         "SRAM-backed",
+        "reset ROM",
+        "boot SRAM",
         "4 KiB",
         "256 MiB",
         "not an IOMMU or coherency implementation",
@@ -418,6 +480,20 @@ def check_gate(errors: list[str]) -> None:
     actual = data.get("current_actual_capability")
     require(isinstance(actual, dict), "memory/UMA gate missing current_actual_capability", errors)
     if isinstance(actual, dict):
+        for key in (
+            "reset_rom",
+            "boot_sram",
+            "dram_init_or_training",
+            "axi4_or_tilelink_fabric",
+            "cacheability_attributes",
+            "noncoherent_dma_cache_sync_abi",
+        ):
+            require(
+                actual.get(key)
+                in {"none", "contract_identity_rom_and_separate_minimal_rv64_scaffold_only"},
+                f"current_actual_capability must explicitly block {key}",
+                errors,
+            )
         require(
             actual.get("usable_rtl_capacity_bytes") == 4096,
             "actual RTL capacity must stay explicit at 4096 bytes until real memory exists",
@@ -667,6 +743,13 @@ def check_gate(errors: list[str]) -> None:
     rules = "\n".join(data.get("claim_rules") or [])
     for token in (
         "must not",
+        "Reset ROM",
+        "boot SRAM",
+        "AXI-Lite",
+        "AXI4",
+        "TileLink",
+        "Non-coherent DMA",
+        "cacheability",
         "real DRAM",
         "UMA coherency",
         "IOMMU/SMMU",
@@ -693,6 +776,190 @@ def check_gate(errors: list[str]) -> None:
                 f"next_commands missing {key}: {command}",
                 errors,
             )
+
+    check_generated_ap_memory_audit(data, errors)
+
+
+def parse_int_value(value: object) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value, 0)
+        except ValueError:
+            return None
+    return None
+
+
+def check_generated_ap_memory_audit(data: dict, errors: list[str]) -> None:
+    audit = data.get("generated_ap_memory_audit")
+    require(isinstance(audit, dict), "memory/UMA gate missing generated_ap_memory_audit", errors)
+    if not isinstance(audit, dict):
+        return
+
+    require(
+        audit.get("status") == "generated_source_only_not_boot_evidence",
+        "generated AP memory audit must remain generated_source_only_not_boot_evidence",
+        errors,
+    )
+
+    sources = audit.get("sources")
+    require(isinstance(sources, dict), "generated AP memory audit missing sources", errors)
+    expected_sources = {
+        "memmap": GENERATED_MEMMAP,
+        "dts": GENERATED_DTS,
+        "verilog": GENERATED_VERILOG,
+        "fir": GENERATED_FIR,
+    }
+    if isinstance(sources, dict):
+        for key, path in expected_sources.items():
+            rel = str(path.relative_to(ROOT))
+            require(
+                sources.get(key) == rel, f"generated AP source path for {key} must be {rel}", errors
+            )
+
+    ram = audit.get("linux_usable_ram")
+    require(isinstance(ram, dict), "generated AP memory audit missing linux_usable_ram", errors)
+    if isinstance(ram, dict):
+        require(
+            ram.get("node") == "memory@80000000", "Linux RAM node must be memory@80000000", errors
+        )
+        require(
+            parse_int_value(ram.get("base")) == 0x80000000,
+            "Linux RAM base must be 0x80000000",
+            errors,
+        )
+        require(
+            parse_int_value(ram.get("size_bytes")) == 0x10000000,
+            "Linux RAM size must be 0x10000000",
+            errors,
+        )
+        require(ram.get("size_mib") == 256, "Linux RAM size_mib must be 256", errors)
+        require(ram.get("dts_status") == "enabled", "Linux RAM DTS status must be enabled", errors)
+        require(
+            "0x80000000" in str(ram.get("payload_policy", "")),
+            "Linux RAM payload policy must name 0x80000000",
+            errors,
+        )
+
+    scratch = audit.get("disabled_scratchpad")
+    require(
+        isinstance(scratch, dict), "generated AP memory audit missing disabled_scratchpad", errors
+    )
+    if isinstance(scratch, dict):
+        require(
+            scratch.get("node") == "memory@8000000",
+            "scratchpad node must be memory@8000000",
+            errors,
+        )
+        require(
+            parse_int_value(scratch.get("base")) == 0x08000000,
+            "scratchpad base must be 0x08000000",
+            errors,
+        )
+        require(
+            parse_int_value(scratch.get("size_bytes")) == 0x10000,
+            "scratchpad size must be 0x10000",
+            errors,
+        )
+        require(
+            scratch.get("dts_status") == "disabled",
+            "scratchpad DTS status must be disabled",
+            errors,
+        )
+
+    model = audit.get("verilator_model")
+    require(isinstance(model, dict), "generated AP memory audit missing verilator_model", errors)
+    if isinstance(model, dict):
+        require(
+            model.get("module") == "SimDRAM", "Verilator memory model must name SimDRAM", errors
+        )
+        require(
+            parse_int_value(model.get("mem_base")) == 0x80000000,
+            "SimDRAM MEM_BASE must be 0x80000000",
+            errors,
+        )
+        require(
+            parse_int_value(model.get("mem_size_bytes")) == 0x10000000,
+            "SimDRAM MEM_SIZE must be 0x10000000",
+            errors,
+        )
+        require(
+            model.get("simulator_executable") == "missing",
+            "generated AP simulator executable must remain marked missing until built",
+            errors,
+        )
+
+    blockers = "\n".join(audit.get("blockers") or [])
+    for token in (
+        "No generated Verilator simulator executable",
+        "No OpenSBI image",
+        "No Linux Image/initrd/DTB",
+        "No serial transcript",
+        "No real DRAM/LPDDR/UMA evidence",
+    ):
+        require(token in blockers, f"generated AP memory blockers missing token: {token}", errors)
+
+    if GENERATED_MEMMAP.is_file():
+        memmap = json.loads(GENERATED_MEMMAP.read_text())
+        mapping = memmap.get("mapping") if isinstance(memmap, dict) else memmap
+        entries = {
+            name: entry
+            for entry in mapping or []
+            if isinstance(entry, dict)
+            for name in entry.get("names", [])
+        }
+        dram = entries.get("memory@80000000")
+        require(isinstance(dram, dict), "generated memmap missing memory@80000000", errors)
+        if isinstance(dram, dict):
+            require(dram.get("base") == [0x80000000], "generated memmap DRAM base drifted", errors)
+            require(dram.get("size") == [0x10000000], "generated memmap DRAM size drifted", errors)
+            require(dram.get("c") == [True], "generated memmap DRAM must remain cacheable", errors)
+        small = entries.get("memory@8000000")
+        require(isinstance(small, dict), "generated memmap missing memory@8000000", errors)
+        if isinstance(small, dict):
+            require(
+                small.get("base") == [0x08000000],
+                "generated memmap scratchpad base drifted",
+                errors,
+            )
+            require(
+                small.get("size") == [0x10000], "generated memmap scratchpad size drifted", errors
+            )
+
+    if GENERATED_DTS.is_file():
+        dts = read(GENERATED_DTS)
+        require("memory@80000000" in dts, "generated DTS missing memory@80000000", errors)
+        require("reg = <0x80000000 0x10000000>;" in dts, "generated DTS DRAM reg drifted", errors)
+        require("memory@8000000" in dts, "generated DTS missing memory@8000000", errors)
+        require("reg = <0x8000000 0x10000>;" in dts, "generated DTS scratchpad reg drifted", errors)
+        require(
+            'status = "disabled";' in dts, "generated DTS must keep scratchpad disabled", errors
+        )
+
+    if GENERATED_VERILOG.is_file():
+        verilog = read(GENERATED_VERILOG)
+        require("SimDRAM" in verilog, "generated Verilog missing SimDRAM", errors)
+        require(
+            ".MEM_BASE(40'd2147483648)" in verilog, "generated Verilog SimDRAM base drifted", errors
+        )
+        require(".MEM_SIZE(268435456)" in verilog, "generated Verilog SimDRAM size drifted", errors)
+
+    if GENERATED_FIR.is_file():
+        fir = read(GENERATED_FIR)
+        require("extmodule SimDRAM" in fir, "generated FIR missing SimDRAM", errors)
+        require(
+            "parameter MEM_BASE = 2147483648" in fir, "generated FIR SimDRAM base drifted", errors
+        )
+        require(
+            "parameter MEM_SIZE = 268435456" in fir, "generated FIR SimDRAM size drifted", errors
+        )
+
+    require(
+        not GENERATED_SIMULATOR.exists(),
+        "generated AP simulator exists; update memory audit and require boot transcript evidence",
+        errors,
+    )
 
 
 def check_docs(errors: list[str]) -> None:

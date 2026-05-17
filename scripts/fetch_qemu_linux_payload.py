@@ -7,7 +7,6 @@ import argparse
 import datetime as dt
 import hashlib
 import json
-import shutil
 import subprocess
 import sys
 import urllib.request
@@ -15,8 +14,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BASE_URL = (
-    "https://deb.debian.org/debian/dists/stable/main/installer-riscv64/current/images"
+    "https://snapshot.debian.org/archive/debian/20260517T000000Z/dists/trixie/main/"
+    "installer-riscv64/current/images"
 )
+DEFAULT_SNAPSHOT_TIMESTAMP = "20260517T000000Z"
+DEFAULT_INSTALLER_PACKAGE_VERSION = "20250803+deb13u5"
 PAYLOADS = {
     "linux": "netboot/debian-installer/riscv64/linux",
     "initrd.gz": "netboot/debian-installer/riscv64/initrd.gz",
@@ -24,7 +26,7 @@ PAYLOADS = {
 
 
 def utc_now() -> str:
-    return dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def sha256_path(path: Path) -> str:
@@ -38,29 +40,59 @@ def sha256_path(path: Path) -> str:
 def fetch(url: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     tmp = destination.with_suffix(destination.suffix + ".tmp")
-    if shutil.which("curl"):
-        subprocess.run(
-            [
-                "curl",
-                "--fail",
-                "--location",
-                "--retry",
-                "3",
-                "--connect-timeout",
-                "15",
-                "--max-time",
-                "300",
-                "--output",
-                str(tmp),
-                url,
-            ],
-            check=True,
-        )
-        tmp.replace(destination)
-        return
-    with urllib.request.urlopen(url, timeout=60) as response:
-        tmp.write_bytes(response.read())
+    tmp.unlink(missing_ok=True)
+    destination.unlink(missing_ok=True)
+    command = [
+        "curl",
+        "--fail",
+        "--location",
+        "--retry",
+        "3",
+        "--connect-timeout",
+        "15",
+        "--max-time",
+        "900",
+        "--output",
+        str(tmp),
+        url,
+    ]
+    try:
+        subprocess.run(command, check=True)
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        with urllib.request.urlopen(url, timeout=900) as response:
+            tmp.write_bytes(response.read())
+    if not tmp.is_file():
+        raise FileNotFoundError(f"download completed without writing {tmp}")
     tmp.replace(destination)
+
+
+def fetch_verified(url: str, destination: Path, expected_hash: str, *, force: bool) -> str:
+    if force or not destination.is_file():
+        if force:
+            destination.unlink(missing_ok=True)
+            destination.with_suffix(destination.suffix + ".tmp").unlink(missing_ok=True)
+        print(f"fetch {url}", flush=True)
+        fetch(url, destination)
+    actual_hash = sha256_path(destination)
+    if actual_hash == expected_hash:
+        return actual_hash
+
+    destination.unlink(missing_ok=True)
+    destination.with_suffix(destination.suffix + ".tmp").unlink(missing_ok=True)
+    print(
+        f"warning: sha256 mismatch for {destination.relative_to(ROOT)}; retrying clean download",
+        file=sys.stderr,
+        flush=True,
+    )
+    fetch(url, destination)
+    actual_hash = sha256_path(destination)
+    if actual_hash != expected_hash:
+        destination.unlink(missing_ok=True)
+        destination.with_suffix(destination.suffix + ".tmp").unlink(missing_ok=True)
+        raise ValueError(
+            f"sha256 mismatch for {destination}: expected {expected_hash}, got {actual_hash}"
+        )
+    return actual_hash
 
 
 def parse_sha256s(text: str) -> dict[str, str]:
@@ -79,7 +111,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument(
         "--output-dir",
-        default="build/qemu/linux_payload/debian-installer-riscv64",
+        default="build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z",
         help="Directory for downloaded linux/initrd.gz artifacts.",
     )
     parser.add_argument("--force", action="store_true", help="Download even when files exist.")
@@ -98,6 +130,10 @@ def main(argv: list[str]) -> int:
         "claim_boundary": "qemu_virt_debian_netboot_payload_only",
         "created_utc": utc_now(),
         "base_url": base_url,
+        "snapshot_timestamp": DEFAULT_SNAPSHOT_TIMESTAMP
+        if DEFAULT_SNAPSHOT_TIMESTAMP in base_url
+        else "",
+        "debian_installer_package_version": DEFAULT_INSTALLER_PACKAGE_VERSION,
         "sha256s_url": sha_url,
         "payloads": {},
     }
@@ -109,15 +145,10 @@ def main(argv: list[str]) -> int:
             return 1
         destination = out_dir / name
         url = f"{base_url}/{rel_url}"
-        if args.force or not destination.is_file():
-            print(f"fetch {url}", flush=True)
-            fetch(url, destination)
-        actual_hash = sha256_path(destination)
-        if actual_hash != expected_hash:
-            print(
-                f"error: sha256 mismatch for {destination}: expected {expected_hash}, got {actual_hash}",
-                file=sys.stderr,
-            )
+        try:
+            actual_hash = fetch_verified(url, destination, expected_hash, force=args.force)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
             return 1
         payloads[name] = {
             "path": str(destination.relative_to(ROOT)),

@@ -52,12 +52,12 @@ Verilator simulator without modifying the checkout:
 python3 scripts/check_chipyard_verilator_preflight.py
 ```
 
-When that preflight passes, the expected build command is:
+When that preflight passes, the expected Verilog generation command is:
 
 ```sh
 cd external/chipyard/sims/verilator
 source ../../env.sh
-make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone
+make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone verilog
 ```
 
 The guarded repo wrapper runs the same preflight first and refuses to invoke
@@ -66,6 +66,18 @@ Chipyard make while setup blockers remain:
 ```sh
 scripts/run_chipyard_openphone_verilator.sh
 ```
+
+The Linux/amd64 container path uses the pinned local base image and writes the
+full attempt transcript to `build/chipyard/openphone_rocket/docker-verilog-attempt.log`:
+
+```sh
+scripts/run_chipyard_openphone_docker.sh
+```
+
+The container must still expose the Chipyard build environment: `/opt/conda/bin`
+on `PATH`, `make`, Java or the bundled SBT launcher runtime, Verilator, `firtool`,
+and `RISCV` pointing at a RISC-V toolchain. The wrapper fails closed before
+generation if those prerequisites are absent.
 
 Require generated artifacts and evidence:
 
@@ -95,13 +107,17 @@ regressions remain reproducible.
 ## Local Manifests
 
 - `openphone-rocket-manifest.json` is the repo-local selection gate. It must
-  remain `selected_not_generated` until generated RTL, DTS, simulator, firmware
-  inputs, and boot/trap evidence exist.
+  remain `selected_not_generated` until the generated import manifest,
+  simulator run, firmware inputs, and boot/trap evidence exist. Loose generated
+  Verilog, DTS, memmap, or regmap files under `build/chipyard/openphone_rocket`
+  are useful audit inputs, but they are not chip Linux boot evidence by
+  themselves.
 - `import-manifest.template.json` is copied into
   `build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json` by the
   eventual generator/import flow, then filled with recursive submodule SHAs,
-  command lines, tool versions, artifact paths, artifact SHA-256 values,
-  evidence paths, and evidence SHA-256 values.
+  command lines, tool versions, the passing bootstrap and Verilator preflight
+  reports, artifact paths, artifact SHA-256 values, evidence paths, and evidence
+  SHA-256 values.
 - `docs/evidence/cpu-ap-evidence-manifest.json` is the fail-closed schema for
   generated artifact paths and required OpenSBI/Linux/trap transcript markers.
   Its `linux_capable_gate_matrix` keeps RV64GC ISA, S-mode privilege, Sv39 MMU,
@@ -112,6 +128,14 @@ regressions remain reproducible.
   `build/reports/qemu_os_boot_attempt.log` with `BLOCKED`, `FAIL`, or `PASS`.
   That log is software-reference evidence only; it cannot close any
   Chipyard/Rocket AP Linux-capable gate.
+- `scripts/check_chipyard_generated_linux_contract.py` audits any generated
+  DTS, memmap, and regmaps that are present. It may pass the structural Linux
+  node check while still reporting boot evidence as `BLOCKED`.
+- `scripts/check_chipyard_payload_path.py` is the next payload-path gate. It
+  checks the generated DTS/artifacts and then reports the missing OpenSBI,
+  U-Boot, Linux boot, trap/IRQ, and ISA/MMU evidence needed before any
+  generated-target boot claim. QEMU `virt` Debian payload logs remain
+  software-reference evidence only and do not close this gate.
 
 ## First Integration Target
 

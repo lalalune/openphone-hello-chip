@@ -31,6 +31,12 @@ fi
 git checkout --detach "$CHIPYARD_SHA"
 git submodule update --init --recursive generators/rocket-chip
 git submodule update --init \
+    tools/cde \
+    tools/firrtl2 \
+    tools/install-circt \
+    tools/rocket-dsp-utils \
+    generators/bar-fetchers \
+    generators/rocc-acc-utils \
     sims/verilator \
     software/firemarshal
 

@@ -3,6 +3,7 @@ set -eu
 
 repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
 firmware="$repo_dir/build/qemu/hello_qemu_firmware.elf"
+firmware_lock="$repo_dir/build/qemu/.hello_qemu_firmware.lock"
 smoke_log="$repo_dir/build/reports/renode_smoke.log"
 smoke_manifest="$repo_dir/build/reports/renode_smoke.manifest"
 attempt_log="$repo_dir/build/reports/renode_smoke_attempt.log"
@@ -16,6 +17,24 @@ status_line() {
     check=$2
     detail=$3
     printf 'STATUS: %s %s - %s\n' "$state" "$check" "$detail"
+}
+
+acquire_firmware_lock() {
+    timeout=${FIRMWARE_LOCK_TIMEOUT_SECONDS:-120}
+    waited=0
+    mkdir -p "$repo_dir/build/qemu"
+    while ! mkdir "$firmware_lock" 2>/dev/null; do
+        if [ "$waited" -ge "$timeout" ]; then
+            status_line "FAIL" "renode.firmware_lock" "timed out waiting for ${firmware_lock#"$repo_dir"/}; remove stale lock after confirming no simulator build is running"
+            return 1
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+}
+
+release_firmware_lock() {
+    rmdir "$firmware_lock" 2>/dev/null || true
 }
 
 usage() {
@@ -372,6 +391,8 @@ if ! command -v renode >/dev/null 2>&1; then
 fi
 
 if [ "$mode" = "check" ]; then
+    acquire_firmware_lock || exit $?
+    trap release_firmware_lock EXIT INT TERM
     status_line "PASS" "renode.preflight" "found $(command -v renode) $(renode_version_label)"
     if [ ! -f "$firmware" ]; then
         blocked "Renode executable smoke needs ${firmware#"$repo_dir"/}; run scripts/run_qemu.sh --build-firmware first."
@@ -386,6 +407,8 @@ fi
 
 echo "Launching Renode qemu-virt software reference target. This is not the hello-chip hardware ABI."
 echo "This interactive target does not create release evidence by itself. For bounded evidence run: make renode-check"
+acquire_firmware_lock || exit $?
+trap release_firmware_lock EXIT INT TERM
 if [ ! -f "$firmware" ]; then
     blocked "Renode run needs ${firmware#"$repo_dir"/}; run scripts/run_qemu.sh --build-firmware first."
 fi

@@ -73,7 +73,7 @@ def main() -> int:
     missing = rel(GENERATED_MANIFEST)
     print(
         "STATUS: BLOCKED cpu_ap.completion_gate - no real RV64GC/Linux AP completion claim; "
-        f"generated artifacts and boot evidence are absent ({missing})"
+        f"Linux boot evidence is absent or incomplete ({missing})"
     )
     errors: list[str] = []
     evidence_manifest = load_evidence_manifest(errors)

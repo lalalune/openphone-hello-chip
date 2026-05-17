@@ -2,6 +2,7 @@
   "DESIGN_NAME": "hello_chip_top",
   "PDK": "sky130A",
   "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+  "STD_CELL_LIBRARY_OPT": "sky130_fd_sc_hd",
   "VERILOG_FILES": [
     "dir::../../rtl/top/hello_chip_top.sv",
     "dir::../../rtl/clock/hello_reset_sync.sv",

@@ -112,10 +112,28 @@ archived transcript ends with `openphone-evidence: status=PASS`.
 | `opensbi_handoff` | OpenSBI transcript reaching the next-stage handoff on the selected memory map. |
 | `linux_initramfs_smoke` | Linux early console, initramfs start, and hello MMIO smoke result from the generated AP target. |
 
+`docs/evidence/linux-hardware-contract-gate.yaml` adds a local fail-closed
+scaffold gate for the RTL CPU, memory, interrupt, timer, and UART paths. Its
+checker, `python3 scripts/check_linux_hardware_contract_gate.py`, must pass only
+when the local RTL remains clearly documented as a non-Linux scaffold and every
+minimum Linux boot axis is still blocked pending executable evidence. The same
+checker also validates that `scripts/run_qemu.sh --check-os`,
+`docs/evidence/linux/qemu-virt-linux-payload-plan.json`, and any
+`build/reports/qemu_os_boot_attempt.json` artifact remain marked as qemu-virt
+reference-only evidence, not chip RTL boot evidence.
+
 QEMU `virt` OS boot attempts are useful software-reference evidence only. The
 bounded attempt log at `build/reports/qemu_os_boot_attempt.log` may be
 `BLOCKED`, `FAIL`, or `PASS`, but it cannot satisfy any generated
 Chipyard/Rocket AP gate.
+
+Generated DTS, memmap, regmap, or Verilog files under
+`build/chipyard/openphone_rocket` are also not sufficient by themselves. Run
+`python3 scripts/check_chipyard_generated_linux_contract.py` to audit their
+Linux launch shape; a structural DTS pass only means the generated AP exposes
+the expected CPU, memory, CLINT, PLIC, UART, ROM, and boot-address nodes.
+OpenSBI/Linux claims remain blocked until the import manifest and executable
+transcripts satisfy the evidence manifest.
 
 The current tiny CPU cannot produce these markers because it has no CSR file,
 trap vector, privilege mode, timer facility, OpenSBI handoff, Linux early

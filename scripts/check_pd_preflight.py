@@ -12,6 +12,7 @@ CONFIGS = [
     ROOT / "pd/openlane/config.json",
     ROOT / "pd/openlane/config.sky130.json",
     ROOT / "pd/openlane/config.gf180.json",
+    ROOT / "pd/openlane/config.pd-smoke.sky130.json",
 ]
 OPENLANE_IMAGE = "ghcr.io/efabless/openlane2:2.4.0.dev1"
 OPENLANE_IMAGE_DIGEST = "sha256:bcaabac3b114dfb9e739af9f16b53a79ce1b744bcdb3ad4fc476c961581fe5d5"
@@ -26,7 +27,9 @@ PD_INPUTS = [
     OPENROAD_TCL,
     ROOT / "pd/constraints/hello_soc.sdc",
     ROOT / "pd/constraints/hello_soc_gf180.sdc",
+    ROOT / "pd/constraints/hello_pd_smoke.sdc",
     ROOT / "pd/pin_order.cfg",
+    ROOT / "pd/pin_order_smoke.cfg",
 ]
 CONFIG_BY_PDK = {
     "sky130A": ROOT / "pd/openlane/config.sky130.json",
@@ -63,8 +66,12 @@ def check_config(config_path: Path, failures: list[str]) -> dict | None:
     if missing_keys:
         failures.append(f"{display_path(config_path)}: missing keys: {', '.join(missing_keys)}")
 
-    if config.get("DESIGN_NAME") != "hello_chip_top":
-        failures.append(f"{display_path(config_path)}: DESIGN_NAME must be hello_chip_top")
+    valid_design_names = {"hello_chip_top", "hello_pd_smoke_top"}
+    if config.get("DESIGN_NAME") not in valid_design_names:
+        failures.append(
+            f"{display_path(config_path)}: DESIGN_NAME must be one of "
+            f"{', '.join(sorted(valid_design_names))}"
+        )
     if config.get("CLOCK_PORT") != "CLK_IN":
         failures.append(f"{display_path(config_path)}: CLOCK_PORT must be CLK_IN")
     if not isinstance(config.get("CLOCK_PERIOD"), (int, float)) or config["CLOCK_PERIOD"] <= 0:

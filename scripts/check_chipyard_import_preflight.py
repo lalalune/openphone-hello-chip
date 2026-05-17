@@ -7,7 +7,7 @@ import argparse
 import json
 import shutil
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -142,7 +142,7 @@ def main() -> int:
     checks: dict[str, object] = {}
     evidence: dict[str, object] = {
         "schema": "openphone.cpu_ap_bootstrap_preflight.v1",
-        "generated_at_utc": datetime.now(UTC).isoformat(),
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "manifest": str(MANIFEST.relative_to(ROOT)),
         "checkout": str(checkout),
         "chipyard": {
@@ -193,7 +193,17 @@ def main() -> int:
         elif head.stdout.strip() != chipyard["commit"]:
             errors.append(f"checkout HEAD is {head.stdout.strip()}, expected {chipyard['commit']}")
 
-        required_submodules = ("generators/rocket-chip", "software/firemarshal")
+        required_submodules = (
+            "generators/rocket-chip",
+            "tools/cde",
+            "tools/firrtl2",
+            "tools/install-circt",
+            "tools/rocket-dsp-utils",
+            "generators/bar-fetchers",
+            "generators/rocc-acc-utils",
+            "sims/verilator",
+            "software/firemarshal",
+        )
         submodules = run(["git", "submodule", "status", *required_submodules], cwd=checkout)
         submodule_lines = [line for line in submodules.stdout.splitlines() if line.strip()]
         checks["required_submodules"] = list(required_submodules)

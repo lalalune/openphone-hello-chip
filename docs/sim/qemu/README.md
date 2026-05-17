@@ -61,8 +61,33 @@ The fetch helper downloads Debian `linux`, `initrd.gz`, and `SHA256SUMS`, then
 verifies the payload hashes before writing
 `build/qemu/linux_payload/debian-installer-riscv64/manifest.json`.
 `--check-os` auto-discovers those files and archives the bounded QEMU output at
-`build/reports/qemu_os_boot_attempt.log`.
+`build/reports/qemu_os_boot_attempt.log`. It also writes a structured status
+manifest at `build/reports/qemu_os_boot_attempt.json` with the required claim
+boundary:
+
+```text
+qemu_virt_reference_only_not_hello_chip_rtl
+```
+
+Validate the payload manifest, boot transcript, and reference-only boundary
+with:
+
+```sh
+python3 scripts/check_qemu_linux_payload_status.py
+```
 
 This path may prove that local QEMU can execute a real riscv64 Linux payload on
 `-machine virt`; it still cannot be used as OpenPhone AP, OpenSBI/U-Boot chain,
 BSP driver, or Android evidence.
+
+The smallest next BSP import step is the external Linux BSP import preflight:
+
+```sh
+python3 scripts/check_bsp_next_import_step.py
+LINUX_DIR=/path/to/linux python3 scripts/check_bsp_next_import_step.py
+```
+
+Linux comes before Buildroot because the Buildroot target needs a kernel
+tree/tarball that already contains the OpenPhone Linux drivers and DTS. OpenSBI
+and U-Boot remain blocked on a CPU-capable SoC handoff with RAM, UART, timer,
+interrupt controller, and boot handoff.

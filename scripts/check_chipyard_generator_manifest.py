@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 from cpu_ap_evidence_lib import (
@@ -222,6 +224,15 @@ def check_generated_import_manifest(errors: list[str]) -> None:
     if isinstance(preflight_report, str):
         check_bootstrap_preflight_report(ROOT / preflight_report, errors)
     require(
+        generation.get("verilator_preflight_report")
+        == "build/chipyard/openphone_rocket/verilator-preflight.json",
+        "generated manifest must reference the Verilator preflight report",
+        errors,
+    )
+    verilator_preflight_report = generation.get("verilator_preflight_report")
+    if isinstance(verilator_preflight_report, str):
+        check_verilator_preflight_report(ROOT / verilator_preflight_report, errors)
+    require(
         bool(generation.get("command")), "generated manifest must record generation command", errors
     )
     require(
@@ -248,6 +259,7 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         errors.append("generated manifest artifacts and evidence fields must be objects")
         return
 
+    require_simulator_executable = manifest.get("status") in {"complete", "linux_complete"}
     for name, spec in artifact_specs(evidence_manifest).items():
         expected_path = spec.get("path")
         path = artifacts.get(name, "")
@@ -257,7 +269,10 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         if not isinstance(path, str) or not path:
             continue
         artifact_path = ROOT / path
-        validate_path_kind(artifact_path, spec, errors, name)
+        validation_spec = dict(spec)
+        if name == "simulator" and not require_simulator_executable:
+            validation_spec["requires_executable"] = False
+        validate_path_kind(artifact_path, validation_spec, errors, name)
         if artifact_path.exists():
             if artifact_path.is_file():
                 required_strings = spec.get("required_strings", [])
@@ -280,6 +295,7 @@ def check_generated_import_manifest(errors: list[str]) -> None:
                 errors,
             )
 
+    require_linux_evidence = manifest.get("status") == "linux_complete"
     for name, spec in transcript_specs(evidence_manifest).items():
         expected_path = spec.get("path")
         path = evidence.get(name, "")
@@ -289,6 +305,8 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         if not isinstance(path, str) or not path:
             continue
         evidence_path = ROOT / path
+        if not require_linux_evidence and not evidence_path.is_file():
+            continue
         require(evidence_path.is_file(), f"evidence artifact does not exist: {path}", errors)
         if evidence_path.is_file():
             text = evidence_path.read_text(encoding="utf-8", errors="ignore")
@@ -300,6 +318,20 @@ def check_generated_import_manifest(errors: list[str]) -> None:
                 str(spec.get("sha256_key")),
                 errors,
             )
+
+    linux_contract = subprocess.run(
+        [sys.executable, "scripts/check_chipyard_generated_linux_contract.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    require(
+        linux_contract.returncode == 0,
+        "generated Linux DTS/memmap/regmap contract failed:\n" + linux_contract.stdout.rstrip(),
+        errors,
+    )
 
 
 def check_bootstrap_preflight_report(path: Path, errors: list[str]) -> None:
@@ -360,6 +392,45 @@ def check_bootstrap_preflight_report(path: Path, errors: list[str]) -> None:
         selected.get("isa") == "RV64GC", "bootstrap preflight report must target RV64GC", errors
     )
     require(selected.get("harts") == 1, "bootstrap preflight report must target one hart", errors)
+
+
+def check_verilator_preflight_report(path: Path, errors: list[str]) -> None:
+    require(path.is_file(), f"missing Verilator preflight report: {rel(path)}", errors)
+    if not path.is_file():
+        return
+
+    try:
+        report = load_json(path)
+    except ValueError as exc:
+        errors.append(f"{rel(path)} is invalid JSON: {exc}")
+        return
+
+    require(
+        report.get("schema") == "openphone.cpu_ap_chipyard_verilator_preflight.v1",
+        "Verilator preflight report schema drifted",
+        errors,
+    )
+    require(
+        report.get("status") == "pass",
+        "Verilator preflight report must pass before generated import claims",
+        errors,
+    )
+    require(
+        report.get("config") == "OpenPhoneRocketConfig",
+        "Verilator preflight report must target OpenPhoneRocketConfig",
+        errors,
+    )
+    require(
+        report.get("config_package") == "openphone",
+        "Verilator preflight report must target package openphone",
+        errors,
+    )
+    for error in report.get("errors", []):
+        if isinstance(error, str) and error:
+            errors.append(f"Verilator preflight error: {error}")
+    for blocker in report.get("blockers", []):
+        if isinstance(blocker, str) and blocker:
+            errors.append(f"Verilator preflight blocker: {blocker}")
 
 
 def main() -> int:

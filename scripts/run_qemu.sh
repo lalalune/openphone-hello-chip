@@ -5,9 +5,11 @@ repo_dir=$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)
 src="$repo_dir/sw/bootrom/hello_qemu_firmware.S"
 linker="$repo_dir/sw/bootrom/linker.ld"
 checked_elf="$repo_dir/build/qemu/hello_qemu_firmware.elf"
+firmware_lock="$repo_dir/build/qemu/.hello_qemu_firmware.lock"
 smoke_log="$repo_dir/build/reports/qemu_smoke.log"
 smoke_manifest="$repo_dir/build/reports/qemu_smoke.manifest"
 os_attempt_log="$repo_dir/build/reports/qemu_os_boot_attempt.log"
+os_attempt_manifest="$repo_dir/build/reports/qemu_os_boot_attempt.json"
 banner="openphone hello qemu"
 load_addr="0x80000000"
 uart_addr="0x10000000"
@@ -35,6 +37,24 @@ status_line() {
     check=$2
     detail=$3
     printf 'STATUS: %s %s - %s\n' "$state" "$check" "$detail"
+}
+
+acquire_firmware_lock() {
+    timeout=${FIRMWARE_LOCK_TIMEOUT_SECONDS:-120}
+    waited=0
+    mkdir -p "$repo_dir/build/qemu"
+    while ! mkdir "$firmware_lock" 2>/dev/null; do
+        if [ "$waited" -ge "$timeout" ]; then
+            status_line "FAIL" "qemu.firmware_lock" "timed out waiting for ${firmware_lock#"$repo_dir"/}; remove stale lock after confirming no simulator build is running"
+            return 1
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+}
+
+release_firmware_lock() {
+    rmdir "$firmware_lock" 2>/dev/null || true
 }
 
 sha256_file() {
@@ -229,6 +249,7 @@ default_os_payload() {
     for path in \
         "$repo_dir/build/linux/arch/riscv/boot/Image" \
         "$repo_dir/build/linux/Image" \
+        "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/linux" \
         "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64/linux" \
         "$repo_dir/build/buildroot/images/Image" \
         "$repo_dir/buildroot/output/images/Image"; do
@@ -244,6 +265,7 @@ default_initrd_payload() {
     for path in \
         "$repo_dir/build/buildroot/images/rootfs.cpio" \
         "$repo_dir/build/buildroot/images/rootfs.cpio.gz" \
+        "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/initrd.gz" \
         "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64/initrd.gz" \
         "$repo_dir/buildroot/output/images/rootfs.cpio" \
         "$repo_dir/buildroot/output/images/rootfs.cpio.gz"; do
@@ -266,6 +288,29 @@ default_dtb_payload() {
         fi
     done
     return 1
+}
+
+write_os_attempt_manifest() {
+    state=$1
+    detail=$2
+    mkdir -p "$repo_dir/build/reports"
+    cat >"$os_attempt_manifest" <<EOF
+{
+  "schema": "openphone.qemu_virt_os_boot_attempt.v1",
+  "claim_boundary": "qemu_virt_reference_only_not_hello_chip_rtl",
+  "status": "$state",
+  "check": "qemu.os_boot",
+  "detail": $(printf '%s' "$detail" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'),
+  "qemu": "$(command -v qemu-system-riscv64 2>/dev/null || printf 'missing')",
+  "kernel": "${linux_kernel:-missing}",
+  "kernel_sha256": "$(if [ -n "${linux_kernel:-}" ] && [ -f "$linux_kernel" ]; then sha256_file "$linux_kernel"; else printf 'missing'; fi)",
+  "initrd": "${linux_initrd:-missing}",
+  "initrd_sha256": "$(if [ -n "${linux_initrd:-}" ] && [ -f "$linux_initrd" ]; then sha256_file "$linux_initrd"; else printf 'missing'; fi)",
+  "dtb": "${linux_dtb:-optional-missing}",
+  "dtb_sha256": "$(if [ -n "${linux_dtb:-}" ] && [ -f "$linux_dtb" ]; then sha256_file "$linux_dtb"; else printf 'optional-missing'; fi)",
+  "transcript": "${os_attempt_log#"$repo_dir"/}"
+}
+EOF
 }
 
 write_os_attempt_log() {
@@ -297,6 +342,7 @@ write_os_attempt_log() {
             printf 'dtb_sha256=optional-missing\n'
         fi
     } >"$os_attempt_log"
+    write_os_attempt_manifest "$state" "$detail"
 }
 
 check_os_boot() {
@@ -350,10 +396,12 @@ check_os_boot() {
     rm -f "$log"
 
     if grep -Eq "Freeing unused kernel memory|Run /init as init process|Welcome to|login:|Debian GNU/Linux installer|Starting system log daemon" "$os_attempt_log"; then
+        write_os_attempt_manifest "PASS" "bounded QEMU OS boot reached an init/login marker; transcript archived"
         status_line "PASS" "qemu.os_boot" "bounded QEMU OS boot reached an init/login marker; archived ${os_attempt_log#"$repo_dir"/}"
         return 0
     fi
 
+    write_os_attempt_manifest "FAIL" "bounded QEMU OS boot did not reach an init/login marker; transcript archived"
     status_line "FAIL" "qemu.os_boot" "bounded QEMU OS boot did not reach an init/login marker; archived ${os_attempt_log#"$repo_dir"/}"
     return 1
 }
@@ -423,9 +471,13 @@ fi
 
 case "$mode" in
     build)
+        acquire_firmware_lock || exit $?
+        trap release_firmware_lock EXIT INT TERM
         build_firmware
         ;;
     check)
+        acquire_firmware_lock || exit $?
+        trap release_firmware_lock EXIT INT TERM
         if build_firmware; then
             if run_bounded_smoke "$checked_elf"; then
                 status_line "PASS" "qemu.check" "semantic, build, and executable smoke passed"

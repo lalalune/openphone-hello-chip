@@ -7,6 +7,7 @@ PASS/BLOCKED/FAIL behavior without installing external packages.
 
 from __future__ import annotations
 
+import json
 import os
 import stat
 import subprocess
@@ -19,6 +20,7 @@ QEMU_ELF = ROOT / "build/qemu/hello_qemu_firmware.elf"
 QEMU_LOG = ROOT / "build/reports/qemu_smoke.log"
 QEMU_MANIFEST = ROOT / "build/reports/qemu_smoke.manifest"
 QEMU_OS_ATTEMPT_LOG = ROOT / "build/reports/qemu_os_boot_attempt.log"
+QEMU_OS_ATTEMPT_MANIFEST = ROOT / "build/reports/qemu_os_boot_attempt.json"
 
 
 def write_executable(path: Path, text: str) -> None:
@@ -39,11 +41,16 @@ def run_check(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
     )
 
 
-def run_os_check(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+def run_os_check(
+    env: dict[str, str], extra_args: list[str] | None = None
+) -> subprocess.CompletedProcess[str]:
     merged = os.environ.copy()
     merged.update(env)
+    command = [str(RUN_QEMU), "--check-os"]
+    if extra_args:
+        command.extend(extra_args)
     return subprocess.run(
-        [str(RUN_QEMU), "--check-os"],
+        command,
         cwd=ROOT,
         env=merged,
         text=True,
@@ -137,7 +144,10 @@ def test_fake_toolchain_and_qemu_pass() -> None:
 
 
 def test_os_boot_check_blocks_without_payloads() -> None:
-    result = run_os_check({"PATH": os.environ["PATH"]})
+    result = run_os_check(
+        {"PATH": os.environ["PATH"]},
+        ["--linux-kernel", "/no/such/openphone/Image", "--initrd", "/no/such/openphone/initrd"],
+    )
     if result.returncode != 2:
         raise AssertionError(
             f"expected OS boot preflight to block without payloads, got {result.returncode}\n{result.stdout}"
@@ -152,8 +162,21 @@ def test_os_boot_check_blocks_without_payloads() -> None:
     )
     assert_contains(attempt, "status=BLOCKED")
     assert_contains(attempt, "check=qemu.os_boot")
-    assert_contains(attempt, "kernel=missing")
-    assert_contains(attempt, "initrd=missing")
+    assert_contains(attempt, "kernel=/no/such/openphone/Image")
+    assert_contains(attempt, "kernel_sha256=missing")
+    assert_contains(attempt, "initrd=/no/such/openphone/initrd")
+    assert_contains(attempt, "initrd_sha256=missing")
+    manifest = json.loads(QEMU_OS_ATTEMPT_MANIFEST.read_text())
+    if manifest["schema"] != "openphone.qemu_virt_os_boot_attempt.v1":
+        raise AssertionError(f"unexpected OS attempt schema: {manifest}")
+    if manifest["claim_boundary"] != "qemu_virt_reference_only_not_hello_chip_rtl":
+        raise AssertionError(f"unexpected OS attempt claim boundary: {manifest}")
+    if manifest["status"] != "BLOCKED":
+        raise AssertionError(f"unexpected OS attempt status: {manifest}")
+    if manifest["kernel"] != "/no/such/openphone/Image":
+        raise AssertionError(f"unexpected OS attempt kernel field: {manifest}")
+    if manifest["initrd"] != "/no/such/openphone/initrd":
+        raise AssertionError(f"unexpected OS attempt payload fields: {manifest}")
 
 
 def main() -> int:
@@ -169,6 +192,9 @@ def main() -> int:
     saved_manifest = QEMU_MANIFEST.read_bytes() if QEMU_MANIFEST.is_file() else None
     saved_os_attempt_log = (
         QEMU_OS_ATTEMPT_LOG.read_bytes() if QEMU_OS_ATTEMPT_LOG.is_file() else None
+    )
+    saved_os_attempt_manifest = (
+        QEMU_OS_ATTEMPT_MANIFEST.read_bytes() if QEMU_OS_ATTEMPT_MANIFEST.is_file() else None
     )
     try:
         for test in tests:
@@ -195,6 +221,11 @@ def main() -> int:
         else:
             QEMU_OS_ATTEMPT_LOG.parent.mkdir(parents=True, exist_ok=True)
             QEMU_OS_ATTEMPT_LOG.write_bytes(saved_os_attempt_log)
+        if saved_os_attempt_manifest is None:
+            QEMU_OS_ATTEMPT_MANIFEST.unlink(missing_ok=True)
+        else:
+            QEMU_OS_ATTEMPT_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+            QEMU_OS_ATTEMPT_MANIFEST.write_bytes(saved_os_attempt_manifest)
     return 0
 
 

@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -83,7 +83,23 @@ def submodule_problems() -> dict[str, list[str]]:
 
 
 def tool_path(name: str) -> str | None:
+    if name == "firtool":
+        local_firtool = ROOT / "external/circt/bin/firtool"
+        if local_firtool.is_file():
+            return str(local_firtool)
+    if name == "java":
+        jdk17_java = Path("/opt/homebrew/opt/openjdk@17/bin/java")
+        if jdk17_java.is_file():
+            return str(jdk17_java)
     return shutil.which(name)
+
+
+def first_line(text: str) -> str:
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped:
+            return stripped
+    return ""
 
 
 def main() -> int:
@@ -178,15 +194,56 @@ def main() -> int:
         if resolved_tool is None:
             blockers.append(f"missing required tool on PATH: {tool}")
 
+    java_path = tool_path("java")
+    if java_path:
+        java_version = run([java_path, "-version"])
+        checks["java_version"] = first_line(java_version.stdout)
+        if java_version.returncode != 0:
+            blockers.append("java is on PATH but `java -version` fails")
+
+    sbt_launcher = CHECKOUT / "scripts/sbt-launch.jar"
+    checks["exists:scripts/sbt-launch.jar"] = sbt_launcher.is_file()
+    checks["tool:sbt"] = tool_path("sbt")
+    checks["sbt_invocation"] = "java -jar external/chipyard/scripts/sbt-launch.jar"
+    if CHECKOUT.is_dir() and not sbt_launcher.is_file():
+        blockers.append("missing Chipyard SBT launcher: external/chipyard/scripts/sbt-launch.jar")
+
     riscv = os.environ.get("RISCV", "")
+    if not riscv:
+        default_riscv = Path("/opt/homebrew")
+        if any(
+            (default_riscv / f"bin/{name}").exists()
+            for name in (
+                "riscv64-unknown-elf-gcc",
+                "riscv64-elf-gcc",
+                "riscv64-linux-gnu-gcc",
+            )
+        ):
+            riscv = str(default_riscv)
     checks["env:RISCV"] = riscv
     if not riscv:
-        blockers.append("RISCV is unset; source external/chipyard/env.sh before running make")
+        blockers.append(
+            "RISCV is unset; exact verilog target stops in external/chipyard/common.mk "
+            "before Java/SBT elaboration"
+        )
     else:
-        gcc = Path(riscv) / "bin/riscv64-unknown-elf-gcc"
-        checks["tool:RISCV/bin/riscv64-unknown-elf-gcc"] = str(gcc) if gcc.exists() else None
-        if not gcc.exists():
-            blockers.append(f"missing RISC-V toolchain under RISCV: {gcc}")
+        toolchain_candidates = [
+            Path(riscv) / "bin/riscv64-unknown-elf-gcc",
+            Path(riscv) / "bin/riscv64-elf-gcc",
+            Path(riscv) / "bin/riscv64-linux-gnu-gcc",
+        ]
+        found_gcc = next(
+            (candidate for candidate in toolchain_candidates if candidate.exists()), None
+        )
+        checks["tool:RISCV/bin/riscv64-gcc"] = str(found_gcc) if found_gcc else None
+        checks["tool:RISCV/bin/riscv64-gcc_candidates"] = [
+            str(candidate) for candidate in toolchain_candidates
+        ]
+        if found_gcc is None:
+            blockers.append(
+                "missing RISC-V toolchain under RISCV; expected one of: "
+                + ", ".join(str(candidate) for candidate in toolchain_candidates)
+            )
 
     env_sh = CHECKOUT / "env.sh"
     checks["exists:env.sh"] = env_sh.is_file()
@@ -197,7 +254,7 @@ def main() -> int:
 
     report = {
         "schema": "openphone.cpu_ap_chipyard_verilator_preflight.v1",
-        "generated_at_utc": datetime.now(UTC).isoformat(),
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "status": "fail" if errors else "blocked" if blockers else "pass",
         "manifest": rel(MANIFEST),
         "checkout": rel(CHECKOUT),
@@ -225,13 +282,13 @@ def main() -> int:
         for blocker in blockers:
             print(f"  - {blocker}")
         print("COMMAND:")
-        print(f"  {' && '.join(BUILD_COMMAND)}")
+        print(f"  {' && '.join(VERILOG_COMMAND)}")
         print(f"REPORT: {rel(REPORT)}")
         return 1
 
     print("STATUS: PASS chipyard.verilator_preflight - ready to generate Verilator artifacts")
     print("COMMAND:")
-    print(f"  {' && '.join(BUILD_COMMAND)}")
+    print(f"  {' && '.join(VERILOG_COMMAND)}")
     print(f"REPORT: {rel(REPORT)}")
     return 0
 

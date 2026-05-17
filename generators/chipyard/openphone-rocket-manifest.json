@@ -76,6 +76,6 @@
   "claim_policy": {
     "linux_capable_cpu_claim": false,
     "platform_contract_has_cpu_may_flip_to_true": false,
-    "reason": "No generated Chipyard/Rocket RTL, simulator, DTS, firmware image, or boot evidence is present."
+    "reason": "Generated Verilog/DTS/regmap artifacts may exist locally, but the generated import manifest, bootable simulator run, firmware image, and OpenSBI/Linux/trap evidence are not complete."
   }
 }

@@ -282,6 +282,12 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
             errors.append(
                 f"CPU/AP artifact {name} kind must be file, directory, or file_or_directory"
             )
+        if name == "simulator":
+            require(
+                spec.get("requires_executable") is True,
+                "CPU/AP simulator artifact must require an executable file",
+                errors,
+            )
 
     transcripts = transcript_specs(manifest)
     required_transcripts = {
@@ -378,6 +384,17 @@ def validate_path_kind(path: Path, spec: dict[str, Any], errors: list[str], labe
             errors.append(f"generated {label} directory is empty: {rel(path)}")
     else:
         errors.append(f"generated {label} has invalid manifest kind: {kind!r}")
+
+    if spec.get("requires_executable") is True and path.exists():
+        executable_found = False
+        if path.is_file():
+            executable_found = path.stat().st_mode & 0o111 != 0
+        elif path.is_dir():
+            executable_found = any(
+                item.is_file() and item.stat().st_mode & 0o111 != 0 for item in path.rglob("*")
+            )
+        if not executable_found:
+            errors.append(f"generated {label} artifact lacks an executable file: {rel(path)}")
 
 
 def validate_sha256(

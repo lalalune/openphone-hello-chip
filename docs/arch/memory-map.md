@@ -27,16 +27,24 @@ The `256 MiB` row is the software-visible aperture contract, not implemented cap
 
 The Linux-capable scaffold routes DMA master traffic only to the DRAM model. DMA access attempts outside the DRAM aperture must fail with a memory error and must not update MMIO targets. This is a local containment check, not an IOMMU or coherency implementation.
 
+The map is also not a complete boot-memory map. The current reset ROM entry is
+the hello-chip identity ROM, and no boot SRAM region, ROM-to-SRAM copy contract,
+DRAM initialization sequence, or OpenSBI memory-discovery handoff is implemented
+in this map. Those rows must be added before Linux boot-memory readiness can be
+claimed.
+
 ## Linux access-map dependencies
 
 The scaffold map is not yet a complete Linux device memory map. Before a Linux/Android readiness claim, the memory map must explicitly reserve and test these dependencies:
 
 | Dependency | Required map contract |
 | --- | --- |
+| Reset ROM | Immutable reset vector, executable ROM image or source, failure behavior, and handoff target. |
+| Boot SRAM | SRAM base/size, permissions, stack/temporary storage ownership, zeroization or lifetime policy, and DMA exclusion. |
 | CLINT/ACLINT | Machine timer and software interrupt window, CPU privilege access, DMA exclusion, and device-tree binding evidence. |
 | PLIC/IMSIC | Interrupt-controller pending, enable, priority, threshold, claim/complete, CPU privilege access, DMA exclusion, and source-ID stability. |
 | IOMMU/SMMU | MMIO aperture, stream/client IDs, page table format, fault-status registers, interrupt source, and reset behavior. |
-| DRAM/LPDDR | Real target memory base, discovered size, reserved firmware/device regions, cacheability attributes, and boot log evidence. |
+| DRAM/LPDDR | Real target memory base, discovered size, reserved firmware/device regions, cacheability attributes, training status, and boot log evidence. |
 | DMA-coherent regions | Coherent or non-coherent DMA buffer attributes, cache-maintenance requirements, and dma-buf/fence compatibility evidence. |
 | QoS/performance counters | Per-master bandwidth, latency, underflow, error, and fault counters if the production fabric exposes them. |
 

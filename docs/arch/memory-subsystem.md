@@ -25,6 +25,32 @@ The current implementation is 4 KiB of SRAM-backed storage: `1024` 32-bit words 
 
 Within `rtl/interconnect/hello_linux_soc_contract.sv`, CPU-side DRAM traffic and the prototype DMA master share the SRAM-backed DRAM model through a fixed CPU-priority mux. That mux is useful for containment tests, but it is not a production fabric, not a QoS arbiter, not a fairness guarantee, and not a cache-coherent fabric.
 
+The reset ROM and boot SRAM story is also incomplete. The hello-chip ROM is a
+contract/identity ROM, while the separate executable RV64 reset scaffold is not
+yet integrated with boot SRAM, DRAM initialization, OpenSBI, or Linux memory
+discovery. A Linux-capable memory system needs an immutable reset path, a
+defined boot SRAM window or equivalent scratch storage, DRAM training before
+use, and a handoff transcript proving OpenSBI sees initialized memory.
+
+## Generated AP memory audit
+
+The generated Chipyard AP artifacts currently expose one Linux-sized memory
+window: `memory@80000000` at `0x80000000`, size `0x10000000` / 256 MiB. That is
+the only generated DTS memory node that should be treated as OpenSBI/Linux
+payload memory. Kernel, initrd, and DTB placement must stay inside that 256 MiB
+window until the generated AP configuration changes.
+
+The same generated DTS also contains `memory@8000000` at `0x08000000`, size
+`0x10000` / 64 KiB, with `status = "disabled"`. That node is not payload RAM for
+OpenSBI or Linux.
+
+The generated Verilog/FIRRTL source includes a `SimDRAM` model with
+`MEM_BASE = 0x80000000` and `MEM_SIZE = 0x10000000`. This is useful local
+generated-source evidence that the AP has a Verilator DRAM model configured, but
+it is not boot evidence. There is still no generated Verilator simulator
+executable, OpenSBI/Linux payload placement manifest, or serial transcript
+showing execution from this window.
+
 ## Phone-class 2028 target
 
 A 2028 performance-heavy Android phone-class memory subsystem is out of scope for the current RTL. The gate in `docs/evidence/memory/uma-dram-evidence-gate.yaml` records the minimum target profile before any phone-class claim can be made:
@@ -49,8 +75,11 @@ The next real hardware boundary needs all of the following before the memory sub
 | Area | Required contract |
 | --- | --- |
 | DRAM controller and PHY | Capacity discovery, training, refresh, timing closure, error policy, and boot-time memory map evidence |
+| Reset ROM and boot SRAM | Immutable reset vector, boot SRAM map, ROM-to-firmware handoff, DRAM init sequencing, and OpenSBI memory discovery transcript |
+| AXI/TL interconnect | AXI4, TileLink, or equivalent fabric with bursts, IDs/source IDs, ordering domains, backpressure, atomics/cacheability attributes, and bridge tests |
 | Cache hierarchy | CPU cache levels, shared system cache, allocation policy, maintenance operations, counters, and cache latency tests |
 | UMA/coherency | Snoop or explicit sync policy covering CPU, DMA, NPU, display, camera/ISP, and GPU/2D clients |
+| Cacheability and non-coherent DMA | Linux-visible memory attributes plus either coherent DMA proof or explicit non-coherent cache clean/invalidate/fence ABI |
 | IOMMU/SMMU | Per-device DMA domains, translation faults, kernel-visible fault reporting, and negative fault-injection tests |
 | Bandwidth/latency/QoS | Sustained and contended STREAM/lmbench/pointer-chase/DMA-copy reports plus display underflow and CPU latency under pressure |
 | Android buffers | dma-buf or successor ABI tests proving producer-consumer freshness and fence/cache-maintenance behavior |

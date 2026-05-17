@@ -6,7 +6,9 @@ scope:
   - Linux-capable AXI-Lite contract wrapper
   - Phone-class memory claim boundary
 non_goals:
+  - Production reset ROM, boot SRAM, ROM-to-SRAM copy, DRAM init, or OpenSBI handoff evidence.
   - Real DRAM controller, LPDDR/DDR PHY, training, refresh, timing, capacity, or ECC evidence.
+  - AXI4, TileLink, CHI, ACE, or other burst-capable coherent/non-coherent production fabric evidence.
   - Cache hierarchy or system-level SRAM evidence.
   - UMA cache coherency, coherent DMA, snooping, or cache-maintenance ABI evidence.
   - IOMMU/SMMU translation, page-fault reporting, or kernel-visible DMA isolation evidence.
@@ -49,11 +51,17 @@ phone_2028_target_profile:
     requires_page_fault_reporting_fields: true
 
 current_actual_capability:
+  reset_rom: contract_identity_rom_and_separate_minimal_rv64_scaffold_only
+  boot_sram: none
+  dram_init_or_training: none
   storage: 1024 32-bit words in rtl/memory/hello_axi_lite_dram.sv
   usable_rtl_capacity_bytes: 4096
   bus_protocol: single-beat AXI-Lite scaffold
+  axi4_or_tilelink_fabric: none
   supported_accesses: aligned 32-bit reads and byte-strobed writes
   arbitration: fixed CPU-priority mux when CPU and DMA requests collide
+  cacheability_attributes: none
+  noncoherent_dma_cache_sync_abi: none
   measured_bandwidth_gbps: null
   measured_latency_ns: null
   cache_hierarchy: none
@@ -217,15 +225,64 @@ current_scaffold_evidence:
       evidence_class: local_simulation_when_cocotb_available
       blocked_if_missing_tool: cocotb or Verilator/Icarus
 
+generated_ap_memory_audit:
+  status: generated_source_only_not_boot_evidence
+  sources:
+    memmap: build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.memmap.json
+    dts: build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts
+    verilog: build/chipyard/openphone_rocket/openphone_rocket_ap.v
+    fir: build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.fir
+  linux_usable_ram:
+    node: memory@80000000
+    base: 0x80000000
+    size_bytes: 0x10000000
+    size_mib: 256
+    dts_status: enabled
+    payload_policy: OpenSBI, Linux Image, initrd, and DTB payload placement must live inside memory@80000000 beginning at 0x80000000 and fit within the 256 MiB generated window until the AP configuration changes.
+  disabled_scratchpad:
+    node: memory@8000000
+    base: 0x08000000
+    size_bytes: 0x10000
+    dts_status: disabled
+    payload_policy: Do not place OpenSBI or Linux payloads in this 64 KiB node; the generated DTS marks it disabled.
+  verilator_model:
+    module: SimDRAM
+    mem_base: 0x80000000
+    mem_size_bytes: 0x10000000
+    loadmem_plusarg_available: true
+    simulator_executable: missing
+  claim_boundary:
+    - Generated memmap, DTS, FIRRTL, and Verilog source show a SimDRAM-backed AP memory window at 0x80000000.
+    - This is generated-source evidence only and is not boot evidence without a built simulator and serial transcript.
+    - This is not real DRAM, LPDDR, UMA coherency, cacheability, or Android shared-buffer evidence.
+  blockers:
+    - No generated Verilator simulator executable exists under build/chipyard/openphone_rocket/simulator.
+    - No OpenSBI image or payload placement manifest is bound to the generated AP memory window.
+    - No Linux Image/initrd/DTB payload set has been loaded into memory@80000000 for the generated AP.
+    - No serial transcript proves OpenSBI or Linux execution from the generated SimDRAM window.
+    - No real DRAM/LPDDR/UMA evidence exists for capacity, training, timing, cache coherency, IOMMU/SMMU, or QoS.
+
 target_2028_phone_uma_spec_deltas:
+  - id: reset_rom_boot_sram_handoff
+    current: Hello-chip ROM is a contract identity ROM and the executable RV64 reset scaffold is not integrated with DRAM init, boot SRAM, OpenSBI handoff, or Linux memory discovery.
+    target: Production reset ROM with immutable entry, boot SRAM, DRAM initialization/training sequence, memory discovery handoff, and OpenSBI payload transition evidence.
+    evidence_gate: reset_rom_boot_memory_handoff
   - id: dram_controller_phy
     current: 32-bit AXI-Lite SRAM model and separate top-level dram_mem array.
     target: LPDDR-class controller/PHY boundary with training, refresh, timing, capacity discovery, ECC/parity policy, and power-state handling.
     evidence_gate: real_dram_controller_phy
+  - id: axi_tl_system_fabric
+    current: Single-beat AXI-Lite scaffold with no AXI4 bursts, TileLink channel semantics, IDs, atomics, cacheability attributes, or coherency messages.
+    target: AXI4, TileLink, or equivalent system fabric with bursts, IDs/source IDs, ordering domains, backpressure, atomic/cacheability policy, and bridge evidence for CPU, DMA, NPU, display, and interrupt windows.
+    evidence_gate: axi_tl_interconnect_contract
   - id: fabric_width_and_outstanding
     current: Single-beat AXI-Lite, no bursts, no IDs, and one read/write response in flight.
     target: Burst-capable system fabric with multiple outstanding transactions, ordering domains, backpressure coverage, and per-master attribution.
     evidence_gate: memory_qos_bandwidth
+  - id: cacheability_noncoherent_dma_policy
+    current: No cacheability attributes, no memory attributes table, no coherent DMA, and no explicit non-coherent cache-maintenance ABI.
+    target: Linux-visible memory attributes and either coherent DMA or explicit non-coherent ownership, cache-clean/invalidate, fence, and stale-buffer negative tests for every DMA-capable client.
+    evidence_gate: cacheability_noncoherent_dma_policy
   - id: uma_coherency
     current: No caches, no snoops, no coherent DMA, and no cache-maintenance ABI.
     target: Coherent interconnect or explicit non-coherent DMA ownership/sync contract for CPU, DMA, NPU, display, and GPU/2D clients.
@@ -244,6 +301,16 @@ target_2028_phone_uma_spec_deltas:
     evidence_gate: linux_interrupt_access_map
 
 blocked_real_claims:
+  - id: reset_rom_boot_memory_handoff
+    status: blocked
+    reason: Current hello boot ROM is a contract identity ROM and the executable RV64 reset scaffold does not initialize DRAM, use boot SRAM, or hand off to OpenSBI/Linux.
+    evidence_artifacts:
+      - docs/evidence/memory/reset_rom_boot_sram_handoff_report.json
+      - docs/evidence/memory/opensbi_dram_handoff_transcript.json
+    unblock_requires:
+      - Reset ROM source or immutable image with reset vector, stack/SRAM policy, DRAM init callout, and failure behavior.
+      - Boot SRAM map, permissions, zeroization or ownership policy, and ROM-to-firmware handoff evidence.
+      - OpenSBI transcript showing discovered memory size, next-stage handoff, and no use of uninitialized DRAM.
   - id: real_dram_controller_phy
     status: blocked
     reason: Current RTL uses rtl/memory/hello_axi_lite_dram.sv, a small SRAM-backed AXI-Lite model.
@@ -263,6 +330,26 @@ blocked_real_claims:
     unblock_requires:
       - Implemented cache hierarchy with documented inclusivity, allocation, eviction, and maintenance policy.
       - Pointer-chase, cache-thrash, and refill-latency evidence from RTL/FPGA/silicon at a declared clock.
+  - id: axi_tl_interconnect_contract
+    status: blocked
+    reason: Current Linux-capable wrapper uses single-beat AXI-Lite and fixed CPU-priority arbitration, not AXI4, TileLink, CHI, ACE, or a production system fabric.
+    evidence_artifacts:
+      - docs/evidence/memory/axi_tl_interconnect_contract_report.json
+      - docs/evidence/memory/fabric_bridge_ordering_report.json
+    unblock_requires:
+      - AXI4, TileLink, or equivalent fabric contract with widths, bursts, IDs/source IDs, ordering domains, atomics, backpressure, and error semantics.
+      - Bridge evidence for CPU, DMA, NPU, display, interrupt-controller, boot ROM/SRAM, and DRAM windows.
+      - Directed tests for bursts, multiple outstanding transactions, response attribution, decode errors, and starvation/fairness policy.
+  - id: cacheability_noncoherent_dma_policy
+    status: blocked
+    reason: No Linux-visible cacheability attributes, memory attribute table, coherent DMA path, or explicit non-coherent cache-maintenance ABI exists.
+    evidence_artifacts:
+      - docs/evidence/memory/cacheability_attribute_map_report.json
+      - docs/evidence/memory/noncoherent_dma_sync_abi_report.json
+    unblock_requires:
+      - Device-tree or ACPI-equivalent memory/cacheability attributes for DRAM, SRAM, MMIO, DMA buffers, and boot memory.
+      - Coherent DMA proof or explicit non-coherent ownership and cache clean/invalidate/fence ABI.
+      - Positive producer-consumer tests and stale-buffer negative tests for CPU, DMA, NPU, display, and GPU/2D clients.
   - id: uma_cache_coherency
     status: blocked
     reason: No cache hierarchy, coherent interconnect, snoop path, or explicit cache-maintenance ABI is implemented.
@@ -322,10 +409,16 @@ blocked_real_claims:
       - Negative tests proving DMA cannot read or mutate timer, software-interrupt, pending, enable, priority, threshold, or claim/complete state.
 
 required_artifact_schemas:
+  docs/evidence/memory/reset_rom_boot_sram_handoff_report.json: openphone.memory.reset_rom_boot_sram_handoff.v1
+  docs/evidence/memory/opensbi_dram_handoff_transcript.json: openphone.memory.opensbi_dram_handoff.v1
   docs/evidence/memory/real_dram_controller_phy_report.json: openphone.memory.real_dram_controller_phy.v1
   docs/evidence/memory/dram_training_timing_report.json: openphone.memory.dram_training_timing.v1
   docs/evidence/memory/cache_hierarchy_report.json: openphone.memory.cache_hierarchy.v1
   docs/evidence/memory/cache_latency_counter_report.json: openphone.memory.cache_latency_counter.v1
+  docs/evidence/memory/axi_tl_interconnect_contract_report.json: openphone.memory.axi_tl_interconnect_contract.v1
+  docs/evidence/memory/fabric_bridge_ordering_report.json: openphone.memory.fabric_bridge_ordering.v1
+  docs/evidence/memory/cacheability_attribute_map_report.json: openphone.memory.cacheability_attribute_map.v1
+  docs/evidence/memory/noncoherent_dma_sync_abi_report.json: openphone.memory.noncoherent_dma_sync_abi.v1
   docs/evidence/memory/uma_coherency_report.json: openphone.memory.uma_coherency.v1
   docs/evidence/memory/shared_buffer_negative_sync_report.json: openphone.memory.shared_buffer_negative_sync.v1
   docs/evidence/memory/android_dma_buf_coherency_report.json: openphone.memory.android_dma_buf_coherency.v1
@@ -342,6 +435,9 @@ required_artifact_schemas:
 
 claim_rules:
   - The scaffold may be described only as SRAM-backed DMA containment evidence.
+  - Reset ROM and boot SRAM work may be described only as scaffold planning until OpenSBI handoff and DRAM discovery transcripts exist.
+  - AXI-Lite checks must not be described as AXI4, TileLink, coherent fabric, or production interconnect evidence.
+  - Non-coherent DMA is blocked unless a Linux-visible cacheability and cache-maintenance ABI is documented and tested.
   - Android, AI-throughput, display-smoothness, memory-bandwidth, and tapeout claims require all blocked_real_claims to be unblocked by executable evidence.
   - Passing this gate must not be interpreted as real DRAM, UMA coherency, IOMMU/SMMU, or QoS evidence.
   - Any future checker that promotes this file beyond scaffold_only_real_claims_blocked must require executable RTL, software, and measurement artifacts for every blocked_real_claims entry.

@@ -52,21 +52,33 @@ Required fix:
   vendor submodules unless those paths are actually needed for Verilator Linux
   bring-up.
 
-### 2. Generated AP artifacts are absent
+### 2. Generated AP source exists, but executable AP boot evidence is absent
 
-The selected AP path is pinned, but the generated import products do not exist:
+The selected AP path now has generated source artifacts, including:
 
-- `build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`
-- generated source tree
-- `openphone_rocket_ap.v`
-- generated Linux-capable DTS
-- generated Verilator simulator
+- `build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.memmap.json`
+- `build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts`
+- `build/chipyard/openphone_rocket/openphone_rocket_ap.v`
+
+The generated memmap/DTS expose `memory@80000000` at `0x80000000`, size
+`0x10000000` / 256 MiB, as the enabled RAM window for OpenSBI/Linux payloads.
+The generated DTS also contains `memory@8000000` at `0x08000000`, size
+`0x10000` / 64 KiB, but that node is disabled and must not be used for payload
+placement. The generated Verilog/FIRRTL includes a `SimDRAM` configured for
+`0x80000000`/256 MiB, which is source-level simulator memory evidence only.
+
+The launch blocker remains: no generated Verilator simulator executable or
+boot transcript exists for this AP path.
 
 Required fix:
 
-- Generate the `OpenPhoneRocketConfig` design from Chipyard.
+- Build the generated `OpenPhoneRocketConfig` Verilator simulator.
 - Archive all generated paths, tool versions, commands, recursive submodule
   state, and SHA-256 values in the generated manifest.
+- Bind OpenSBI, Linux Image, initrd, and DTB placement to the `0x80000000`
+  payload memory window and keep all payloads inside the 256 MiB generated RAM
+  range unless the AP configuration changes.
+- Capture OpenSBI/Linux serial transcripts from the generated AP simulator.
 - Keep the platform contract in non-claiming mode until evidence passes.
 
 ### 3. Boot payloads are absent

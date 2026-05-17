@@ -393,17 +393,67 @@ def qemu_os_status() -> Status:
         "qemu-os-boot",
         ["scripts/run_qemu.sh", "--check-os"],
         "STATUS: PASS qemu.os_boot",
-        "make qemu-check-strict",
+        "make qemu-os-check",
     )
+    if status.status == PASS:
+        return Status(
+            "qemu-virt-os-boot",
+            PASS,
+            status.evidence + " (reference qemu-virt only; not OS on generated OpenPhone AP)",
+            "none",
+            "reference_qemu_virt",
+        )
     if status.status == BLOCK:
         return Status(
-            "qemu-os-boot",
+            "qemu-virt-os-boot",
             BLOCK,
             status.evidence,
-            "build/import a Linux Image and initrd/rootfs, then run scripts/run_qemu.sh --check-os",
+            "build/import a Linux Image and initrd/rootfs, then run make qemu-os-check",
             "missing_os_payload",
         )
     return status
+
+
+def on_chip_os_status() -> Status:
+    report = ROOT / "build/reports/mvp_simulator.json"
+    if report.is_file():
+        try:
+            data = json.loads(report.read_text())
+        except json.JSONDecodeError:
+            return Status(
+                "our-chip-os-boot",
+                FAIL,
+                "build/reports/mvp_simulator.json is invalid JSON",
+                "python3 scripts/run_mvp_simulator.py",
+                "report_fail",
+            )
+        if data.get("on_chip_os_boot_claim") is True:
+            return Status(
+                "our-chip-os-boot",
+                PASS,
+                "MVP simulator report records on_chip_os_boot_claim true",
+                "none",
+                "generated_ap_os_boot",
+            )
+        blockers = []
+        for item in data.get("blockers_to_on_chip_os_boot", []):
+            if isinstance(item, dict) and item.get("name"):
+                blockers.append(str(item["name"]))
+        detail = ", ".join(blockers) if blockers else "generated AP/Linux evidence not present"
+        return Status(
+            "our-chip-os-boot",
+            BLOCK,
+            "OS is not running on generated OpenPhone AP/hello-chip RTL; blockers: " + detail,
+            "python3 scripts/run_mvp_simulator.py && make mvp-simulator-check",
+            "release_blocker",
+        )
+    return Status(
+        "our-chip-os-boot",
+        BLOCK,
+        "missing build/reports/mvp_simulator.json; cannot claim OS on generated OpenPhone AP",
+        "python3 scripts/run_mvp_simulator.py && make mvp-simulator-check",
+        "missing_report",
+    )
 
 
 def android_sim_status() -> Status:
@@ -615,6 +665,7 @@ def collect_statuses() -> list[Status]:
         formal_status(),
         qemu_status(),
         qemu_os_status(),
+        on_chip_os_status(),
         renode_status(),
         android_sim_status(),
         command_status(

@@ -122,6 +122,39 @@ Immediate work:
 - Add display validation around scanout DMA, format conversion, vsync semantics, underflow, mode programming, and software driver contract tests.
 - Define bring-up evidence: FPGA board, logic analyzer traces, power measurements, serial logs, and signed-off manufacturing artifacts.
 
+2026-05-17 05:57 PDT heartbeat update:
+
+- Local setup now has `repo`, `sigrok-cli`, `renode`, `kicad-cli`, RISC-V
+  bare-metal GCC, a RISC-V Linux compiler shim, the pinned OpenLane2 Docker
+  image, and repo-local Sky130/GF180 PDK installs under `external/pdks`.
+- `make qemu-check`, `make renode-check`, `make pd-preflight-check`, and
+  `scripts/check_tools.sh` pass for installed local tooling. `nix`, `cvd`, and
+  `launch_cvd` remain unavailable on this macOS host.
+- `make android-sim-boot-check` is correctly blocked until `AOSP_DIR` points
+  at a real AOSP checkout and Cuttlefish is available on a Linux-capable host.
+- A real OpenLane run now reaches tool/PDK execution instead of missing-tool
+  failure, but it is not clean: the first run failed at global placement with
+  771.788% utilization, and the Docker/manual-PDK path exposed Sky130 PDK
+  compatibility variables that still need a proper OpenLane-compatible PDK
+  pin or config update before claiming PD evidence.
+
+2026-05-17 06:07 PDT heartbeat update:
+
+- Completed the OpenLane-compatible Sky130 Volare revision
+  `0fe599b2afb6708d281543108caf8310912f54af` and switched
+  `external/pdks/sky130A` to that revision. The partial-PDK failure is closed.
+- Retried `OPENLANE_CONFIG=pd/openlane/config.sky130.json make openlane`.
+  The flow now starts cleanly, passes lint checks into Yosys synthesis, maps
+  DFFs to `sky130_fd_sc_hd`, and records a large scaffold netlist
+  (`438487` cells, `754058.201600` reported area) in
+  `build/reports/openlane_bounded_attempt.txt`.
+- The run was stopped intentionally during long synthesis/ABC to avoid leaving
+  a runaway heartbeat job active. The current blocker is no longer missing PDK
+  setup; it is that the hello-chip scaffold is too large/unstructured for a
+  fast PD smoke target. Next PD work should add a smaller PD smoke top or
+  parameterized synthesis configuration before asking OpenLane for full
+  placement/routing evidence.
+
 ## Workstream E: toolchain and upstreams
 
 Primary gaps:

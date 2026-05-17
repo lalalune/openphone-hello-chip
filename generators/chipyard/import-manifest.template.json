@@ -14,6 +14,7 @@
     "config_package": "openphone",
     "top_wrapper": "openphone_rocket_ap",
     "bootstrap_preflight_report": "build/chipyard/openphone_rocket/bootstrap-preflight.json",
+    "verilator_preflight_report": "build/chipyard/openphone_rocket/verilator-preflight.json",
     "command": "",
     "tool_versions": "",
     "generated_at_utc": ""
