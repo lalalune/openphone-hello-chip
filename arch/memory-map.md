@@ -23,6 +23,30 @@ The CPU/interconnect scaffold is separate from the hello-chip debug MMIO path. I
 
 Unmapped AXI-Lite scaffold accesses return `DECERR`; reads also return `0xDEAD_BEEF`.
 
+## Linux-capable CPU SoC variant (generated artifacts)
+
+The Linux-capable CPU SoC variant of the hello chip is defined by the
+`hello_chip_cpu_variant` section of `sw/platform/hello_platform_contract.json`.
+That section is the single source of truth for the boot vector, DRAM map,
+PLIC/CLINT bases, UART, timer, DMA, NPU, display, and IRQ assignments.
+
+The following files under `sw/platform/generated/` are produced by
+`scripts/gen_platform_artifacts.py` (also reachable via
+`make platform-artifacts`) and MUST NOT be edited by hand:
+
+| Artifact | Consumer |
+| --- | --- |
+| `sw/platform/generated/hello_platform.vh`       | RTL decode / Verilog headers |
+| `sw/platform/generated/hello-platform.dtsi`     | Linux kernel DTS includes |
+| `sw/platform/generated/hello_platform.h`        | U-Boot, OpenSBI, bare-metal firmware |
+| `sw/platform/generated/hello_platform_hal.json` | AOSP HAL configs |
+
+`make platform-contract-check` runs `scripts/gen_platform_artifacts.py
+--check` and `scripts/check_platform_contract.py`, which together fail CI
+if any artifact is stale or if a handwritten DTS consumer references one
+of the contract device compatibles at a base address that does not match
+the contract.
+
 The tiny CPU execution test uses the DRAM aperture as instruction and data memory. The current DRAM model implements aligned 32-bit words with byte strobes; the CPU subset only generates aligned `LW` and `SW`.
 
 ## Register conventions

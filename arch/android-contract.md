@@ -4,6 +4,23 @@ The hello chip does not boot Android. It establishes the minimal hardware contra
 
 The central software-visible contract is `sw/platform/hello_platform_contract.json`. Android, Linux, and Buildroot scaffolding must consume that contract or generated artifacts from it instead of copying register addresses into unchecked placeholders.
 
+The Linux-capable CPU SoC variant of the hello chip is described by the
+`hello_chip_cpu_variant` section of that contract. The authoritative
+artifacts derived from it live under `sw/platform/generated/`:
+
+| Artifact | Authoritative for |
+| --- | --- |
+| `sw/platform/generated/hello_platform.vh`       | RTL decode / Verilog headers |
+| `sw/platform/generated/hello-platform.dtsi`     | Linux kernel DTS includes |
+| `sw/platform/generated/hello_platform.h`        | U-Boot, OpenSBI, bare-metal firmware |
+| `sw/platform/generated/hello_platform_hal.json` | AOSP HAL configs |
+
+These four files are produced by `scripts/gen_platform_artifacts.py`
+(`make platform-artifacts`) and MUST NOT be edited by hand. CI runs
+`make platform-contract-check`, which fails on stale artifacts and on
+any handwritten DTS that references a contract device compatible at the
+wrong base address.
+
 QEMU/Renode bring-up uses a separate qemu-virt software reference target. Passing on qemu-virt proves boot scaffolding and userspace plumbing only; it does not prove the hello-chip package debug/MMIO ABI.
 
 | Android need | Hello chip representation | Full SoC direction |
