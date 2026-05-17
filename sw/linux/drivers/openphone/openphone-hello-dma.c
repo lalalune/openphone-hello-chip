@@ -2,10 +2,12 @@
 /*
  * OpenPhone hello-DMA platform driver.
  *
- * Binds compatible "openphone,hello-dma" and exports sysfs attributes:
- *   contract     - multi-line platform-contract string
- *   bytes_done   - live readback of BYTES_DONE
- *   error_count  - live readback of ERROR_COUNT
+ * Binds the openphone,hello-dma MMIO node and exports sysfs attributes:
+ *   /sys/bus/platform/drivers/openphone-hello-dma/<dev>/contract
+ *     - Multi-line string carrying every address from the platform contract
+ *       so BSP smoke tools can validate without parsing the JSON.
+ *   /sys/.../bytes_done, /sys/.../error_count
+ *     - Live readback of the corresponding DMA RO counters.
  */
 
 #include <linux/io.h>

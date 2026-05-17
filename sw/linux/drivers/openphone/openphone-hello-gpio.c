@@ -2,9 +2,11 @@
 /*
  * OpenPhone hello GPIO: minimal gpio-mmio driver.
  *
- * Wraps the single GPIO_OUT 32-bit register inside the peripheral-control
- * window (HELLO_PERIPH_GPIO_OUT_OFFSET) as a 32-line output-only gpiochip
- * via bgpio_init().
+ * The peripheral_control region exposes a single 32-bit GPIO_OUT register at
+ * HELLO_PERIPH_GPIO_OUT_OFFSET. This driver wraps that register with the
+ * standard bgpio_init() helper so the kernel sees a real gpiochip with 32
+ * output lines. Inputs are not implemented in hardware yet; reads return the
+ * last written value.
  */
 
 #include <linux/gpio/driver.h>
@@ -40,9 +42,13 @@ static int openphone_hello_gpio_probe(struct platform_device *pdev)
 
 	gpio_out = g->regs + HELLO_PERIPH_GPIO_OUT_OFFSET;
 
-	ret = bgpio_init(&g->gc, &pdev->dev, 4,
-			 gpio_out, gpio_out, NULL, NULL, NULL,
-			 BGPIOF_READ_OUTPUT_REG_SET);
+	ret = bgpio_init(&g->gc, &pdev->dev, /* sz = */ 4,
+			 /* dat   */ gpio_out,
+			 /* set   */ gpio_out,
+			 /* clr   */ NULL,
+			 /* dirout*/ NULL,
+			 /* dirin */ NULL,
+			 /* flags */ BGPIOF_READ_OUTPUT_REG_SET);
 	if (ret)
 		return ret;
 
