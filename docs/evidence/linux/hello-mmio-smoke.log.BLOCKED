@@ -1,0 +1,3 @@
+reason: no boot transcript of a kernel built from sw/linux/drivers/openphone/ exists; cannot capture /dev/hello-npu and DMA sysfs probe output yet
+required: boot the imported kernel (QEMU/Renode/FPGA), then `hello-mmio-smoke 2>&1 | tee docs/evidence/linux/hello-mmio-smoke.log`
+audit: docs/android/bsp-critical-gap-audit-2026-05-17.md
