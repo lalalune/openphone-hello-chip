@@ -1,0 +1,43 @@
+{
+  "_generated_from": "sw/platform/hello_platform_contract.json",
+  "_generator": "scripts/gen_platform_artifacts.py",
+  "devices": {
+    "display": {
+      "base": "0x10030000",
+      "compatible": "openphone,hello-display",
+      "irq": 4,
+      "size": "0x00001000"
+    },
+    "dma": {
+      "base": "0x10010000",
+      "compatible": "openphone,hello-dma",
+      "irq": 2,
+      "size": "0x00001000"
+    },
+    "npu": {
+      "base": "0x10020000",
+      "compatible": "openphone,hello-npu",
+      "irq": 3,
+      "size": "0x00001000"
+    }
+  },
+  "interrupts": {
+    "IRQ_DMA": 2,
+    "IRQ_NPU": 3,
+    "IRQ_TIMER": 7,
+    "IRQ_UART": 1,
+    "IRQ_VSYNC": 4
+  },
+  "isa": "rv64gc",
+  "memory": {
+    "dram_base": "0x80000000",
+    "dram_size": "0x10000000"
+  },
+  "platform": "openphone-hello-cpu-variant",
+  "uart": {
+    "base": "0x10001000",
+    "baud": 115200,
+    "irq": 1,
+    "size": "0x00001000"
+  }
+}
