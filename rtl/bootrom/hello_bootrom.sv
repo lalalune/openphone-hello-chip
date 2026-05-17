@@ -10,6 +10,7 @@ module hello_bootrom (
             6'h01: rdata = 32'h4348_4950; // CHIP
             6'h02: rdata = 32'h0000_0001; // contract version
             6'h03: rdata = 32'h0000_1000; // boot vector placeholder
+            6'h04: rdata = 32'h8008_0000; // OpenSBI handoff entry, docs/arch/boot-rom-spec.md
             default: rdata = 32'h0000_0000;
         endcase
     end
