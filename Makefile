@@ -7,7 +7,7 @@ RTL_TOP := hello_chip_top
 RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
 BUILD := build
 
-.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict project-plan-check product-check product-release-check pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions pipeline-check archive-release clean
+.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict project-plan-check product-check product-release-check pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check platform-artifacts platform-artifacts-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions pipeline-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
@@ -139,8 +139,14 @@ renode-check-strict: platform-contract-check
 renode-status-test:
 	@$(PYTHON) scripts/test_renode_status.py
 
-platform-contract-check:
+platform-contract-check: platform-artifacts-check
 	@$(PYTHON) scripts/check_platform_contract.py
+
+platform-artifacts:
+	@$(PYTHON) scripts/gen_platform_artifacts.py
+
+platform-artifacts-check:
+	@$(PYTHON) scripts/gen_platform_artifacts.py --check
 
 software-contract-check: platform-contract-check
 
