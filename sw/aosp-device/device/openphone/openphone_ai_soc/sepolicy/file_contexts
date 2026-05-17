@@ -1,7 +1,12 @@
-# SELinux file contexts for the external AOSP openphone_ai_soc device tree.
-# The hello_npu HAL is a fail-closed integration point tied to
-# sw/platform/hello_platform_contract.json.
+# SELinux file_contexts v0 for openphone_ai_soc.
+# Fail-closed: only the two declared HAL binaries and the hello-npu device
+# node are labeled. Anything else stays under default vendor labels.
+#
+# Backing contract: sw/platform/hello_platform_contract.json
 
-/vendor/bin/hw/hello_npu\.default        u:object_r:hal_hello_npu_default_exec:s0
-/vendor/bin/hw/hwcomposer\.openphone_ai_soc u:object_r:hal_graphics_composer_default_exec:s0
-/dev/hello-npu                          u:object_r:hello_npu_device:s0
+# HAL binaries
+/vendor/bin/hw/vendor\.openphone\.hello_npu@1\.0-service                              u:object_r:hal_hello_npu_default_exec:s0
+/vendor/bin/hw/android\.hardware\.graphics\.composer@2\.4-service\.openphone_ai_soc   u:object_r:hal_graphics_composer_default_exec:s0
+
+# Devices
+/dev/hello-npu                                                                        u:object_r:hello_npu_device:s0
