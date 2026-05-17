@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,25 +13,36 @@ TARGETS = {
     "buildroot": {
         "readme": ROOT / "sw/buildroot/README.md",
         "required": [
+            "sw/buildroot/external.desc",
+            "sw/buildroot/Config.in",
+            "sw/buildroot/external.mk",
+            "sw/buildroot/scripts/import-buildroot-external.sh",
             "sw/buildroot/configs/openphone_hello_defconfig",
             "sw/buildroot/board/openphone/hello/linux.fragment",
             "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke",
         ],
-        "contract_terms": ["HELLO_NPU_BASE", "HELLO_DISPLAY_BASE", "HELLO_DMA_BASE"],
+        "contract_terms": ["BR2_EXTERNAL_OPENPHONE_HELLO_PATH", "HELLO_NPU_BASE", "HELLO_DISPLAY_BASE", "HELLO_DMA_BASE"],
     },
     "linux": {
         "readme": ROOT / "sw/linux/README.md",
         "required": [
+            "sw/linux/drivers/hello/Kconfig",
+            "sw/linux/drivers/hello/Makefile",
+            "sw/linux/scripts/import-linux-bsp.sh",
             "sw/linux/dts/openphone-hello.dts",
             "sw/linux/drivers/hello/hello-npu.c",
             "sw/linux/drivers/hello/hello-dma.c",
             "sw/linux/tests/hello-mmio-smoke.c",
         ],
-        "contract_terms": ["openphone,hello-npu", "openphone,hello-dma", "openphone,hello-display"],
+        "contract_terms": ["CONFIG_OPENPHONE_HELLO_NPU", "CONFIG_OPENPHONE_HELLO_DMA", "openphone,hello-npu", "openphone,hello-dma", "openphone,hello-display"],
     },
     "aosp": {
         "readme": ROOT / "sw/aosp-device/README.md",
         "required": [
+            "sw/aosp-device/import-aosp-device.sh",
+            "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
+            "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
+            "sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk",
             "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk",
             "sw/aosp-device/device/openphone/openphone_ai_soc/device.mk",
             "sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc",
@@ -51,6 +63,24 @@ def check_contract(errors: list[str]) -> None:
         errors.append("hello platform contract must keep hello_chip.has_cpu=false until a CPU exists")
     if data.get("qemu_virt", {}).get("target_kind") != "software_reference_only":
         errors.append("qemu_virt must be marked software_reference_only")
+
+
+def check_aosp_product_glue(errors: list[str]) -> None:
+    product = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk"
+    board = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk"
+    manifest = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml"
+    text = product.read_text(errors="ignore") if product.is_file() else ""
+    if "COMMON_LUNCH_CHOICES" not in text or "openphone_ai_soc-userdebug" not in text:
+        errors.append("AOSP AndroidProducts.mk must expose openphone_ai_soc-userdebug lunch")
+    board_text = board.read_text(errors="ignore") if board.is_file() else ""
+    for term in ["TARGET_ARCH := riscv64", "BOARD_VENDOR_SEPOLICY_DIRS", "OPENPHONE_KERNEL_CONFIG_FRAGMENT", "OPENPHONE_DTS"]:
+        if term not in board_text:
+            errors.append(f"AOSP BoardConfig.mk missing {term}")
+    if manifest.is_file():
+        manifest_text = manifest.read_text(errors="ignore")
+        for term in ["<manifest", "</manifest>", "<hal", "</hal>"]:
+            if term not in manifest_text:
+                errors.append(f"AOSP VINTF manifest missing XML marker {term}")
 
 
 def check_target(name: str) -> list[str]:
@@ -83,6 +113,9 @@ def check_target(name: str) -> list[str]:
         if missing_terms:
             errors.append(f"{name} BSP artifacts do not expose expected contract terms: " + ", ".join(missing_terms))
 
+    if name == "aosp":
+        check_aosp_product_glue(errors)
+
     return errors
 
 
@@ -95,6 +128,18 @@ def main() -> int:
     failed = False
     for name in names:
         errors = check_target(name)
+        scaffold = subprocess.run(
+            [sys.executable, "sw/check_bsp_scaffolds.py", name],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        if scaffold.stdout:
+            print(scaffold.stdout, end="")
+        if scaffold.stderr:
+            print(scaffold.stderr, end="", file=sys.stderr)
+        if scaffold.returncode:
+            errors.append(f"{name} scaffold audit failed")
         if errors:
             failed = True
             print(f"{name} BSP check failed:")

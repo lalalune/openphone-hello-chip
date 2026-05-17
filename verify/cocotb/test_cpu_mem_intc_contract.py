@@ -127,3 +127,76 @@ async def interrupt_controller_claim_complete_contract(dut):
     assert resp == 0
     assert data == 0
     assert int(dut.cpu_external_irq.value) == 0
+
+
+async def wait_dma_done(dut, timeout_cycles=100):
+    for cycle in range(timeout_cycles):
+        data, resp = await axil_read32(dut, 0x1001_000C)
+        assert resp == 0
+        if data & 0x2:
+            return cycle + 1, data
+    raise AssertionError("DMA did not complete")
+
+
+@cocotb.test()
+async def dma_bus_master_copies_dram_and_reports_counters(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert await axil_write32(dut, 0x8000_0040, 0x1122_3344) == 0
+    assert await axil_write32(dut, 0x8000_0044, 0x5566_7788) == 0
+
+    assert await axil_write32(dut, 0x1001_0000, 0x8000_0040) == 0
+    assert await axil_write32(dut, 0x1001_0004, 0x8000_0080) == 0
+    assert await axil_write32(dut, 0x1001_0008, 8) == 0
+    assert await axil_write32(dut, 0x1001_000C, 1) == 0
+
+    cycles, status = await wait_dma_done(dut)
+    assert status & 0x1 == 0
+    assert status & 0x4 == 0
+    assert 4 <= cycles <= 40
+
+    data, resp = await axil_read32(dut, 0x8000_0080)
+    assert resp == 0
+    assert data == 0x1122_3344
+    data, resp = await axil_read32(dut, 0x8000_0084)
+    assert resp == 0
+    assert data == 0x5566_7788
+
+    data, resp = await axil_read32(dut, 0x1001_0014)
+    assert resp == 0
+    assert data == 8
+    data, resp = await axil_read32(dut, 0x1001_0018)
+    assert resp == 0
+    assert data == 2
+    data, resp = await axil_read32(dut, 0x1001_0030)
+    assert resp == 0
+    assert data == 2
+    data, resp = await axil_read32(dut, 0x1001_0034)
+    assert resp == 0
+    assert data == 2
+
+
+@cocotb.test()
+async def dma_rejects_unaligned_and_reports_memory_errors(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert await axil_write32(dut, 0x1001_0000, 0x8000_0041) == 0
+    assert await axil_write32(dut, 0x1001_0004, 0x8000_0080) == 0
+    assert await axil_write32(dut, 0x1001_0008, 4) == 0
+    assert await axil_write32(dut, 0x1001_000C, 1) == 0
+    data, resp = await axil_read32(dut, 0x1001_000C)
+    assert resp == 0
+    assert data & 0x6 == 0x6
+
+    assert await axil_write32(dut, 0x1001_000C, 2) == 0
+    assert await axil_write32(dut, 0x1001_0000, 0x9000_0000) == 0
+    assert await axil_write32(dut, 0x1001_0004, 0x8000_0080) == 0
+    assert await axil_write32(dut, 0x1001_0008, 4) == 0
+    assert await axil_write32(dut, 0x1001_000C, 1) == 0
+    _, status = await wait_dma_done(dut)
+    assert status & 0x6 == 0x6
+    data, resp = await axil_read32(dut, 0x1001_0038)
+    assert resp == 0
+    assert data == 1

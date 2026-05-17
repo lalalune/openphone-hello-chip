@@ -18,6 +18,24 @@ REQUIRED_ARTIFACTS = {
     "sta_report": ".rpt",
 }
 
+REQUIRED_BLOCKED_GATES = {
+    "pd_release",
+    "tapeout_release",
+    "board_fabrication_release",
+}
+
+REQUIRED_READINESS_SECTIONS = {
+    "si_pi",
+    "pdn_current_budget",
+    "padframe_package",
+}
+
+ALLOWED_READINESS_STATUS = {
+    "blocked",
+    "incomplete",
+    "required_for_release",
+}
+
 
 def as_list(value: object) -> list[str]:
     return value if isinstance(value, list) and all(isinstance(item, str) for item in value) else []
@@ -28,6 +46,90 @@ def matched_files(root: Path, globs: list[str]) -> list[Path]:
     for pattern in globs:
         matches.extend(sorted(root.glob(pattern)))
     return [path for path in matches if path.is_file()]
+
+
+def validate_relative_globs(section: str, name: str, globs: object, failures: list[str]) -> None:
+    glob_list = as_list(globs)
+    if not glob_list:
+        failures.append(f"{section}.{name}: missing globs")
+        return
+    for pattern in glob_list:
+        path = Path(pattern)
+        if path.is_absolute() or ".." in path.parts:
+            failures.append(f"{section}.{name}: glob must be a relative repo path: {pattern}")
+
+
+def validate_blocked_gates(manifest: dict) -> list[str]:
+    failures: list[str] = []
+    gates = manifest.get("blocked_gates")
+    if not isinstance(gates, dict):
+        return ["manifest must list blocked_gates"]
+
+    missing = sorted(REQUIRED_BLOCKED_GATES - set(gates))
+    if missing:
+        failures.append("blocked_gates missing gates: " + ", ".join(missing))
+
+    for gate_name, gate in gates.items():
+        if not isinstance(gate, dict):
+            failures.append(f"blocked_gates.{gate_name}: gate spec must be a mapping")
+            continue
+        if not isinstance(gate.get("blocked"), bool):
+            failures.append(f"blocked_gates.{gate_name}: blocked must be true or false")
+        if gate.get("blocked") is False:
+            approvals = as_list(gate.get("approvals"))
+            evidence = as_list(gate.get("evidence"))
+            if not approvals or not evidence:
+                failures.append(
+                    f"blocked_gates.{gate_name}: unblocked gates require approvals and evidence"
+                )
+        if not isinstance(gate.get("reason"), str) or not gate["reason"]:
+            failures.append(f"blocked_gates.{gate_name}: missing reason")
+        if not as_list(gate.get("unblock_requires")):
+            failures.append(f"blocked_gates.{gate_name}: missing unblock_requires")
+    return failures
+
+
+def validate_readiness_sections(manifest: dict) -> list[str]:
+    failures: list[str] = []
+    missing = sorted(REQUIRED_READINESS_SECTIONS - set(manifest))
+    if missing:
+        failures.append("manifest missing readiness sections: " + ", ".join(missing))
+
+    for section_name in sorted(REQUIRED_READINESS_SECTIONS & set(manifest)):
+        section = manifest[section_name]
+        if not isinstance(section, dict):
+            failures.append(f"{section_name}: readiness section must be a mapping")
+            continue
+        status = section.get("status")
+        if status not in ALLOWED_READINESS_STATUS:
+            failures.append(
+                f"{section_name}: status must be one of "
+                + ", ".join(sorted(ALLOWED_READINESS_STATUS))
+            )
+        if not isinstance(section.get("release_blocking"), bool):
+            failures.append(f"{section_name}: release_blocking must be true or false")
+        if section.get("release_blocking") is True and not as_list(section.get("blockers")):
+            failures.append(f"{section_name}: release-blocking sections require blockers")
+
+        required_artifacts = section.get("required_artifacts")
+        if not isinstance(required_artifacts, list) or not required_artifacts:
+            failures.append(f"{section_name}: missing required_artifacts")
+            continue
+        for index, artifact in enumerate(required_artifacts):
+            artifact_name = f"required_artifacts[{index}]"
+            if not isinstance(artifact, dict):
+                failures.append(f"{section_name}.{artifact_name}: artifact must be a mapping")
+                continue
+            if not isinstance(artifact.get("name"), str) or not artifact["name"]:
+                failures.append(f"{section_name}.{artifact_name}: missing name")
+            validate_relative_globs(section_name, artifact.get("name", artifact_name), artifact.get("globs"), failures)
+            artifact_status = artifact.get("status")
+            if artifact_status not in {"missing", "draft", "complete"}:
+                failures.append(
+                    f"{section_name}.{artifact.get('name', artifact_name)}: "
+                    "status must be missing, draft, or complete"
+                )
+    return failures
 
 
 def check_reports(paths: list[Path], fail_regex: str | None, pass_regex: str | None) -> tuple[list[str], list[str]]:
@@ -107,6 +209,8 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
 
     if manifest_path.name != "manifest.yaml":
         failures.append("signoff manifest file must be named manifest.yaml")
+    failures.extend(validate_blocked_gates(manifest))
+    failures.extend(validate_readiness_sections(manifest))
     return failures
 
 
@@ -207,6 +311,11 @@ def main() -> int:
 
     waiver_spec = manifest.get("waivers", {})
     waivers = matched_files(root, waiver_spec.get("globs", []))
+    blocked_gates = manifest.get("blocked_gates", {})
+    if isinstance(blocked_gates, dict):
+        for gate_name, gate in blocked_gates.items():
+            if isinstance(gate, dict) and gate.get("blocked") is True:
+                failures.append(f"release gate remains blocked: {gate_name}: {gate.get('reason')}")
     if dirty_reports and waiver_spec.get("required_if_any_report_dirty", False) and not waivers:
         failures.append("dirty signoff reports found but no waiver file is present")
     for path in dirty_reports:

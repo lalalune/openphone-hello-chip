@@ -31,6 +31,33 @@ The machine-readable source for this contract is
 the pins are not bonded in the hello chip, the host controller is not
 implemented, and the OS/firmware driver path is not implemented.
 
+## Concrete integration slice
+
+The first board/software slice targets a Murata Type 1DX / CYW4343W-class
+external combo module shape. This is a reference integration, not a committed
+BOM choice. The intent is to bind the abstract signal names to a Linux-supported
+SDIO WiFi plus UART Bluetooth module family while keeping RF silicon, antenna
+layout, shielding, crystals, matching, and certification at the module/board
+boundary.
+
+The module-facing details live in
+`package/wifi/murata-1dx-sdio.yaml`. Linux bring-up is expected to use the
+standard `brcmfmac` SDIO WiFi path and `hci_uart_bcm` Bluetooth HCI UART path
+once a real SDIO host, UART, GPIO, pinctrl, clock, and interrupt controller are
+available in the platform. The checked-in DTS and Buildroot fragments carry
+disabled stubs so BSP work can name the intended devices without claiming that
+hello-chip currently has those host peripherals.
+
+Required board/software validation for this slice:
+
+- Confirm 1.8 V SDIO signaling and board-level pulls with the selected module.
+- Scope `WIFI_EN`, `WIFI_RST_N`, SDIO clock, and UART flow-control sequencing.
+- Enumerate SDIO function 1 and load the board-specific `brcmfmac` firmware.
+- Exercise `WIFI_IRQ` or OOB wake during traffic and suspend/resume.
+- Attach Bluetooth over UART with flow control enabled.
+- Keep all product claims limited to an external Linux-supported module until
+  the final BOM, layout, firmware files, and certification path are complete.
+
 The maturity gates before any product WiFi claim are:
 
 - Select a concrete WiFi/Bluetooth module and bind this contract to that module datasheet.

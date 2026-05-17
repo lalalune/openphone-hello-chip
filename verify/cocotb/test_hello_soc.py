@@ -47,6 +47,14 @@ async def poll_done(dut, addr, cycles=128):
     raise AssertionError(f"timeout waiting for done at 0x{addr:08x}")
 
 
+def s32(value):
+    return value - 0x1_0000_0000 if value & 0x8000_0000 else value
+
+
+def golden_gemm_s8(a, b):
+    return [[sum(a_row[k] * b[k][j] for k in range(len(b))) for j in range(len(b[0]))] for a_row in a]
+
+
 @cocotb.test()
 async def bootrom_and_gpio_contract(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
@@ -81,7 +89,9 @@ async def timer_dma_npu_display_interrupts(dut):
     assert await read32(dut, 0x1001_0018) == 16
     assert await read32(dut, 0x1001_0024) == 0x103C
     assert await read32(dut, 0x1001_0028) == 0x203C
-    assert (await read32(dut, 0x1001_002C)) & 0x3C0 == 0x3C0
+    dma_trace = await read32(dut, 0x1001_002C)
+    assert ((dma_trace >> 7) & 0xF) == 0xF
+    assert (dma_trace & 0x7) == 0x0
 
     await write32(dut, 0x1002_0000, 17)
     await write32(dut, 0x1002_0004, 25)
@@ -122,6 +132,56 @@ async def timer_dma_npu_display_interrupts(dut):
     await write32(dut, 0x1003_0004, (480 << 16) | 640)
     await write32(dut, 0x1003_000C, 1)
     assert await read32(dut, 0x1003_0000) == 0x8000_0000
+
+
+@cocotb.test()
+async def npu_scratchpad_gemm_matches_golden_model(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    a = [
+        [1, -2, 3],
+        [4, 5, -6],
+    ]
+    b = [
+        [7, -8],
+        [9, 10],
+        [-11, 12],
+    ]
+    golden = golden_gemm_s8(a, b)
+
+    a_flat = [value for row in a for value in row]
+    b_flat = [b[row][col] for row in range(3) for col in range(2)]
+    a_base = 0
+    b_base = 6
+    c_base = 12
+
+    scratch = bytearray(64)
+    scratch[a_base : a_base + len(a_flat)] = bytes(value & 0xFF for value in a_flat)
+    scratch[b_base : b_base + len(b_flat)] = bytes(value & 0xFF for value in b_flat)
+    for word_index in range(16):
+        word = int.from_bytes(scratch[word_index * 4 : word_index * 4 + 4], "little")
+        await write32(dut, 0x1002_0080 + word_index * 4, word)
+
+    await write32(dut, 0x1002_0034, 1)
+    await write32(dut, 0x1002_0020, 2 | (2 << 8) | (3 << 16))
+    await write32(dut, 0x1002_0024, a_base | (b_base << 8) | (c_base << 16))
+    await write32(dut, 0x1002_0028, 3 | (2 << 8) | (8 << 16))
+    await write32(dut, 0x1002_0010, 8)
+    await write32(dut, 0x1002_000C, 1)
+
+    assert await poll_done(dut, 0x1002_000C) == 0x2
+    assert await read32(dut, 0x1002_002C) == 12
+    assert await read32(dut, 0x1002_0030) == 12
+    assert await read32(dut, 0x1002_0034) == 0
+
+    observed = []
+    for row in range(2):
+        observed_row = []
+        for col in range(2):
+            observed_row.append(s32(await read32(dut, 0x1002_0080 + c_base + (row * 2 + col) * 4)))
+        observed.append(observed_row)
+    assert observed == golden
 
 
 @cocotb.test()
@@ -167,7 +227,9 @@ async def reset_unmapped_and_clear_edges(dut):
     assert await read32(dut, 0x1001_0018) == 3
     assert await read32(dut, 0x1001_0024) == 0x3008
     assert await read32(dut, 0x1001_0028) == 0x4008
-    assert (await read32(dut, 0x1001_002C)) & 0x3C0 == 0x0C0
+    dma_trace = await read32(dut, 0x1001_002C)
+    assert ((dma_trace >> 7) & 0xF) == 0x3
+    assert (dma_trace & 0x7) == 0x0
 
 
 @cocotb.test()

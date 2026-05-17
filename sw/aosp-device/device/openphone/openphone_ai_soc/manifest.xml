@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  VINTF skeleton for an external AOSP tree. The hello_npu HAL and hwcomposer
+  VINTF scaffold for an external AOSP tree. The hello_npu HAL and hwcomposer
   service names reserve the platform integration points for openphone_ai_soc.
 -->
 <manifest version="1.0" type="device">

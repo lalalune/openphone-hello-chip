@@ -48,6 +48,21 @@ pd/constraints/hello_soc.sdc
 pd/constraints/hello_soc_gf180.sdc
 docs/manufacturing/release-manifest.yaml
 docs/manufacturing/hello-demo-checklist.md
+docs/toolchain/README.md
+docs/spec-db/mobile-sota-2026.yaml
+docs/benchmarks/benchmark-matrix.md
+docs/benchmarks/report-schema.yaml
+docs/android/riscv-bringup.md
+docs/project/three-week-execution-plan.md
+docs/project/workstreams.md
+docs/risks/risk-register.md
+rtl/open_rtl_prototype_path.md
+board/README.md
+board/fpga/README.md
+board/fpga/hello_demo_fpga.yaml
+board/fpga/constraints/hello_demo_ulx3s.lpf
+board/kicad/hello-demo/fab-notes.md
+fw/board-smoke/tests/smoke_plan.md
 EOF
 
 find "$archive_dir" -type f -print0 | sort -z | xargs -0 shasum -a 256 > "$archive_dir/SHA256SUMS"

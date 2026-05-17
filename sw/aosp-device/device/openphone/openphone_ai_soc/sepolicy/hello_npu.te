@@ -1,0 +1,7 @@
+# Minimal SELinux type declarations for the fail-closed hello_npu HAL scaffold.
+
+type hello_npu_device, dev_type;
+type hal_hello_npu_default, domain;
+type hal_hello_npu_default_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(hal_hello_npu_default)

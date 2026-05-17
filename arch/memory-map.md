@@ -17,9 +17,12 @@ The CPU/DRAM/interconnect scaffold is separate from the hello-chip debug MMIO pa
 | Region | Base | Size | Purpose |
 | --- | ---: | ---: | --- |
 | Interrupt controller | `0x0C00_0000` | `4 KiB` | PLIC-style source pending, enable, claim/complete scaffold |
+| DMA control scaffold | `0x1001_0000` | `4 KiB` | AXI-Lite decode slot; currently tied off in the Linux scaffold |
 | DRAM aperture | `0x8000_0000` | `256 MiB` | External DRAM controller/PHY boundary; current RTL model implements a small test memory |
 
 Unmapped AXI-Lite scaffold accesses return `DECERR`; reads also return `0xDEAD_BEEF`.
+
+The tiny CPU execution test uses the DRAM aperture as instruction and data memory. The current DRAM model implements aligned 32-bit words with byte strobes; the CPU subset only generates aligned `LW` and `SW`.
 
 ## Register conventions
 
@@ -43,7 +46,7 @@ All registers are 32-bit little-endian words. Writes to reserved registers are i
 | `0x00` | `SRC` | RW | Source byte address; must be word-aligned in this model |
 | `0x04` | `DST` | RW | Destination byte address; must be word-aligned in this model |
 | `0x08` | `LEN` | RW | Byte length; the model issues one 32-bit beat at a time |
-| `0x0C` | `CTRL_STATUS` | RW | Write bit 0 to start, bit 1 to clear done/error; read bit 0 busy, bit 1 done/IRQ, bit 2 error, bit 3 read-issue pulse, bit 4 write-issue pulse |
+| `0x0C` | `CTRL_STATUS` | RW | Write bit 0 to start, bit 1 to clear done/error; read bit 0 busy, bit 1 done/IRQ, bit 2 error, bit 3 accepted read-address pulse, bit 4 accepted write-address/data pulse |
 | `0x10` | `CFG` | RW | Reserved DMA integration/configuration word; reset value is `4` bytes per beat |
 | `0x14` | `BYTES_DONE` | RO | Number of payload bytes completed by the current/last command |
 | `0x18` | `BEATS_ISSUED` | RO | Number of modeled write beats completed |
@@ -51,7 +54,10 @@ All registers are 32-bit little-endian words. Writes to reserved registers are i
 | `0x20` | `CUR_DST` | RO | Current destination address while busy |
 | `0x24` | `LAST_SRC` | RO | Last modeled read address issued |
 | `0x28` | `LAST_DST` | RO | Last modeled write address issued |
-| `0x2C` | `MASTER_TRACE` | RO | `{last_wstrb[3:0], state[1:0]}` packed into bits `[11:8]` and `[1:0]` |
+| `0x2C` | `MASTER_TRACE` | RO | `{last_wstrb[3:0], state[2:0]}` packed into bits `[10:7]` and `[2:0]` |
+| `0x30` | `READ_BEATS` | RO | Number of AXI-Lite read responses completed |
+| `0x34` | `WRITE_BEATS` | RO | Number of AXI-Lite write responses completed |
+| `0x38` | `ERROR_COUNT` | RO | Number of alignment or bus response errors observed by the current/last command |
 
 ## NPU registers
 

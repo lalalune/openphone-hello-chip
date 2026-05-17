@@ -24,6 +24,26 @@
 #   JTAG_TDI
 #   JTAG_TDO
 #
+# Reserved external WiFi module integration stub. These logical names are not
+# package-pin assigned for the current hello_demo_fpga scaffold. They document
+# the future SDIO/UART/control surface for a Linux-supported external module:
+#   WIFI_SDIO_CLK
+#   WIFI_SDIO_CMD
+#   WIFI_SDIO_D0
+#   WIFI_SDIO_D1
+#   WIFI_SDIO_D2
+#   WIFI_SDIO_D3
+#   WIFI_EN
+#   WIFI_RST_N
+#   WIFI_HOST_WAKE
+#   WIFI_IRQ
+#   BT_UART_TX
+#   BT_UART_RX
+#   BT_UART_CTS_N
+#   BT_UART_RTS_N
+# Final constraints must place these on a 1.8 V capable bank or use level
+# translation. Do not assign RF, antenna, or module analog pins here.
+#
 # Example syntax for finalization:
 #   LOCATE COMP "CLK_IN" SITE "G2";
 #   IOBUF PORT "CLK_IN" IO_TYPE=LVCMOS33;

@@ -57,15 +57,33 @@ module hello_axi_lite_interconnect (
     input  logic        intc_rvalid,
     output logic        intc_rready,
     input  logic [31:0] intc_rdata,
-    input  logic [1:0]  intc_rresp
+    input  logic [1:0]  intc_rresp,
+    output logic        dma_awvalid,
+    input  logic        dma_awready,
+    output logic [31:0] dma_awaddr,
+    output logic        dma_wvalid,
+    input  logic        dma_wready,
+    output logic [31:0] dma_wdata,
+    output logic [3:0]  dma_wstrb,
+    input  logic        dma_bvalid,
+    output logic        dma_bready,
+    input  logic [1:0]  dma_bresp,
+    output logic        dma_arvalid,
+    input  logic        dma_arready,
+    output logic [31:0] dma_araddr,
+    input  logic        dma_rvalid,
+    output logic        dma_rready,
+    input  logic [31:0] dma_rdata,
+    input  logic [1:0]  dma_rresp
 );
-    localparam logic [1:0] SEL_NONE = 2'h0;
-    localparam logic [1:0] SEL_DRAM = 2'h1;
-    localparam logic [1:0] SEL_INTC = 2'h2;
-    localparam logic [1:0] SEL_ERR  = 2'h3;
+    localparam logic [2:0] SEL3_NONE = 3'h0;
+    localparam logic [2:0] SEL3_DRAM = 3'h1;
+    localparam logic [2:0] SEL3_INTC = 3'h2;
+    localparam logic [2:0] SEL3_DMA  = 3'h3;
+    localparam logic [2:0] SEL3_ERR  = 3'h4;
 
-    logic [1:0] wr_sel_q;
-    logic [1:0] rd_sel_q;
+    logic [2:0] wr_sel_q;
+    logic [2:0] rd_sel_q;
     logic       wr_pending;
     logic       rd_pending;
     logic       wr_err_valid;
@@ -80,10 +98,12 @@ module hello_axi_lite_interconnect (
     wire ar_dram_sel = m_axil_araddr[31:28] == 4'h8;
     wire aw_intc_sel = wr_addr_q[31:12] == 20'h0C00_0;
     wire ar_intc_sel = m_axil_araddr[31:12] == 20'h0C00_0;
+    wire aw_dma_sel  = wr_addr_q[31:12] == 20'h1001_0;
+    wire ar_dma_sel  = m_axil_araddr[31:12] == 20'h1001_0;
 
     wire wr_has_addr_data = wr_addr_valid && wr_data_valid && !wr_pending;
     wire rd_has_addr      = m_axil_arvalid && !rd_pending;
-    wire wr_decode_error  = wr_has_addr_data && !aw_dram_sel && !aw_intc_sel;
+    wire wr_decode_error  = wr_has_addr_data && !aw_dram_sel && !aw_intc_sel && !aw_dma_sel;
 
     assign dram_awaddr = wr_addr_q - 32'h8000_0000;
     assign dram_wdata  = wr_data_q;
@@ -93,14 +113,21 @@ module hello_axi_lite_interconnect (
     assign intc_wdata  = wr_data_q;
     assign intc_wstrb  = wr_strb_q;
     assign intc_araddr = m_axil_araddr - 32'h0C00_0000;
+    assign dma_awaddr  = wr_addr_q - 32'h1001_0000;
+    assign dma_wdata   = wr_data_q;
+    assign dma_wstrb   = wr_strb_q;
+    assign dma_araddr  = m_axil_araddr - 32'h1001_0000;
 
     assign dram_awvalid = wr_has_addr_data && aw_dram_sel;
     assign dram_wvalid  = wr_has_addr_data && aw_dram_sel;
     assign intc_awvalid = wr_has_addr_data && aw_intc_sel;
     assign intc_wvalid  = wr_has_addr_data && aw_intc_sel;
+    assign dma_awvalid  = wr_has_addr_data && aw_dma_sel;
+    assign dma_wvalid   = wr_has_addr_data && aw_dma_sel;
 
     assign dram_arvalid = rd_has_addr && ar_dram_sel;
     assign intc_arvalid = rd_has_addr && ar_intc_sel;
+    assign dma_arvalid  = rd_has_addr && ar_dma_sel;
 
     assign m_axil_awready = !wr_addr_valid && !wr_pending;
     assign m_axil_wready  = !wr_data_valid && !wr_pending;
@@ -108,24 +135,31 @@ module hello_axi_lite_interconnect (
     assign m_axil_arready = rd_has_addr &&
                             ((ar_dram_sel && dram_arready) ||
                              (ar_intc_sel && intc_arready) ||
-                             (!ar_dram_sel && !ar_intc_sel));
+                             (ar_dma_sel && dma_arready) ||
+                             (!ar_dram_sel && !ar_intc_sel && !ar_dma_sel));
 
-    assign dram_bready = wr_sel_q == SEL_DRAM && m_axil_bready;
-    assign intc_bready = wr_sel_q == SEL_INTC && m_axil_bready;
-    assign dram_rready = rd_sel_q == SEL_DRAM && m_axil_rready;
-    assign intc_rready = rd_sel_q == SEL_INTC && m_axil_rready;
+    assign dram_bready = wr_sel_q == SEL3_DRAM && m_axil_bready;
+    assign intc_bready = wr_sel_q == SEL3_INTC && m_axil_bready;
+    assign dma_bready  = wr_sel_q == SEL3_DMA && m_axil_bready;
+    assign dram_rready = rd_sel_q == SEL3_DRAM && m_axil_rready;
+    assign intc_rready = rd_sel_q == SEL3_INTC && m_axil_rready;
+    assign dma_rready  = rd_sel_q == SEL3_DMA && m_axil_rready;
 
     always_comb begin
         unique case (wr_sel_q)
-            SEL_DRAM: begin
+            SEL3_DRAM: begin
                 m_axil_bvalid = dram_bvalid;
                 m_axil_bresp  = dram_bresp;
             end
-            SEL_INTC: begin
+            SEL3_INTC: begin
                 m_axil_bvalid = intc_bvalid;
                 m_axil_bresp  = intc_bresp;
             end
-            SEL_ERR: begin
+            SEL3_DMA: begin
+                m_axil_bvalid = dma_bvalid;
+                m_axil_bresp  = dma_bresp;
+            end
+            SEL3_ERR: begin
                 m_axil_bvalid = wr_err_valid;
                 m_axil_bresp  = 2'b11;
             end
@@ -138,17 +172,22 @@ module hello_axi_lite_interconnect (
 
     always_comb begin
         unique case (rd_sel_q)
-            SEL_DRAM: begin
+            SEL3_DRAM: begin
                 m_axil_rvalid = dram_rvalid;
                 m_axil_rdata  = dram_rdata;
                 m_axil_rresp  = dram_rresp;
             end
-            SEL_INTC: begin
+            SEL3_INTC: begin
                 m_axil_rvalid = intc_rvalid;
                 m_axil_rdata  = intc_rdata;
                 m_axil_rresp  = intc_rresp;
             end
-            SEL_ERR: begin
+            SEL3_DMA: begin
+                m_axil_rvalid = dma_rvalid;
+                m_axil_rdata  = dma_rdata;
+                m_axil_rresp  = dma_rresp;
+            end
+            SEL3_ERR: begin
                 m_axil_rvalid = rd_err_valid;
                 m_axil_rdata  = 32'hDEAD_BEEF;
                 m_axil_rresp  = 2'b11;
@@ -163,8 +202,8 @@ module hello_axi_lite_interconnect (
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            wr_sel_q     <= SEL_NONE;
-            rd_sel_q     <= SEL_NONE;
+            wr_sel_q     <= SEL3_NONE;
+            rd_sel_q     <= SEL3_NONE;
             wr_pending   <= 1'b0;
             rd_pending   <= 1'b0;
             wr_err_valid <= 1'b0;
@@ -189,41 +228,46 @@ module hello_axi_lite_interconnect (
             if (wr_has_addr_data &&
                 ((aw_dram_sel && dram_awready && dram_wready) ||
                  (aw_intc_sel && intc_awready && intc_wready) ||
+                 (aw_dma_sel && dma_awready && dma_wready) ||
                  wr_decode_error)) begin
                 wr_pending <= 1'b1;
                 wr_addr_valid <= 1'b0;
                 wr_data_valid <= 1'b0;
                 if (aw_dram_sel) begin
-                    wr_sel_q <= SEL_DRAM;
+                    wr_sel_q <= SEL3_DRAM;
                 end else if (aw_intc_sel) begin
-                    wr_sel_q <= SEL_INTC;
+                    wr_sel_q <= SEL3_INTC;
+                end else if (aw_dma_sel) begin
+                    wr_sel_q <= SEL3_DMA;
                 end else begin
-                    wr_sel_q     <= SEL_ERR;
+                    wr_sel_q     <= SEL3_ERR;
                     wr_err_valid <= 1'b1;
                 end
             end
 
             if (m_axil_bvalid && m_axil_bready) begin
                 wr_pending   <= 1'b0;
-                wr_sel_q     <= SEL_NONE;
+                wr_sel_q     <= SEL3_NONE;
                 wr_err_valid <= 1'b0;
             end
 
             if (m_axil_arready && m_axil_arvalid) begin
                 rd_pending <= 1'b1;
                 if (ar_dram_sel) begin
-                    rd_sel_q <= SEL_DRAM;
+                    rd_sel_q <= SEL3_DRAM;
                 end else if (ar_intc_sel) begin
-                    rd_sel_q <= SEL_INTC;
+                    rd_sel_q <= SEL3_INTC;
+                end else if (ar_dma_sel) begin
+                    rd_sel_q <= SEL3_DMA;
                 end else begin
-                    rd_sel_q     <= SEL_ERR;
+                    rd_sel_q     <= SEL3_ERR;
                     rd_err_valid <= 1'b1;
                 end
             end
 
             if (m_axil_rvalid && m_axil_rready) begin
                 rd_pending   <= 1'b0;
-                rd_sel_q     <= SEL_NONE;
+                rd_sel_q     <= SEL3_NONE;
                 rd_err_valid <= 1'b0;
             end
         end

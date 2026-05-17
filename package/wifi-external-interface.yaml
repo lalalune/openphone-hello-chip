@@ -3,6 +3,13 @@ status: product_scaffold_not_bonded_in_hello_chip
 io_voltage: 1.8V
 module_boundary: external_wifi_bluetooth_combo
 regulatory_boundary: module_and_board
+reference_module:
+  vendor_family: murata_type_1dx_cyw4343w_class
+  host_interface: sdio_wifi_uart_bluetooth
+  linux_wifi_driver: brcmfmac
+  linux_bluetooth_driver: hci_uart_bcm
+  integration_file: package/wifi/murata-1dx-sdio.yaml
+  commitment: reference_integration_slice_not_committed_bom
 integration_state:
   rtl_host_controller: not_implemented
   padframe_bonding: not_bonded_in_hello_chip

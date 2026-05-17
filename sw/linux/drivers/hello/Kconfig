@@ -1,0 +1,24 @@
+menuconfig OPENPHONE_HELLO_BSP
+	tristate "OpenPhone hello BSP drivers"
+	depends on OF
+	help
+	  Enables importable Linux drivers for the OpenPhone hello platform
+	  contract described by sw/platform/hello_platform_contract.json.
+
+if OPENPHONE_HELLO_BSP
+
+config OPENPHONE_HELLO_NPU
+	tristate "OpenPhone hello NPU contract driver"
+	depends on MISC_DEVICES
+	help
+	  Exposes the openphone,hello-npu MMIO node through /dev/hello-npu for
+	  smoke tests. The register base is HELLO_NPU_BASE in the platform
+	  contract.
+
+config OPENPHONE_HELLO_DMA
+	tristate "OpenPhone hello DMA contract driver"
+	help
+	  Binds the openphone,hello-dma MMIO node and exports a read-only sysfs
+	  contract file for fast BSP validation.
+
+endif

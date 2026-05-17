@@ -1,22 +1,29 @@
 SHELL := /bin/sh
 
 PYTHON ?= python3
+VENV := .venv
+VENV_PYTHON := $(VENV)/bin/python
 RTL_TOP := hello_chip_top
 RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
 BUILD := build
 
-.PHONY: tools smoke ci-fast ci-local ci-strict ci-pd product-check pinout-check fpga-check wifi-interface-check padframe-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check cocotb cocotb-contract verilator formal synth openlane openroad qemu renode qemu-check renode-check platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check software-bsp-check docs-check tool-versions pipeline-check archive-release clean
+.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks project-plan-check product-check pinout-check fpga-check wifi-interface-check padframe-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check renode-check platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check software-bsp-check docs-check tool-versions pipeline-check archive-release clean
+
+venv:
+	@$(PYTHON) -m venv $(VENV)
+	@$(VENV_PYTHON) -m pip install --upgrade pip
+	@$(VENV_PYTHON) -m pip install -r requirements.txt
 
 tools:
 	@scripts/check_tools.sh
 
-smoke: docs-check platform-contract-check rtl-check synth
+smoke: docs-check project-plan-check platform-contract-check stub-audit rtl-check synth
 	@echo "smoke complete"
 
-ci-fast: docs-check platform-contract-check pinout-check rtl-check synth cocotb cocotb-contract verilator formal product-check
+ci-fast: docs-check project-plan-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
 	@echo "ci-fast complete"
 
-ci-local: docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-contract verilator formal tool-versions
+ci-local: docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal tool-versions
 	@echo "ci-local complete"
 
 ci-strict: REQUIRE_SBY=1
@@ -27,8 +34,17 @@ ci-strict: ci-local
 ci-pd: openlane pd-signoff-check
 	@echo "ci-pd complete"
 
+benchmarks-dry-run:
+	@$(PYTHON) benchmarks/run_benchmarks.py --dry-run --report-id dry-run
+
+benchmarks:
+	@$(PYTHON) benchmarks/run_benchmarks.py
+
 product-check: pinout-check fpga-check wifi-interface-check padframe-check pd-signoff-manifest-check
 	@$(PYTHON) scripts/product_check.py
+
+project-plan-check:
+	@$(PYTHON) scripts/check_project_plan.py
 
 pinout-check:
 	@$(PYTHON) package/scripts/validate_pinout.py package/hello-demo-pinout.yaml
@@ -42,7 +58,10 @@ wifi-interface-check:
 padframe-check:
 	@$(PYTHON) scripts/check_padframe_contract.py
 
-pd-contract-check: padframe-check pd-signoff-manifest-check
+pd-preflight-check:
+	@$(PYTHON) scripts/check_pd_preflight.py
+
+pd-contract-check: padframe-check pd-preflight-check pd-signoff-manifest-check
 	@echo "pd contract checks complete"
 
 pd-signoff-manifest-check:
@@ -54,11 +73,17 @@ pd-signoff-check:
 rtl-check:
 	@scripts/run_rtl_check.sh
 
+stub-audit:
+	@$(PYTHON) verify/check_stub_audit.py
+
 cocotb:
-	@scripts/run_cocotb.sh
+	@PYTHON=$(VENV_PYTHON) scripts/run_cocotb.sh
 
 cocotb-contract:
-	@COCOTB_MODULE=test_cpu_mem_intc_contract COCOTB_TOPLEVEL=hello_linux_soc_contract scripts/run_cocotb.sh
+	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_cpu_mem_intc_contract COCOTB_TOPLEVEL=hello_linux_soc_contract scripts/run_cocotb.sh
+
+cocotb-cpu:
+	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_tiny_cpu_execution COCOTB_TOPLEVEL=hello_tiny_cpu_contract_tb scripts/run_cocotb.sh
 
 verilator:
 	@scripts/run_verilator.sh
@@ -82,7 +107,7 @@ renode:
 	@scripts/run_renode.sh
 
 qemu-check: platform-contract-check
-	@echo "qemu-virt scaffold check complete"
+	@scripts/run_qemu.sh --check
 
 renode-check: platform-contract-check
 	@echo "renode qemu-virt scaffold check complete"
@@ -117,4 +142,4 @@ archive-release: pipeline-check
 	@scripts/archive_release.sh
 
 clean:
-	rm -rf $(BUILD) sim_build results reports verify/formal/work verify/cocotb/sim_build verify/cocotb/results.xml verify/formal/hello_dbg_mmio_bridge verify/formal/hello_npu verify/formal/hello_dma verify/formal/hello_soc_top
+	rm -rf $(BUILD) sim_build sim_build_* results reports verify/formal/work verify/cocotb/sim_build verify/cocotb/sim_build_* verify/cocotb/results.xml verify/formal/hello_dbg_mmio_bridge verify/formal/hello_npu verify/formal/hello_dma verify/formal/hello_soc_top

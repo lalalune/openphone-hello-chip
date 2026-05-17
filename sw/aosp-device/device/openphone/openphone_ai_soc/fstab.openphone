@@ -1,0 +1,5 @@
+# Initial Android fstab scaffold for openphone_ai_soc.
+# Cuttlefish integration may override block devices during simulator bring-up.
+
+/dev/block/by-name/vendor /vendor ext4 ro,barrier=1 wait,slotselect,avb
+/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,inline_xattr wait,check,formattable,fileencryption=ice

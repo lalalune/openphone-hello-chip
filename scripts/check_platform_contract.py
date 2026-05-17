@@ -171,12 +171,20 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
             int(index, 16) * 4
             for index in re.findall(r"6'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
         }
+        contract_offsets = set()
         for reg in regions[region_name]["registers"]:
             offset = h(reg["offset"])
+            contract_offsets.add(offset)
             require(
                 offset in rtl_offsets,
                 f"{region_name} register {reg['name']} offset {fmt_hex(offset, 2)} is missing in {path.relative_to(ROOT)}",
                 errors,
+            )
+        undocumented = sorted(rtl_offsets - contract_offsets)
+        for offset in undocumented:
+            errors.append(
+                f"{region_name} RTL exposes readable offset {fmt_hex(offset, 2)} in "
+                f"{path.relative_to(ROOT)} but {CONTRACT_PATH.relative_to(ROOT)} does not document it"
             )
 
 

@@ -8,12 +8,32 @@ module hello_dma (
     input  logic [5:0]  addr,
     input  logic [31:0] wdata,
     output logic [31:0] rdata,
-    output logic        irq
+    output logic        irq,
+
+    output logic        m_axil_awvalid,
+    input  logic        m_axil_awready,
+    output logic [31:0] m_axil_awaddr,
+    output logic        m_axil_wvalid,
+    input  logic        m_axil_wready,
+    output logic [31:0] m_axil_wdata,
+    output logic [3:0]  m_axil_wstrb,
+    input  logic        m_axil_bvalid,
+    output logic        m_axil_bready,
+    input  logic [1:0]  m_axil_bresp,
+
+    output logic        m_axil_arvalid,
+    input  logic        m_axil_arready,
+    output logic [31:0] m_axil_araddr,
+    input  logic        m_axil_rvalid,
+    output logic        m_axil_rready,
+    input  logic [31:0] m_axil_rdata,
+    input  logic [1:0]  m_axil_rresp
 );
-    localparam logic [1:0] DMA_IDLE  = 2'd0;
-    localparam logic [1:0] DMA_READ  = 2'd1;
-    localparam logic [1:0] DMA_WRITE = 2'd2;
-    localparam logic [1:0] DMA_DONE  = 2'd3;
+    localparam logic [2:0] DMA_IDLE   = 3'd0;
+    localparam logic [2:0] DMA_READ   = 3'd1;
+    localparam logic [2:0] DMA_WRITE  = 3'd2;
+    localparam logic [2:0] DMA_WRESP  = 3'd3;
+    localparam logic [2:0] DMA_DONE   = 3'd4;
 
     logic [31:0] src;
     logic [31:0] dst;
@@ -27,13 +47,35 @@ module hello_dma (
     logic [31:0] remaining;
     logic [31:0] last_src;
     logic [31:0] last_dst;
+    logic [31:0] read_data_q;
+    logic [31:0] read_beats;
+    logic [31:0] write_beats;
+    logic [31:0] error_count;
     logic [3:0]  last_wstrb;
-    logic [1:0]  state;
+    logic [2:0]  state;
 
     wire clear_req = valid && write && addr == 6'h03 && wdata[1];
     wire unsupported_align = (src[1:0] != 2'b00) || (dst[1:0] != 2'b00);
+    wire [3:0] next_wstrb = (remaining >= 32'd4) ? 4'hF :
+                             ((4'h1 << remaining[1:0]) - 4'h1);
+    wire [31:0] beat_bytes = (remaining >= 32'd4) ? 32'd4 : remaining;
+    wire read_fire = m_axil_arvalid && m_axil_arready;
+    wire read_done = m_axil_rvalid && m_axil_rready;
+    wire write_fire = m_axil_awvalid && m_axil_awready &&
+                      m_axil_wvalid && m_axil_wready;
+    wire write_done = m_axil_bvalid && m_axil_bready;
 
     assign irq = status[1];
+
+    assign m_axil_arvalid = status[0] && state == DMA_READ;
+    assign m_axil_araddr  = cur_src;
+    assign m_axil_rready  = status[0] && state == DMA_READ;
+    assign m_axil_awvalid = status[0] && state == DMA_WRITE;
+    assign m_axil_awaddr  = cur_dst;
+    assign m_axil_wvalid  = status[0] && state == DMA_WRITE;
+    assign m_axil_wdata   = read_data_q;
+    assign m_axil_wstrb   = next_wstrb;
+    assign m_axil_bready  = status[0] && state == DMA_WRESP;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -49,6 +91,10 @@ module hello_dma (
             remaining <= 32'h0;
             last_src <= 32'h0;
             last_dst <= 32'h0;
+            read_data_q <= 32'h0;
+            read_beats <= 32'h0;
+            write_beats <= 32'h0;
+            error_count <= 32'h0;
             last_wstrb <= 4'h0;
             state <= DMA_IDLE;
         end else begin
@@ -63,25 +109,53 @@ module hello_dma (
             if (status[0]) begin
                 unique case (state)
                     DMA_READ: begin
-                        last_src <= cur_src;
-                        status[3] <= 1'b1;
-                        state <= DMA_WRITE;
+                        if (read_fire) begin
+                            last_src <= cur_src;
+                            status[3] <= 1'b1;
+                        end
+                        if (read_done) begin
+                            read_data_q <= m_axil_rdata;
+                            read_beats <= read_beats + 32'd1;
+                            if (m_axil_rresp != 2'b00) begin
+                                status[0] <= 1'b0;
+                                status[1] <= 1'b1;
+                                status[2] <= 1'b1;
+                                error_count <= error_count + 32'd1;
+                                state <= DMA_IDLE;
+                            end else begin
+                                state <= DMA_WRITE;
+                            end
+                        end
                     end
                     DMA_WRITE: begin
-                        last_dst <= cur_dst;
-                        last_wstrb <= (remaining >= 32'd4) ? 4'hF : ((4'h1 << remaining[1:0]) - 4'h1);
-                        status[4] <= 1'b1;
-                        beats_issued <= beats_issued + 32'd1;
-                        if (remaining <= 32'd4) begin
-                            bytes_done <= bytes_done + remaining;
-                            remaining <= 32'h0;
-                            state <= DMA_DONE;
-                        end else begin
-                            bytes_done <= bytes_done + 32'd4;
-                            remaining <= remaining - 32'd4;
-                            cur_src <= cur_src + 32'd4;
-                            cur_dst <= cur_dst + 32'd4;
-                            state <= DMA_READ;
+                        if (write_fire) begin
+                            last_dst <= cur_dst;
+                            last_wstrb <= next_wstrb;
+                            status[4] <= 1'b1;
+                            beats_issued <= beats_issued + 32'd1;
+                            write_beats <= write_beats + 32'd1;
+                            state <= DMA_WRESP;
+                        end
+                    end
+                    DMA_WRESP: begin
+                        if (write_done) begin
+                            if (m_axil_bresp != 2'b00) begin
+                                status[0] <= 1'b0;
+                                status[1] <= 1'b1;
+                                status[2] <= 1'b1;
+                                error_count <= error_count + 32'd1;
+                                state <= DMA_IDLE;
+                            end else if (remaining <= 32'd4) begin
+                                bytes_done <= bytes_done + beat_bytes;
+                                remaining <= 32'h0;
+                                state <= DMA_DONE;
+                            end else begin
+                                bytes_done <= bytes_done + 32'd4;
+                                remaining <= remaining - 32'd4;
+                                cur_src <= cur_src + 32'd4;
+                                cur_dst <= cur_dst + 32'd4;
+                                state <= DMA_READ;
+                            end
                         end
                     end
                     DMA_DONE: begin
@@ -106,6 +180,9 @@ module hello_dma (
                         if (wdata[0] && !status[0]) begin
                             bytes_done <= 32'h0;
                             beats_issued <= 32'h0;
+                            read_beats <= 32'h0;
+                            write_beats <= 32'h0;
+                            error_count <= 32'h0;
                             cur_src <= src;
                             cur_dst <= dst;
                             last_src <= src;
@@ -114,6 +191,7 @@ module hello_dma (
                             last_wstrb <= 4'h0;
                             if (unsupported_align) begin
                                 status <= 32'h0000_0006;
+                                error_count <= 32'd1;
                                 state <= DMA_IDLE;
                             end else if (len == 32'h0) begin
                                 status <= 32'h0000_0002;
@@ -143,7 +221,10 @@ module hello_dma (
             6'h08: rdata = cur_dst;
             6'h09: rdata = last_src;
             6'h0a: rdata = last_dst;
-            6'h0b: rdata = {22'h0, last_wstrb, 4'h0, state};
+            6'h0b: rdata = {21'h0, last_wstrb, 4'h0, state};
+            6'h0c: rdata = read_beats;
+            6'h0d: rdata = write_beats;
+            6'h0e: rdata = error_count;
             default: rdata = 32'h0;
         endcase
     end

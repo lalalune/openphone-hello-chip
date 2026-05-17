@@ -1,0 +1,4 @@
+read_verilog -sv -formal rtl/npu/hello_npu.sv verify/formal/hello_npu_formal.sv
+prep -top hello_npu_formal
+check -assert
+stat

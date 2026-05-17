@@ -3,7 +3,7 @@ mode bmc
 depth 12
 
 [engines]
-smtbmc
+smtbmc z3
 
 [script]
 read -formal hello_bootrom.sv

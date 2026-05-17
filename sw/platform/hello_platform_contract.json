@@ -119,6 +119,72 @@
             "name": "CTRL_STATUS",
             "access": "RW",
             "reset": "0x00000000"
+          },
+          {
+            "offset": "0x10",
+            "name": "CFG",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x14",
+            "name": "BYTES_DONE",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x18",
+            "name": "BEATS_ISSUED",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x1C",
+            "name": "CUR_SRC",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x20",
+            "name": "CUR_DST",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x24",
+            "name": "LAST_SRC",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x28",
+            "name": "LAST_DST",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x2C",
+            "name": "MASTER_TRACE",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x30",
+            "name": "READ_BEATS",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x34",
+            "name": "WRITE_BEATS",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x38",
+            "name": "ERROR_COUNT",
+            "access": "RO",
+            "reset": "0x00000000"
           }
         ]
       },
@@ -148,6 +214,66 @@
           {
             "offset": "0x0C",
             "name": "CTRL_STATUS",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x10",
+            "name": "OPCODE",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x14",
+            "name": "ACC",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x18",
+            "name": "RESULT_HI",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x1C",
+            "name": "TRACE",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x20",
+            "name": "GEMM_DIMS",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x24",
+            "name": "GEMM_BASES",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x28",
+            "name": "GEMM_STRIDES",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x2C",
+            "name": "PERF_CYCLES",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x30",
+            "name": "PERF_MACS",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x34",
+            "name": "PERF_ERRORS",
             "access": "RW",
             "reset": "0x00000000"
           }
@@ -186,6 +312,18 @@
             "offset": "0x10",
             "name": "VSYNC",
             "access": "RO"
+          },
+          {
+            "offset": "0x14",
+            "name": "UNDERFLOW_COUNT",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x18",
+            "name": "FETCHED_PIXEL_COUNT",
+            "access": "RW",
+            "reset": "0x00000000"
           }
         ]
       }

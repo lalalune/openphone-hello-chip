@@ -1,0 +1,40 @@
+adapter: hello_demo_wifi_external_module
+status: constraint_stub_no_physical_pin_assignment
+reference_module: package/wifi/murata-1dx-sdio.yaml
+purpose: >
+  Reserve the logical FPGA/package-facing signal names needed to exercise a
+  Linux-supported external SDIO WiFi plus UART Bluetooth module on a future
+  hello-demo carrier or mezzanine.
+release_limits:
+  - No RF silicon is present in hello-chip.
+  - No bitstream release is allowed from this stub.
+  - Exact FPGA pins, bank voltage, trace lengths, antenna placement, and module
+    power tree remain board-revision work.
+io_bank_requirements:
+  sdio_wifi:
+    voltage: 1.8V
+    signals:
+      - WIFI_SDIO_CLK
+      - WIFI_SDIO_CMD
+      - WIFI_SDIO_D0
+      - WIFI_SDIO_D1
+      - WIFI_SDIO_D2
+      - WIFI_SDIO_D3
+  control_and_wake:
+    voltage: 1.8V
+    signals:
+      - WIFI_EN
+      - WIFI_RST_N
+      - WIFI_HOST_WAKE
+      - WIFI_IRQ
+  bluetooth_uart:
+    voltage: 1.8V
+    signals:
+      - BT_UART_TX
+      - BT_UART_RX
+      - BT_UART_CTS_N
+      - BT_UART_RTS_N
+validation:
+  - Check SDIO timing with SDR25 first.
+  - Verify default low on WIFI_EN and WIFI_RST_N before firmware handoff.
+  - Confirm IRQ polarity and wake behavior against the selected module.

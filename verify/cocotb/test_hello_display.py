@@ -9,6 +9,8 @@ async def reset(dut):
     dut.write.value = 0
     dut.addr.value = 0
     dut.wdata.value = 0
+    dut.fb_read_data.value = 0
+    dut.fb_read_ready.value = 0
     await Timer(1, units="ns")
     for _ in range(4):
         await RisingEdge(dut.clk)
@@ -74,7 +76,7 @@ async def display_clamps_mode_and_rejects_unsupported_format(dut):
     await write_reg(dut, 1, 0)
     assert await read_reg(dut, 1) == (1 << 16) | 1
 
-    await write_reg(dut, 2, 0x3432_4247)  # XB24/GB24-like value is not implemented.
+    await write_reg(dut, 2, 0x3432_4247)  # XB24/GB24-like value is rejected.
     assert await read_reg(dut, 2) == 0x3432_5258
 
     await write_reg(dut, 2, 0x3432_5258)
@@ -90,22 +92,31 @@ async def display_generates_active_pixels_and_hsync(dut):
     await write_reg(dut, 1, (3 << 16) | 4)
     await write_reg(dut, 3, 1)
 
+    dut.fb_read_ready.value = 1
+    dut.fb_read_data.value = 0x00112233
+    await Timer(1, units="ns")
     assert int(dut.scan_active.value) == 1
     assert int(dut.scan_x.value) == 0
     assert int(dut.scan_y.value) == 0
     assert int(dut.scan_fb_addr.value) == 0x8000_0000
-    assert int(dut.scan_rgb.value) == 0
+    assert int(dut.fb_read_valid.value) == 1
+    assert int(dut.fb_read_addr.value) == 0x8000_0000
+    assert int(dut.scan_rgb.value) == 0x112233
 
+    dut.fb_read_data.value = 0x00A0B0C0
     await advance(dut, 1)
     assert int(dut.scan_active.value) == 1
     assert int(dut.scan_x.value) == 1
     assert int(dut.scan_fb_addr.value) == 0x8000_0004
-    assert int(dut.scan_rgb.value) == 0x010001
+    assert int(dut.fb_read_addr.value) == 0x8000_0004
+    assert int(dut.scan_rgb.value) == 0xA0B0C0
 
     await advance(dut, 3)
     assert int(dut.scan_active.value) == 0
     assert int(dut.scan_x.value) == 4
     assert int(dut.scan_fb_addr.value) == 0
+    assert int(dut.fb_read_valid.value) == 0
+    assert int(dut.fb_read_addr.value) == 0
 
     await advance(dut, 16)
     assert int(dut.scan_x.value) == 20
@@ -143,3 +154,29 @@ async def display_generates_vsync_pulse_and_wraps_frame(dut):
     assert int(dut.scan_x.value) == 0
     assert int(dut.scan_y.value) == 0
     assert int(dut.scan_active.value) == 1
+
+
+@cocotb.test()
+async def display_counts_fetched_pixels_and_underflows(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    await write_reg(dut, 0, 0x8000_0100)
+    await write_reg(dut, 1, (2 << 16) | 3)
+    await write_reg(dut, 3, 1)
+
+    dut.fb_read_ready.value = 1
+    dut.fb_read_data.value = 0x00010203
+    await advance(dut, 1)
+
+    dut.fb_read_ready.value = 0
+    await Timer(1, units="ns")
+    await advance(dut, 1)
+    assert int(dut.scan_rgb.value) == 0
+    assert await read_reg(dut, 5) == 1
+    assert await read_reg(dut, 6) == 1
+
+    await write_reg(dut, 5, 1)
+    await write_reg(dut, 6, 1)
+    assert await read_reg(dut, 5) == 0
+    assert await read_reg(dut, 6) == 0

@@ -46,6 +46,21 @@ required_pins:
   - JTAG_TMS
   - JTAG_TDI
   - JTAG_TDO
+package_artifacts:
+  pinout: package/hello-demo-pinout.yaml
+  package_plan: package/hello-demo-package.md
+  pad_ring_plan: package/hello-demo-pad-ring.md
+  board_fab_notes: board/kicad/hello-demo/fab-notes.md
+release_gates:
+  padframe_release:
+    blocked: true
+    reason: Foundry IO cells, ESD/corner cells, and padframe-inclusive DRC/LVS are not present.
+  package_release:
+    blocked: true
+    reason: Package drawing, bond diagram, and package-vendor footprint evidence are not present.
+  board_fabrication_release:
+    blocked: true
+    reason: Board footprint, SI/PI, and rail-current reviews are placeholders only.
 fabrication_blockers:
   - Replace placeholder package with shuttle/package/bonding document.
   - Instantiate foundry IO, power, ground, corner, and ESD pad cells.

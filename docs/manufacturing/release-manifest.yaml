@@ -1,5 +1,25 @@
 release: openphone_hello_demo
 status: pipeline_scaffold
+blocked_gates:
+  pd_release:
+    blocked: true
+    evidence_manifest: pd/signoff/manifest.yaml
+  tapeout_release:
+    blocked: true
+    evidence_manifest: pd/signoff/manifest.yaml
+  board_fabrication_release:
+    blocked: true
+    evidence_manifest: pd/signoff/manifest.yaml
+readiness:
+  si_pi:
+    status: blocked
+    evidence_manifest: pd/signoff/manifest.yaml
+  pdn_current_budget:
+    status: blocked
+    evidence_manifest: pd/signoff/manifest.yaml
+  padframe_package:
+    status: blocked
+    evidence_manifest: pd/signoff/manifest.yaml
 required_artifacts:
   rtl:
     - rtl/top/hello_chip_top.sv
@@ -25,12 +45,20 @@ required_artifacts:
     - package/hello-demo-pinout.yaml
     - package/hello-demo-package.md
     - package/hello-demo-pad-ring.md
+    - package/wifi-external-interface.yaml
     - pd/pin_order.cfg
     - pd/constraints/hello_soc.sdc
     - pd/constraints/hello_soc_gf180.sdc
     - pd/padframe/hello_demo_padframe.md
+    - pd/padframe/hello_demo_padframe.yaml
+    - pd/signoff/manifest.yaml
     - board/README.md
+    - board/fpga/README.md
+    - board/fpga/hello_demo_fpga.yaml
+    - board/fpga/constraints/hello_demo_ulx3s.lpf
+    - board/kicad/hello-demo/fab-notes.md
     - fw/board-smoke/tests/smoke_plan.md
+    - docs/manufacturing/hello-demo-checklist.md
   generated:
     - build/netlist/hello_chip_synth.v
     - build/reports/hello_soc_yosys.log

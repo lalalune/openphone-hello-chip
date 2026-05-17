@@ -1,5 +1,5 @@
 # SELinux file contexts for the external AOSP openphone_ai_soc device tree.
-# The hello_npu HAL is a skeleton integration point tied to
+# The hello_npu HAL is a fail-closed integration point tied to
 # sw/platform/hello_platform_contract.json.
 
 /vendor/bin/hw/hello_npu\.default        u:object_r:hal_hello_npu_default_exec:s0

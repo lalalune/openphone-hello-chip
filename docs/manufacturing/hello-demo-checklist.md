@@ -4,6 +4,7 @@ This checklist is for the simple demo chip/board product slice.
 
 ## Tapeout package
 
+- Release status: blocked until `pd/signoff/manifest.yaml` has no blocked gates.
 - Final RTL commit recorded.
 - Tool versions recorded.
 - PDK version recorded.
@@ -18,9 +19,12 @@ This checklist is for the simple demo chip/board product slice.
 - STA clean across selected corners or waivers approved.
 - Pinout and bonding diagram approved.
 - Padframe/power strategy approved.
+- SI/PI artifacts archived: package model, board SI report, and power-integrity report.
+- PDN/current budget archived for `VDDCORE` and `VDDIO`, including post-route power, IR-drop/EM, decoupling, and board current limits.
 
 ## Board package
 
+- Fabrication status: blocked until package, footprint, SI/PI, PDN, and DFM evidence are archived.
 - Package drawing approved.
 - Symbol/footprint reviewed.
 - Power rails and current limits reviewed.

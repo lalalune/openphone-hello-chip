@@ -1,0 +1,102 @@
+schema: openphone.benchmark_report.v1
+format: generated JSON report validated by benchmarks/run_benchmarks.py
+required_fields:
+  schema: string
+  report_id: string
+  date_utc: string
+  dry_run: boolean
+  claim_level:
+    enum:
+      - L0_RTL_UNIT
+      - L1_RTL_FULL_SOC
+      - L2_ARCH_SIM
+      - L3_FPGA
+      - L4_DEV_BOARD
+      - L5_PROTOTYPE_SILICON
+      - L6_COMPLETE_PHONE
+  platform:
+    name: string
+    revision: string
+    source_tree_sha: string
+    host: string
+    host_system: string
+  config:
+    path: string
+    version: string
+  software:
+    os: string
+    kernel: string
+    firmware: string
+    runtime: string
+  clocks:
+    source: string
+    cpu_hz: number
+    npu_hz: number
+    memory_hz: number
+  memory:
+    type: string
+    capacity_bytes: integer
+    bandwidth_bytes_per_second: number
+  thermal:
+    ambient_c: number
+    die_c: number
+    cooling: string
+  power:
+    source: string
+    watts: number
+    measurement_method: string
+  workload:
+    name: string
+    dataset: string
+    batch_size: integer
+  results:
+    type: list
+    item:
+      name: string
+      suite: string
+      version: string
+      command: list
+      input_dataset: string
+      primary_metric: string
+      units: string
+      status:
+        enum:
+          - planned
+          - planned_missing_deps
+          - blocked
+          - missing_dependencies
+          - passed
+          - failed
+          - timeout
+          - error
+      dependencies:
+        type: list
+        item:
+          name: string
+          kind:
+            enum:
+              - executable
+              - file
+              - model_artifact
+          available: boolean
+          path: string_or_null
+      artifacts:
+        raw_output: string
+  artifacts:
+    logs: list
+    reports: list
+    traces: list
+optional_result_fields:
+  missing_dependencies: list
+  blocked_assets: list
+  returncode: integer
+  elapsed_seconds: number
+  error: string
+validation_rules:
+  - Generated reports must validate with `python3 benchmarks/run_benchmarks.py validate-report <report.json>`.
+  - Results with unavailable model_artifact dependencies must use status `blocked`, not `passed`.
+  - Placeholder or undersized TFLite models are blocked until replaced by a declared non-proprietary model artifact.
+  - Simulator wall-clock time must not be compared against commercial phone scores.
+  - FPGA power must not be reported as mobile SoC power.
+  - NPU reports must include unsupported op count and CPU fallback percentage.
+  - Android reports must separate boot success from CTS/VTS compatibility.

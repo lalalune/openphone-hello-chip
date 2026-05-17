@@ -1,4 +1,4 @@
-# Init skeleton for the OpenPhone hello AOSP target.
+# Init scaffold for the OpenPhone hello AOSP target.
 # External AOSP integration must provide the hello_npu HAL binary.
 
 on post-fs

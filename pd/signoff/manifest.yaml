@@ -1,5 +1,108 @@
 signoff: hello_chip_top_pd
 status: required_for_pd_release
+blocked_gates:
+  pd_release:
+    blocked: true
+    reason: No complete routed run has archived all required physical signoff artifacts.
+    unblock_requires:
+      - Complete one selected OpenLane/OpenROAD run with final GDS, DEF, netlist, SDC, DRC, LVS, antenna, and STA reports.
+      - Archive waiver files for any non-clean report.
+      - Record selected PDK, library, RC, and timing corners.
+  tapeout_release:
+    blocked: true
+    reason: Standalone-chip signoff is missing SI/PI, PDN/current budget, and padframe/package release evidence.
+    unblock_requires:
+      - Close SI/PI and PDN/current-budget sections in this manifest.
+      - Replace placeholder package and padframe plan with foundry/package-vendor artifacts.
+      - Approve tapeout checklist and manufacturing release manifest.
+  board_fabrication_release:
+    blocked: true
+    reason: Board package is a placeholder and has no DFM, footprint, SI, PI, or current-limit review evidence.
+    unblock_requires:
+      - Release package drawing, footprint, and pin-1 orientation evidence.
+      - Complete board SI/PI review and rail current-limit budget.
+      - Complete assembly-house DFM review and first-article limits.
+si_pi:
+  status: blocked
+  release_blocking: true
+  blockers:
+    - No package model, IBIS/SPICE model, extracted parasitics, or board stackup has been approved.
+    - No clock/reset/debug/GPIO signal-integrity report has been archived.
+    - No rail impedance, decoupling, or return-path review has been archived.
+  required_artifacts:
+    - name: package_model
+      status: missing
+      globs:
+        - "package/models/**/*"
+        - "pd/signoff/si-pi/package-models/**/*"
+    - name: board_signal_integrity_report
+      status: missing
+      globs:
+        - "board/reports/si/**/*"
+        - "pd/signoff/si-pi/board-si/**/*"
+    - name: power_integrity_report
+      status: missing
+      globs:
+        - "board/reports/pi/**/*"
+        - "pd/signoff/si-pi/power-integrity/**/*"
+pdn_current_budget:
+  status: blocked
+  release_blocking: true
+  rails:
+    - name: VDDCORE
+      voltage: 1.8V
+      board_net: +1V8
+      current_limit_status: missing
+      pdn_status: missing
+    - name: VDDIO
+      voltage: 3.3V
+      board_net: +3V3
+      current_limit_status: missing
+      pdn_status: missing
+  blockers:
+    - Current budgets are not derived from post-route power or measured silicon data.
+    - IR-drop, EM, decoupling, and first-article current-limit reports are not archived.
+  required_artifacts:
+    - name: post_route_power_report
+      status: missing
+      globs:
+        - "pd/reports/power/**/*"
+        - "pd/openlane/runs/*/reports/power/**/*"
+        - "runs/*/reports/power/**/*"
+    - name: ir_drop_em_report
+      status: missing
+      globs:
+        - "pd/reports/pdn/**/*"
+        - "pd/openlane/runs/*/reports/pdn/**/*"
+        - "runs/*/reports/pdn/**/*"
+    - name: board_current_limit_plan
+      status: draft
+      globs:
+        - "board/kicad/hello-demo/fab-notes.md"
+        - "docs/manufacturing/hello-demo-checklist.md"
+padframe_package:
+  status: blocked
+  release_blocking: true
+  blockers:
+    - Padframe is a contract scaffold, not a foundry IO ring.
+    - Package is a placeholder QFN64 planning artifact with no vendor drawing or bond diagram.
+    - Package, padframe, and board footprint have not been cross-probed against released fabrication data.
+  required_artifacts:
+    - name: padframe_contract
+      status: draft
+      globs:
+        - "pd/padframe/hello_demo_padframe.yaml"
+        - "pd/padframe/hello_demo_padframe.md"
+    - name: package_pinout
+      status: draft
+      globs:
+        - "package/hello-demo-pinout.yaml"
+        - "package/hello-demo-package.md"
+        - "package/hello-demo-pad-ring.md"
+    - name: board_footprint_notes
+      status: draft
+      globs:
+        - "board/kicad/hello-demo/fab-notes.md"
 run_roots:
   - pd/openlane/runs
   - runs

@@ -16,9 +16,17 @@ elif command -v flow.tcl >/dev/null 2>&1; then
             exit 1
             ;;
     esac
-elif command -v docker >/dev/null 2>&1 && docker image inspect "$IMAGE" >/dev/null 2>&1; then
-    docker run --rm -v "$PWD:/work" -w /work "$IMAGE" openlane "$CONFIG"
 else
-    echo "OpenLane missing. Install/pull $IMAGE and rerun with OPENLANE_CONFIG=$CONFIG."
-    exit 1
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "OpenLane missing and docker is not on PATH."
+        echo "Install OpenLane 2, or install Docker and run: OPENLANE_IMAGE=$IMAGE scripts/install_openlane_image.sh"
+        exit 1
+    fi
+    if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+        echo "OpenLane missing and Docker image is not installed: $IMAGE"
+        echo "Install it with: OPENLANE_IMAGE=$IMAGE scripts/install_openlane_image.sh"
+        echo "Then rerun: OPENLANE_CONFIG=$CONFIG make openlane"
+        exit 1
+    fi
+    docker run --rm -v "$PWD:/work" -w /work "$IMAGE" openlane "$CONFIG"
 fi

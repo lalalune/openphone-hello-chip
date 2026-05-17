@@ -156,7 +156,9 @@ async def chip_interrupt_smoke(dut):
     assert await read32(dut, 0x1001_0018) == 3
     assert await read32(dut, 0x1001_0024) == 0x3008
     assert await read32(dut, 0x1001_0028) == 0x4008
-    assert (await read32(dut, 0x1001_002C)) & 0x3C0 == 0x0C0
+    dma_trace = await read32(dut, 0x1001_002C)
+    assert ((dma_trace >> 7) & 0xF) == 0x3
+    assert (dma_trace & 0x7) == 0x0
 
     await write32(dut, 0x1003_0004, (3 << 16) | 4)
     await write32(dut, 0x1003_000C, 1)

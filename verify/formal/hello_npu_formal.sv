@@ -9,6 +9,9 @@ module hello_npu_formal(input logic clk);
     logic [31:0] rdata;
     logic irq;
     logic [3:0] opcode_shadow = 4'h0;
+    logic [31:0] op_a_shadow = 32'h0;
+    logic [31:0] op_b_shadow = 32'h0;
+    logic [31:0] acc_shadow = 32'h0;
 
     hello_npu dut (
         .clk(clk),
@@ -26,6 +29,7 @@ module hello_npu_formal(input logic clk);
     always_ff @(posedge clk) begin
         rst_n <= 1'b1;
         assume(addr < 6'h08);
+        assume(!(rst_n && valid && write && addr == 6'h03 && wdata[0]));
 
         if (!$past(rst_n)) begin
             assert(!irq);
@@ -49,6 +53,18 @@ module hello_npu_formal(input logic clk);
             assert(rdata == {28'h0, opcode_shadow});
         end
 
+        if (rst_n && addr == 6'h00) begin
+            assert(rdata == op_a_shadow);
+        end
+
+        if (rst_n && addr == 6'h01) begin
+            assert(rdata == op_b_shadow);
+        end
+
+        if (rst_n && addr == 6'h05) begin
+            assert(rdata == acc_shadow);
+        end
+
         if (rst_n && addr == 6'h07) begin
             assert(rdata[31:7] == 25'h0);
         end
@@ -56,5 +72,18 @@ module hello_npu_formal(input logic clk);
         if (rst_n && valid && write && addr == 6'h04) begin
             opcode_shadow <= wdata[3:0];
         end
+
+        if (rst_n && valid && write && addr == 6'h00) begin
+            op_a_shadow <= wdata;
+        end
+
+        if (rst_n && valid && write && addr == 6'h01) begin
+            op_b_shadow <= wdata;
+        end
+
+        if (rst_n && valid && write && addr == 6'h05) begin
+            acc_shadow <= wdata;
+        end
+
     end
 endmodule

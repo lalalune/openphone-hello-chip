@@ -1,0 +1,125 @@
+{
+  "version": "0.1",
+  "benchmarks": [
+    {
+      "name": "coremark",
+      "suite": "CoreMark",
+      "version": "upstream/local",
+      "command": ["coremark"],
+      "requires": ["coremark"],
+      "install": "Build EEMBC CoreMark for the target and place the coremark executable on PATH.",
+      "input_dataset": "default",
+      "primary_metric": "CoreMark/MHz",
+      "units": "score_per_mhz",
+      "timeout_seconds": 300
+    },
+    {
+      "name": "stream",
+      "suite": "STREAM",
+      "version": "upstream/local",
+      "command": ["stream_c.exe"],
+      "requires": ["stream_c.exe"],
+      "install": "Compile STREAM from source for the target compiler, keep the executable named stream_c.exe, and place it on PATH.",
+      "input_dataset": "default arrays",
+      "primary_metric": "Triad bandwidth",
+      "units": "MB/s",
+      "timeout_seconds": 300
+    },
+    {
+      "name": "lmbench_bw_mem",
+      "suite": "lmbench",
+      "version": "upstream/local",
+      "command": ["bw_mem", "64M", "rd"],
+      "requires": ["bw_mem"],
+      "install": "Build lmbench for the target and place bw_mem on PATH.",
+      "input_dataset": "64M read",
+      "primary_metric": "memory bandwidth",
+      "units": "MB/s",
+      "timeout_seconds": 300
+    },
+    {
+      "name": "lmbench_lat_mem_rd",
+      "suite": "lmbench",
+      "version": "upstream/local",
+      "command": ["lat_mem_rd", "64M", "128"],
+      "requires": ["lat_mem_rd"],
+      "install": "Build lmbench for the target and place lat_mem_rd on PATH.",
+      "input_dataset": "64M stride sweep",
+      "primary_metric": "memory latency",
+      "units": "ns",
+      "timeout_seconds": 300
+    },
+    {
+      "name": "fio_seq_read",
+      "suite": "fio",
+      "version": "upstream/local",
+      "command": ["fio", "benchmarks/configs/fio-seq-read.fio"],
+      "requires": ["fio"],
+      "install": "Install fio from the target OS package manager or build it for the target and place fio on PATH.",
+      "input_dataset": "128MiB sequential read file",
+      "primary_metric": "read bandwidth",
+      "units": "KiB/s",
+      "timeout_seconds": 600
+    },
+    {
+      "name": "fio_rand_rw",
+      "suite": "fio",
+      "version": "upstream/local",
+      "command": ["fio", "benchmarks/configs/fio-rand-rw.fio"],
+      "requires": ["fio"],
+      "install": "Install fio from the target OS package manager or build it for the target and place fio on PATH.",
+      "input_dataset": "128MiB 4KiB random read/write file",
+      "primary_metric": "IOPS",
+      "units": "iops",
+      "timeout_seconds": 600
+    },
+    {
+      "name": "tflite_cpu",
+      "suite": "TensorFlow Lite benchmark_model",
+      "version": "upstream/local",
+      "command": [
+        "benchmark_model",
+        "--graph=benchmarks/models/mobile_smoke.tflite",
+        "--num_threads=1",
+        "--use_nnapi=false"
+      ],
+      "requires": ["benchmark_model"],
+      "model_artifacts": [
+        {
+          "path": "benchmarks/models/mobile_smoke.tflite",
+          "placeholder_allowed": false,
+          "min_size_bytes": 4096
+        }
+      ],
+      "install": "Build TensorFlow Lite benchmark_model for the target and supply a non-proprietary smoke .tflite model at benchmarks/models/mobile_smoke.tflite.",
+      "input_dataset": "mobile_smoke.tflite synthetic input",
+      "primary_metric": "inference latency",
+      "units": "us",
+      "timeout_seconds": 600
+    },
+    {
+      "name": "tflite_hello_npu",
+      "suite": "TensorFlow Lite benchmark_model",
+      "version": "upstream/local",
+      "command": [
+        "benchmark_model",
+        "--graph=benchmarks/models/mobile_smoke.tflite",
+        "--use_nnapi=true",
+        "--nnapi_accelerator_name=hello-npu"
+      ],
+      "requires": ["benchmark_model"],
+      "model_artifacts": [
+        {
+          "path": "benchmarks/models/mobile_smoke.tflite",
+          "placeholder_allowed": false,
+          "min_size_bytes": 4096
+        }
+      ],
+      "install": "Build TensorFlow Lite benchmark_model with NNAPI support and supply a non-proprietary smoke .tflite model at benchmarks/models/mobile_smoke.tflite.",
+      "input_dataset": "mobile_smoke.tflite synthetic input",
+      "primary_metric": "inference latency",
+      "units": "us",
+      "timeout_seconds": 600
+    }
+  ]
+}

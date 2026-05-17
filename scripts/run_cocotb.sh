@@ -7,6 +7,26 @@ if ! command -v make >/dev/null 2>&1; then
 fi
 
 PYTHON_BIN="${PYTHON:-python3}"
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+    PYTHON_BIN=python3
+fi
+PYTHON_DIR="$(CDPATH= cd -- "$(dirname "$PYTHON_BIN")" && pwd)"
+if [ -x "$PYTHON_DIR/cocotb-config" ]; then
+    PATH="$PYTHON_DIR:$PATH"
+fi
+PYTHON_SITE="$("$PYTHON_BIN" - <<'PY'
+import site
+print(site.getsitepackages()[0])
+PY
+)"
+PYTHONPATH="$PYTHON_SITE${PYTHONPATH:+:$PYTHONPATH}"
+export PATH PYTHONPATH
+PYTHON_PREFIX="$(CDPATH= cd -- "$PYTHON_DIR/.." && pwd)"
+if [ -d "$PYTHON_PREFIX/lib" ]; then
+    DYLD_LIBRARY_PATH="$PYTHON_PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+    LD_LIBRARY_PATH="$PYTHON_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export DYLD_LIBRARY_PATH LD_LIBRARY_PATH
+fi
 
 if ! "$PYTHON_BIN" -c "import cocotb" >/dev/null 2>&1; then
     if ! python3 -c "import cocotb" >/dev/null 2>&1; then
@@ -15,41 +35,24 @@ if ! "$PYTHON_BIN" -c "import cocotb" >/dev/null 2>&1; then
     fi
 fi
 
-rm -rf verify/cocotb/sim_build verify/cocotb/results.xml
+COCOTB_TOP="${COCOTB_TOPLEVEL:-hello_chip_top}"
+COCOTB_MOD="${COCOTB_MODULE:-test_hello_chip}"
+COCOTB_BUILD="sim_build_${COCOTB_TOP}_${COCOTB_MOD}"
+rm -rf "verify/cocotb/$COCOTB_BUILD" verify/cocotb/results.xml
 
 if command -v verilator >/dev/null 2>&1; then
     $(command -v make) -C verify/cocotb SIM=verilator \
-        MODULE="${COCOTB_MODULE:-test_hello_chip}" \
-        TOPLEVEL="${COCOTB_TOPLEVEL:-hello_chip_top}"
+        MODULE="$COCOTB_MOD" \
+        TOPLEVEL="$COCOTB_TOP" \
+        SIM_BUILD="$COCOTB_BUILD"
 elif command -v iverilog >/dev/null 2>&1; then
     $(command -v make) -C verify/cocotb SIM=icarus \
-        MODULE="${COCOTB_MODULE:-test_hello_chip}" \
-        TOPLEVEL="${COCOTB_TOPLEVEL:-hello_chip_top}"
+        MODULE="$COCOTB_MOD" \
+        TOPLEVEL="$COCOTB_TOP" \
+        SIM_BUILD="$COCOTB_BUILD"
 else
     echo "No cocotb simulator found. Install Verilator or Icarus Verilog."
     exit 1
 fi
 
-"$PYTHON_BIN" - <<'PY'
-from pathlib import Path
-import re
-import sys
-
-path = Path("verify/cocotb/results.xml")
-if not path.is_file():
-    raise SystemExit("verify/cocotb/results.xml missing after cocotb run")
-
-text = path.read_text(errors="ignore")
-failures = sum(int(value) for value in re.findall(r'failures="(\d+)"', text))
-errors = sum(int(value) for value in re.findall(r'errors="(\d+)"', text))
-failure_elements = len(re.findall(r"<failure\b", text))
-error_elements = len(re.findall(r"<error\b", text))
-testcases = len(re.findall(r"<testcase\b", text))
-
-if failures or errors or failure_elements or error_elements or not testcases:
-    print(
-        "cocotb XML indicates failure: "
-        f"testcases={testcases} failures={failures + failure_elements} errors={errors + error_elements}"
-    )
-    sys.exit(1)
-PY
+"$PYTHON_BIN" scripts/check_cocotb_results.py

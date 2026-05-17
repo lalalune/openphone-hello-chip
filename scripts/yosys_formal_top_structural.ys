@@ -1,0 +1,10 @@
+read_verilog -sv -formal rtl/bootrom/hello_bootrom.sv
+read_verilog -sv -formal rtl/peripherals/hello_peripherals.sv
+read_verilog -sv -formal rtl/dma/hello_dma.sv
+read_verilog -sv -formal rtl/npu/hello_npu.sv
+read_verilog -sv -formal rtl/display/hello_display.sv
+read_verilog -sv -formal rtl/top/hello_soc_top.sv
+read_verilog -sv -formal verify/formal/hello_soc_top_formal.sv
+prep -top hello_soc_top_formal
+check -assert
+stat

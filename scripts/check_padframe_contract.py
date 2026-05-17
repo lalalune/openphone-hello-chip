@@ -7,6 +7,17 @@ import yaml
 
 
 VECTOR_PIN_RE = re.compile(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)(\d+)$")
+REQUIRED_PACKAGE_ARTIFACTS = {
+    "pinout",
+    "package_plan",
+    "pad_ring_plan",
+    "board_fab_notes",
+}
+REQUIRED_RELEASE_GATES = {
+    "padframe_release",
+    "package_release",
+    "board_fabrication_release",
+}
 
 
 def parse_ports(path: Path) -> set[str]:
@@ -106,6 +117,44 @@ def main() -> int:
     missing_from_pin_order = sorted(port for port in ports if not any(pattern.match(port) for pattern in patterns))
     if missing_from_pin_order:
         failures.append("RTL ports missing from pd/pin_order.cfg: " + ", ".join(missing_from_pin_order))
+
+    package_artifacts = contract.get("package_artifacts")
+    if not isinstance(package_artifacts, dict):
+        failures.append("padframe contract must list package_artifacts")
+    else:
+        missing_artifacts = sorted(REQUIRED_PACKAGE_ARTIFACTS - set(package_artifacts))
+        if missing_artifacts:
+            failures.append("package_artifacts missing: " + ", ".join(missing_artifacts))
+        for name, artifact in package_artifacts.items():
+            if not isinstance(artifact, str):
+                failures.append(f"package_artifacts.{name}: path must be a string")
+                continue
+            artifact_path = Path(artifact)
+            if artifact_path.is_absolute() or ".." in artifact_path.parts:
+                failures.append(f"package_artifacts.{name}: path must be relative to repo: {artifact}")
+                continue
+            if not (root / artifact_path).is_file():
+                failures.append(f"package_artifacts.{name}: missing artifact {artifact}")
+
+    release_gates = contract.get("release_gates")
+    if not isinstance(release_gates, dict):
+        failures.append("padframe contract must list release_gates")
+    else:
+        missing_gates = sorted(REQUIRED_RELEASE_GATES - set(release_gates))
+        if missing_gates:
+            failures.append("release_gates missing: " + ", ".join(missing_gates))
+        for name, gate in release_gates.items():
+            if not isinstance(gate, dict):
+                failures.append(f"release_gates.{name}: gate must be a mapping")
+                continue
+            if gate.get("blocked") is not True:
+                failures.append(f"release_gates.{name}: must remain explicitly blocked until released")
+            if not isinstance(gate.get("reason"), str) or not gate["reason"]:
+                failures.append(f"release_gates.{name}: missing reason")
+
+    blockers = contract.get("fabrication_blockers")
+    if not isinstance(blockers, list) or not blockers:
+        failures.append("padframe contract must list fabrication_blockers")
 
     if failures:
         print("Padframe contract check failed:")

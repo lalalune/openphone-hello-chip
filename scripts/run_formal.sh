@@ -16,8 +16,8 @@ if ! command -v sby >/dev/null 2>&1; then
     if command -v yosys >/dev/null 2>&1; then
         echo "SymbiYosys missing; running Yosys SAT fallback."
         echo "Bridge formal requires SymbiYosys; fallback covers legacy blocks only."
-        yosys -q -l build/reports/hello_soc_top_formal_yosys.log scripts/yosys_formal_top.ys
-        yosys -q -l build/reports/hello_npu_formal_yosys.log scripts/yosys_formal_npu.ys
+        yosys -q -l build/reports/hello_soc_top_formal_yosys.log scripts/yosys_formal_top_structural.ys
+        yosys -q -l build/reports/hello_npu_formal_yosys.log scripts/yosys_formal_npu_structural.ys
         yosys -q -l build/reports/hello_dma_formal_yosys.log scripts/yosys_formal_dma.ys
         echo "Yosys formal fallback reports: build/reports/hello_*_formal_yosys.log"
         exit 0

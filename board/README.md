@@ -15,3 +15,6 @@ Minimal demo board contents:
 - JTAG/debug header reserved.
 
 The board must not be released for fabrication until the package, padframe, pinout, ESD, and rail-current assumptions are replaced with foundry/package-specific data.
+
+Physical TH1520 reference-board procurement and validation are tracked in
+[`docs/board/th1520-procurement-test-plan.md`](../docs/board/th1520-procurement-test-plan.md).

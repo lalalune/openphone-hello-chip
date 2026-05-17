@@ -29,41 +29,86 @@ module hello_linux_soc_contract #(
     output logic                       cpu_external_irq,
     output logic [31:0]                irq_pending
 );
-    logic        dram_awvalid;
-    logic        dram_awready;
-    logic [31:0] dram_awaddr;
-    logic        dram_wvalid;
-    logic        dram_wready;
-    logic [31:0] dram_wdata;
-    logic [3:0]  dram_wstrb;
-    logic        dram_bvalid;
-    logic        dram_bready;
-    logic [1:0]  dram_bresp;
-    logic        dram_arvalid;
-    logic        dram_arready;
-    logic [31:0] dram_araddr;
-    logic        dram_rvalid;
-    logic        dram_rready;
-    logic [31:0] dram_rdata;
-    logic [1:0]  dram_rresp;
+    logic        cpu_mem_awvalid, cpu_mem_awready;
+    logic [31:0] cpu_mem_awaddr;
+    logic        cpu_mem_wvalid, cpu_mem_wready;
+    logic [31:0] cpu_mem_wdata;
+    logic [3:0]  cpu_mem_wstrb;
+    logic        cpu_mem_bvalid, cpu_mem_bready;
+    logic [1:0]  cpu_mem_bresp;
+    logic        cpu_mem_arvalid, cpu_mem_arready;
+    logic [31:0] cpu_mem_araddr;
+    logic        cpu_mem_rvalid, cpu_mem_rready;
+    logic [31:0] cpu_mem_rdata;
+    logic [1:0]  cpu_mem_rresp;
 
-    logic        intc_awvalid;
-    logic        intc_awready;
+    logic        dma_mmio_awvalid, dma_mmio_awready;
+    logic [31:0] dma_mmio_awaddr;
+    logic        dma_mmio_wvalid, dma_mmio_wready;
+    logic [31:0] dma_mmio_wdata;
+    logic [3:0]  dma_mmio_wstrb;
+    logic        dma_mmio_bvalid, dma_mmio_bready;
+    logic [1:0]  dma_mmio_bresp;
+    logic        dma_mmio_arvalid, dma_mmio_arready;
+    logic [31:0] dma_mmio_araddr;
+    logic        dma_mmio_rvalid, dma_mmio_rready;
+    logic [31:0] dma_mmio_rdata;
+    logic [1:0]  dma_mmio_rresp;
+
+    logic        dma_mem_awvalid, dma_mem_awready;
+    logic [31:0] dma_mem_awaddr;
+    logic        dma_mem_wvalid, dma_mem_wready;
+    logic [31:0] dma_mem_wdata;
+    logic [3:0]  dma_mem_wstrb;
+    logic        dma_mem_bvalid, dma_mem_bready;
+    logic [1:0]  dma_mem_bresp;
+    logic        dma_mem_arvalid, dma_mem_arready;
+    logic [31:0] dma_mem_araddr;
+    logic        dma_mem_rvalid, dma_mem_rready;
+    logic [31:0] dma_mem_rdata;
+    logic [1:0]  dma_mem_rresp;
+
+    logic        intc_awvalid, intc_awready;
     logic [31:0] intc_awaddr;
-    logic        intc_wvalid;
-    logic        intc_wready;
+    logic        intc_wvalid, intc_wready;
     logic [31:0] intc_wdata;
     logic [3:0]  intc_wstrb;
-    logic        intc_bvalid;
-    logic        intc_bready;
+    logic        intc_bvalid, intc_bready;
     logic [1:0]  intc_bresp;
-    logic        intc_arvalid;
-    logic        intc_arready;
+    logic        intc_arvalid, intc_arready;
     logic [31:0] intc_araddr;
-    logic        intc_rvalid;
-    logic        intc_rready;
+    logic        intc_rvalid, intc_rready;
     logic [31:0] intc_rdata;
     logic [1:0]  intc_rresp;
+
+    logic        dram_awvalid, dram_awready;
+    logic [31:0] dram_awaddr;
+    logic        dram_wvalid, dram_wready;
+    logic [31:0] dram_wdata;
+    logic [3:0]  dram_wstrb;
+    logic        dram_bvalid, dram_bready;
+    logic [1:0]  dram_bresp;
+    logic        dram_arvalid, dram_arready;
+    logic [31:0] dram_araddr;
+    logic        dram_rvalid, dram_rready;
+    logic [31:0] dram_rdata;
+    logic [1:0]  dram_rresp;
+    logic        wr_dma_owner, rd_dma_owner;
+    logic        wr_active, rd_active;
+    logic        dma_irq;
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic        unused_dma_mmio;
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    wire cpu_wr_req = cpu_mem_awvalid && cpu_mem_wvalid;
+    wire dma_wr_req = dma_mem_awvalid && dma_mem_wvalid;
+    wire grant_dma_wr = !cpu_wr_req && dma_wr_req;
+    wire cpu_rd_req = cpu_mem_arvalid;
+    wire dma_rd_req = dma_mem_arvalid;
+    wire grant_dma_rd = !cpu_rd_req && dma_rd_req;
+    assign unused_dma_mmio = ^{dma_mmio_awaddr[31:8], dma_mmio_awaddr[1:0],
+                               dma_mmio_wstrb,
+                               dma_mmio_araddr[31:8], dma_mmio_araddr[1:0]};
 
     hello_axi_lite_interconnect u_interconnect (
         .clk(clk),
@@ -85,23 +130,23 @@ module hello_linux_soc_contract #(
         .m_axil_rready(cpu_rready),
         .m_axil_rdata(cpu_rdata),
         .m_axil_rresp(cpu_rresp),
-        .dram_awvalid(dram_awvalid),
-        .dram_awready(dram_awready),
-        .dram_awaddr(dram_awaddr),
-        .dram_wvalid(dram_wvalid),
-        .dram_wready(dram_wready),
-        .dram_wdata(dram_wdata),
-        .dram_wstrb(dram_wstrb),
-        .dram_bvalid(dram_bvalid),
-        .dram_bready(dram_bready),
-        .dram_bresp(dram_bresp),
-        .dram_arvalid(dram_arvalid),
-        .dram_arready(dram_arready),
-        .dram_araddr(dram_araddr),
-        .dram_rvalid(dram_rvalid),
-        .dram_rready(dram_rready),
-        .dram_rdata(dram_rdata),
-        .dram_rresp(dram_rresp),
+        .dram_awvalid(cpu_mem_awvalid),
+        .dram_awready(cpu_mem_awready),
+        .dram_awaddr(cpu_mem_awaddr),
+        .dram_wvalid(cpu_mem_wvalid),
+        .dram_wready(cpu_mem_wready),
+        .dram_wdata(cpu_mem_wdata),
+        .dram_wstrb(cpu_mem_wstrb),
+        .dram_bvalid(cpu_mem_bvalid),
+        .dram_bready(cpu_mem_bready),
+        .dram_bresp(cpu_mem_bresp),
+        .dram_arvalid(cpu_mem_arvalid),
+        .dram_arready(cpu_mem_arready),
+        .dram_araddr(cpu_mem_araddr),
+        .dram_rvalid(cpu_mem_rvalid),
+        .dram_rready(cpu_mem_rready),
+        .dram_rdata(cpu_mem_rdata),
+        .dram_rresp(cpu_mem_rresp),
         .intc_awvalid(intc_awvalid),
         .intc_awready(intc_awready),
         .intc_awaddr(intc_awaddr),
@@ -118,8 +163,130 @@ module hello_linux_soc_contract #(
         .intc_rvalid(intc_rvalid),
         .intc_rready(intc_rready),
         .intc_rdata(intc_rdata),
-        .intc_rresp(intc_rresp)
+        .intc_rresp(intc_rresp),
+        .dma_awvalid(dma_mmio_awvalid),
+        .dma_awready(dma_mmio_awready),
+        .dma_awaddr(dma_mmio_awaddr),
+        .dma_wvalid(dma_mmio_wvalid),
+        .dma_wready(dma_mmio_wready),
+        .dma_wdata(dma_mmio_wdata),
+        .dma_wstrb(dma_mmio_wstrb),
+        .dma_bvalid(dma_mmio_bvalid),
+        .dma_bready(dma_mmio_bready),
+        .dma_bresp(dma_mmio_bresp),
+        .dma_arvalid(dma_mmio_arvalid),
+        .dma_arready(dma_mmio_arready),
+        .dma_araddr(dma_mmio_araddr),
+        .dma_rvalid(dma_mmio_rvalid),
+        .dma_rready(dma_mmio_rready),
+        .dma_rdata(dma_mmio_rdata),
+        .dma_rresp(dma_mmio_rresp)
     );
+
+    assign dram_awvalid = !wr_active && (grant_dma_wr ? dma_mem_awvalid : cpu_mem_awvalid);
+    assign dram_wvalid  = !wr_active && (grant_dma_wr ? dma_mem_wvalid  : cpu_mem_wvalid);
+    assign dram_awaddr  = grant_dma_wr ? (dma_mem_awaddr - 32'h8000_0000) : cpu_mem_awaddr;
+    assign dram_wdata   = grant_dma_wr ? dma_mem_wdata  : cpu_mem_wdata;
+    assign dram_wstrb   = grant_dma_wr ? dma_mem_wstrb  : cpu_mem_wstrb;
+    assign cpu_mem_awready = !wr_active && !grant_dma_wr && dram_awready && dram_wready;
+    assign cpu_mem_wready  = cpu_mem_awready;
+    assign dma_mem_awready = !wr_active && grant_dma_wr && dram_awready && dram_wready;
+    assign dma_mem_wready  = dma_mem_awready;
+    assign dram_bready = wr_dma_owner ? dma_mem_bready : cpu_mem_bready;
+    assign cpu_mem_bvalid = wr_active && !wr_dma_owner && dram_bvalid;
+    assign cpu_mem_bresp  = dram_bresp;
+    assign dma_mem_bvalid = wr_active && wr_dma_owner && dram_bvalid;
+    assign dma_mem_bresp  = dram_bresp;
+
+    assign dram_arvalid = !rd_active && (grant_dma_rd ? dma_mem_arvalid : cpu_mem_arvalid);
+    assign dram_araddr  = grant_dma_rd ? (dma_mem_araddr - 32'h8000_0000) : cpu_mem_araddr;
+    assign cpu_mem_arready = !rd_active && !grant_dma_rd && dram_arready;
+    assign dma_mem_arready = !rd_active && grant_dma_rd && dram_arready;
+    assign dram_rready = rd_dma_owner ? dma_mem_rready : cpu_mem_rready;
+    assign cpu_mem_rvalid = rd_active && !rd_dma_owner && dram_rvalid;
+    assign cpu_mem_rdata  = dram_rdata;
+    assign cpu_mem_rresp  = dram_rresp;
+    assign dma_mem_rvalid = rd_active && rd_dma_owner && dram_rvalid;
+    assign dma_mem_rdata  = dram_rdata;
+    assign dma_mem_rresp  = dram_rresp;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            wr_active <= 1'b0;
+            wr_dma_owner <= 1'b0;
+            rd_active <= 1'b0;
+            rd_dma_owner <= 1'b0;
+        end else begin
+            if (!wr_active && dram_awvalid && dram_awready && dram_wvalid && dram_wready) begin
+                wr_active <= 1'b1;
+                wr_dma_owner <= grant_dma_wr;
+            end else if (wr_active && dram_bvalid && dram_bready) begin
+                wr_active <= 1'b0;
+            end
+
+            if (!rd_active && dram_arvalid && dram_arready) begin
+                rd_active <= 1'b1;
+                rd_dma_owner <= grant_dma_rd;
+            end else if (rd_active && dram_rvalid && dram_rready) begin
+                rd_active <= 1'b0;
+            end
+        end
+    end
+
+    hello_dma u_dma (
+        .clk(clk),
+        .rst_n(rst_n),
+        .valid((dma_mmio_awvalid && dma_mmio_wvalid && dma_mmio_awready && dma_mmio_wready) ||
+               (dma_mmio_arvalid && dma_mmio_arready)),
+        .write(dma_mmio_awvalid && dma_mmio_wvalid),
+        .addr((dma_mmio_awvalid && dma_mmio_wvalid) ? dma_mmio_awaddr[7:2] : dma_mmio_araddr[7:2]),
+        .wdata(dma_mmio_wdata),
+        .rdata(dma_mmio_rdata),
+        .irq(dma_irq),
+        .m_axil_awvalid(dma_mem_awvalid),
+        .m_axil_awready(dma_mem_awready),
+        .m_axil_awaddr(dma_mem_awaddr),
+        .m_axil_wvalid(dma_mem_wvalid),
+        .m_axil_wready(dma_mem_wready),
+        .m_axil_wdata(dma_mem_wdata),
+        .m_axil_wstrb(dma_mem_wstrb),
+        .m_axil_bvalid(dma_mem_bvalid),
+        .m_axil_bready(dma_mem_bready),
+        .m_axil_bresp(dma_mem_bresp),
+        .m_axil_arvalid(dma_mem_arvalid),
+        .m_axil_arready(dma_mem_arready),
+        .m_axil_araddr(dma_mem_araddr),
+        .m_axil_rvalid(dma_mem_rvalid),
+        .m_axil_rready(dma_mem_rready),
+        .m_axil_rdata(dma_mem_rdata),
+        .m_axil_rresp(dma_mem_rresp)
+    );
+
+    assign dma_mmio_awready = !dma_mmio_bvalid;
+    assign dma_mmio_wready  = !dma_mmio_bvalid;
+    assign dma_mmio_bresp   = 2'b00;
+    assign dma_mmio_arready = !dma_mmio_rvalid;
+    assign dma_mmio_rresp   = 2'b00;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            dma_mmio_bvalid <= 1'b0;
+            dma_mmio_rvalid <= 1'b0;
+        end else begin
+            if (dma_mmio_bvalid && dma_mmio_bready) begin
+                dma_mmio_bvalid <= 1'b0;
+            end
+            if (dma_mmio_rvalid && dma_mmio_rready) begin
+                dma_mmio_rvalid <= 1'b0;
+            end
+            if (dma_mmio_awvalid && dma_mmio_awready && dma_mmio_wvalid && dma_mmio_wready) begin
+                dma_mmio_bvalid <= 1'b1;
+            end
+            if (dma_mmio_arvalid && dma_mmio_arready) begin
+                dma_mmio_rvalid <= 1'b1;
+            end
+        end
+    end
 
     hello_axi_lite_dram u_dram (
         .clk(clk),
@@ -148,7 +315,7 @@ module hello_linux_soc_contract #(
     ) u_interrupt_controller (
         .clk(clk),
         .rst_n(rst_n),
-        .irq_sources(irq_sources),
+        .irq_sources(irq_sources | {{(NUM_IRQ_SOURCES-1){1'b0}}, dma_irq}),
         .cpu_external_irq(cpu_external_irq),
         .pending_status(irq_pending),
         .s_axil_awvalid(intc_awvalid),

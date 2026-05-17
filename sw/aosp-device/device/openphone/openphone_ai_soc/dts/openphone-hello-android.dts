@@ -1,0 +1,48 @@
+/dts-v1/;
+
+/ {
+    compatible = "openphone,openphone-ai-soc", "openphone,hello-soc";
+    model = "OpenPhone hello AI SoC Android scaffold";
+    #address-cells = <2>;
+    #size-cells = <2>;
+
+    chosen {
+        stdout-path = "serial0:115200n8";
+        bootargs = "console=ttyS0 earlycon androidboot.hardware=openphone_ai_soc";
+    };
+
+    aliases {
+        serial0 = &uart0;
+    };
+
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0x0 0x80000000 0x0 0x40000000>;
+    };
+
+    uart0: serial@10000000 {
+        compatible = "ns16550a";
+        reg = <0x0 0x10000000 0x0 0x100>;
+        clock-frequency = <50000000>;
+        current-speed = <115200>;
+        status = "okay";
+    };
+
+    dma@10010000 {
+        compatible = "openphone,hello-dma";
+        reg = <0x0 0x10010000 0x0 0x1000>;
+        status = "disabled";
+    };
+
+    npu@10020000 {
+        compatible = "openphone,hello-npu";
+        reg = <0x0 0x10020000 0x0 0x1000>;
+        status = "disabled";
+    };
+
+    display@10030000 {
+        compatible = "openphone,hello-display";
+        reg = <0x0 0x10030000 0x0 0x1000>;
+        status = "disabled";
+    };
+};

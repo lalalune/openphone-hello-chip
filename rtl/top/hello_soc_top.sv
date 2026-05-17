@@ -21,6 +21,15 @@ module hello_soc_top (
     logic [31:0] npu_rdata;
     logic [31:0] display_rdata;
     logic [31:0] periph_rdata;
+    logic dma_m_awvalid;
+    logic [31:0] dma_m_awaddr;
+    logic dma_m_wvalid;
+    logic [31:0] dma_m_wdata;
+    logic [3:0] dma_m_wstrb;
+    logic dma_m_bready;
+    logic dma_m_arvalid;
+    logic [31:0] dma_m_araddr;
+    logic dma_m_rready;
     logic display_scan_hsync;
     logic display_scan_vsync;
     logic display_scan_active;
@@ -28,6 +37,8 @@ module hello_soc_top (
     logic [15:0] display_scan_y;
     logic [31:0] display_scan_fb_addr;
     logic [23:0] display_scan_rgb;
+    logic display_fb_read_valid;
+    logic [31:0] display_fb_read_addr;
 
     logic bootrom_sel;
     logic dma_sel;
@@ -54,7 +65,21 @@ module hello_soc_top (
         display_scan_x,
         display_scan_y,
         display_scan_fb_addr,
-        display_scan_rgb
+        display_scan_rgb,
+        display_fb_read_valid,
+        display_fb_read_addr
+    };
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic unused_dma_write_payload;
+    assign unused_dma_write_payload = ^{
+        dma_m_awvalid,
+        dma_m_awaddr,
+        dma_m_wvalid,
+        dma_m_wdata,
+        dma_m_wstrb,
+        dma_m_arvalid
     };
     /* verilator lint_on UNUSEDSIGNAL */
 
@@ -83,7 +108,24 @@ module hello_soc_top (
         .addr(mmio_addr[7:2]),
         .wdata(mmio_wdata),
         .rdata(dma_rdata),
-        .irq(irq_dma)
+        .irq(irq_dma),
+        .m_axil_awvalid(dma_m_awvalid),
+        .m_axil_awready(1'b1),
+        .m_axil_awaddr(dma_m_awaddr),
+        .m_axil_wvalid(dma_m_wvalid),
+        .m_axil_wready(1'b1),
+        .m_axil_wdata(dma_m_wdata),
+        .m_axil_wstrb(dma_m_wstrb),
+        .m_axil_bvalid(dma_m_bready),
+        .m_axil_bready(dma_m_bready),
+        .m_axil_bresp(2'b00),
+        .m_axil_arvalid(dma_m_arvalid),
+        .m_axil_arready(1'b1),
+        .m_axil_araddr(dma_m_araddr),
+        .m_axil_rvalid(dma_m_rready),
+        .m_axil_rready(dma_m_rready),
+        .m_axil_rdata(dma_m_araddr ^ 32'hA5A5_0000),
+        .m_axil_rresp(2'b00)
     );
 
     hello_npu u_npu (
@@ -112,7 +154,11 @@ module hello_soc_top (
         .scan_x(display_scan_x),
         .scan_y(display_scan_y),
         .scan_fb_addr(display_scan_fb_addr),
-        .scan_rgb(display_scan_rgb)
+        .scan_rgb(display_scan_rgb),
+        .fb_read_valid(display_fb_read_valid),
+        .fb_read_addr(display_fb_read_addr),
+        .fb_read_data(32'h0),
+        .fb_read_ready(1'b1)
     );
 
     always_comb begin

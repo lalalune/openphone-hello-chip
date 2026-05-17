@@ -18,7 +18,8 @@ VERILOG_SOURCES := \
 	$(REPO)/rtl/interconnect/hello_axi_lite_interconnect.sv \
 	$(REPO)/rtl/memory/hello_axi_lite_dram.sv \
 	$(REPO)/rtl/interrupts/hello_interrupt_controller.sv \
-	$(REPO)/rtl/interconnect/hello_linux_soc_contract.sv
+	$(REPO)/rtl/interconnect/hello_linux_soc_contract.sv \
+	$(REPO)/verify/cocotb/hello_tiny_cpu_contract_tb.sv
 
 TOPLEVEL ?= hello_chip_top
 MODULE ?= test_hello_chip

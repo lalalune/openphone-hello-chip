@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <!--
+    Local-manifest seed for AOSP repo workspaces that mirror this repository.
+    Set the remote fetch URL to the parent location of this repo before use, or
+    use sw/aosp-device/import-aosp-device.sh for a plain local checkout.
+  -->
+  <remote name="openphone-local" fetch="file:///Users/shawwalters/Desktop" />
+  <project name="npu_experiment"
+           path="external/openphone-ai-soc"
+           remote="openphone-local"
+           revision="HEAD">
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk"
+              dest="device/openphone/openphone_ai_soc/AndroidProducts.mk" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk"
+              dest="device/openphone/openphone_ai_soc/BoardConfig.mk" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/device.mk"
+              dest="device/openphone/openphone_ai_soc/device.mk" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk"
+              dest="device/openphone/openphone_ai_soc/openphone_ai_soc.mk" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc"
+              dest="device/openphone/openphone_ai_soc/init.openphone.rc" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone"
+              dest="device/openphone/openphone_ai_soc/fstab.openphone" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml"
+              dest="device/openphone/openphone_ai_soc/manifest.xml" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment"
+              dest="device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts"
+              dest="device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts"
+              dest="device/openphone/openphone_ai_soc/sepolicy/file_contexts" />
+    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te"
+              dest="device/openphone/openphone_ai_soc/sepolicy/hello_npu.te" />
+  </project>
+</manifest>

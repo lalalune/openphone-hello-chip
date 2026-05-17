@@ -1,9 +1,9 @@
 [options]
 mode bmc
-depth 12
+depth 8
 
 [engines]
-smtbmc
+smtbmc z3
 
 [script]
 read -formal hello_npu.sv hello_npu_formal.sv

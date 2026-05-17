@@ -3,7 +3,7 @@
  * Minimal OpenPhone hello NPU Linux driver source.
  *
  * Import this file into an external Linux tree before building. The checked-in
- * repository only owns the platform contract and BSP source skeleton.
+ * repository only owns the platform contract and BSP source scaffold.
  */
 
 #include <linux/fs.h>
