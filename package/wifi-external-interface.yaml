@@ -1,0 +1,56 @@
+interface: wifi_external_module
+status: product_scaffold_not_bonded_in_hello_chip
+io_voltage: 1.8V
+module_boundary: external_wifi_bluetooth_combo
+regulatory_boundary: module_and_board
+integration_state:
+  rtl_host_controller: not_implemented
+  padframe_bonding: not_bonded_in_hello_chip
+  firmware_driver: not_implemented
+  rf_certification: module_and_board_responsibility
+groups:
+  sdio:
+    mode: sdr25_initial
+    signals:
+      - {name: WIFI_SDIO_CLK, direction: output, reset: low, pull: none}
+      - {name: WIFI_SDIO_CMD, direction: bidirectional, reset: input, pull: up}
+      - {name: WIFI_SDIO_D0, direction: bidirectional, reset: input, pull: up}
+      - {name: WIFI_SDIO_D1, direction: bidirectional, reset: input, pull: up}
+      - {name: WIFI_SDIO_D2, direction: bidirectional, reset: input, pull: up}
+      - {name: WIFI_SDIO_D3, direction: bidirectional, reset: input, pull: up}
+  control:
+    signals:
+      - {name: WIFI_EN, direction: output, reset: low, pull: down}
+      - {name: WIFI_RST_N, direction: output, reset: low, pull: down}
+  wake_irq:
+    signals:
+      - {name: WIFI_HOST_WAKE, direction: input, reset: input, pull: down}
+      - {name: WIFI_IRQ, direction: input, reset: input, pull: down}
+  bluetooth_uart:
+    signals:
+      - {name: BT_UART_TX, direction: output, reset: high, pull: none}
+      - {name: BT_UART_RX, direction: input, reset: input, pull: up}
+      - {name: BT_UART_CTS_N, direction: input, reset: input, pull: up}
+      - {name: BT_UART_RTS_N, direction: output, reset: high, pull: none}
+  bluetooth_pcm:
+    optional: true
+    signals:
+      - {name: BT_PCM_CLK, direction: bidirectional, reset: input, pull: down}
+      - {name: BT_PCM_SYNC, direction: bidirectional, reset: input, pull: down}
+      - {name: BT_PCM_DIN, direction: input, reset: input, pull: down}
+      - {name: BT_PCM_DOUT, direction: output, reset: low, pull: none}
+  coexistence:
+    optional: true
+    signals:
+      - {name: WIFI_COEX_REQ, direction: input, reset: input, pull: down}
+      - {name: WIFI_COEX_GRANT, direction: output, reset: low, pull: none}
+      - {name: WIFI_COEX_PRI, direction: input, reset: input, pull: down}
+board_requirements:
+  - External module handles RF and regulatory-critical analog design.
+  - Board provides module power rails, antenna path, shielding, and RF keepouts.
+  - Host reset defaults keep radios disabled until firmware configures them.
+maturity_gates_before_product_claim:
+  - Select a concrete WiFi/Bluetooth combo module and bind this contract to its datasheet pins.
+  - Add an SDIO host controller and Bluetooth UART/PCM ownership in RTL or platform integration.
+  - Bond the required pins in the product padframe and verify package, board, and RTL names match.
+  - Add firmware and OS driver bring-up tests for reset sequencing, SDIO enumeration, IRQ, and wake.

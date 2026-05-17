@@ -1,0 +1,208 @@
+{
+  "contract": {
+    "name": "openphone-hello-platform",
+    "version": 1,
+    "byte_order": "little",
+    "source_of_truth": "sw/platform/hello_platform_contract.json"
+  },
+  "hello_chip": {
+    "target_kind": "hardware_abi",
+    "has_cpu": false,
+    "bus_master": "package_debug_nibble_bridge",
+    "debug_transport": {
+      "address_nibbles": 8,
+      "data_nibbles": 8,
+      "launch_signal": "DBG_LAUNCH",
+      "ready_signal": "DBG_READY"
+    },
+    "unmapped_read_value": "0xDEADBEEF",
+    "implemented_window_bytes": 256,
+    "word_bytes": 4,
+    "boot_rom": {
+      "base": "0x00000000",
+      "size": "0x00001000",
+      "words": [
+        {
+          "offset": "0x00",
+          "name": "magic0",
+          "value": "0x4F50534F"
+        },
+        {
+          "offset": "0x04",
+          "name": "magic1",
+          "value": "0x43484950"
+        },
+        {
+          "offset": "0x08",
+          "name": "contract_version",
+          "value": "0x00000001"
+        },
+        {
+          "offset": "0x0C",
+          "name": "boot_vector_placeholder",
+          "value": "0x00001000"
+        }
+      ]
+    },
+    "regions": [
+      {
+        "name": "boot_rom",
+        "base": "0x00000000",
+        "size": "0x00001000"
+      },
+      {
+        "name": "peripheral_control",
+        "base": "0x10000000",
+        "size": "0x00001000",
+        "registers": [
+          {
+            "offset": "0x00",
+            "name": "ID",
+            "access": "RO",
+            "reset": "0x10000001"
+          },
+          {
+            "offset": "0x04",
+            "name": "SCRATCH",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x08",
+            "name": "GPIO_OUT",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x0C",
+            "name": "TIMER_COUNT",
+            "access": "RO"
+          },
+          {
+            "offset": "0x10",
+            "name": "TIMER_COMPARE",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x14",
+            "name": "TIMER_IRQ",
+            "access": "RO"
+          }
+        ]
+      },
+      {
+        "name": "dma",
+        "base": "0x10010000",
+        "size": "0x00001000",
+        "registers": [
+          {
+            "offset": "0x00",
+            "name": "SRC",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x04",
+            "name": "DST",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x08",
+            "name": "LEN",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x0C",
+            "name": "CTRL_STATUS",
+            "access": "RW",
+            "reset": "0x00000000"
+          }
+        ]
+      },
+      {
+        "name": "npu",
+        "base": "0x10020000",
+        "size": "0x00001000",
+        "registers": [
+          {
+            "offset": "0x00",
+            "name": "OP_A",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x04",
+            "name": "OP_B",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x08",
+            "name": "RESULT",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x0C",
+            "name": "CTRL_STATUS",
+            "access": "RW",
+            "reset": "0x00000000"
+          }
+        ]
+      },
+      {
+        "name": "display",
+        "base": "0x10030000",
+        "size": "0x00001000",
+        "registers": [
+          {
+            "offset": "0x00",
+            "name": "FB_BASE",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x04",
+            "name": "MODE",
+            "access": "RW",
+            "reset": "0x01E00280"
+          },
+          {
+            "offset": "0x08",
+            "name": "FORMAT",
+            "access": "RW",
+            "reset": "0x34325258"
+          },
+          {
+            "offset": "0x0C",
+            "name": "ENABLE",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x10",
+            "name": "VSYNC",
+            "access": "RO"
+          }
+        ]
+      }
+    ],
+    "interrupts": [
+      "IRQ_TIMER",
+      "IRQ_DMA",
+      "IRQ_NPU",
+      "IRQ_VSYNC"
+    ]
+  },
+  "qemu_virt": {
+    "target_kind": "software_reference_only",
+    "machine": "virt",
+    "isa": "rv64gc",
+    "load_address": "0x80000000",
+    "uart_base": "0x10000000",
+    "abi_note": "This is a QEMU/Renode software bring-up target. Its UART and CPU are not the hello-chip hardware ABI."
+  }
+}

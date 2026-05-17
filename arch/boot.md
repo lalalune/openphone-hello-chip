@@ -11,7 +11,11 @@ The hello chip boot ROM is an identity ROM used by simulation and synthesis chec
 0x0000_000C = boot vector placeholder
 ```
 
-No CPU is integrated in the hello chip. Testbenches act as the bus master.
+No CPU is integrated in the hello chip. Testbenches and board smoke tools act as the bus master through the package debug nibble bridge. The machine-readable software contract is `sw/platform/hello_platform_contract.json`; generated software constants live in `sw/platform/generated/hello_platform_contract.h`.
+
+The CPU subsystem stub is intentionally halted and non-booting. It exports reset PC and hart ID parameters and a quiescent AXI-Lite manager port so integration can validate the SoC boundary before selecting or building a real RV64GC core.
+
+QEMU and Renode do not model this ABI yet. They are qemu-virt software reference targets for early firmware scaffolding, with their own CPU, RAM, and UART contract.
 
 ## Full SoC target
 

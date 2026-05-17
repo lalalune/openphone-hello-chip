@@ -1,0 +1,21 @@
+# Linux config fragment for the OpenPhone hello Buildroot target.
+#
+# Apply this to an external Linux tree that has imported the checked-in BSP
+# sources under sw/linux. It enables enough interfaces for the smoke test to
+# probe HELLO_NPU_BASE, HELLO_DMA_BASE, and HELLO_DISPLAY_BASE through device
+# tree-described MMIO nodes.
+CONFIG_64BIT=y
+CONFIG_RISCV=y
+CONFIG_OF=y
+CONFIG_OF_OVERLAY=y
+CONFIG_DEVTMPFS=y
+CONFIG_DEVTMPFS_MOUNT=y
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+CONFIG_VT=y
+CONFIG_FB=y
+CONFIG_FRAMEBUFFER_CONSOLE=y
+CONFIG_UIO=y
+CONFIG_UIO_PDRV_GENIRQ=y
+CONFIG_OPENPHONE_HELLO_NPU=m
+CONFIG_OPENPHONE_HELLO_DMA=m

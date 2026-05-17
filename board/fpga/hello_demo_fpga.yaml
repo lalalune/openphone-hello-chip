@@ -1,0 +1,44 @@
+target: hello_demo_fpga
+status: scaffold
+rtl_top: hello_chip_top
+family: ecp5
+flow:
+  synth: yosys
+  place_route: nextpnr-ecp5
+  pack: ecppack
+board:
+  class: ulx3s_style
+  exact_revision: unassigned
+clock:
+  port: CLK_IN
+  nominal_frequency_hz: 25000000
+  constraint_required: true
+reset:
+  port: RST_N
+  active_level: low
+debug_bridge:
+  required_ports:
+    - DBG_VALID
+    - DBG_LAUNCH
+    - DBG_WRITE
+    - DBG_ADDR
+    - DBG_WDATA
+    - DBG_RDATA
+    - DBG_READY
+external_outputs:
+  gpio_port: GPIO
+  irq_ports:
+    - IRQ_TIMER
+    - IRQ_DMA
+    - IRQ_NPU
+    - IRQ_VSYNC
+reserved_inputs:
+  - TEST_MODE
+  - JTAG_TCK
+  - JTAG_TMS
+  - JTAG_TDI
+reserved_outputs:
+  - JTAG_TDO
+constraints:
+  skeleton_lpf: board/fpga/constraints/hello_demo_ulx3s.lpf
+  bitstream_release_blocked_until_pins_assigned: true

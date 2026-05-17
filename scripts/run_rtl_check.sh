@@ -20,6 +20,11 @@ rtl/peripherals/hello_peripherals.sv
 rtl/dma/hello_dma.sv
 rtl/npu/hello_npu.sv
 rtl/display/hello_display.sv
+rtl/cpu/hello_cpu_subsystem_stub.sv
+rtl/interconnect/hello_axi_lite_interconnect.sv
+rtl/memory/hello_axi_lite_dram.sv
+rtl/interrupts/hello_interrupt_controller.sv
+rtl/interconnect/hello_linux_soc_contract.sv
 "
 
 if command -v verilator >/dev/null 2>&1; then

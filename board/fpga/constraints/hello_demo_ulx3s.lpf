@@ -1,0 +1,30 @@
+# Hello demo ULX3S-style ECP5 constraint skeleton.
+#
+# This file is deliberately not sufficient for bitstream release. Assign
+# concrete package pins only after selecting the exact board revision.
+#
+# Required logical ports:
+#   CLK_IN
+#   RST_N
+#   DBG_VALID
+#   DBG_LAUNCH
+#   DBG_WRITE
+#   DBG_ADDR[3:0]
+#   DBG_WDATA[3:0]
+#   DBG_RDATA[3:0]
+#   DBG_READY
+#   IRQ_TIMER
+#   IRQ_DMA
+#   IRQ_NPU
+#   IRQ_VSYNC
+#   GPIO[7:0]
+#   TEST_MODE
+#   JTAG_TCK
+#   JTAG_TMS
+#   JTAG_TDI
+#   JTAG_TDO
+#
+# Example syntax for finalization:
+#   LOCATE COMP "CLK_IN" SITE "G2";
+#   IOBUF PORT "CLK_IN" IO_TYPE=LVCMOS33;
+#   FREQUENCY PORT "CLK_IN" 25 MHz;

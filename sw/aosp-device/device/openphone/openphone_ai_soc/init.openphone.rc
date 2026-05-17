@@ -1,0 +1,15 @@
+# Init skeleton for the OpenPhone hello AOSP target.
+# External AOSP integration must provide the hello_npu HAL binary.
+
+on post-fs
+    mkdir /dev/hello 0755 system system
+
+service vendor.hello_npu /vendor/bin/hw/hello_npu.default
+    class hal
+    user system
+    group system graphics
+    disabled
+    oneshot
+
+on property:vendor.hello_npu.ready=1
+    start vendor.hello_npu

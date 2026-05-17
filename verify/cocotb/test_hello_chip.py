@@ -61,6 +61,14 @@ async def read32(dut, addr):
     return value
 
 
+async def poll_done(dut, addr, cycles=160):
+    for _ in range(cycles):
+        status = await read32(dut, addr)
+        if status & 0x2:
+            return status
+    raise AssertionError(f"timeout waiting for done at 0x{addr:08x}")
+
+
 @cocotb.test()
 async def chip_debug_bridge_bootrom_gpio_npu(dut):
     cocotb.start_soon(Clock(dut.CLK_IN, 10, units="ns").start())
@@ -76,9 +84,39 @@ async def chip_debug_bridge_bootrom_gpio_npu(dut):
     await write32(dut, 0x1002_0000, 17)
     await write32(dut, 0x1002_0004, 25)
     await write32(dut, 0x1002_000C, 1)
-    for _ in range(4):
-        await RisingEdge(dut.CLK_IN)
+    assert await poll_done(dut, 0x1002_000C) == 0x2
     assert await read32(dut, 0x1002_0008) == 42
+    assert int(dut.IRQ_NPU.value) == 1
+
+    await write32(dut, 0x1002_000C, 2)
+    await write32(dut, 0x1002_0000, 0x04FD_0201)
+    await write32(dut, 0x1002_0004, 0x0807_FA05)
+    await write32(dut, 0x1002_0014, 10)
+    await write32(dut, 0x1002_0010, 4)
+    assert await read32(dut, 0x1002_0000) == 0x04FD_0201
+    assert await read32(dut, 0x1002_0004) == 0x0807_FA05
+    assert await read32(dut, 0x1002_0014) == 10
+    assert await read32(dut, 0x1002_0010) == 4
+    await write32(dut, 0x1002_000C, 1)
+    assert await poll_done(dut, 0x1002_000C) == 0x2
+    assert await read32(dut, 0x1002_0008) == 14
+    assert await read32(dut, 0x1002_0018) == 0
+
+    await write32(dut, 0x1002_000C, 2)
+    await write32(dut, 0x1002_0000, 0xFFFF_FFFF)
+    await write32(dut, 0x1002_0004, 2)
+    await write32(dut, 0x1002_0010, 2)
+    assert await read32(dut, 0x1002_0010) == 2
+    await write32(dut, 0x1002_000C, 1)
+    assert await poll_done(dut, 0x1002_000C) == 0x2
+    assert await read32(dut, 0x1002_0008) == 0xFFFF_FFFE
+    assert await read32(dut, 0x1002_0018) == 1
+
+    await write32(dut, 0x1002_000C, 2)
+    await write32(dut, 0x1002_0010, 0xF)
+    assert await read32(dut, 0x1002_0010) == 0xF
+    await write32(dut, 0x1002_000C, 1)
+    assert await poll_done(dut, 0x1002_000C) == 0x6
     assert int(dut.IRQ_NPU.value) == 1
 
 
@@ -94,13 +132,36 @@ async def chip_interrupt_smoke(dut):
 
     await write32(dut, 0x1001_0008, 64)
     await write32(dut, 0x1001_000C, 1)
-    for _ in range(6):
-        await RisingEdge(dut.CLK_IN)
+    assert await poll_done(dut, 0x1001_000C) == 0x2
     assert int(dut.IRQ_DMA.value) == 1
+    assert await read32(dut, 0x1001_0014) == 64
+    assert await read32(dut, 0x1001_0018) == 16
 
+    await write32(dut, 0x1001_000C, 2)
+    await write32(dut, 0x1001_0000, 0x3001)
+    await write32(dut, 0x1001_0004, 0x4000)
+    await write32(dut, 0x1001_0008, 10)
+    await write32(dut, 0x1001_000C, 1)
+    assert await poll_done(dut, 0x1001_000C) == 0x6
+    assert await read32(dut, 0x1001_0014) == 0
+    assert await read32(dut, 0x1001_0018) == 0
+
+    await write32(dut, 0x1001_000C, 2)
+    await write32(dut, 0x1001_0000, 0x3000)
+    await write32(dut, 0x1001_0004, 0x4000)
+    await write32(dut, 0x1001_0008, 10)
+    await write32(dut, 0x1001_000C, 1)
+    assert await poll_done(dut, 0x1001_000C) == 0x2
+    assert await read32(dut, 0x1001_0014) == 10
+    assert await read32(dut, 0x1001_0018) == 3
+    assert await read32(dut, 0x1001_0024) == 0x3008
+    assert await read32(dut, 0x1001_0028) == 0x4008
+    assert (await read32(dut, 0x1001_002C)) & 0x3C0 == 0x0C0
+
+    await write32(dut, 0x1003_0004, (3 << 16) | 4)
     await write32(dut, 0x1003_000C, 1)
     seen = False
-    for _ in range(260):
+    for _ in range((4 + 16 + 96 + 48) * (3 + 10) + 4):
         await RisingEdge(dut.CLK_IN)
         seen = seen or int(dut.IRQ_VSYNC.value) == 1
     assert seen

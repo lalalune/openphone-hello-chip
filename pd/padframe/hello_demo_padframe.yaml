@@ -1,0 +1,53 @@
+padframe: hello_demo_padframe
+status: contract_scaffold
+package_pinout: package/hello-demo-pinout.yaml
+rtl_top: rtl/top/hello_chip_top.sv
+pin_order: pd/pin_order.cfg
+package_pins: 64
+voltage_domains:
+  io:
+    voltage: 3.3V
+    min_power_pads: 5
+    min_ground_pads: 5
+  core:
+    voltage: 1.8V
+    min_power_pads: 4
+    min_ground_pads: 4
+allowed:
+  directions: [input, output, bidirectional, power, ground, nc]
+  voltage_domains: [io, core, none]
+  pad_types:
+    - clock
+    - schmitt_input
+    - digital_input
+    - digital_output
+    - bidirectional
+    - power
+    - ground
+    - no_connect
+  pulls: [none, up, down]
+required_pins:
+  - CLK_IN
+  - RST_N
+  - DBG_VALID
+  - DBG_LAUNCH
+  - DBG_WRITE
+  - DBG_ADDR
+  - DBG_WDATA
+  - DBG_RDATA
+  - DBG_READY
+  - IRQ_TIMER
+  - IRQ_DMA
+  - IRQ_NPU
+  - IRQ_VSYNC
+  - GPIO
+  - TEST_MODE
+  - JTAG_TCK
+  - JTAG_TMS
+  - JTAG_TDI
+  - JTAG_TDO
+fabrication_blockers:
+  - Replace placeholder package with shuttle/package/bonding document.
+  - Instantiate foundry IO, power, ground, corner, and ESD pad cells.
+  - Run padframe-inclusive LVS and DRC.
+  - Archive clean signoff artifacts through pd/signoff/manifest.yaml.

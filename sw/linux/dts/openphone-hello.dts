@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause
+/*
+ * Minimal OpenPhone hello device tree source.
+ *
+ * This is a source artifact for an external Linux tree. It exposes the MMIO
+ * contract from sw/platform/hello_platform_contract.json; it does not claim
+ * that an upstream kernel platform or full SoC CPU integration exists.
+ */
+
+/dts-v1/;
+
+/ {
+	compatible = "openphone,hello-board", "openphone,hello";
+	model = "OpenPhone hello software BSP";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	chosen {
+		bootargs = "console=ttyS0 earlycon";
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		hello_dma: dma@10010000 {
+			compatible = "openphone,hello-dma";
+			reg = <0x0 0x10010000 0x0 0x1000>;
+			interrupt-names = "IRQ_DMA";
+			/* HELLO_DMA_BASE */
+		};
+
+		hello_npu: npu@10020000 {
+			compatible = "openphone,hello-npu";
+			reg = <0x0 0x10020000 0x0 0x1000>;
+			interrupt-names = "IRQ_NPU";
+			/* HELLO_NPU_BASE */
+		};
+
+		hello_display: display@10030000 {
+			compatible = "openphone,hello-display";
+			reg = <0x0 0x10030000 0x0 0x1000>;
+			interrupt-names = "IRQ_VSYNC";
+			/* HELLO_DISPLAY_BASE */
+		};
+	};
+};

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  VINTF skeleton for an external AOSP tree. The hello_npu HAL and hwcomposer
+  service names reserve the platform integration points for openphone_ai_soc.
+-->
+<manifest version="1.0" type="device">
+    <hal format="hidl">
+        <name>android.hardware.graphics.composer</name>
+        <transport>hwbinder</transport>
+        <version>2.4</version>
+        <interface>
+            <name>IComposer</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl">
+        <name>vendor.openphone.hello_npu</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IHelloNpu</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</manifest>

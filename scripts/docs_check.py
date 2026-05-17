@@ -6,7 +6,15 @@ required = [
     "arch/interrupts.md",
     "arch/boot.md",
     "arch/android-contract.md",
+    "arch/peripherals.md",
+    "arch/wifi.md",
+    "board/fpga/README.md",
+    "sim/qemu/README.md",
+    "sim/renode/README.md",
+    "sw/platform/hello_platform_contract.json",
+    "sw/platform/generated/hello_platform_contract.h",
     "docs/tapeout-checklist/hello-chip.md",
+    "docs/toolchain/README.md",
 ]
 
 missing = [p for p in required if not Path(p).exists()]

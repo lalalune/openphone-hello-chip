@@ -1,0 +1,68 @@
+signoff: hello_chip_top_pd
+status: required_for_pd_release
+run_roots:
+  - pd/openlane/runs
+  - runs
+required_artifacts:
+  gds:
+    min_bytes: 128
+    globs:
+      - "pd/openlane/runs/*/final/gds/*.gds"
+      - "runs/*/final/gds/*.gds"
+  def:
+    min_bytes: 128
+    globs:
+      - "pd/openlane/runs/*/final/def/*.def"
+      - "runs/*/final/def/*.def"
+  gate_netlist:
+    min_bytes: 128
+    globs:
+      - "pd/openlane/runs/*/final/verilog/gl/*.v"
+      - "runs/*/final/verilog/gl/*.v"
+  sdc:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/final/sdc/*.sdc"
+      - "runs/*/final/sdc/*.sdc"
+  drc_report:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/final/drc/*.rpt"
+      - "pd/openlane/runs/*/reports/signoff/*drc*.rpt"
+      - "runs/*/final/drc/*.rpt"
+      - "runs/*/reports/signoff/*drc*.rpt"
+    fail_regex: "(?i)(\\bfail\\b|violations?\\s*[:=]\\s*[1-9][0-9]*)"
+    pass_regex: "(?i)(\\b0\\s+(drc\\s+)?violations?\\b|violations?\\s*[:=]\\s*0|\\bclean\\b|\\bpass(?:ed)?\\b)"
+  lvs_report:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/final/lvs/*.rpt"
+      - "pd/openlane/runs/*/reports/signoff/*lvs*.rpt"
+      - "runs/*/final/lvs/*.rpt"
+      - "runs/*/reports/signoff/*lvs*.rpt"
+    fail_regex: "(?i)(\\bfail\\b|netlists?\\s+do\\s+not\\s+match|mismatch)"
+    pass_regex: "(?i)(netlists?\\s+match|circuits?\\s+match|lvs\\s+(clean|pass(?:ed)?))"
+  antenna_report:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/final/antenna/*.rpt"
+      - "pd/openlane/runs/*/reports/signoff/*antenna*.rpt"
+      - "runs/*/final/antenna/*.rpt"
+      - "runs/*/reports/signoff/*antenna*.rpt"
+    fail_regex: "(?i)(\\bfail\\b|violations?\\s*[:=]\\s*[1-9][0-9]*)"
+    pass_regex: "(?i)(\\b0\\s+antenna\\s+violations?\\b|violations?\\s*[:=]\\s*0|\\bclean\\b|\\bpass(?:ed)?\\b)"
+  sta_report:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/final/sta/*.rpt"
+      - "pd/openlane/runs/*/reports/signoff/*sta*.rpt"
+      - "runs/*/final/sta/*.rpt"
+      - "runs/*/reports/signoff/*sta*.rpt"
+    fail_regex: "(?i)(\\bslack\\s*[-:]\\s*-[0-9]|wns\\s*[:=]\\s*-[0-9])"
+    pass_regex: "(?i)(wns\\s*[:=]\\s*[+]?(0|[1-9][0-9]*)(\\.[0-9]+)?|no\\s+timing\\s+violations|timing\\s+(clean|pass(?:ed)?))"
+waivers:
+  required_if_any_report_dirty: true
+  globs:
+    - "pd/signoff/waivers/*.yaml"
+    - "pd/openlane/runs/*/signoff-waivers.yaml"
+    - "runs/*/signoff-waivers.yaml"

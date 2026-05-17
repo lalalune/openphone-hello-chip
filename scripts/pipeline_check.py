@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 
@@ -35,8 +36,10 @@ def main() -> int:
     cocotb = (root / "verify/cocotb/results.xml").read_text(errors="ignore")
     failures = sum(int(value) for value in re.findall(r'failures="(\d+)"', cocotb))
     errors = sum(int(value) for value in re.findall(r'errors="(\d+)"', cocotb))
+    failure_elements = len(re.findall(r"<failure\b", cocotb))
+    error_elements = len(re.findall(r"<error\b", cocotb))
     testcases = re.findall(r"<testcase\b", cocotb)
-    if failures or errors or not testcases:
+    if failures or errors or failure_elements or error_elements or not testcases:
         print("cocotb results.xml is missing a passing non-empty result.")
         return 1
 
@@ -56,6 +59,9 @@ def main() -> int:
     if not (has_yosys_fallback or has_sby_pass):
         print("No complete formal evidence found.")
         return 1
+
+    if sys.argv[1:] == ["--require-pd-signoff"]:
+        subprocess.run([sys.executable, "scripts/check_pd_signoff.py"], cwd=root, check=True)
 
     print("Pipeline artifact check passed.")
     return 0

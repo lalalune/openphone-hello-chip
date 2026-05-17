@@ -21,6 +21,13 @@ module hello_soc_top (
     logic [31:0] npu_rdata;
     logic [31:0] display_rdata;
     logic [31:0] periph_rdata;
+    logic display_scan_hsync;
+    logic display_scan_vsync;
+    logic display_scan_active;
+    logic [15:0] display_scan_x;
+    logic [15:0] display_scan_y;
+    logic [31:0] display_scan_fb_addr;
+    logic [23:0] display_scan_rgb;
 
     logic bootrom_sel;
     logic dma_sel;
@@ -37,6 +44,19 @@ module hello_soc_top (
     assign dma_sel     = implemented_window && mmio_addr[31:12] == 20'h1001_0;
     assign npu_sel     = implemented_window && mmio_addr[31:12] == 20'h1002_0;
     assign display_sel = implemented_window && mmio_addr[31:12] == 20'h1003_0;
+
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic unused_display_scanout;
+    assign unused_display_scanout = ^{
+        display_scan_hsync,
+        display_scan_vsync,
+        display_scan_active,
+        display_scan_x,
+        display_scan_y,
+        display_scan_fb_addr,
+        display_scan_rgb
+    };
+    /* verilator lint_on UNUSEDSIGNAL */
 
     hello_bootrom u_bootrom (
         .addr(mmio_addr[7:2]),
@@ -85,7 +105,14 @@ module hello_soc_top (
         .addr(mmio_addr[7:2]),
         .wdata(mmio_wdata),
         .rdata(display_rdata),
-        .irq_vsync(irq_vsync)
+        .irq_vsync(irq_vsync),
+        .scan_hsync(display_scan_hsync),
+        .scan_vsync(display_scan_vsync),
+        .scan_active(display_scan_active),
+        .scan_x(display_scan_x),
+        .scan_y(display_scan_y),
+        .scan_fb_addr(display_scan_fb_addr),
+        .scan_rgb(display_scan_rgb)
     );
 
     always_comb begin

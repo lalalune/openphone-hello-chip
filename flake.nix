@@ -10,11 +10,12 @@
     in {
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          packages = with pkgs; [
+          packages = (with pkgs; [
             python3
             python3Packages.cocotb
             python3Packages.pytest
             python3Packages.numpy
+            python3Packages.pyyaml
             verilator
             yosys
             iverilog
@@ -22,7 +23,13 @@
             cmake
             ninja
             qemu
-          ];
+            z3
+          ])
+          ++ nixpkgs.lib.optionals (pkgs ? boolector) [ pkgs.boolector ]
+          ++ nixpkgs.lib.optionals (pkgs ? nextpnr) [ pkgs.nextpnr ]
+          ++ nixpkgs.lib.optionals (pkgs ? trellis) [ pkgs.trellis ]
+          ++ nixpkgs.lib.optionals (pkgs ? prjtrellis) [ pkgs.prjtrellis ]
+          ++ nixpkgs.lib.optionals (pkgs ? symbiyosys) [ pkgs.symbiyosys ];
         };
       });
     };
