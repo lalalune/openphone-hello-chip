@@ -11,10 +11,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import random
 import sys
-
+from pathlib import Path
 
 BLOCKER = {
     "blocker_id": "TFLITE_SMOKE_MODEL_GENERATOR_UNAVAILABLE",
@@ -44,11 +43,18 @@ def generate_model() -> bytes:
         [
             tf.keras.layers.Input(shape=(8,), name="input"),
             tf.keras.layers.Dense(
-                4,
+                32,
                 activation="relu",
                 kernel_initializer=tf.keras.initializers.GlorotUniform(seed=7),
                 bias_initializer=tf.keras.initializers.Zeros(),
                 name="dense",
+            ),
+            tf.keras.layers.Dense(
+                16,
+                activation="relu",
+                kernel_initializer=tf.keras.initializers.GlorotUniform(seed=9),
+                bias_initializer=tf.keras.initializers.Zeros(),
+                name="dense_mid",
             ),
             tf.keras.layers.Dense(
                 2,
@@ -90,7 +96,9 @@ def main(argv: list[str]) -> int:
     except RuntimeError:
         status = {"status": "blocked", **BLOCKER, "output": str(args.out)}
         if args.status_json:
-            args.status_json.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            args.status_json.write_text(
+                json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            )
         print(json.dumps(status, sort_keys=True), file=sys.stderr)
         return 2
 
@@ -103,7 +111,9 @@ def main(argv: list[str]) -> int:
         "sha256": sha256_bytes(model),
     }
     if args.status_json:
-        args.status_json.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.status_json.write_text(
+            json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
     print(json.dumps(status, sort_keys=True))
     return 0
 

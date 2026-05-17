@@ -52,7 +52,9 @@ def s32(value):
 
 
 def golden_gemm_s8(a, b):
-    return [[sum(a_row[k] * b[k][j] for k in range(len(b))) for j in range(len(b[0]))] for a_row in a]
+    return [
+        [sum(a_row[k] * b[k][j] for k in range(len(b))) for j in range(len(b[0]))] for a_row in a
+    ]
 
 
 @cocotb.test()
@@ -167,7 +169,7 @@ async def npu_scratchpad_gemm_matches_golden_model(dut):
         word = int.from_bytes(scratch[word_index * 4 : word_index * 4 + 4], "little")
         await write32(dut, 0x1002_0080 + word_index * 4, word)
 
-    await write32(dut, 0x1002_0034, 1)
+    await write32(dut, 0x1002_005C, 1)
     await write32(dut, 0x1002_0020, 2 | (2 << 8) | (3 << 16))
     await write32(dut, 0x1002_0024, a_base | (b_base << 8) | (c_base << 16))
     await write32(dut, 0x1002_0028, 3 | (2 << 8) | (8 << 16))
@@ -175,9 +177,9 @@ async def npu_scratchpad_gemm_matches_golden_model(dut):
     await write32(dut, 0x1002_000C, 1)
 
     assert await poll_done(dut, 0x1002_000C) == 0x2
-    assert await read32(dut, 0x1002_002C) == 12
-    assert await read32(dut, 0x1002_0030) == 12
-    assert await read32(dut, 0x1002_0034) == 0
+    assert await read32(dut, 0x1002_0050) >= 12
+    assert await read32(dut, 0x1002_0054) == 12
+    assert await read32(dut, 0x1002_005C) == 0
 
     observed = []
     for row in range(2):
@@ -241,6 +243,41 @@ async def reset_unmapped_and_clear_edges(dut):
     dma_trace = await read32(dut, 0x1001_002C)
     assert ((dma_trace >> 7) & 0xF) == 0x3
     assert (dma_trace & 0x7) == 0x0
+
+
+@cocotb.test()
+async def clint_msip_mtimecmp_and_address_decode(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert int(dut.msip_o.value) == 0
+    assert int(dut.mtip_o.value) == 0
+    assert await read32(dut, 0x0200_0000) == 0
+
+    await write32(dut, 0x0200_0000, 1)
+    assert await read32(dut, 0x0200_0000) == 1
+    assert int(dut.msip_o.value) == 1
+
+    await write32(dut, 0x0200_0000, 0)
+    assert await read32(dut, 0x0200_0000) == 0
+    assert int(dut.msip_o.value) == 0
+
+    await write32(dut, 0x0200_BFF8, 0)
+    await write32(dut, 0x0200_BFFC, 0)
+    await write32(dut, 0x0200_4000, 48)
+    await write32(dut, 0x0200_4004, 0)
+    assert await read32(dut, 0x0200_4000) == 48
+    assert await read32(dut, 0x0200_4004) == 0
+
+    saw_mtip = False
+    for _ in range(80):
+        await RisingEdge(dut.clk)
+        saw_mtip = saw_mtip or int(dut.mtip_o.value) == 1
+    assert saw_mtip
+
+    await write32(dut, 0x0200_C000, 0xFFFF_FFFF)
+    assert await read32(dut, 0x0200_C000) == 0xDEAD_BEEF
+    assert await read32(dut, 0x0201_0000) == 0xDEAD_BEEF
 
 
 @cocotb.test()

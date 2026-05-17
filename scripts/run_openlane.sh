@@ -3,6 +3,8 @@ set -eu
 
 CONFIG="${OPENLANE_CONFIG:-pd/openlane/config.sky130.json}"
 IMAGE="${OPENLANE_IMAGE:-ghcr.io/efabless/openlane2:2.4.0.dev1}"
+REPO_DIR="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
+PDK_ROOT_HOST="${PDK_ROOT:-$REPO_DIR/external/pdks}"
 
 if command -v openlane >/dev/null 2>&1; then
     openlane "$CONFIG"
@@ -28,5 +30,9 @@ else
         echo "Then rerun: OPENLANE_CONFIG=$CONFIG make openlane"
         exit 1
     fi
-    docker run --rm -v "$PWD:/work" -w /work "$IMAGE" openlane "$CONFIG"
+    case "$PDK_ROOT_HOST" in
+        "$REPO_DIR"/external/pdks) pdk_root_container="/work/external/pdks" ;;
+        *) pdk_root_container="$PDK_ROOT_HOST" ;;
+    esac
+    docker run --rm -v "$PWD:/work" -w /work -e "PDK_ROOT=$pdk_root_container" "$IMAGE" openlane --pdk-root "$pdk_root_container" "$CONFIG"
 fi

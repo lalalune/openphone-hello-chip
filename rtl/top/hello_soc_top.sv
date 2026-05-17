@@ -13,6 +13,8 @@ module hello_soc_top (
     output logic        irq_dma,
     output logic        irq_npu,
     output logic        irq_vsync,
+    output logic        msip_o,
+    output logic        mtip_o,
     output logic [7:0]  gpio_out
 );
 
@@ -21,6 +23,7 @@ module hello_soc_top (
     logic [31:0] npu_rdata;
     logic [31:0] display_rdata;
     logic [31:0] periph_rdata;
+    logic [31:0] clint_rdata;
     logic dma_m_awvalid;
     logic dma_m_awready;
     logic [31:0] dma_m_awaddr;
@@ -56,9 +59,13 @@ module hello_soc_top (
     logic display_sel;
     logic periph_sel;
     logic dram_sel;
+    logic clint_sel;
     logic word_aligned;
     logic implemented_window;
     logic [31:0] dram_mem [0:1023];
+    logic        clint_msip;
+    logic [63:0] clint_mtime;
+    logic [63:0] clint_mtimecmp;
 
     wire [9:0]  mmio_dram_word = mmio_addr[11:2];
     wire [9:0]  dma_wr_word = dma_m_awaddr[11:2];
@@ -79,7 +86,43 @@ module hello_soc_top (
     assign dma_sel     = implemented_window && mmio_addr[31:12] == 20'h1001_0;
     assign npu_sel     = implemented_window && mmio_addr[31:12] == 20'h1002_0;
     assign display_sel = implemented_window && mmio_addr[31:12] == 20'h1003_0;
+    assign clint_sel   = word_aligned && mmio_addr[31:16] == 16'h0200 &&
+                         mmio_addr[15:14] != 2'b11;
     assign dram_sel    = word_aligned && mmio_addr[31:12] == 20'h8000_0;
+
+    assign msip_o = clint_msip;
+    assign mtip_o = clint_mtime >= clint_mtimecmp;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            clint_msip     <= 1'b0;
+            clint_mtime    <= 64'h0;
+            clint_mtimecmp <= 64'hFFFF_FFFF_FFFF_FFFF;
+        end else begin
+            clint_mtime <= clint_mtime + 64'h1;
+            if (mmio_valid && mmio_write && clint_sel) begin
+                unique case (mmio_addr[15:2])
+                    14'h0000: clint_msip         <= mmio_wdata[0];
+                    14'h1000: clint_mtimecmp[31:0]  <= mmio_wdata;
+                    14'h1001: clint_mtimecmp[63:32] <= mmio_wdata;
+                    14'h2FFE: clint_mtime[31:0]  <= mmio_wdata;
+                    14'h2FFF: clint_mtime[63:32] <= mmio_wdata;
+                    default: begin end
+                endcase
+            end
+        end
+    end
+
+    always_comb begin
+        unique case (mmio_addr[15:2])
+            14'h0000: clint_rdata = {31'h0, clint_msip};
+            14'h1000: clint_rdata = clint_mtimecmp[31:0];
+            14'h1001: clint_rdata = clint_mtimecmp[63:32];
+            14'h2FFE: clint_rdata = clint_mtime[31:0];
+            14'h2FFF: clint_rdata = clint_mtime[63:32];
+            default:  clint_rdata = 32'h0;
+        endcase
+    end
 
     /* verilator lint_off UNUSEDSIGNAL */
     logic unused_display_scanout;
@@ -232,6 +275,7 @@ module hello_soc_top (
             dma_sel:      mmio_rdata = dma_rdata;
             npu_sel:      mmio_rdata = npu_rdata;
             display_sel:  mmio_rdata = display_rdata;
+            clint_sel:    mmio_rdata = clint_rdata;
             dram_sel:     mmio_rdata = dram_mem[mmio_dram_word];
             default:      mmio_rdata = 32'hDEAD_BEEF;
         endcase

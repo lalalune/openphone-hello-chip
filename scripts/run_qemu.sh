@@ -1,23 +1,34 @@
 #!/usr/bin/env sh
 set -eu
 
-repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+repo_dir=$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)
 src="$repo_dir/sw/bootrom/hello_qemu_firmware.S"
 linker="$repo_dir/sw/bootrom/linker.ld"
 checked_elf="$repo_dir/build/qemu/hello_qemu_firmware.elf"
+firmware_lock="$repo_dir/build/qemu/.hello_qemu_firmware.lock"
 smoke_log="$repo_dir/build/reports/qemu_smoke.log"
+smoke_manifest="$repo_dir/build/reports/qemu_smoke.manifest"
+os_attempt_log="$repo_dir/build/reports/qemu_os_boot_attempt.log"
+os_attempt_manifest="$repo_dir/build/reports/qemu_os_boot_attempt.json"
 banner="openphone hello qemu"
 load_addr="0x80000000"
 uart_addr="0x10000000"
+linux_kernel=
+linux_initrd=
+linux_dtb=
 
 usage() {
     cat <<EOF
-usage: scripts/run_qemu.sh [--check|--build-firmware|--build-stub|--elf PATH]
+usage: scripts/run_qemu.sh [--check|--check-os|--build-firmware|--build-stub|--elf PATH]
 
   --check           run semantic checks, build if possible, then bounded QEMU smoke
+  --check-os        preflight and, when payloads exist, attempt bounded Linux/OS boot
   --build-firmware  build build/qemu/hello_qemu_firmware.elf with a local RISC-V toolchain
   --build-stub      compatibility alias for --build-firmware
   --elf PATH        launch an explicit ELF instead of the default firmware path
+  --linux-kernel PATH  Linux kernel Image for --check-os
+  --initrd PATH        initrd/rootfs image for --check-os
+  --dtb PATH           optional device tree blob for --check-os
 EOF
 }
 
@@ -26,6 +37,65 @@ status_line() {
     check=$2
     detail=$3
     printf 'STATUS: %s %s - %s\n' "$state" "$check" "$detail"
+}
+
+acquire_firmware_lock() {
+    timeout=${FIRMWARE_LOCK_TIMEOUT_SECONDS:-120}
+    waited=0
+    mkdir -p "$repo_dir/build/qemu"
+    while ! mkdir "$firmware_lock" 2>/dev/null; do
+        if [ "$waited" -ge "$timeout" ]; then
+            status_line "FAIL" "qemu.firmware_lock" "timed out waiting for ${firmware_lock#"$repo_dir"/}; remove stale lock after confirming no simulator build is running"
+            return 1
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+}
+
+release_firmware_lock() {
+    rmdir "$firmware_lock" 2>/dev/null || true
+}
+
+sha256_file() {
+    path=$1
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$path" | awk '{print $1}'
+        return 0
+    fi
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$path" | awk '{print $1}'
+        return 0
+    fi
+    printf 'unavailable\n'
+}
+
+write_smoke_manifest() {
+    state=$1
+    detail=$2
+    mkdir -p "$repo_dir/build/reports"
+    {
+        printf 'status=%s\n' "$state"
+        printf 'check=qemu.run\n'
+        printf 'evidence_kind=qemu-executable-transcript\n'
+        printf 'archive=%s\n' "${smoke_log#"$repo_dir"/}"
+        if [ -f "$smoke_log" ]; then
+            printf 'sha256=%s\n' "$(sha256_file "$smoke_log")"
+        else
+            printf 'sha256=missing\n'
+        fi
+        printf 'banner=%s\n' "$banner"
+        printf 'firmware=%s\n' "${checked_elf#"$repo_dir"/}"
+        if [ -f "$checked_elf" ]; then
+            printf 'firmware_sha256=%s\n' "$(sha256_file "$checked_elf")"
+        else
+            printf 'firmware_sha256=missing\n'
+        fi
+        printf 'qemu=%s\n' "$(command -v qemu-system-riscv64 2>/dev/null || printf 'missing')"
+        printf 'qemu_version=%s\n' "$(qemu-system-riscv64 --version 2>/dev/null | head -n 1 || printf 'unavailable')"
+        printf 'qemu_command=qemu-system-riscv64 -machine virt -nographic -bios none -no-reboot -kernel %s\n' "${checked_elf#"$repo_dir"/}"
+        printf 'detail=%s\n' "$detail"
+    } >"$smoke_manifest"
 }
 
 find_toolchain() {
@@ -72,9 +142,9 @@ EOF
 semantic_check() {
     failed=0
 
-    for path in "$src" "$linker" "$repo_dir/sim/qemu/README.md"; do
+    for path in "$src" "$linker" "$repo_dir/docs/sim/qemu/README.md"; do
         if [ ! -f "$path" ]; then
-            status_line "FAIL" "qemu.semantic" "missing required artifact ${path#$repo_dir/}"
+            status_line "FAIL" "qemu.semantic" "missing required artifact ${path#"$repo_dir"/}"
             failed=1
         fi
     done
@@ -99,12 +169,12 @@ semantic_check() {
         status_line "FAIL" "qemu.semantic" "sw/bootrom/linker.ld must keep _start as the ELF entry"
         failed=1
     }
-    grep -q "software reference only" "$repo_dir/sim/qemu/README.md" || {
-        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must mark qemu-virt as software reference only"
+    grep -q "software reference only" "$repo_dir/docs/sim/qemu/README.md" || {
+        status_line "FAIL" "qemu.semantic" "docs/sim/qemu/README.md must mark qemu-virt as software reference only"
         failed=1
     }
-    grep -q "scripts/run_qemu.sh --build-firmware" "$repo_dir/sim/qemu/README.md" || {
-        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must document the firmware ELF build path"
+    grep -q "scripts/run_qemu.sh --build-firmware" "$repo_dir/docs/sim/qemu/README.md" || {
+        status_line "FAIL" "qemu.semantic" "docs/sim/qemu/README.md must document the firmware ELF build path"
         failed=1
     }
 
@@ -132,10 +202,10 @@ build_firmware() {
         -march=rv64imac -mabi=lp64 \
         -Wl,-T,"$linker" -Wl,--build-id=none \
         -o "$checked_elf" "$src"; then
-        status_line "FAIL" "qemu.build" "$cc could not build ${src#$repo_dir/}"
+        status_line "FAIL" "qemu.build" "$cc could not build ${src#"$repo_dir"/}"
         return 1
     fi
-    status_line "PASS" "qemu.build" "built ${checked_elf#$repo_dir/} with $cc"
+    status_line "PASS" "qemu.build" "built ${checked_elf#"$repo_dir"/} with $cc"
 }
 
 run_bounded_smoke() {
@@ -160,16 +230,179 @@ run_bounded_smoke() {
     if grep -q "$banner" "$log"; then
         mkdir -p "$repo_dir/build/reports"
         cp "$log" "$smoke_log"
-        status_line "PASS" "qemu.run" "bounded smoke saw '$banner'; archived ${smoke_log#$repo_dir/}"
+        write_smoke_manifest "PASS" "bounded QEMU stdout/stderr contained expected serial banner"
+        status_line "PASS" "qemu.run" "bounded smoke saw '$banner'; archived ${smoke_log#"$repo_dir"/}"
         rm -f "$log"
         return 0
     fi
 
     mkdir -p "$repo_dir/build/reports"
     cp "$log" "$smoke_log"
+    write_smoke_manifest "FAIL" "bounded QEMU stdout/stderr did not contain expected serial banner"
     status_line "FAIL" "qemu.run" "bounded smoke did not see '$banner'"
     echo "QEMU log: $smoke_log"
     rm -f "$log"
+    return 1
+}
+
+default_os_payload() {
+    for path in \
+        "$repo_dir/build/linux/arch/riscv/boot/Image" \
+        "$repo_dir/build/linux/Image" \
+        "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/linux" \
+        "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64/linux" \
+        "$repo_dir/build/buildroot/images/Image" \
+        "$repo_dir/buildroot/output/images/Image"; do
+        if [ -f "$path" ]; then
+            printf '%s\n' "$path"
+            return 0
+        fi
+    done
+    return 1
+}
+
+default_initrd_payload() {
+    for path in \
+        "$repo_dir/build/buildroot/images/rootfs.cpio" \
+        "$repo_dir/build/buildroot/images/rootfs.cpio.gz" \
+        "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/initrd.gz" \
+        "$repo_dir/build/qemu/linux_payload/debian-installer-riscv64/initrd.gz" \
+        "$repo_dir/buildroot/output/images/rootfs.cpio" \
+        "$repo_dir/buildroot/output/images/rootfs.cpio.gz"; do
+        if [ -f "$path" ]; then
+            printf '%s\n' "$path"
+            return 0
+        fi
+    done
+    return 1
+}
+
+default_dtb_payload() {
+    for path in \
+        "$repo_dir/build/linux/arch/riscv/boot/dts/openphone/openphone-hello.dtb" \
+        "$repo_dir/build/buildroot/images/openphone-hello.dtb" \
+        "$repo_dir/buildroot/output/images/openphone-hello.dtb"; do
+        if [ -f "$path" ]; then
+            printf '%s\n' "$path"
+            return 0
+        fi
+    done
+    return 1
+}
+
+write_os_attempt_manifest() {
+    state=$1
+    detail=$2
+    mkdir -p "$repo_dir/build/reports"
+    cat >"$os_attempt_manifest" <<EOF
+{
+  "schema": "openphone.qemu_virt_os_boot_attempt.v1",
+  "claim_boundary": "qemu_virt_reference_only_not_hello_chip_rtl",
+  "status": "$state",
+  "check": "qemu.os_boot",
+  "detail": $(printf '%s' "$detail" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'),
+  "qemu": "$(command -v qemu-system-riscv64 2>/dev/null || printf 'missing')",
+  "kernel": "${linux_kernel:-missing}",
+  "kernel_sha256": "$(if [ -n "${linux_kernel:-}" ] && [ -f "$linux_kernel" ]; then sha256_file "$linux_kernel"; else printf 'missing'; fi)",
+  "initrd": "${linux_initrd:-missing}",
+  "initrd_sha256": "$(if [ -n "${linux_initrd:-}" ] && [ -f "$linux_initrd" ]; then sha256_file "$linux_initrd"; else printf 'missing'; fi)",
+  "dtb": "${linux_dtb:-optional-missing}",
+  "dtb_sha256": "$(if [ -n "${linux_dtb:-}" ] && [ -f "$linux_dtb" ]; then sha256_file "$linux_dtb"; else printf 'optional-missing'; fi)",
+  "transcript": "${os_attempt_log#"$repo_dir"/}"
+}
+EOF
+}
+
+write_os_attempt_log() {
+    state=$1
+    detail=$2
+    mkdir -p "$repo_dir/build/reports"
+    {
+        printf 'status=%s\n' "$state"
+        printf 'check=qemu.os_boot\n'
+        printf 'evidence_kind=qemu-os-boot-attempt\n'
+        printf 'detail=%s\n' "$detail"
+        printf 'qemu=%s\n' "$(command -v qemu-system-riscv64 2>/dev/null || printf 'missing')"
+        printf 'kernel=%s\n' "${linux_kernel:-missing}"
+        if [ -n "${linux_kernel:-}" ] && [ -f "$linux_kernel" ]; then
+            printf 'kernel_sha256=%s\n' "$(sha256_file "$linux_kernel")"
+        else
+            printf 'kernel_sha256=missing\n'
+        fi
+        printf 'initrd=%s\n' "${linux_initrd:-missing}"
+        if [ -n "${linux_initrd:-}" ] && [ -f "$linux_initrd" ]; then
+            printf 'initrd_sha256=%s\n' "$(sha256_file "$linux_initrd")"
+        else
+            printf 'initrd_sha256=missing\n'
+        fi
+        printf 'dtb=%s\n' "${linux_dtb:-optional-missing}"
+        if [ -n "${linux_dtb:-}" ] && [ -f "$linux_dtb" ]; then
+            printf 'dtb_sha256=%s\n' "$(sha256_file "$linux_dtb")"
+        else
+            printf 'dtb_sha256=optional-missing\n'
+        fi
+    } >"$os_attempt_log"
+    write_os_attempt_manifest "$state" "$detail"
+}
+
+check_os_boot() {
+    if [ -z "$linux_kernel" ]; then
+        linux_kernel=$(default_os_payload || true)
+    fi
+    if [ -z "$linux_initrd" ]; then
+        linux_initrd=$(default_initrd_payload || true)
+    fi
+    if [ -z "$linux_dtb" ]; then
+        linux_dtb=$(default_dtb_payload || true)
+    fi
+
+    missing=
+    if [ -z "$linux_kernel" ] || [ ! -f "$linux_kernel" ]; then
+        missing="${missing} Linux kernel Image"
+    fi
+    if [ -z "$linux_initrd" ] || [ ! -f "$linux_initrd" ]; then
+        missing="${missing} initrd/rootfs image"
+    fi
+    if ! command -v qemu-system-riscv64 >/dev/null 2>&1; then
+        missing="${missing} qemu-system-riscv64"
+    fi
+
+    if [ -n "$missing" ]; then
+        detail="OS boot blocked; missing:${missing}. Build/import Linux plus rootfs artifacts before claiming OS boot."
+        write_os_attempt_log "BLOCKED" "$detail"
+        status_line "BLOCKED" "qemu.os_boot" "$detail; wrote ${os_attempt_log#"$repo_dir"/}"
+        return 2
+    fi
+
+    log=$(mktemp "${TMPDIR:-/tmp}/openphone-qemu-os.XXXXXX")
+    set -- qemu-system-riscv64 -machine virt -nographic -no-reboot \
+        -kernel "$linux_kernel" \
+        -initrd "$linux_initrd" \
+        -append "console=ttyS0 earlycon"
+    if [ -n "$linux_dtb" ] && [ -f "$linux_dtb" ]; then
+        set -- "$@" -dtb "$linux_dtb"
+    fi
+
+    "$@" >"$log" 2>&1 &
+    qemu_pid=$!
+    sleep "${QEMU_OS_BOOT_SECONDS:-10}"
+    if kill -0 "$qemu_pid" >/dev/null 2>&1; then
+        kill "$qemu_pid" >/dev/null 2>&1 || true
+    fi
+    wait "$qemu_pid" >/dev/null 2>&1 || true
+
+    mkdir -p "$repo_dir/build/reports"
+    cp "$log" "$os_attempt_log"
+    rm -f "$log"
+
+    if grep -Eq "Freeing unused kernel memory|Run /init as init process|Welcome to|login:|Debian GNU/Linux installer|Starting system log daemon" "$os_attempt_log"; then
+        write_os_attempt_manifest "PASS" "bounded QEMU OS boot reached an init/login marker; transcript archived"
+        status_line "PASS" "qemu.os_boot" "bounded QEMU OS boot reached an init/login marker; archived ${os_attempt_log#"$repo_dir"/}"
+        return 0
+    fi
+
+    write_os_attempt_manifest "FAIL" "bounded QEMU OS boot did not reach an init/login marker; transcript archived"
+    status_line "FAIL" "qemu.os_boot" "bounded QEMU OS boot did not reach an init/login marker; archived ${os_attempt_log#"$repo_dir"/}"
     return 1
 }
 
@@ -181,6 +414,9 @@ while [ "$#" -gt 0 ]; do
         --check)
             mode=check
             ;;
+        --check-os)
+            mode=check_os
+            ;;
         --build-firmware|--build-stub)
             mode=build
             ;;
@@ -191,6 +427,30 @@ while [ "$#" -gt 0 ]; do
                 exit 2
             fi
             elf=$1
+            ;;
+        --linux-kernel)
+            shift
+            if [ "$#" -eq 0 ]; then
+                usage
+                exit 2
+            fi
+            linux_kernel=$1
+            ;;
+        --initrd)
+            shift
+            if [ "$#" -eq 0 ]; then
+                usage
+                exit 2
+            fi
+            linux_initrd=$1
+            ;;
+        --dtb)
+            shift
+            if [ "$#" -eq 0 ]; then
+                usage
+                exit 2
+            fi
+            linux_dtb=$1
             ;;
         -h|--help)
             usage
@@ -211,9 +471,13 @@ fi
 
 case "$mode" in
     build)
+        acquire_firmware_lock || exit $?
+        trap release_firmware_lock EXIT INT TERM
         build_firmware
         ;;
     check)
+        acquire_firmware_lock || exit $?
+        trap release_firmware_lock EXIT INT TERM
         if build_firmware; then
             if run_bounded_smoke "$checked_elf"; then
                 status_line "PASS" "qemu.check" "semantic, build, and executable smoke passed"
@@ -237,6 +501,9 @@ case "$mode" in
             fi
             exit "$status"
         fi
+        ;;
+    check_os)
+        check_os_boot
         ;;
     run)
         if [ -z "$elf" ]; then

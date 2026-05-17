@@ -20,6 +20,8 @@ The target contract is machine-readable in `board/fpga/hello_demo_fpga.yaml`. Th
 
 `make fpga-check` validates that the FPGA contract names the RTL top, clock, reset, debug, GPIO, and IRQ signals consistently with the current package and RTL contract. The check is a scaffold gate, not a bitstream build.
 
+`make fpga-release-check` runs the stricter bitstream release preflight in `scripts/check_fpga_release.py`. It must fail until `board/fpga/hello_demo_fpga.yaml` and `board/fpga/release_manifest.yaml` name a real board revision, final LPF, timing report, bitstream, bitstream SHA-256, and tool-version archive.
+
 Bitstream generation must remain blocked until:
 
 - Every `hello_chip_top` external signal has an assigned FPGA package pin.
@@ -27,3 +29,4 @@ Bitstream generation must remain blocked until:
 - The clock constraint matches the physical oscillator.
 - Reset polarity is verified on hardware.
 - The debug bridge firmware or MCU host is identified.
+- `nextpnr-ecp5` timing evidence and an `ecppack` bitstream are archived from the exact board revision and final LPF.

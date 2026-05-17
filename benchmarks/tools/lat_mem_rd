@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""lmbench lat_mem_rd-shaped host smoke command."""
+
+from __future__ import annotations
+
+import argparse
+import math
+import time
+
+import numpy as np
+
+
+def parse_size(value: str) -> int:
+    value = value.strip().upper()
+    factor = 1
+    if value.endswith("K"):
+        factor = 1024
+        value = value[:-1]
+    elif value.endswith("M"):
+        factor = 1024 * 1024
+        value = value[:-1]
+    return max(int(float(value) * factor), 4096)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("size", nargs="?", default="64M")
+    parser.add_argument("stride", nargs="?", default="128")
+    args = parser.parse_args()
+    size_bytes = min(parse_size(args.size), 64 * 1024 * 1024)
+    stride = max(int(args.stride), 1)
+    data = np.arange(size_bytes // 8, dtype=np.int64)
+    print(f"stride={stride}")
+    for power in range(10, int(math.log2(size_bytes)) + 1, 2):
+        count = min((1 << power) // 8, data.size)
+        step = max(stride // 8, 1)
+        view = data[:count:step]
+        started = time.perf_counter()
+        checksum = int(np.sum(view))
+        elapsed = max(time.perf_counter() - started, 1e-9)
+        ns = elapsed / max(view.size, 1) * 1e9
+        print(f"{(1 << power) / 1024 / 1024:.6f} {ns:.3f}")
+    print(f"# checksum={checksum} provenance=openphone-host-smoke")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

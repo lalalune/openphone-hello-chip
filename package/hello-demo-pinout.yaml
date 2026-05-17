@@ -1,10 +1,18 @@
 chip: openphone_hello_demo
 package: qfn64_placeholder
+evidence_class: non_release_placeholder
+release_use: prohibited
 io_voltage: 3.3V
 core_voltage: 1.8V
 notes:
-  - Placeholder package for product and PCB planning.
-  - Real foundry pad cells, ESD rules, package, and bond diagram must replace this before fabrication.
+  - Non-release placeholder package for product and PCB planning only.
+  - This file is not vendor package data, not a bond map, and not a fabrication footprint source.
+  - Real foundry pad cells, ESD rules, package drawing, package-vendor footprint evidence, and bond diagram must replace this before fabrication.
+release_blockers:
+  - package_vendor_drawing_missing
+  - bond_diagram_missing
+  - foundry_pad_cells_missing
+  - package_vendor_footprint_evidence_missing
 pins:
   - {pin: 1, name: VDDIO0, direction: power, pad_type: power, voltage_domain: io, reset: na, pull: none, drive: na, board_net: +3V3}
   - {pin: 2, name: VSSIO0, direction: ground, pad_type: ground, voltage_domain: io, reset: na, pull: none, drive: na, board_net: GND}

@@ -17,6 +17,7 @@ module hello_npu (
     localparam logic [3:0] OP_DOT4_S8  = 4'h4;
     localparam logic [3:0] OP_MAX_U32  = 4'h5;
     localparam logic [3:0] OP_MIN_U32  = 4'h6;
+    localparam logic [3:0] OP_DOT8_S4  = 4'h7;
     localparam logic [3:0] OP_GEMM_S8  = 4'h8;
 
     localparam int unsigned SCRATCH_WORDS = 16;
@@ -36,6 +37,7 @@ module hello_npu (
     logic [63:0] datapath_wide;
     logic signed [31:0] mac_s16_sum;
     logic signed [31:0] dot4_s8_sum;
+    logic signed [31:0] dot8_s4_sum;
 
     logic [31:0] scratch [0:SCRATCH_WORDS-1];
     logic [1:0]  gemm_m;
@@ -54,6 +56,13 @@ module hello_npu (
     logic [31:0] perf_cycles;
     logic [31:0] perf_macs;
     logic [31:0] perf_errors;
+    logic [31:0] perf_ops;
+    logic [31:0] perf_unsupported_ops;
+    logic [31:0] cmd_param;
+    logic [31:0] desc_base;
+    logic [2:0]  desc_head;
+    logic [2:0]  desc_tail;
+    logic        desc_busy;
     logic gemm_busy;
 
     logic [7:0] gemm_a_addr;
@@ -65,6 +74,10 @@ module hello_npu (
 
     function automatic logic signed [31:0] sx8(input logic [7:0] value);
         sx8 = {{24{value[7]}}, value};
+    endfunction
+
+    function automatic logic signed [31:0] sx4(input logic [3:0] value);
+        sx4 = {{28{value[3]}}, value};
     endfunction
 
     function automatic logic signed [31:0] sx16(input logic [15:0] value);
@@ -93,13 +106,14 @@ module hello_npu (
             OP_MUL_LO:  opcode_latency = 3'd2;
             OP_MAC_S16: opcode_latency = 3'd2;
             OP_DOT4_S8: opcode_latency = 3'd3;
+            OP_DOT8_S4: opcode_latency = 3'd3;
             default:    opcode_latency = 3'd1;
         endcase
     endfunction
 
     function automatic logic opcode_valid(input logic [3:0] op);
         unique case (op)
-            OP_ADD, OP_SUB, OP_MUL_LO, OP_MAC_S16, OP_DOT4_S8, OP_MAX_U32, OP_MIN_U32, OP_GEMM_S8: opcode_valid = 1'b1;
+            OP_ADD, OP_SUB, OP_MUL_LO, OP_MAC_S16, OP_DOT4_S8, OP_MAX_U32, OP_MIN_U32, OP_DOT8_S4, OP_GEMM_S8: opcode_valid = 1'b1;
             default: opcode_valid = 1'b0;
         endcase
     endfunction
@@ -122,6 +136,16 @@ module hello_npu (
             (sx8(op_a_q[23:16]) * sx8(op_b_q[23:16])) +
             (sx8(op_a_q[31:24]) * sx8(op_b_q[31:24])) +
             $signed(acc_q);
+        dot8_s4_sum =
+            (sx4(op_a_q[3:0])   * sx4(op_b_q[3:0]))   +
+            (sx4(op_a_q[7:4])   * sx4(op_b_q[7:4]))   +
+            (sx4(op_a_q[11:8])  * sx4(op_b_q[11:8]))  +
+            (sx4(op_a_q[15:12]) * sx4(op_b_q[15:12])) +
+            (sx4(op_a_q[19:16]) * sx4(op_b_q[19:16])) +
+            (sx4(op_a_q[23:20]) * sx4(op_b_q[23:20])) +
+            (sx4(op_a_q[27:24]) * sx4(op_b_q[27:24])) +
+            (sx4(op_a_q[31:28]) * sx4(op_b_q[31:28])) +
+            $signed(acc_q);
 
         unique case (opcode_q)
             OP_ADD:     datapath_wide = {32'h0, op_a_q + op_b_q};
@@ -131,6 +155,7 @@ module hello_npu (
             OP_DOT4_S8: datapath_wide = {{32{dot4_s8_sum[31]}}, dot4_s8_sum};
             OP_MAX_U32: datapath_wide = {32'h0, (op_a_q > op_b_q) ? op_a_q : op_b_q};
             OP_MIN_U32: datapath_wide = {32'h0, (op_a_q < op_b_q) ? op_a_q : op_b_q};
+            OP_DOT8_S4: datapath_wide = {{32{dot8_s4_sum[31]}}, dot8_s4_sum};
             default:    datapath_wide = 64'h0;
         endcase
     end
@@ -165,6 +190,13 @@ module hello_npu (
             perf_cycles <= 32'h0;
             perf_macs <= 32'h0;
             perf_errors <= 32'h0;
+            perf_ops <= 32'h0;
+            perf_unsupported_ops <= 32'h0;
+            cmd_param <= 32'h0;
+            desc_base <= 32'h0;
+            desc_head <= 3'h0;
+            desc_tail <= 3'h0;
+            desc_busy <= 1'b0;
             gemm_busy <= 1'b0;
             for (int idx = 0; idx < SCRATCH_WORDS; idx++) begin
                 scratch[idx] <= 32'h0;
@@ -230,11 +262,16 @@ module hello_npu (
                         gemm_b_stride <= wdata[11:8];
                         gemm_c_stride <= wdata[19:16];
                     end
-                    6'h0d: begin
+                    6'h0c: cmd_param <= wdata;
+                    6'h10: desc_base <= wdata;
+                    6'h11: desc_head <= wdata[2:0];
+                    6'h17: begin
                         if (wdata[0]) begin
                             perf_cycles <= 32'h0;
                             perf_macs <= 32'h0;
                             perf_errors <= 32'h0;
+                            perf_ops <= 32'h0;
+                            perf_unsupported_ops <= 32'h0;
                         end
                     end
                     6'h03: begin
@@ -247,9 +284,11 @@ module hello_npu (
                                     gemm_j <= 2'h0;
                                     gemm_l <= 3'h0;
                                     gemm_acc <= 32'sh0;
+                                    perf_ops <= perf_ops + 32'd1;
                                 end else begin
                                     status <= 32'h0000_0006;
                                     perf_errors <= perf_errors + 32'd1;
+                                    perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
                                 end
                             end else if (opcode_valid(opcode)) begin
                                 status <= 32'h0000_0001;
@@ -258,9 +297,11 @@ module hello_npu (
                                 op_b_q <= op_b;
                                 acc_q <= acc;
                                 opcode_q <= opcode;
+                                perf_ops <= perf_ops + 32'd1;
                             end else begin
                                 status <= 32'h0000_0006;
                                 perf_errors <= perf_errors + 32'd1;
+                                perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
                             end
                         end
                         if (wdata[1]) begin
@@ -291,9 +332,16 @@ module hello_npu (
             6'h08: rdata = {13'h0, gemm_k, 6'h0, gemm_n, 6'h0, gemm_m};
             6'h09: rdata = {10'h0, gemm_c_base, 2'h0, gemm_b_base, 2'h0, gemm_a_base};
             6'h0a: rdata = {12'h0, gemm_c_stride, 4'h0, gemm_b_stride, 4'h0, gemm_a_stride};
-            6'h0b: rdata = perf_cycles;
-            6'h0c: rdata = perf_macs;
-            6'h0d: rdata = perf_errors;
+            6'h0b: rdata = perf_unsupported_ops;
+            6'h0c: rdata = cmd_param;
+            6'h10: rdata = desc_base;
+            6'h11: rdata = {29'h0, desc_head};
+            6'h12: rdata = {29'h0, desc_tail};
+            6'h13: rdata = {29'h0, desc_busy, desc_head == 3'h7, desc_head == desc_tail};
+            6'h14: rdata = perf_cycles;
+            6'h15: rdata = perf_macs;
+            6'h16: rdata = perf_ops;
+            6'h17: rdata = perf_errors;
             default: begin
                 if (addr[5:4] == 2'b10) begin
                     rdata = scratch[addr[3:0]];

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-from argparse import ArgumentParser
-from pathlib import Path
 import re
 import sys
+from argparse import ArgumentParser
+from pathlib import Path
 
 import yaml
-
+from yaml.nodes import MappingNode, ScalarNode
 
 REQUIRED_ARTIFACTS = {
+    "run_manifest": ".yaml",
     "gds": ".gds",
     "def": ".def",
     "gate_netlist": ".v",
@@ -35,6 +36,7 @@ REQUIRED_READINESS_SECTIONS = {
     "si_pi",
     "pdn_current_budget",
     "padframe_package",
+    "thermal_package_board",
 }
 
 ALLOWED_READINESS_STATUS = {
@@ -43,9 +45,130 @@ ALLOWED_READINESS_STATUS = {
     "required_for_release",
 }
 
+REQUIRED_RUN_MANIFEST_FIELDS = {
+    "run_id",
+    "design",
+    "flow",
+    "pdk",
+    "std_cell_library",
+    "openlane_image",
+    "openlane_image_digest",
+    "started_at",
+    "completed_at",
+    "status",
+    "corners",
+    "inputs",
+    "outputs",
+    "checks",
+}
+
+REQUIRED_RUN_CHECKS = {
+    "drc",
+    "lvs",
+    "antenna",
+    "sta",
+    "utilization",
+    "congestion",
+    "density_fill",
+}
+
+REQUIRED_RUN_OUTPUTS = {
+    "gds": "GDS layout",
+    "def": "DEF layout",
+    "gate_netlist": "gate-level netlist",
+    "corner_manifest": "corner manifest",
+    "sdc": "SDC constraints",
+    "spef": "SPEF parasitics",
+    "sdf": "SDF backannotation",
+    "tool_versions": "tool-version report",
+}
+
+REQUIRED_RUN_OUTPUT_EXTENSIONS = {
+    "gds": ".gds",
+    "def": ".def",
+    "gate_netlist": ".v",
+    "corner_manifest": ".yaml",
+    "sdc": ".sdc",
+    "spef": ".spef",
+    "sdf": ".sdf",
+    "tool_versions": ".txt",
+}
+
+ARTIFACT_LABELS = {
+    "run_manifest": "run manifest",
+    "gds": "GDS layout",
+    "def": "DEF layout",
+    "gate_netlist": "gate-level netlist",
+    "corner_manifest": "corner manifest",
+    "sdc": "SDC constraints",
+    "spef": "SPEF parasitics",
+    "sdf": "SDF backannotation",
+    "drc_report": "DRC report",
+    "lvs_report": "LVS report",
+    "antenna_report": "antenna report",
+    "sta_report": "STA report",
+    "utilization_report": "utilization report",
+    "congestion_report": "congestion report",
+    "density_fill_report": "density/fill report",
+    "tool_versions": "tool-version report",
+}
+
+PLACEHOLDER_VALUES = {
+    "",
+    "unknown",
+    "placeholder",
+    "todo",
+    "tbd",
+    "n/a",
+    "na",
+    "none",
+}
+FORBIDDEN_ARTIFACT_TEXT_MARKERS = (
+    "template_not_release_evidence",
+    "non_release_placeholder",
+    "release use: `prohibited`",
+    "release_use: prohibited",
+    "placeholder-only",
+    "placeholder signoff",
+    "dummy signoff",
+    "fake signoff",
+    "not release evidence",
+)
+REPOSITORY_MANIFEST_SCHEMA = "openphone.pd_signoff_manifest.v1"
+RUN_MANIFEST_SCHEMA_PATH = "pd/signoff/run-manifest.schema.json"
+
 
 def as_list(value: object) -> list[str]:
     return value if isinstance(value, list) and all(isinstance(item, str) for item in value) else []
+
+
+def validate_no_duplicate_yaml_keys(text: str) -> list[str]:
+    failures: list[str] = []
+    root = yaml.compose(text)
+    if root is None:
+        return failures
+
+    def visit(node: object, path: str) -> None:
+        if not isinstance(node, MappingNode):
+            return
+        seen: dict[str, int] = {}
+        for key_node, value_node in node.value:
+            if isinstance(key_node, ScalarNode):
+                key = str(key_node.value)
+                if key in seen:
+                    failures.append(
+                        f"duplicate YAML key at {path or '<root>'}: {key} "
+                        f"(first line {seen[key]}, duplicate line {key_node.start_mark.line + 1})"
+                    )
+                else:
+                    seen[key] = key_node.start_mark.line + 1
+                child_path = f"{path}.{key}" if path else key
+            else:
+                child_path = path
+            visit(value_node, child_path)
+
+    visit(root, "")
+    return failures
 
 
 def matched_files(root: Path, globs: list[str]) -> list[Path]:
@@ -103,7 +226,9 @@ def validate_blocked_gates(root: Path, manifest: dict) -> list[str]:
                 )
         if not isinstance(gate.get("reason"), str) or not gate["reason"]:
             failures.append(f"blocked_gates.{gate_name}: missing reason")
-        validate_relative_file(root, f"blocked_gates.{gate_name}", gate.get("evidence_manifest"), failures)
+        validate_relative_file(
+            root, f"blocked_gates.{gate_name}", gate.get("evidence_manifest"), failures
+        )
         if not as_list(gate.get("unblock_requires")):
             failures.append(f"blocked_gates.{gate_name}: missing unblock_requires")
     return failures
@@ -142,7 +267,9 @@ def validate_readiness_sections(manifest: dict) -> list[str]:
                 continue
             if not isinstance(artifact.get("name"), str) or not artifact["name"]:
                 failures.append(f"{section_name}.{artifact_name}: missing name")
-            validate_relative_globs(section_name, artifact.get("name", artifact_name), artifact.get("globs"), failures)
+            validate_relative_globs(
+                section_name, artifact.get("name", artifact_name), artifact.get("globs"), failures
+            )
             artifact_status = artifact.get("status")
             if artifact_status not in {"missing", "draft", "complete"}:
                 failures.append(
@@ -152,13 +279,12 @@ def validate_readiness_sections(manifest: dict) -> list[str]:
     return failures
 
 
-def check_reports(paths: list[Path], fail_regex: str | None, pass_regex: str | None) -> tuple[list[str], list[str]]:
+def check_reports(
+    paths: list[Path], fail_regex: str | None, pass_regex: str | None
+) -> tuple[list[str], list[str]]:
     dirty: list[str] = []
     missing_clean_marker: list[str] = []
-    if not fail_regex:
-        fail_pattern = None
-    else:
-        fail_pattern = re.compile(fail_regex)
+    fail_pattern = None if not fail_regex else re.compile(fail_regex)
     pass_pattern = re.compile(pass_regex) if pass_regex else None
     for path in paths:
         text = path.read_text(errors="ignore")
@@ -169,13 +295,78 @@ def check_reports(paths: list[Path], fail_regex: str | None, pass_regex: str | N
     return dirty, missing_clean_marker
 
 
+def reject_placeholder_artifacts(name: str, paths: list[Path], root: Path) -> list[str]:
+    failures: list[str] = []
+    for path in paths:
+        text = path.read_text(errors="ignore").lower()
+        matched = [marker for marker in FORBIDDEN_ARTIFACT_TEXT_MARKERS if marker in text]
+        if matched:
+            failures.append(
+                f"{name}: artifact contains non-release marker(s): {path.relative_to(root)}: "
+                + ", ".join(matched)
+            )
+    return failures
+
+
+def artifact_label(name: str) -> str:
+    return f"{ARTIFACT_LABELS.get(name, name)} ({name})"
+
+
+def artifact_list(names: list[str]) -> str:
+    return ", ".join(artifact_label(name) for name in names)
+
+
+def is_placeholder(value: object) -> bool:
+    return not isinstance(value, str) or value.strip().lower() in PLACEHOLDER_VALUES
+
+
+def relative_run_path(
+    root: Path, run_dir: Path, value: str, field: str, failures: list[str]
+) -> Path | None:
+    path = Path(value)
+    if path.is_absolute() or ".." in path.parts:
+        failures.append(
+            f"run_manifest: {run_dir.relative_to(root)} {field} must be a relative path inside the run directory: {value}"
+        )
+        return None
+    resolved = (run_dir / path).resolve()
+    try:
+        resolved.relative_to(run_dir.resolve())
+    except ValueError:
+        failures.append(
+            f"run_manifest: {run_dir.relative_to(root)} {field} must stay inside the run directory: {value}"
+        )
+        return None
+    return resolved
+
+
 def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
     failures: list[str] = []
     run_roots = as_list(manifest.get("run_roots"))
     required = manifest.get("required_artifacts")
+    runner = manifest.get("runner")
 
+    if manifest.get("schema") != REPOSITORY_MANIFEST_SCHEMA:
+        failures.append(f"manifest schema must be {REPOSITORY_MANIFEST_SCHEMA}")
+    if manifest.get("run_manifest_schema") != RUN_MANIFEST_SCHEMA_PATH:
+        failures.append(f"manifest run_manifest_schema must be {RUN_MANIFEST_SCHEMA_PATH}")
+    elif not (manifest_path.parents[2] / RUN_MANIFEST_SCHEMA_PATH).is_file():
+        failures.append(
+            f"manifest run_manifest_schema points at missing file: {RUN_MANIFEST_SCHEMA_PATH}"
+        )
     if not isinstance(manifest.get("signoff"), str) or not manifest["signoff"]:
         failures.append("manifest must name signoff")
+    if not isinstance(runner, dict):
+        failures.append("manifest must list runner metadata")
+    else:
+        image = runner.get("openlane_image")
+        digest = runner.get("openlane_image_digest")
+        if not isinstance(image, str) or not image:
+            failures.append("runner.openlane_image must be a non-empty string")
+        if not isinstance(digest, str) or not digest.startswith("sha256:"):
+            failures.append("runner.openlane_image_digest must be a sha256 digest")
+        if runner.get("require_pinned_runner_for_release") is not True:
+            failures.append("runner.require_pinned_runner_for_release must be true")
     if not run_roots:
         failures.append("manifest must list run_roots")
     if not isinstance(required, dict):
@@ -205,8 +396,12 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
             path = Path(pattern)
             if path.is_absolute() or ".." in path.parts:
                 failures.append(f"{name}: glob must be a relative repo path: {pattern}")
-            if run_roots and not any(pattern.startswith(f"{run_root.rstrip('/')}/*/") for run_root in run_roots):
-                failures.append(f"{name}: glob must be scoped to one configured run root: {pattern}")
+            if run_roots and not any(
+                pattern.startswith(f"{run_root.rstrip('/')}/*/") for run_root in run_roots
+            ):
+                failures.append(
+                    f"{name}: glob must be scoped to one configured run root: {pattern}"
+                )
             if extension and not pattern.endswith(extension):
                 failures.append(f"{name}: glob must match {extension} files: {pattern}")
         if name.endswith("_report"):
@@ -234,6 +429,136 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
     return failures
 
 
+def validate_run_manifest(root: Path, run_dir: Path, run_manifest: Path) -> list[str]:
+    failures: list[str] = []
+    rel_manifest = run_manifest.relative_to(root)
+    try:
+        payload = yaml.safe_load(run_manifest.read_text())
+    except yaml.YAMLError as exc:
+        return [f"run_manifest: invalid YAML in {rel_manifest}: {exc}"]
+
+    if not isinstance(payload, dict):
+        return [f"run_manifest: {rel_manifest} must be a YAML mapping"]
+
+    missing = sorted(REQUIRED_RUN_MANIFEST_FIELDS - set(payload))
+    if missing:
+        failures.append(f"run_manifest: {rel_manifest} missing fields: {', '.join(missing)}")
+    for field in ("run_id", "flow", "pdk", "std_cell_library", "openlane_image"):
+        if field in payload and is_placeholder(payload.get(field)):
+            failures.append(
+                f"run_manifest: {rel_manifest} {field} must not be empty or placeholder"
+            )
+    if payload.get("design") != "hello_chip_top":
+        failures.append(f"run_manifest: {rel_manifest} design must be hello_chip_top")
+    if payload.get("status") != "complete":
+        failures.append(f"run_manifest: {rel_manifest} status must be complete")
+    digest = payload.get("openlane_image_digest")
+    if not isinstance(digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+        failures.append(
+            f"run_manifest: {rel_manifest} openlane_image_digest must be a full sha256 digest"
+        )
+    corners = payload.get("corners")
+    if not isinstance(corners, list) or not corners:
+        failures.append(f"run_manifest: {rel_manifest} corners must be a non-empty list")
+    else:
+        for index, corner in enumerate(corners):
+            if not isinstance(corner, dict):
+                failures.append(f"run_manifest: {rel_manifest} corners[{index}] must be a mapping")
+                continue
+            for field in ("name", "liberty", "rc"):
+                if is_placeholder(corner.get(field)):
+                    failures.append(
+                        f"run_manifest: {rel_manifest} corners[{index}].{field} must not be empty or placeholder"
+                    )
+
+    checks = payload.get("checks")
+    if not isinstance(checks, dict):
+        failures.append(f"run_manifest: {rel_manifest} checks must be a mapping")
+    else:
+        missing_checks = sorted(REQUIRED_RUN_CHECKS - set(checks))
+        if missing_checks:
+            failures.append(
+                f"run_manifest: {rel_manifest} missing checks: {', '.join(missing_checks)}"
+            )
+        for check_name in sorted(REQUIRED_RUN_CHECKS & set(checks)):
+            check = checks[check_name]
+            if not isinstance(check, dict):
+                failures.append(
+                    f"run_manifest: {rel_manifest} checks.{check_name} must be a mapping"
+                )
+                continue
+            if check.get("status") not in {"clean", "waived"}:
+                failures.append(
+                    f"run_manifest: {rel_manifest} checks.{check_name}.status must be clean or waived"
+                )
+            if check.get("status") == "waived" and is_placeholder(check.get("waiver")):
+                failures.append(
+                    f"run_manifest: {rel_manifest} checks.{check_name}.waiver is required when status is waived"
+                )
+            report = check.get("report")
+            if not isinstance(report, str) or not report:
+                failures.append(
+                    f"run_manifest: {rel_manifest} checks.{check_name}.report is required"
+                )
+                continue
+            report_path = relative_run_path(
+                root, run_dir, report, f"checks.{check_name}.report", failures
+            )
+            if report_path is None:
+                continue
+            if not report_path.is_file():
+                failures.append(
+                    f"run_manifest: {rel_manifest} checks.{check_name}.report missing: {report}"
+                )
+
+    outputs = payload.get("outputs")
+    if isinstance(outputs, dict):
+        missing_outputs = sorted(set(REQUIRED_RUN_OUTPUTS) - set(outputs))
+        if missing_outputs:
+            failures.append(
+                f"run_manifest: {rel_manifest} missing required outputs: "
+                + ", ".join(f"{REQUIRED_RUN_OUTPUTS[name]} ({name})" for name in missing_outputs)
+            )
+        for output_name, label in REQUIRED_RUN_OUTPUTS.items():
+            value = outputs.get(output_name)
+            if not isinstance(value, str) or not value:
+                continue
+            expected_extension = REQUIRED_RUN_OUTPUT_EXTENSIONS[output_name]
+            if not value.endswith(expected_extension):
+                failures.append(
+                    f"run_manifest: {rel_manifest} outputs.{output_name} must point to {expected_extension} for {label}: {value}"
+                )
+            output_path = relative_run_path(
+                root, run_dir, value, f"outputs.{output_name}", failures
+            )
+            if output_path is None:
+                continue
+            if not output_path.is_file():
+                failures.append(
+                    f"run_manifest: {rel_manifest} outputs.{output_name} missing {label}: {value}"
+                )
+
+    for section_name in ("inputs", "outputs"):
+        section = payload.get(section_name)
+        if not isinstance(section, dict):
+            failures.append(f"run_manifest: {rel_manifest} {section_name} must be a mapping")
+            continue
+        for item_name, value in section.items():
+            if isinstance(value, str):
+                values = [value]
+            elif isinstance(value, list) and all(isinstance(item, str) for item in value):
+                values = value
+            else:
+                failures.append(
+                    f"run_manifest: {rel_manifest} {section_name}.{item_name} must be a path string or list of path strings"
+                )
+                continue
+            for entry in values:
+                relative_run_path(root, run_dir, entry, f"{section_name}.{item_name}", failures)
+
+    return failures
+
+
 def run_dirs(root: Path, run_roots: list[str]) -> list[Path]:
     dirs: list[Path] = []
     for run_root in run_roots:
@@ -248,11 +573,15 @@ def files_for_run(run_dir: Path, run_root: str, globs: list[str]) -> list[Path]:
     prefix = f"{run_root.rstrip('/')}/*/"
     for pattern in globs:
         if pattern.startswith(prefix):
-            files.extend(sorted(path for path in run_dir.glob(pattern[len(prefix) :]) if path.is_file()))
+            files.extend(
+                sorted(path for path in run_dir.glob(pattern[len(prefix) :]) if path.is_file())
+            )
     return files
 
 
-def choose_complete_run(root: Path, manifest: dict) -> tuple[Path | None, dict[str, list[Path]], dict[Path, list[str]]]:
+def choose_complete_run(
+    root: Path, manifest: dict
+) -> tuple[Path | None, dict[str, list[Path]], dict[Path, list[str]]]:
     required = manifest["required_artifacts"]
     run_roots = as_list(manifest["run_roots"])
     best_run: Path | None = None
@@ -281,12 +610,24 @@ def choose_complete_run(root: Path, manifest: dict) -> tuple[Path | None, dict[s
 def main() -> int:
     parser = ArgumentParser(description="Validate PD signoff artifact manifest.")
     parser.add_argument("--manifest", default="pd/signoff/manifest.yaml")
-    parser.add_argument("--manifest-only", action="store_true", help="validate manifest shape without requiring run artifacts")
+    parser.add_argument(
+        "--manifest-only",
+        action="store_true",
+        help="validate manifest shape without requiring run artifacts",
+    )
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]
     manifest_path = root / args.manifest
-    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest_text = manifest_path.read_text()
+    duplicate_key_failures = validate_no_duplicate_yaml_keys(manifest_text)
+    if duplicate_key_failures:
+        print("PD signoff artifact check failed:")
+        for failure in duplicate_key_failures:
+            print(f"  - {failure}")
+        return 1
+
+    manifest = yaml.safe_load(manifest_text)
     if not isinstance(manifest, dict):
         print("PD signoff artifact check failed:")
         print("  - manifest must be a YAML mapping")
@@ -310,12 +651,18 @@ def main() -> int:
     complete_run, artifacts, missing_by_run = choose_complete_run(root, manifest)
     if not missing_by_run:
         failures.append("no PD run directories found under run_roots: " + ", ".join(run_roots))
+        failures.append("required signoff artifacts: " + artifact_list(sorted(required)))
     elif complete_run is None:
         best_run = min(missing_by_run, key=lambda run: len(missing_by_run[run]))
         failures.append("no single PD run contains all required signoff artifacts")
         failures.append(
-            f"closest run {best_run.relative_to(root)} missing: " + ", ".join(missing_by_run[best_run])
+            f"closest run {best_run.relative_to(root)} missing: "
+            + artifact_list(missing_by_run[best_run])
         )
+        for name in missing_by_run[best_run]:
+            globs = required.get(name, {}).get("globs", [])
+            if as_list(globs):
+                failures.append(f"{artifact_label(name)} expected at: " + ", ".join(globs))
     else:
         print(f"Checking PD signoff run: {complete_run.relative_to(root)}")
         for name, files in artifacts.items():
@@ -323,11 +670,18 @@ def main() -> int:
             min_bytes = spec.get("min_bytes", 1)
             empty = [path for path in files if path.stat().st_size < min_bytes]
             for path in empty:
-                failures.append(f"{name}: artifact is smaller than min_bytes={min_bytes}: {path.relative_to(root)}")
+                failures.append(
+                    f"{name}: artifact is smaller than min_bytes={min_bytes}: {path.relative_to(root)}"
+                )
+            failures.extend(reject_placeholder_artifacts(name, files, root))
             if name.endswith("_report"):
-                dirty, missing_clean = check_reports(files, spec.get("fail_regex"), spec.get("pass_regex"))
+                dirty, missing_clean = check_reports(
+                    files, spec.get("fail_regex"), spec.get("pass_regex")
+                )
                 dirty_reports.extend(dirty)
                 missing_clean_markers.extend(missing_clean)
+        for run_manifest in artifacts.get("run_manifest", []):
+            failures.extend(validate_run_manifest(root, complete_run, run_manifest))
 
     waiver_spec = manifest.get("waivers", {})
     waivers = matched_files(root, waiver_spec.get("globs", []))
@@ -338,10 +692,10 @@ def main() -> int:
                 failures.append(f"release gate remains blocked: {gate_name}: {gate.get('reason')}")
     if dirty_reports and waiver_spec.get("required_if_any_report_dirty", False) and not waivers:
         failures.append("dirty signoff reports found but no waiver file is present")
-    for path in dirty_reports:
-        failures.append(f"signoff report matched failure regex: {path}")
-    for path in missing_clean_markers:
-        failures.append(f"signoff report missing required clean marker: {path}")
+    for report_path in dirty_reports:
+        failures.append(f"signoff report matched failure regex: {report_path}")
+    for report_path in missing_clean_markers:
+        failures.append(f"signoff report missing required clean marker: {report_path}")
 
     if failures:
         print("PD signoff artifact check failed:")

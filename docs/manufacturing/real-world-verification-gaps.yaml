@@ -24,6 +24,7 @@ release_gates:
     unblock_requires:
       - Release a KiCad project generated from package-vendor data with ERC, DRC, plot, BOM, and position outputs.
       - Archive board SI/PI, current-limit, assembly DFM, and first-article smoke-test evidence.
+      - Pass scripts/check_kicad_artifacts.py and scripts/check_manufacturing_artifacts.py without release blockers.
 required_gap_categories:
   - physical_design
   - package
@@ -95,7 +96,7 @@ gaps:
     release_gate: board_fabrication_release
     status: missing_board_artifact
     evidence_manifest: docs/manufacturing/release-manifest.yaml
-    local_check: scripts/check_real_world_gates.py
+    local_check: scripts/check_kicad_artifacts.py
     required_evidence:
       - Released PCB stackup with impedance targets.
       - Return-path and reference-plane review for clock, reset, debug, GPIO, IRQ, and JTAG nets.

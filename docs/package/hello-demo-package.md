@@ -1,8 +1,11 @@
 # Hello demo package contract
 
-The demo product target is a placeholder QFN64-style package for planning, review, and PCB bring-up flow validation.
+Evidence class: `non_release_placeholder`
+Release use: `prohibited`
 
-This is not a foundry-approved package. It exists to make the top-level chip interface explicit while the project uses open PDK digital flows.
+The demo product target is a Placeholder package using a QFN64-style planning package for review and PCB bring-up flow validation only.
+
+This is not vendor package data, not a foundry-approved package, not a bond diagram, and not a footprint source. It exists to make the top-level chip interface explicit while the project uses open PDK digital flows.
 
 ## Package assumptions
 
@@ -16,4 +19,20 @@ This is not a foundry-approved package. It exists to make the top-level chip int
 - IRQ test-point outputs.
 - JTAG pins reserved for future scan/debug.
 
-Before fabrication, this document must be replaced by the actual shuttle/package/bonding document.
+## Release blockers
+
+- Package-vendor drawing is missing.
+- Shuttle/package approval evidence is missing.
+- Bond diagram mapping die pads to package pins is missing.
+- Package electrical/parasitic model is missing.
+- Package-vendor footprint evidence is missing.
+
+Before fabrication, this document must be replaced by the actual shuttle/package/bonding document and actual shuttle/package/bonding evidence. Do not use this file as release evidence.
+
+## KiCad release dependency
+
+Do not derive a fabrication-ready KiCad project, footprint, or Gerber package
+from this placeholder package contract. Board release requires a vendor package
+drawing, package source checksum or immutable revision, land-pattern review,
+bond diagram, and package-pin to board-net cross-probe before any KiCad outputs
+can be treated as manufacturing evidence.

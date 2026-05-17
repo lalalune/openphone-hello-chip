@@ -17,19 +17,15 @@ PRODUCT_COPY_FILES += \
     device/openphone/openphone_ai_soc/fstab.openphone:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.openphone \
     device/openphone/openphone_ai_soc/manifest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest.xml
 
-# v0 HAL packages. Both are stubs and must remain the ONLY HALs declared
-# here until backing kernel drivers and CTS/VTS transcripts exist.
-PRODUCT_PACKAGES += \
-    vendor.openphone.hello_npu@1.0-service \
-    android.hardware.graphics.composer@2.4-service.openphone_ai_soc \
-    hwcomposer.openphone_ai_soc
-
-# Explicitly NOT declared (v0):
-#   audio, camera, radio/telephony, bluetooth, wifi, gnss, nfc, sensors,
-#   thermal, power, drm, keymaster/keymint, gatekeeper, biometric, vulkan,
-#   neuralnetworks (NNAPI), tv, automotive, secure_element.
-# Do not add any of the above without driver evidence, CTS/VTS pass logs,
-# and an updated manifest.xml entry.
+# HAL packages are intentionally not enabled in the repo-local scaffold.
+# Enable these only in an external AOSP tree after source or reviewed prebuilts
+# exist and the vendorimage, VINTF, SELinux, and smoke evidence logs are
+# archived under docs/evidence/android/.
+#
+# Future integration points:
+#   android.hardware.graphics.composer@2.4-service
+#   hwcomposer.openphone_ai_soc
+#   hello_npu.default
 
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=OpenPhone \

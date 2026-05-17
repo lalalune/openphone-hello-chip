@@ -14,7 +14,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[1]
 OWNED_ROOTS = (ROOT / "rtl", ROOT / "sim", ROOT / "verify")
 SKIP_PARTS = {
@@ -26,8 +25,19 @@ SKIP_PARTS = {
     "src",
 }
 SKIP_SUFFIXES = {".pyc", ".sqlite", ".log", ".xml"}
-TERMS = re.compile(r"\b(stub|placeholder|TODO|FIXME|not implemented|dummy|mock|scaffold)\b", re.IGNORECASE)
-REQUIRED_GAP_AREAS = ("cpu", "interconnect", "display", "dma", "npu", "bootrom", "dram", "pass_gates")
+TERMS = re.compile(
+    r"\b(stub|placeholder|TODO|FIXME|not implemented|dummy|mock|scaffold)\b", re.IGNORECASE
+)
+REQUIRED_GAP_AREAS = (
+    "cpu",
+    "interconnect",
+    "display",
+    "dma",
+    "npu",
+    "bootrom",
+    "dram",
+    "pass_gates",
+)
 REQUIRED_GAP_CATEGORIES = {
     "rtl_stub",
     "incomplete_subsystem",
@@ -47,11 +57,6 @@ class AllowedFinding:
 
 ALLOWLIST = (
     AllowedFinding(
-        "rtl/bootrom/hello_bootrom.sv",
-        "boot vector placeholder",
-        "Boot ROM exposes a documented contract word; platform-contract checks pin it.",
-    ),
-    AllowedFinding(
         "rtl/cpu/hello_cpu_subsystem_stub.sv",
         "hello_cpu_subsystem_stub",
         "Executable tiny CPU model; covered by verify/cocotb/test_tiny_cpu_execution.py.",
@@ -67,7 +72,7 @@ ALLOWLIST = (
         "Testbench instantiates the executable tiny CPU model.",
     ),
     AllowedFinding(
-        "sim/qemu/README.md",
+        "docs/sim/qemu/README.md",
         "--build-stub",
         "QEMU README documents the compatibility alias while the preferred path is firmware.",
     ),
@@ -151,15 +156,35 @@ def require(condition: bool, message: str, errors: list[str]) -> None:
 
 def check_renode_scaffold() -> list[str]:
     errors: list[str] = []
-    readme = (ROOT / "sim/renode/README.md").read_text(encoding="utf-8").lower()
+    readme = (ROOT / "docs/sim/renode/README.md").read_text(encoding="utf-8").lower()
     repl = (ROOT / "sim/renode/openphone_hello.repl").read_text(encoding="utf-8").lower()
     resc = (ROOT / "sim/renode/openphone_hello.resc").read_text(encoding="utf-8").lower()
 
-    require("qemu-virt reference target" in readme, "Renode README must label the flow as qemu-virt reference.", errors)
-    require("not the hello-chip hardware abi" in readme, "Renode README must state this is not the hello-chip hardware ABI.", errors)
-    require("0x80000000" in repl and "0x100000" in repl, "Renode REPL must define RAM at the qemu-virt load window.", errors)
-    require("0x10000000" in repl and "litex_uart" in repl, "Renode REPL must define the qemu-virt UART window.", errors)
-    require("loadplatformdescription" in resc and "openphone_hello.repl" in resc, "Renode RESC must load the checked-in REPL.", errors)
+    require(
+        "qemu-virt reference target" in readme,
+        "Renode README must label the flow as qemu-virt reference.",
+        errors,
+    )
+    require(
+        "not the hello-chip hardware abi" in readme,
+        "Renode README must state this is not the hello-chip hardware ABI.",
+        errors,
+    )
+    require(
+        "0x80000000" in repl and "0x100000" in repl,
+        "Renode REPL must define RAM at the qemu-virt load window.",
+        errors,
+    )
+    require(
+        "0x10000000" in repl and ("ns16550" in repl or "litex_uart" in repl),
+        "Renode REPL must define the qemu-virt UART window.",
+        errors,
+    )
+    require(
+        "loadplatformdescription" in resc and "openphone_hello.repl" in resc,
+        "Renode RESC must load the checked-in REPL.",
+        errors,
+    )
     require("start" in resc, "Renode RESC must start the machine explicitly.", errors)
     return errors
 
@@ -167,7 +192,9 @@ def check_renode_scaffold() -> list[str]:
 def check_gap_work_order() -> list[str]:
     errors: list[str] = []
     path = ROOT / "verify/rtl_gap_work_order.yaml"
-    require(path.exists(), "RTL gap work order must exist at verify/rtl_gap_work_order.yaml.", errors)
+    require(
+        path.exists(), "RTL gap work order must exist at verify/rtl_gap_work_order.yaml.", errors
+    )
     if errors:
         return errors
 
@@ -176,13 +203,25 @@ def check_gap_work_order() -> list[str]:
     if not isinstance(data, dict):
         return errors
 
-    require(data.get("fail_closed_required") is True, "RTL gap work order must require fail-closed behavior.", errors)
+    require(
+        data.get("fail_closed_required") is True,
+        "RTL gap work order must require fail-closed behavior.",
+        errors,
+    )
     audit_doc = data.get("audit_doc")
-    require(isinstance(audit_doc, str) and bool(audit_doc), "RTL gap work order must name audit_doc.", errors)
+    require(
+        isinstance(audit_doc, str) and bool(audit_doc),
+        "RTL gap work order must name audit_doc.",
+        errors,
+    )
     if isinstance(audit_doc, str) and audit_doc:
         require((ROOT / audit_doc).is_file(), f"RTL gap audit doc missing: {audit_doc}.", errors)
     required_gap_fields = data.get("required_gap_fields")
-    require(isinstance(required_gap_fields, list) and bool(required_gap_fields), "RTL gap work order must list required_gap_fields.", errors)
+    require(
+        isinstance(required_gap_fields, list) and bool(required_gap_fields),
+        "RTL gap work order must list required_gap_fields.",
+        errors,
+    )
     areas = data.get("areas")
     require(isinstance(areas, dict), "RTL gap work order must define an areas mapping.", errors)
     if not isinstance(areas, dict):
@@ -193,7 +232,9 @@ def check_gap_work_order() -> list[str]:
         require(isinstance(entry, dict), f"RTL gap work order missing area: {area}.", errors)
         if not isinstance(entry, dict):
             continue
-        require(bool(entry.get("current_posture")), f"{area} must describe current_posture.", errors)
+        require(
+            bool(entry.get("current_posture")), f"{area} must describe current_posture.", errors
+        )
         require(bool(entry.get("fail_closed")), f"{area} must list fail_closed behavior.", errors)
         require(bool(entry.get("checks")), f"{area} must list executable checks.", errors)
         gaps = entry.get("critical_gaps")
@@ -201,23 +242,49 @@ def check_gap_work_order() -> list[str]:
         if not isinstance(gaps, list):
             continue
         for gap in gaps:
-            require(isinstance(gap, dict), f"{area} critical_gaps entries must be mappings.", errors)
+            require(
+                isinstance(gap, dict), f"{area} critical_gaps entries must be mappings.", errors
+            )
             if not isinstance(gap, dict):
                 continue
             gap_id = gap.get("id", "<missing>")
             if isinstance(required_gap_fields, list):
                 for field in required_gap_fields:
                     require(bool(gap.get(field)), f"{area}:{gap_id} must include {field}.", errors)
-            require(gap.get("status") == "open", f"{area}:{gap_id} must remain status=open until closed by RTL and checks.", errors)
-            require(gap.get("category") in REQUIRED_GAP_CATEGORIES, f"{area}:{gap_id} has invalid category.", errors)
-            require(gap.get("severity") in REQUIRED_GAP_SEVERITIES, f"{area}:{gap_id} has invalid severity.", errors)
+            require(
+                gap.get("status") == "open",
+                f"{area}:{gap_id} must remain status=open until closed by RTL and checks.",
+                errors,
+            )
+            require(
+                gap.get("category") in REQUIRED_GAP_CATEGORIES,
+                f"{area}:{gap_id} has invalid category.",
+                errors,
+            )
+            require(
+                gap.get("severity") in REQUIRED_GAP_SEVERITIES,
+                f"{area}:{gap_id} has invalid severity.",
+                errors,
+            )
             affected_paths = gap.get("affected_paths")
-            require(isinstance(affected_paths, list) and bool(affected_paths), f"{area}:{gap_id} must list affected_paths.", errors)
+            require(
+                isinstance(affected_paths, list) and bool(affected_paths),
+                f"{area}:{gap_id} must list affected_paths.",
+                errors,
+            )
             if isinstance(affected_paths, list):
                 for affected in affected_paths:
-                    require(isinstance(affected, str) and bool(affected), f"{area}:{gap_id} affected path must be a string.", errors)
+                    require(
+                        isinstance(affected, str) and bool(affected),
+                        f"{area}:{gap_id} affected path must be a string.",
+                        errors,
+                    )
                     if isinstance(affected, str) and affected:
-                        require((ROOT / affected).exists(), f"{area}:{gap_id} affected path does not exist: {affected}.", errors)
+                        require(
+                            (ROOT / affected).exists(),
+                            f"{area}:{gap_id} affected path does not exist: {affected}.",
+                            errors,
+                        )
     return errors
 
 

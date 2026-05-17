@@ -175,7 +175,7 @@ items:
       - first-article-bench-current-limits
       - fuse-regulator-thermal-current-limit-review
     evidence_paths:
-      - board/kicad/hello-demo/fab-notes.md
+      - docs/board/kicad/hello-demo/fab-notes.md
       - docs/manufacturing/hello-demo-checklist.md
       - docs/manufacturing/evidence/lab/
     acceptance_criteria:
@@ -227,7 +227,7 @@ items:
       - fabrication-notes-approval
     evidence_paths:
       - docs/manufacturing/evidence/dfm/
-      - board/kicad/hello-demo/fab-notes.md
+      - docs/board/kicad/hello-demo/fab-notes.md
     acceptance_criteria:
       - Assembly review covers package, stencil, paste aperture, reflow, inspection, rework, panelization, and component availability constraints.
       - Board vendor approval passes only when it names fabrication notes revision and any accepted exceptions; the DFM result is clean or waived.

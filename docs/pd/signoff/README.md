@@ -15,13 +15,15 @@ The demo chip cannot be called tapeout-ready until the selected PDK flow archive
 - Utilization/congestion report.
 - Density/fill report.
 - Waiver file for every non-clean check.
+- Per-run `signoff-run.yaml` matching `pd/signoff/run-manifest.schema.json`, recording the exact flow, PDK, image digest, corners, inputs, outputs, and clean or waived report status.
 - SI/PI evidence for package models, board-level signal integrity, and power integrity.
 - PDN/current-budget evidence for post-route power, IR-drop/EM, decoupling, and board current limits.
+- Thermal evidence for package/board temperature limits, regulator loss, ambient/enclosure assumptions, and first-article stop conditions.
 - Padframe/package evidence for foundry IO/ESD/corner cells, package drawing, bond diagram, and footprint release.
 
-The current `hello_soc_top` can be hardened as a padless macro. A standalone fabricated chip also requires the padframe plan in `pd/padframe/hello_demo_padframe.md`.
+The current `hello_soc_top` can be hardened as a padless macro. A standalone fabricated chip also requires the padframe plan in `docs/pd/padframe/hello_demo_padframe.md`.
 
-The machine-readable artifact gate is `pd/signoff/manifest.yaml`.
+The machine-readable artifact gate is `pd/signoff/manifest.yaml`. The per-run manifest schema is `pd/signoff/run-manifest.schema.json`; it is intentionally separate from the repository-level manifest so a selected OpenLane/OpenROAD run can be archived without editing release policy.
 
 Run:
 
@@ -30,4 +32,4 @@ make pd-signoff-manifest-check
 make pd-signoff-check
 ```
 
-The manifest check validates required artifact classes, run-scoped globs, explicit blocked gates, and the SI/PI, PDN/current-budget, and padframe/package readiness sections without requiring tool output, so it is safe for fast product checks. The full signoff check is a hard release gate: one OpenLane/OpenROAD run directory must contain nonempty final GDS, DEF, gate netlist, corner manifest, SDC, SPEF, SDF, DRC, LVS, antenna, STA, utilization, congestion, density/fill, and tool-version artifacts. Signoff reports must include clean markers while avoiding failure patterns, and release gates must no longer be blocked.
+The manifest check validates required artifact classes, run-scoped globs, explicit blocked gates, and the SI/PI, PDN/current-budget, padframe/package, and thermal readiness sections without requiring tool output, so it is safe for fast product checks. The full signoff check is a hard release gate: one OpenLane/OpenROAD run directory must contain nonempty final GDS, DEF, gate netlist, corner manifest, SDC, SPEF, SDF, DRC, LVS, antenna, STA, utilization, congestion, density/fill, run-manifest, and tool-version artifacts. Signoff reports must include clean markers while avoiding failure patterns, and release gates must no longer be blocked.

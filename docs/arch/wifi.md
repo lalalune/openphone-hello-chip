@@ -48,13 +48,23 @@ available in the platform. The checked-in DTS and Buildroot fragments carry
 disabled stubs so BSP work can name the intended devices without claiming that
 hello-chip currently has those host peripherals.
 
+The evidence path is machine-readable in `package/wifi/evidence-gates.yaml`.
+That manifest is intentionally blocked: it records the host-controller,
+board/package, Linux BSP, Android framework, firmware, and regulatory artifacts
+that must exist before this repo can move beyond an interface-only claim.
+
 Required board/software validation for this slice:
 
 - Confirm 1.8 V SDIO signaling and board-level pulls with the selected module.
 - Scope `WIFI_EN`, `WIFI_RST_N`, SDIO clock, and UART flow-control sequencing.
+- Keep `WIFI_EN` and `WIFI_RST_N` low until board `VBAT` and `VDDIO_1V8`
+  rails are stable, then release controls in the selected module datasheet
+  order before starting SDIO clock or UART RTS/CTS.
 - Enumerate SDIO function 1 and load the board-specific `brcmfmac` firmware.
 - Exercise `WIFI_IRQ` or OOB wake during traffic and suspend/resume.
 - Attach Bluetooth over UART with flow control enabled.
+- Archive Android feature, supplicant or hostapd, `dumpsys wifi`, Bluetooth HCI,
+  and CTS/VTS subset evidence before any Android WiFi/Bluetooth claim.
 - Keep all product claims limited to an external Linux-supported module until
   the final BOM, layout, firmware files, and certification path are complete.
 
@@ -64,7 +74,11 @@ The maturity gates before any product WiFi claim are:
 - Add an SDIO host controller and Bluetooth UART/PCM ownership in RTL or platform integration.
 - Bond the required pins in the product padframe and cross-check package, board, and RTL names.
 - Add firmware and OS driver bring-up tests for reset sequencing, SDIO enumeration, IRQ, and wake.
+- Close the blocked evidence gates for firmware provenance, Android framework
+  behavior, board power sequencing, and regulatory approval scope.
 
 `make wifi-interface-check` validates the expected groups, voltages, directions,
 reset defaults, duplicate-free signal names, integration-state disclaimers, and
-maturity gates.
+maturity gates. It also validates that the WiFi/BT evidence manifest remains
+blocked rather than implying implementation without host controller or module
+evidence.

@@ -23,7 +23,17 @@ except ModuleNotFoundError:
     data = {"pins": pins}
 pins = data.get("pins", [])
 
-required = {"pin", "name", "direction", "pad_type", "voltage_domain", "reset", "pull", "drive", "board_net"}
+required = {
+    "pin",
+    "name",
+    "direction",
+    "pad_type",
+    "voltage_domain",
+    "reset",
+    "pull",
+    "drive",
+    "board_net",
+}
 seen_nums = set()
 seen_names = set()
 

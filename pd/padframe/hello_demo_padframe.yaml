@@ -1,5 +1,7 @@
 padframe: hello_demo_padframe
 status: contract_scaffold
+evidence_class: non_release_placeholder
+release_use: prohibited
 package_pinout: package/hello-demo-pinout.yaml
 rtl_top: rtl/top/hello_chip_top.sv
 pin_order: pd/pin_order.cfg
@@ -48,9 +50,10 @@ required_pins:
   - JTAG_TDO
 package_artifacts:
   pinout: package/hello-demo-pinout.yaml
-  package_plan: package/hello-demo-package.md
-  pad_ring_plan: package/hello-demo-pad-ring.md
-  board_fab_notes: board/kicad/hello-demo/fab-notes.md
+  package_plan: docs/package/hello-demo-package.md
+  pad_ring_plan: docs/package/hello-demo-pad-ring.md
+  board_fab_notes: docs/board/kicad/hello-demo/fab-notes.md
+  board_cross_probe: board/kicad/hello-demo/package-pinout-cross-probe.yaml
 release_gates:
   padframe_release:
     blocked: true
@@ -62,7 +65,8 @@ release_gates:
     blocked: true
     reason: Board footprint, SI/PI, and rail-current reviews are placeholders only.
 fabrication_blockers:
-  - Replace placeholder package with shuttle/package/bonding document.
-  - Instantiate foundry IO, power, ground, corner, and ESD pad cells.
+  - Replace placeholder package with package-vendor drawing, shuttle/package approval, and bonding document.
+  - Instantiate selected foundry IO, power, ground, corner, and ESD pad cells.
+  - Generate board symbol and footprint from package-vendor evidence; do not fabricate from the placeholder pin list.
   - Run padframe-inclusive LVS and DRC.
   - Archive clean signoff artifacts through pd/signoff/manifest.yaml.

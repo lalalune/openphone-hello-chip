@@ -11,7 +11,6 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "PASS"
 BLOCK = "BLOCK"
@@ -45,7 +44,11 @@ def command_status(subsystem: str, command: list[str], next_step: str) -> Status
     )
     output = " ".join(line.strip() for line in result.stdout.splitlines() if line.strip())
     evidence = output[:220] if output else "command produced no output"
-    if "release check failed:" in result.stdout or "release gate remains blocked" in result.stdout or "explicitly blocked" in result.stdout:
+    if (
+        "release check failed:" in result.stdout
+        or "release gate remains blocked" in result.stdout
+        or "explicitly blocked" in result.stdout
+    ):
         return Status(subsystem, BLOCK, evidence, next_step, "release_blocker")
     if "BLOCKED:" in result.stdout:
         return Status(subsystem, BLOCK, evidence, next_step, "tool_blocker")
@@ -68,8 +71,34 @@ def software_bsp_status() -> Status:
     if result.returncode != 0:
         return Status("software-bsp", FAIL, evidence, "make software-bsp-check", "command_fail")
     if "external evidence blocked" in result.stdout:
-        return Status("software-bsp", BLOCK, evidence, "make software-bsp-evidence-check", "scaffold_only")
+        return Status(
+            "software-bsp", BLOCK, evidence, "make software-bsp-evidence-check", "scaffold_only"
+        )
     return Status("software-bsp", PASS, evidence, "none", "command_pass")
+
+
+def cpu_ap_status() -> Status:
+    result = subprocess.run(
+        [sys.executable, "scripts/check_cpu_ap_completion_gate.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    evidence = " ".join(lines)[:220] if lines else "command produced no output"
+    if any(line.startswith("STATUS: PASS cpu_ap.completion_gate") for line in lines):
+        return Status("cpu-ap", PASS, evidence, "none", "generated_artifact")
+    if any(line.startswith("STATUS: BLOCKED cpu_ap.completion_gate") for line in lines):
+        return Status(
+            "cpu-ap",
+            BLOCK,
+            evidence,
+            "make chipyard-generated-check cpu-ap-evidence-check cpu-ap-completion-gate",
+            "release_blocker",
+        )
+    return Status("cpu-ap", FAIL, evidence, "make cpu-ap-completion-gate", "claim_gate_fail")
 
 
 def status_check(subsystem: str, command: list[str], pass_marker: str, next_step: str) -> Status:
@@ -99,7 +128,13 @@ def status_check(subsystem: str, command: list[str], pass_marker: str, next_step
 def files_status(subsystem: str, paths: list[str], pass_evidence: str, next_step: str) -> Status:
     missing = [path for path in paths if not (ROOT / path).exists()]
     if missing:
-        return Status(subsystem, BLOCK, "missing source/config artifacts: " + ", ".join(missing), next_step, "missing_source")
+        return Status(
+            subsystem,
+            BLOCK,
+            "missing source/config artifacts: " + ", ".join(missing),
+            next_step,
+            "missing_source",
+        )
     return Status(subsystem, PASS, pass_evidence, "none", "source_present")
 
 
@@ -151,16 +186,19 @@ def artifact_status(
 ) -> Status:
     missing = [path for path in artifacts if not (ROOT / path).is_file()]
     if not missing:
-        return Status(subsystem, PASS, "generated artifacts present: " + ", ".join(artifacts), "none", "generated_artifact")
+        return Status(
+            subsystem,
+            PASS,
+            "generated artifacts present: " + ", ".join(artifacts),
+            "none",
+            "generated_artifact",
+        )
     found = tool_path(*tool_names)
     if found:
         return Status(
             subsystem,
             BLOCK,
-            "missing regenerated artifacts; tool available at "
-            + found
-            + ": "
-            + ", ".join(missing),
+            "missing regenerated artifacts; tool available at " + found + ": " + ", ".join(missing),
             command,
             "regen_required",
         )
@@ -177,7 +215,13 @@ def toolchain_status() -> Status:
     required = ["python3", "make", "git"]
     missing = [tool for tool in required if shutil.which(tool) is None]
     if missing:
-        return Status("toolchain-fast-path", FAIL, "missing required tools: " + ", ".join(missing), "make tools", "tool_blocker")
+        return Status(
+            "toolchain-fast-path",
+            FAIL,
+            "missing required tools: " + ", ".join(missing),
+            "make tools",
+            "tool_blocker",
+        )
 
     optional_blocks = []
     for group, tools in {
@@ -205,13 +249,54 @@ def toolchain_status() -> Status:
 
 
 def cocotb_status() -> Status:
+    manifest = ROOT / "build/reports/cocotb/manifest.json"
+    if manifest.is_file():
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        targets = data.get("targets", {}) if isinstance(data, dict) else {}
+        if isinstance(targets, dict) and targets:
+            for entry in targets.values():
+                stats = entry.get("stats", {}) if isinstance(entry, dict) else {}
+                if stats.get("failures") or stats.get("errors") or not stats.get("testcases"):
+                    return Status(
+                        "cocotb",
+                        FAIL,
+                        "cocotb manifest records failures/errors or no testcase",
+                        "make cocotb",
+                        "test_fail",
+                    )
+            return Status(
+                "cocotb",
+                PASS,
+                "per-target cocotb XML artifacts have passing testcases under build/reports/cocotb",
+                "none",
+                "generated_artifact",
+            )
+
     result = ROOT / "verify/cocotb/results.xml"
     if not result.is_file():
-        return Status("cocotb", BLOCK, "missing regenerated artifact: verify/cocotb/results.xml", "make cocotb", "regen_required")
+        return Status(
+            "cocotb",
+            BLOCK,
+            "missing regenerated cocotb manifest or legacy results.xml",
+            "make cocotb",
+            "regen_required",
+        )
     text = result.read_text(errors="ignore")
     if "<failure" in text or "<error" in text or "<testcase" not in text:
-        return Status("cocotb", FAIL, "results.xml contains failures/errors or no testcase", "make cocotb", "test_fail")
-    return Status("cocotb", PASS, "generated artifact verify/cocotb/results.xml has passing testcases", "none", "generated_artifact")
+        return Status(
+            "cocotb",
+            FAIL,
+            "results.xml contains failures/errors or no testcase",
+            "make cocotb",
+            "test_fail",
+        )
+    return Status(
+        "cocotb",
+        PASS,
+        "generated artifact verify/cocotb/results.xml has passing testcases",
+        "none",
+        "generated_artifact",
+    )
 
 
 def formal_status() -> Status:
@@ -227,24 +312,49 @@ def formal_status() -> Status:
         ROOT / "build/reports/hello_dma_formal_yosys.log",
     ]
     if all(path.is_file() and "PASS" in path.read_text(errors="ignore") for path in sby_status):
-        return Status("formal", PASS, "generated SymbiYosys status files report PASS", "none", "generated_artifact")
+        return Status(
+            "formal",
+            PASS,
+            "generated SymbiYosys status files report PASS",
+            "none",
+            "generated_artifact",
+        )
     failed_status = [
         rel(path)
         for path in sby_status
-        if path.is_file() and any(token in path.read_text(errors="ignore") for token in ("FAIL", "ERROR"))
+        if path.is_file()
+        and any(token in path.read_text(errors="ignore") for token in ("FAIL", "ERROR"))
     ]
     failed_status.extend(
-        rel(path.parent / "ERROR")
-        for path in sby_status
-        if (path.parent / "ERROR").is_file()
+        rel(path.parent / "ERROR") for path in sby_status if (path.parent / "ERROR").is_file()
     )
     if failed_status:
-        return Status("formal", FAIL, "SymbiYosys status file reports failure: " + ", ".join(failed_status), "make formal", "test_fail")
+        return Status(
+            "formal",
+            FAIL,
+            "SymbiYosys status file reports failure: " + ", ".join(failed_status),
+            "make formal",
+            "test_fail",
+        )
     if all(path.is_file() for path in fallback_logs):
-        return Status("formal", PASS, "generated Yosys formal fallback logs present", "none", "generated_artifact")
+        return Status(
+            "formal",
+            PASS,
+            "generated Yosys formal fallback logs present",
+            "none",
+            "generated_artifact",
+        )
     if tool_path("sby", "yosys"):
-        return Status("formal", BLOCK, "missing regenerated formal evidence", "make formal", "regen_required")
-    return Status("formal", BLOCK, "formal tools and generated evidence missing", "make formal inside Docker/Nix", "tool_blocker")
+        return Status(
+            "formal", BLOCK, "missing regenerated formal evidence", "make formal", "regen_required"
+        )
+    return Status(
+        "formal",
+        BLOCK,
+        "formal tools and generated evidence missing",
+        "make formal inside Docker/Nix",
+        "tool_blocker",
+    )
 
 
 def qemu_status() -> Status:
@@ -256,7 +366,9 @@ def qemu_status() -> Status:
     )
     if status.status == PASS:
         smoke_log = ROOT / "build/reports/qemu_smoke.log"
-        if not smoke_log.is_file() or "openphone hello qemu" not in smoke_log.read_text(errors="ignore"):
+        if not smoke_log.is_file() or "openphone hello qemu" not in smoke_log.read_text(
+            errors="ignore"
+        ):
             return Status(
                 "qemu",
                 BLOCK,
@@ -276,19 +388,205 @@ def renode_status() -> Status:
     )
 
 
+def qemu_os_status() -> Status:
+    status = status_check(
+        "qemu-os-boot",
+        ["scripts/run_qemu.sh", "--check-os"],
+        "STATUS: PASS qemu.os_boot",
+        "make qemu-os-check",
+    )
+    if status.status == PASS:
+        return Status(
+            "qemu-virt-os-boot",
+            PASS,
+            status.evidence + " (reference qemu-virt only; not OS on generated OpenPhone AP)",
+            "none",
+            "reference_qemu_virt",
+        )
+    if status.status == BLOCK:
+        return Status(
+            "qemu-virt-os-boot",
+            BLOCK,
+            status.evidence,
+            "build/import a Linux Image and initrd/rootfs, then run make qemu-os-check",
+            "missing_os_payload",
+        )
+    return status
+
+
+def on_chip_os_status() -> Status:
+    report = ROOT / "build/reports/mvp_simulator.json"
+    if report.is_file():
+        try:
+            data = json.loads(report.read_text())
+        except json.JSONDecodeError:
+            return Status(
+                "our-chip-os-boot",
+                FAIL,
+                "build/reports/mvp_simulator.json is invalid JSON",
+                "python3 scripts/run_mvp_simulator.py",
+                "report_fail",
+            )
+        if data.get("on_chip_os_boot_claim") is True:
+            return Status(
+                "our-chip-os-boot",
+                PASS,
+                "MVP simulator report records on_chip_os_boot_claim true",
+                "none",
+                "generated_ap_os_boot",
+            )
+        blockers = []
+        for item in data.get("blockers_to_on_chip_os_boot", []):
+            if isinstance(item, dict) and item.get("name"):
+                blockers.append(str(item["name"]))
+        detail = ", ".join(blockers) if blockers else "generated AP/Linux evidence not present"
+        return Status(
+            "our-chip-os-boot",
+            BLOCK,
+            "OS is not running on generated OpenPhone AP/hello-chip RTL; blockers: " + detail,
+            "python3 scripts/run_mvp_simulator.py && make mvp-simulator-check",
+            "release_blocker",
+        )
+    return Status(
+        "our-chip-os-boot",
+        BLOCK,
+        "missing build/reports/mvp_simulator.json; cannot claim OS on generated OpenPhone AP",
+        "python3 scripts/run_mvp_simulator.py && make mvp-simulator-check",
+        "missing_report",
+    )
+
+
+def android_sim_status() -> Status:
+    result = subprocess.run(
+        [sys.executable, "scripts/check_android_sim_boot.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    evidence = " ".join(lines)[:220] if lines else "command produced no output"
+    if result.returncode == 0:
+        return Status("android-sim", PASS, evidence, "none", "generated_artifact")
+    if result.returncode == 2:
+        return Status(
+            "android-sim",
+            BLOCK,
+            evidence,
+            "AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish",
+            "external_aosp_blocker",
+        )
+    return Status(
+        "android-sim", FAIL, evidence, "python3 scripts/check_android_sim_boot.py", "test_fail"
+    )
+
+
 def benchmark_status() -> Status:
+    npu_proof = ROOT / "benchmarks/capabilities/hello_npu_nnapi.proof.json"
+    if not npu_proof.is_file():
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "hello-NPU NNAPI capability proof is missing; fail-closed dry-run planning evidence "
+            "only until real benchmark evidence exists; host-smoke benchmark reports cannot "
+            "satisfy MVP NPU benchmark evidence",
+            "python3 benchmarks/run_benchmarks.py plan --bench tflite_hello_npu --strict-missing",
+            "scaffold_only",
+        )
+
+    reports = sorted(
+        (ROOT / "benchmarks/results").glob("*/report.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
     report = ROOT / "benchmarks/results/pipeline-check/report.json"
+    for candidate in reports:
+        try:
+            if json.loads(candidate.read_text()).get("dry_run") is not True:
+                report = candidate
+                break
+        except (OSError, json.JSONDecodeError):
+            continue
+    else:
+        report = reports[0] if reports else report
     if not report.is_file():
-        return Status("benchmarks", BLOCK, "missing regenerated pipeline dry-run report", "make benchmarks-dry-run", "regen_required")
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "missing regenerated pipeline dry-run report",
+            "make benchmarks-dry-run",
+            "regen_required",
+        )
     data = json.loads(report.read_text())
     statuses = {result.get("status") for result in data.get("results", [])}
     if "failed" in statuses or "error" in statuses or "timeout" in statuses:
-        return Status("benchmarks", FAIL, "report has failing benchmark status", "python3 benchmarks/run_benchmarks.py validate-report " + rel(report), "test_fail")
+        return Status(
+            "benchmarks",
+            FAIL,
+            "report has failing benchmark status",
+            "python3 benchmarks/run_benchmarks.py validate-report " + rel(report),
+            "test_fail",
+        )
     if data.get("dry_run") is True:
-        return Status("benchmarks", BLOCK, "benchmark report is dry-run planning evidence only", "python3 benchmarks/run_benchmarks.py --strict-missing", "scaffold_only")
-    if "blocked" in statuses or "planned_missing_deps" in statuses or "missing_dependencies" in statuses:
-        return Status("benchmarks", BLOCK, "benchmark report records blocked/missing benchmark dependencies", "make benchmarks", "tool_blocker")
-    return Status("benchmarks", PASS, "benchmark report records executed results with no blocked entries", "none", "generated_artifact")
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "benchmark report is dry-run planning evidence only: " + rel(report),
+            "python3 benchmarks/run_benchmarks.py --strict-missing",
+            "scaffold_only",
+        )
+    if (
+        "blocked" in statuses
+        or "planned_missing_deps" in statuses
+        or "missing_dependencies" in statuses
+    ):
+        missing = []
+        for result in data.get("results", []):
+            for item in result.get("missing_dependency_details", []):
+                missing.append(f"{result.get('name')}.{item.get('name')}:{item.get('reason')}")
+            for item in result.get("blocked_assets", []):
+                missing.append(f"{result.get('name')}.{item.get('name')}:{item.get('reason')}")
+        detail = "; missing/blockers: " + ", ".join(sorted(set(missing))) if missing else ""
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "benchmark report records blocked/missing benchmark dependencies: "
+            + rel(report)
+            + detail,
+            "make benchmarks",
+            "tool_blocker",
+        )
+    non_release_deps = []
+    for result in data.get("results", []):
+        for dependency in result.get("dependencies", []):
+            if (
+                dependency.get("release_claim_allowed") is False
+                or dependency.get("evidence_kind") == "host_smoke_tool"
+            ):
+                non_release_deps.append(
+                    f"{result.get('name')}.{dependency.get('name')}:"
+                    f"{dependency.get('evidence_kind', 'non_release_dependency')}"
+                )
+    if non_release_deps:
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "benchmark report is host-smoke/developer evidence only and cannot satisfy MVP "
+            "real benchmark evidence: "
+            + rel(report)
+            + "; non-release deps: "
+            + ", ".join(sorted(set(non_release_deps))[:8]),
+            "python3 benchmarks/run_benchmarks.py --strict-missing",
+            "scaffold_only",
+        )
+    return Status(
+        "benchmarks",
+        PASS,
+        "benchmark report records executed results with no blocked entries: " + rel(report),
+        "none",
+        "generated_artifact",
+    )
 
 
 def product_status() -> Status:
@@ -307,7 +605,7 @@ def product_status() -> Status:
             "product-package",
             BLOCK,
             evidence,
-            "close package/FPGA/KiCad/PD release blockers or keep product claim below fabrication",
+            "python3 scripts/product_check.py --release; python3 scripts/check_board_package_evidence.py --release; python3 scripts/check_pd_signoff.py",
             "release_blocker",
         )
     if result.returncode == 0:
@@ -317,10 +615,21 @@ def product_status() -> Status:
 
 def collect_statuses() -> list[Status]:
     return [
-        command_status("docs-and-project-plan", [sys.executable, "scripts/check_project_plan.py"], "make project-plan-check"),
-        command_status("architecture-docs", [sys.executable, "scripts/docs_check.py"], "make docs-check"),
+        command_status(
+            "docs-and-project-plan",
+            [sys.executable, "scripts/check_project_plan.py"],
+            "make project-plan-check",
+        ),
+        command_status(
+            "architecture-docs", [sys.executable, "scripts/docs_check.py"], "make docs-check"
+        ),
         toolchain_status(),
-        command_status("platform-contract", [sys.executable, "scripts/check_platform_contract.py"], "make platform-contract-check"),
+        command_status(
+            "platform-contract",
+            [sys.executable, "scripts/check_platform_contract.py"],
+            "make platform-contract-check",
+        ),
+        cpu_ap_status(),
         software_bsp_status(),
         command_status(
             "real-world-release-gates",
@@ -355,8 +664,15 @@ def collect_statuses() -> list[Status]:
         ),
         formal_status(),
         qemu_status(),
+        qemu_os_status(),
+        on_chip_os_status(),
         renode_status(),
-        command_status("pd-contract", [sys.executable, "scripts/check_pd_preflight.py"], "make pd-contract-check"),
+        android_sim_status(),
+        command_status(
+            "pd-contract",
+            [sys.executable, "scripts/check_pd_preflight.py"],
+            "make pd-contract-check",
+        ),
         product_status(),
         benchmark_status(),
         artifact_status(

@@ -9,20 +9,31 @@ checked-in scaffold as either locally executable or externally blocked.
 from __future__ import annotations
 
 import argparse
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
-
+from typing import TypedDict
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-CHECKS = {
+class CheckSpec(TypedDict):
+    local: str
+    expected: str
+    blocker: str
+    files: list[str]
+    terms: list[str]
+
+
+CHECKS: dict[str, CheckSpec] = {
     "linux": {
         "local": "make linux-bsp-check",
         "expected": "linux BSP check passed.",
         "blocker": "external Linux kernel checkout plus integration of drivers/misc/openphone-hello",
         "files": [
-            "sw/linux/README.md",
+            "docs/sw/linux/README.md",
             "sw/linux/scripts/import-linux-bsp.sh",
             "sw/linux/dts/openphone-hello.dts",
             "sw/linux/drivers/hello/hello_platform_contract.h",
@@ -47,7 +58,7 @@ CHECKS = {
         "expected": "buildroot BSP check passed.",
         "blocker": "external Buildroot checkout and external Linux kernel tarball/tree",
         "files": [
-            "sw/buildroot/README.md",
+            "docs/sw/buildroot/README.md",
             "sw/buildroot/external.desc",
             "sw/buildroot/Config.in",
             "sw/buildroot/external.mk",
@@ -69,8 +80,11 @@ CHECKS = {
         "expected": "aosp BSP check passed.",
         "blocker": "external AOSP checkout with riscv64/Cuttlefish host dependencies and HAL binaries",
         "files": [
-            "sw/aosp-device/README.md",
+            "docs/sw/aosp-device/README.md",
+            "docs/evidence/aosp-evidence.schema.json",
             "sw/aosp-device/import-aosp-device.sh",
+            "sw/aosp-device/capture-aosp-evidence.sh",
+            "sw/aosp-device/evidence_manifest.json",
             "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
             "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
             "sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk",
@@ -83,13 +97,20 @@ CHECKS = {
             "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts",
             "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
             "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te",
+            "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu_runtime.h",
+            "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu_runtime.cc",
+            "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu_probe_main.cc",
+            "docs/sw/aosp-device/device/openphone/openphone_ai_soc/hal/README.md",
         ],
         "terms": [
             "sw/platform/hello_platform_contract.json",
             "openphone_ai_soc",
             "hello_npu",
             "hwcomposer",
+            "nnapi_acceleration=false",
+            "unsupported",
             "vendorimage",
+            "validation_command",
         ],
     },
     "boot": {
@@ -97,20 +118,29 @@ CHECKS = {
         "expected": "buildroot BSP check passed.; linux BSP check passed.; aosp BSP check passed.",
         "blocker": "CPU-capable SoC integration with RAM, UART, timer, interrupt controller, OpenSBI handoff",
         "files": [
-            "sw/opensbi/README.md",
-            "sw/u-boot/README.md",
+            "docs/sw/opensbi/README.md",
+            "docs/sw/u-boot/README.md",
+            "sw/opensbi/capture-opensbi-evidence.sh",
+            "sw/u-boot/capture-u-boot-evidence.sh",
+            "docs/evidence/software-bsp-capture.md",
+            "docs/evidence/software-bsp-evidence.schema.json",
         ],
         "terms": [
             "sw/platform/hello_platform_contract.json",
             "dependency blocker",
             "expected output",
+            "OpenSBI",
+            "U-Boot",
+            "validation_command",
         ],
     },
 }
 
 
 def read_joined(files: list[str]) -> str:
-    return "\n".join((ROOT / path).read_text(errors="ignore") for path in files if (ROOT / path).is_file())
+    return "\n".join(
+        (ROOT / path).read_text(errors="ignore") for path in files if (ROOT / path).is_file()
+    )
 
 
 def check(name: str) -> list[str]:
@@ -126,6 +156,63 @@ def check(name: str) -> list[str]:
     missing_terms = [term for term in spec["terms"] if term.lower() not in text]
     if missing_terms:
         errors.append("missing scaffold terms: " + ", ".join(missing_terms))
+
+    if name == "aosp":
+        errors.extend(check_aosp_hello_npu_host_probe())
+
+    return errors
+
+
+def check_aosp_hello_npu_host_probe() -> list[str]:
+    errors: list[str] = []
+    compiler = shutil.which("c++") or shutil.which("clang++") or shutil.which("g++")
+    if compiler is None:
+        return ["missing host C++ compiler for hello_npu fail-closed probe"]
+
+    hal_dir = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/hal"
+    sources = [
+        hal_dir / "hello_npu_runtime.cc",
+        hal_dir / "hello_npu_probe_main.cc",
+    ]
+    with tempfile.TemporaryDirectory(prefix="openphone-hello-npu-") as tmp:
+        binary = Path(tmp) / "hello_npu_probe"
+        missing_device = Path(tmp) / "missing-hello-npu"
+        compile_cmd = [
+            compiler,
+            "-std=c++17",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            str(hal_dir),
+            *[str(source) for source in sources],
+            "-o",
+            str(binary),
+        ]
+        compiled = subprocess.run(compile_cmd, text=True, capture_output=True)
+        if compiled.returncode != 0:
+            errors.append("hello_npu host probe failed to compile: " + compiled.stderr.strip())
+            return errors
+
+        probed = subprocess.run(
+            [str(binary), "--device", str(missing_device)],
+            text=True,
+            capture_output=True,
+        )
+        if probed.returncode != 0:
+            errors.append("hello_npu fail-closed probe returned nonzero: " + probed.stderr.strip())
+            return errors
+        output = probed.stdout
+        required = [
+            "hello_npu_status=unsupported",
+            "device_node_present=false",
+            "runtime_supported=false",
+            "nnapi_acceleration=false",
+            "claim_boundary=no_nnapi_acceleration_without_android_nnapi_hal_and_device_evidence",
+        ]
+        missing = [term for term in required if term not in output]
+        if missing:
+            errors.append("hello_npu fail-closed probe missing output terms: " + ", ".join(missing))
 
     return errors
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-repo_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
 mkdir -p "$repo_dir/build/reports"
 
 if [ -d "$repo_dir/tools/bin" ]; then

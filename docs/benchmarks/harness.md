@@ -44,6 +44,22 @@ Validate an existing report:
 python3 benchmarks/run_benchmarks.py validate-report benchmarks/results/dry-run/report.json
 ```
 
+Check whether the TFLite CPU benchmark is ready to run with a real
+`benchmark_model` binary and the local smoke model:
+
+```sh
+python3 scripts/check_tflite_cpu_benchmark.py \
+  --status-json benchmarks/results/tflite-cpu-readiness/status.json
+```
+
+Check both TFLite entries, including the hello-npu NNAPI proof gate:
+
+```sh
+python3 scripts/check_tflite_cpu_benchmark.py \
+  --benchmark all \
+  --status-json benchmarks/results/tflite-readiness/status.json
+```
+
 ## Dry Run
 
 ```sh
@@ -77,11 +93,59 @@ python3 benchmarks/run_benchmarks.py run \
   --claim-level L4_DEV_BOARD
 ```
 
+For local host smoke evidence, use the repo `.venv` and the checked-in smoke
+commands:
+
+```sh
+make venv
+scripts/install_benchmark_smoke_tools.sh
+.venv/bin/python benchmarks/models/generate_mobile_smoke_tflite.py \
+  --out benchmarks/models/mobile_smoke.tflite
+PATH="$PWD/.venv/bin:$PWD/benchmarks/tools:$PATH" \
+  .venv/bin/python benchmarks/run_benchmarks.py run \
+    --allow-host-smoke-tools \
+    --report-id local-host-smoke \
+    --platform openphone-host-smoke \
+    --platform-revision "$(uname -m)" \
+    --claim-level L2_ARCH_SIM \
+    --bench coremark --bench stream --bench lmbench_bw_mem \
+    --bench lmbench_lat_mem_rd --bench fio_seq_read \
+    --bench fio_rand_rw --bench tflite_cpu
+```
+
+For strict CoreMark and STREAM runs, install real upstream builds ahead of the
+smoke shims. The runner searches `tools/bin` first, then `.venv/bin`, then the
+ambient `PATH`; in strict mode it skips repo-local smoke shims and continues
+searching for a real executable. A source-based helper is available:
+
+```sh
+scripts/install_coremark_stream_tools.sh \
+  --coremark-src /path/to/eembc-coremark \
+  --stream-src /path/to/stream
+```
+
+The helper installs `tools/bin/coremark` and `tools/bin/stream_c.exe`. It only
+builds from explicit or already-vendored source checkouts and does not download
+or synthesize benchmark binaries. If sources are missing, it exits with code `2`
+and prints the blocker. Verify the installed tools are not smoke shims with:
+
+```sh
+scripts/install_coremark_stream_tools.sh --check
+```
+
 Missing tools are recorded as `missing_dependencies` and do not abort the whole
 run unless `--strict-missing` is passed. Missing or placeholder model artifacts
 are recorded as `blocked_assets` with status `blocked`; they also make
 `--strict-missing` return non-zero. Failed commands, timeouts, and runner errors
 return a non-zero exit status.
+
+Strict mode rejects the repo-local smoke shims in `benchmarks/tools`, including
+symlinks installed into `.venv/bin`. If a real executable with the same command
+name exists later on `PATH`, the runner records and executes that resolved path
+instead of letting the smoke shim shadow it.
+
+`--allow-host-smoke-tools` is accepted only with `--claim-level L2_ARCH_SIM`.
+Board, prototype, or product release claims must use real benchmark executables.
 
 Expected status codes:
 
@@ -121,23 +185,54 @@ unrelated `stream` utility with the memory benchmark.
 
 | Benchmark | What the harness expects | How to provide it |
 |---|---|---|
-| CoreMark | `coremark` on `PATH` | Build EEMBC CoreMark for the target compiler and install or copy the executable into the benchmark user's `PATH`. |
-| STREAM | `stream_c.exe` on `PATH` | Compile STREAM from source for the target, keep the binary name `stream_c.exe`, and put it on `PATH`. The name avoids colliding with ImageMagick's `stream`. |
-| lmbench bandwidth | `bw_mem` on `PATH` | Build lmbench for the target and expose `bw_mem` on `PATH`. |
-| lmbench latency | `lat_mem_rd` on `PATH` | Build lmbench for the target and expose `lat_mem_rd` on `PATH`. |
+| CoreMark | `coremark` on `PATH` | Build EEMBC CoreMark for the target compiler and install or copy the executable into the benchmark user's `PATH`. `scripts/install_coremark_stream_tools.sh --coremark-src <dir> --only coremark` installs to `tools/bin/coremark`. |
+| STREAM | `stream_c.exe` on `PATH` | Compile STREAM from source for the target, keep the binary name `stream_c.exe`, and put it on `PATH`. `scripts/install_coremark_stream_tools.sh --stream-src <dir> --only stream` installs to `tools/bin/stream_c.exe`; the name avoids colliding with ImageMagick's `stream`. |
+| lmbench bandwidth | `bw_mem` on `PATH` | Build lmbench for the target and expose `bw_mem` on `PATH`. If a repo `.venv/bin/bw_mem` smoke symlink exists, strict mode skips it and keeps searching for a real executable later on `PATH`. |
+| lmbench latency | `lat_mem_rd` on `PATH` | Build lmbench for the target and expose `lat_mem_rd` on `PATH`. If a repo `.venv/bin/lat_mem_rd` smoke symlink exists, strict mode skips it and keeps searching for a real executable later on `PATH`. |
 | fio sequential read | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-seq-read.fio`. |
 | fio random read/write | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-rand-rw.fio`. |
 | TFLite CPU | `benchmark_model` on `PATH` and `benchmarks/models/mobile_smoke.tflite` | Build TensorFlow Lite's benchmark tool and generate or supply a redistributable smoke model. Do not use proprietary app or vendor models unless the report is kept private and marked accordingly outside this harness. |
-| TFLite hello NPU | NNAPI-capable `benchmark_model` and `benchmarks/models/mobile_smoke.tflite` | Build `benchmark_model` with NNAPI support, generate or supply the smoke model, and run on a platform exposing the `hello-npu` accelerator name. |
+| TFLite hello NPU | NNAPI-capable `benchmark_model`, `benchmarks/models/mobile_smoke.tflite`, and `benchmarks/capabilities/hello_npu_nnapi.proof.json` | Build `benchmark_model` with NNAPI support, generate or supply the smoke model, and run on a platform exposing the `hello-npu` accelerator name. The proof JSON must reference non-empty transcripts with the expected `hello-npu` and NNAPI command markers. Use `docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json` as the job output shape, not as evidence. |
+
+The checked-in `benchmarks/tools/*` commands are host smoke tools for CI and
+developer machines. They intentionally preserve the command names and output
+shape expected by the harness, but reports using them are not target CoreMark,
+STREAM, lmbench, or TFLite NNAPI product evidence. Product or board claims must
+replace them with target-built upstream binaries and include clock, thermal,
+power, compiler, and platform metadata.
+
+Do not copy or symlink any `benchmarks/tools/*` smoke command into `tools/bin`
+for a strict run. The runner detects the `openphone-host-smoke` provenance
+marker and treats those shims as missing dependencies unless
+`--allow-host-smoke-tools` is explicitly used.
+
+For local CLI wiring of a built lmbench tree, point the helper at the directory
+that contains real `bw_mem` and `lat_mem_rd` executables:
+
+```sh
+scripts/install_benchmark_smoke_tools.sh \
+  --lmbench-bin-dir /path/to/lmbench/bin/<target>
+```
+
+The helper still installs the other host smoke tools, but links lmbench to the
+supplied real binaries and refuses inputs containing the repo host-smoke marker.
+Generated reports include executable SHA-256, size, provenance, and any rejected
+host-smoke candidates in each executable dependency record.
+
+For hello-npu NNAPI evidence, the harness validates the proof JSON schema,
+accelerator name, transcript presence, and required transcript markers before
+the benchmark can move out of `blocked`. A strict release report that only has
+repo-local smoke tools, an empty proof, or copied template content must stay
+blocked or fail report validation.
 
 ## Report Shape
 
 The generated report is JSON and maps onto the project benchmark schema in
 `docs/benchmarks/report-schema.yaml`. The runner validates generated reports
 before writing them and can validate an existing report with `validate-report`.
-The skeleton does not parse benchmark scores yet; it records raw output logs and
-a declared primary metric for each benchmark so parsers can be added
-incrementally.
+The runner parses primary metrics for CoreMark-shaped, STREAM-shaped, lmbench,
+fio JSON, and TFLite `benchmark_model` output and still archives raw logs for
+auditability.
 
 Blocked model assets include stable `blocker_id`, `pipeline_visible`, and
 `release_blocking` fields. Release and CI jobs should fail on any blocked asset

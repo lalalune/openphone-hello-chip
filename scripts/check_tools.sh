@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-repo_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
 strict=0
 json=0
 while [ "$#" -gt 0 ]; do
@@ -122,6 +122,12 @@ check_tool python3 fast "repo scripts/docs" required
 check_tool pip3 fast ".venv bootstrap" required
 check_tool make fast "documented gates" required
 check_tool git fast "source/upstream refs" required
+check_tool ruff fast "python lint/format" required
+check_tool mypy fast "python typecheck" required
+check_tool shellcheck fast "shell lint" optional
+check_tool yamllint fast "yaml lint" optional
+check_tool jq fast "json inspection" optional
+check_tool dtc fast "devicetree syntax" optional
 check_tool verilator fast "smoke/cocotb/verilator" optional
 check_tool yosys fast "synth/formal fallback" optional
 check_tool yosys-smtbmc fast "formal fallback" optional
@@ -184,6 +190,9 @@ check_python_package cocotb cocotb "cocotb"
 check_python_package pytest pytest "pytest/docs"
 check_python_package numpy numpy "runtime/tests"
 check_python_package yaml PyYAML "yaml checks"
+check_python_package ruff ruff "python lint/format"
+check_python_package mypy mypy "python typecheck"
+check_python_package yamllint yamllint "yaml lint"
 
 if [ "$json" -eq 1 ]; then
     python_for_json="$(command -v python3)"

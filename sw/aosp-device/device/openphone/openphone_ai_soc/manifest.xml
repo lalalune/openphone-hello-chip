@@ -1,42 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  VINTF v0 scaffold for openphone_ai_soc.
+  VINTF scaffold for an external AOSP tree.
 
-  This manifest intentionally declares ONLY two HALs and both are stubs:
+  Active HAL entries are intentionally absent until matching source or reviewed
+  prebuilts are imported into the external tree and evidence is archived.
 
-    1. android.hardware.graphics.composer@2.4 - hwcomposer.openphone_ai_soc
-       Framebuffer-only stub. No GLES2/3/Vulkan claim, no HW overlays.
-
-    2. vendor.openphone.hello_npu@1.0 - hello_npu default service
-       Fail-closed NPU stub. Returns unsupported when /dev/hello-npu is
-       absent. Only a fixed-vector smoke RPC is exposed when the node
-       exists.
-
-  No audio, camera, radio (telephony), Bluetooth, WiFi, GNSS, NFC,
-  sensors, thermal, power, drm, keymaster/keymint, gatekeeper, biometric,
-  Vulkan, or NNAPI HALs are declared. They MUST NOT be added without
-  backing kernel drivers and CTS/VTS transcripts.
-
-  host_checkable_manifest_only_not_boot_evidence; paired with
-  sw/platform/hello_platform_contract.json.
+  Reserved future integration points:
+    android.hardware.graphics.composer / hwcomposer.openphone_ai_soc
+    vendor.openphone.hello_npu / hello_npu.default
 -->
-<manifest version="1.0" type="device" target-level="7">
-    <hal format="hidl">
-        <name>android.hardware.graphics.composer</name>
-        <transport>hwbinder</transport>
-        <version>2.4</version>
-        <interface>
-            <name>IComposer</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>vendor.openphone.hello_npu</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IHelloNpu</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
+<manifest version="1.0" type="device">
 </manifest>

@@ -7,7 +7,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 linux=$1
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
+repo_root=$(CDPATH=; cd -- "$(dirname -- "$0")/../../.." && pwd)
 bsp="$repo_root/sw/linux"
 
 if [ ! -f "$linux/Kconfig" ] || [ ! -d "$linux/drivers" ] || [ ! -d "$linux/arch" ]; then
@@ -22,4 +22,5 @@ printf '  cp %s/dts/openphone-hello.dts %s/arch/riscv/boot/dts/openphone/\n' "$b
 printf '  cp %s/sw/platform/generated/hello_platform_contract.h %s/drivers/misc/openphone-hello/hello_platform_contract.h\n' "$repo_root" "$linux"
 printf 'Then add these fragments in the external Linux tree:\n'
 printf '  drivers/misc/Kconfig: source "drivers/misc/openphone-hello/Kconfig"\n'
+# shellcheck disable=SC2016
 printf '  drivers/misc/Makefile: obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-hello/\n'

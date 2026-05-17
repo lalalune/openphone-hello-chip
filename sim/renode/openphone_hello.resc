@@ -1,4 +1,5 @@
 mach create "openphone-hello"
 machine LoadPlatformDescription @sim/renode/openphone_hello.repl
+sysbus LoadELF @build/qemu/hello_qemu_firmware.elf
 showAnalyzer uart
 start

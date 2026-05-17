@@ -18,36 +18,37 @@ The CPU/interconnect scaffold is separate from the hello-chip debug MMIO path. I
 | Region | Base | Size | Purpose |
 | --- | ---: | ---: | --- |
 | Interrupt controller | `0x0C00_0000` | `4 KiB` | PLIC-style source pending, enable, claim/complete scaffold |
-| DMA control scaffold | `0x1001_0000` | `4 KiB` | AXI-Lite decode slot; currently tied off in the Linux scaffold |
+| DMA control scaffold | `0x1001_0000` | `4 KiB` | AXI-Lite DMA control target; DMA master is arbitrated onto the DRAM model |
 | DRAM aperture | `0x8000_0000` | `256 MiB` | External DRAM controller/PHY boundary; current RTL model implements a small test memory |
 
 Unmapped AXI-Lite scaffold accesses return `DECERR`; reads also return `0xDEAD_BEEF`.
 
-## Linux-capable CPU SoC variant (generated artifacts)
+The `256 MiB` row is the software-visible aperture contract, not implemented capacity. The current SRAM-backed RTL model under that aperture implements only `4 KiB`; accesses within `0x8000_0000` - `0x8FFF_FFFF` but outside the 4 KiB model return DRAM-model `SLVERR`, not AXI-Lite decode `DECERR`. The tiny CPU execution test uses the DRAM aperture as instruction and data memory. The current DRAM model implements aligned 32-bit words with byte strobes; the CPU subset only generates aligned `LW` and `SW`.
 
-The Linux-capable CPU SoC variant of the hello chip is defined by the
-`hello_chip_cpu_variant` section of `sw/platform/hello_platform_contract.json`.
-That section is the single source of truth for the boot vector, DRAM map,
-PLIC/CLINT bases, UART, timer, DMA, NPU, display, and IRQ assignments.
+The Linux-capable scaffold routes DMA master traffic only to the DRAM model. DMA access attempts outside the DRAM aperture must fail with a memory error and must not update MMIO targets. This is a local containment check, not an IOMMU or coherency implementation.
 
-The following files under `sw/platform/generated/` are produced by
-`scripts/gen_platform_artifacts.py` (also reachable via
-`make platform-artifacts`) and MUST NOT be edited by hand:
+The map is also not a complete boot-memory map. The current reset ROM entry is
+the hello-chip identity ROM, and no boot SRAM region, ROM-to-SRAM copy contract,
+DRAM initialization sequence, or OpenSBI memory-discovery handoff is implemented
+in this map. Those rows must be added before Linux boot-memory readiness can be
+claimed.
 
-| Artifact | Consumer |
+## Linux access-map dependencies
+
+The scaffold map is not yet a complete Linux device memory map. Before a Linux/Android readiness claim, the memory map must explicitly reserve and test these dependencies:
+
+| Dependency | Required map contract |
 | --- | --- |
-| `sw/platform/generated/hello_platform.vh`       | RTL decode / Verilog headers |
-| `sw/platform/generated/hello-platform.dtsi`     | Linux kernel DTS includes |
-| `sw/platform/generated/hello_platform.h`        | U-Boot, OpenSBI, bare-metal firmware |
-| `sw/platform/generated/hello_platform_hal.json` | AOSP HAL configs |
+| Reset ROM | Immutable reset vector, executable ROM image or source, failure behavior, and handoff target. |
+| Boot SRAM | SRAM base/size, permissions, stack/temporary storage ownership, zeroization or lifetime policy, and DMA exclusion. |
+| CLINT/ACLINT | Machine timer and software interrupt window, CPU privilege access, DMA exclusion, and device-tree binding evidence. |
+| PLIC/IMSIC | Interrupt-controller pending, enable, priority, threshold, claim/complete, CPU privilege access, DMA exclusion, and source-ID stability. |
+| IOMMU/SMMU | MMIO aperture, stream/client IDs, page table format, fault-status registers, interrupt source, and reset behavior. |
+| DRAM/LPDDR | Real target memory base, discovered size, reserved firmware/device regions, cacheability attributes, training status, and boot log evidence. |
+| DMA-coherent regions | Coherent or non-coherent DMA buffer attributes, cache-maintenance requirements, and dma-buf/fence compatibility evidence. |
+| QoS/performance counters | Per-master bandwidth, latency, underflow, error, and fault counters if the production fabric exposes them. |
 
-`make platform-contract-check` runs `scripts/gen_platform_artifacts.py
---check` and `scripts/check_platform_contract.py`, which together fail CI
-if any artifact is stale or if a handwritten DTS consumer references one
-of the contract device compatibles at a base address that does not match
-the contract.
-
-The tiny CPU execution test uses the DRAM aperture as instruction and data memory. The current DRAM model implements aligned 32-bit words with byte strobes; the CPU subset only generates aligned `LW` and `SW`.
+Until those rows exist with executable evidence, CLINT/PLIC access map dependencies, page fault reporting, coherent DMA, IOMMU/SMMU, and DRAM bandwidth/latency remain blockers rather than implemented behavior.
 
 ## Register conventions
 
@@ -92,10 +93,24 @@ All registers are 32-bit little-endian words. Writes to reserved registers are i
 | `0x04` | `OP_B` | RW | Operand B |
 | `0x08` | `RESULT` | RO | Low result word |
 | `0x0C` | `CTRL_STATUS` | RW | Write bit 0 to start, bit 1 to clear done/error; read bit 0 busy, bit 1 done/IRQ, bit 2 error |
-| `0x10` | `OPCODE` | RW | `0` add, `1` sub, `2` unsigned multiply, `3` signed S16 MAC, `4` packed signed INT8 dot4, `5` unsigned max, `6` unsigned min |
-| `0x14` | `ACC` | RW | Accumulator/bias input for MAC and DOT4 |
+| `0x10` | `OPCODE` | RW | `0` add, `1` sub, `2` unsigned multiply, `3` signed S16 MAC, `4` packed signed INT8 dot4, `5` unsigned max, `6` unsigned min, `7` packed signed INT4 dot8, `8` bounded INT8 GEMM |
+| `0x14` | `ACC` | RW | Accumulator/bias input for MAC/DOT operations |
 | `0x18` | `RESULT_HI` | RO | High result/sign-extension word |
 | `0x1C` | `TRACE` | RO | `{latched_opcode[3:0], busy_count[2:0]}` in low bits |
+| `0x20` | `GEMM_CFG` | RW | Bounded scratchpad GEMM dimensions: `M[1:0]`, `N[9:8]`, `K[18:16]` |
+| `0x24` | `GEMM_BASE` | RW | Byte bases: `A[5:0]`, `B[13:8]`, `C[21:16]` |
+| `0x28` | `GEMM_STRIDE` | RW | Byte strides: `A[3:0]`, `B[11:8]`, `C[19:16]` |
+| `0x2C` | `PERF_UNSUPPORTED_OPS` | RO | Rejected opcode/configuration counter |
+| `0x30` | `CMD_PARAM` | RW | Reserved command parameter word; no tensor queue semantics yet |
+| `0x40` | `DESC_BASE` | RW | Reserved descriptor-ring base; not a DMA command queue |
+| `0x44` | `DESC_HEAD` | RW | Reserved descriptor-ring head |
+| `0x48` | `DESC_TAIL` | RO | Reserved descriptor-ring tail |
+| `0x4C` | `DESC_STATUS` | RO | Reserved descriptor-ring status |
+| `0x50` | `PERF_CYCLES` | RO | Cycles spent in active GEMM state |
+| `0x54` | `PERF_MACS` | RO | Signed INT8 GEMM MACs issued by the scratchpad prototype |
+| `0x58` | `PERF_OPS` | RO | Accepted operation counter |
+| `0x5C` | `PERF_ERRORS` | RW | Rejected command/configuration counter; write bit 0 clears all NPU perf counters |
+| `0x80`-`0xBC` | `SCRATCH[0..15]` | RW | 64-byte MMIO scratchpad for the bounded GEMM prototype |
 
 ## Display registers
 

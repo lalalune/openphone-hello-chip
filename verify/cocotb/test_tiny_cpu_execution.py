@@ -15,6 +15,10 @@ def add(rd, rs1, rs2):
     return (rs2 << 20) | (rs1 << 15) | (0 << 12) | (rd << 7) | 0x33
 
 
+def sub(rd, rs1, rs2):
+    return (0x20 << 25) | (rs2 << 20) | (rs1 << 15) | (0 << 12) | (rd << 7) | 0x33
+
+
 def lw(rd, offset, rs1):
     imm = offset & 0xFFF
     return (imm << 20) | (rs1 << 15) | (2 << 12) | (rd << 7) | 0x03
@@ -22,19 +26,15 @@ def lw(rd, offset, rs1):
 
 def sw(rs2, offset, rs1):
     imm = offset & 0xFFF
-    return (
-        ((imm >> 5) << 25)
-        | (rs2 << 20)
-        | (rs1 << 15)
-        | (2 << 12)
-        | ((imm & 0x1F) << 7)
-        | 0x23
-    )
+    return ((imm >> 5) << 25) | (rs2 << 20) | (rs1 << 15) | (2 << 12) | ((imm & 0x1F) << 7) | 0x23
 
 
 async def reset(dut):
     dut.rst_n.value = 0
     dut.cpu_enable.value = 0
+    dut.stall_cpu_aw.value = 0
+    dut.stall_cpu_w.value = 0
+    dut.stall_cpu_ar.value = 0
     dut.loader_awvalid.value = 0
     dut.loader_awaddr.value = 0
     dut.loader_wvalid.value = 0
@@ -50,6 +50,14 @@ async def reset(dut):
         await RisingEdge(dut.clk)
     dut.rst_n.value = 1
     await RisingEdge(dut.clk)
+
+
+async def run_until_halted(dut, timeout_cycles):
+    for _ in range(timeout_cycles):
+        await RisingEdge(dut.clk)
+        if int(dut.cpu_halted.value):
+            return
+    raise AssertionError("tiny CPU did not halt before timeout")
 
 
 async def axil_write32(dut, addr, data, strobe=0xF):
@@ -113,26 +121,22 @@ async def tiny_cpu_fetches_executes_and_updates_soc_state(dut):
     await reset(dut)
 
     program = [
-        lui(4, 0x80000),       # x4 = DRAM base
-        addi(1, 0, 5),         # x1 = 5
-        addi(2, 0, 7),         # x2 = 7
-        add(3, 1, 2),          # x3 = 12
-        sw(3, 0x100, 4),       # DRAM[0x80000100] = 12
-        lui(5, 0x0C000),       # x5 = interrupt controller base
-        addi(6, 0, 0b1010),    # enable sources 2 and 4
-        sw(6, 0x008, 5),       # INTC.ENABLE = 0b1010
-        0x00000073,            # ECALL: halt tiny core
+        lui(4, 0x80000),  # x4 = DRAM base
+        addi(1, 0, 5),  # x1 = 5
+        addi(2, 0, 7),  # x2 = 7
+        add(3, 1, 2),  # x3 = 12
+        sw(3, 0x100, 4),  # DRAM[0x80000100] = 12
+        lui(5, 0x0C000),  # x5 = interrupt controller base
+        addi(6, 0, 0b1010),  # enable sources 2 and 4
+        sw(6, 0x008, 5),  # INTC.ENABLE = 0b1010
+        0x00000073,  # ECALL: halt tiny core
     ]
 
     for index, instr in enumerate(program):
         assert await axil_write32(dut, 0x8000_0000 + index * 4, instr) == 0
 
     dut.cpu_enable.value = 1
-    for _ in range(200):
-        await RisingEdge(dut.clk)
-        if int(dut.cpu_halted.value):
-            break
-
+    await run_until_halted(dut, 200)
     assert int(dut.cpu_halted.value) == 1
 
     dut.cpu_enable.value = 0
@@ -160,10 +164,7 @@ async def tiny_cpu_halts_on_unsupported_instruction_and_fetch_error(dut):
     assert await axil_write32(dut, 0x8000_0000, 0xFFFF_FFFF) == 0
 
     dut.cpu_enable.value = 1
-    for _ in range(32):
-        await RisingEdge(dut.clk)
-        if int(dut.cpu_halted.value):
-            break
+    await run_until_halted(dut, 32)
     assert int(dut.cpu_halted.value) == 1
 
     dut.cpu_enable.value = 0
@@ -171,18 +172,33 @@ async def tiny_cpu_halts_on_unsupported_instruction_and_fetch_error(dut):
     await reset(dut)
 
     program = [
-        lui(1, 0x40000),       # x1 = unmapped fetch target
-        0x00008067,            # JALR x0, 0(x1)
+        lui(1, 0x40000),  # x1 = unmapped fetch target
+        0x00008067,  # JALR x0, 0(x1)
     ]
     for index, instr in enumerate(program):
         assert await axil_write32(dut, 0x8000_0000 + index * 4, instr) == 0
 
     dut.cpu_enable.value = 1
-    for _ in range(64):
-        await RisingEdge(dut.clk)
-        if int(dut.cpu_halted.value):
-            break
+    await run_until_halted(dut, 64)
     assert int(dut.cpu_halted.value) == 1
+
+
+@cocotb.test()
+async def tiny_cpu_privileged_csr_and_trap_instructions_are_blocked_scaffold(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+
+    for instr in (
+        0x00100073,  # EBREAK: local halt only, not debug/trap entry
+        0x30200073,  # MRET: privileged return is outside the tiny CPU subset
+        0x300010F3,  # CSRRW x1, mstatus, x0 is outside the tiny CPU subset
+    ):
+        await reset(dut)
+        assert await axil_write32(dut, 0x8000_0000, instr) == 0
+        assert await axil_write32(dut, 0x8000_0004, 0xFFFF_FFFF) == 0
+
+        dut.cpu_enable.value = 1
+        await run_until_halted(dut, 32)
+        assert int(dut.cpu_halted.value) == 1
 
 
 @cocotb.test()
@@ -192,19 +208,16 @@ async def tiny_cpu_halts_on_unaligned_word_memory_before_bus_access(dut):
 
     assert await axil_write32(dut, 0x8000_0100, 0) == 0
     program = [
-        lui(1, 0x80000),       # x1 = DRAM base
-        addi(2, 0, 99),        # x2 = value that must not be stored
-        sw(2, 0x102, 1),       # unaligned SW must halt locally
-        0x00000073,            # ECALL would only execute if SW advanced
+        lui(1, 0x80000),  # x1 = DRAM base
+        addi(2, 0, 99),  # x2 = value that must not be stored
+        sw(2, 0x102, 1),  # unaligned SW must halt locally
+        0x00000073,  # ECALL would only execute if SW advanced
     ]
     for index, instr in enumerate(program):
         assert await axil_write32(dut, 0x8000_0000 + index * 4, instr) == 0
 
     dut.cpu_enable.value = 1
-    for _ in range(80):
-        await RisingEdge(dut.clk)
-        if int(dut.cpu_halted.value):
-            break
+    await run_until_halted(dut, 80)
     assert int(dut.cpu_halted.value) == 1
 
     dut.cpu_enable.value = 0
@@ -215,16 +228,82 @@ async def tiny_cpu_halts_on_unaligned_word_memory_before_bus_access(dut):
 
     await reset(dut)
     program = [
-        lui(1, 0x80000),       # x1 = DRAM base
-        lw(2, 0x102, 1),       # unaligned LW must halt locally
-        sw(2, 0x100, 1),       # must not execute
+        lui(1, 0x80000),  # x1 = DRAM base
+        lw(2, 0x102, 1),  # unaligned LW must halt locally
+        sw(2, 0x100, 1),  # must not execute
     ]
     for index, instr in enumerate(program):
         assert await axil_write32(dut, 0x8000_0000 + index * 4, instr) == 0
 
     dut.cpu_enable.value = 1
-    for _ in range(80):
-        await RisingEdge(dut.clk)
-        if int(dut.cpu_halted.value):
-            break
+    await run_until_halted(dut, 80)
     assert int(dut.cpu_halted.value) == 1
+
+
+@cocotb.test()
+async def tiny_cpu_extended_opcode_subset_has_observable_state(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    program = [
+        lui(1, 0x80000),  # x1 = DRAM base
+        addi(0, 0, 123),  # x0 must stay hardwired to zero
+        addi(2, 0, 9),
+        add(3, 2, 0),  # x3 = 9 if x0 stayed zero
+        sub(4, 3, 2),  # x4 = 0
+        sw(3, 0x120, 1),
+        sw(4, 0x124, 1),
+        lw(5, 0x120, 1),
+        sw(5, 0x128, 1),
+        0x00000073,
+    ]
+    for index, instr in enumerate(program):
+        assert await axil_write32(dut, 0x8000_0000 + index * 4, instr) == 0
+
+    dut.cpu_enable.value = 1
+    await run_until_halted(dut, 160)
+
+    dut.cpu_enable.value = 0
+    await RisingEdge(dut.clk)
+    for offset, expected in ((0x120, 9), (0x124, 0), (0x128, 9)):
+        data, resp = await axil_read32(dut, 0x8000_0000 + offset)
+        assert resp == 0
+        assert data == expected
+
+
+@cocotb.test()
+async def tiny_cpu_waits_for_fetch_and_store_request_stalls(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    program = [
+        lui(1, 0x80000),
+        addi(2, 0, 55),
+        sw(2, 0x140, 1),
+        0x00000073,
+    ]
+    for index, instr in enumerate(program):
+        assert await axil_write32(dut, 0x8000_0000 + index * 4, instr) == 0
+
+    dut.stall_cpu_ar.value = 1
+    dut.stall_cpu_aw.value = 1
+    dut.stall_cpu_w.value = 1
+    dut.cpu_enable.value = 1
+    for _ in range(12):
+        await RisingEdge(dut.clk)
+    assert int(dut.cpu_halted.value) == 0
+
+    dut.stall_cpu_ar.value = 0
+    for _ in range(40):
+        await RisingEdge(dut.clk)
+    assert int(dut.cpu_halted.value) == 0
+
+    dut.stall_cpu_aw.value = 0
+    dut.stall_cpu_w.value = 0
+    await run_until_halted(dut, 120)
+
+    dut.cpu_enable.value = 0
+    await RisingEdge(dut.clk)
+    data, resp = await axil_read32(dut, 0x8000_0140)
+    assert resp == 0
+    assert data == 55

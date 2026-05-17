@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "claim_boundary": "android_external_logs_only",
+  "compatibility_claim": "none_without_cts_vts_logs",
+  "android_boot_claim": "blocked_until_all_required_evidence_passes",
+  "required_for_android_boot_claim": [
+    "docs/evidence/android/openphone_ai_soc_lunch.log",
+    "docs/evidence/android/openphone_ai_soc_vendorimage.log",
+    "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+    "docs/evidence/android/cuttlefish_riscv64_boot.log",
+    "docs/evidence/android/cts_virtual_device_subset.log",
+    "docs/evidence/android/vts_virtual_device_subset.log"
+  ],
+  "forbidden_claims_without_required_evidence": [
+    "Android boot proven",
+    "Android booted on hello_soc",
+    "Android compatible",
+    "CDD compliant",
+    "CTS passed",
+    "VTS passed",
+    "GMS certified"
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/android/openphone_ai_soc_lunch.log",
+      "claim": "AOSP product lunch is visible in an external AOSP checkout",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch",
+      "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+      "external_artifacts": [
+        "build/envsetup.sh",
+        "device/openphone/openphone_ai_soc/AndroidProducts.mk"
+      ]
+    },
+    {
+      "path": "docs/evidence/android/openphone_ai_soc_vendorimage.log",
+      "claim": "OpenPhone vendor image builds in an external AOSP checkout",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage",
+      "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+      "external_artifacts": [
+        "out/target/product/openphone_ai_soc/vendor.img",
+        "out/target/product/openphone_ai_soc/installed-files-vendor.txt",
+        "out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml"
+      ]
+    },
+    {
+      "path": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+      "claim": "OpenPhone VINTF packaging validates in an external AOSP checkout",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf",
+      "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+      "external_artifacts": [
+        "out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml",
+        "out/target/product/openphone_ai_soc/vendor.img"
+      ]
+    },
+    {
+      "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
+      "claim": "Reference-only AOSP riscv64 virtual-device boot reaches boot-completed state; this is not hello-chip/AP evidence",
+      "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot",
+      "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+      "external_artifacts": [
+        "out/target/product/openphone_ai_soc/vendor.img",
+        "out/target/product/openphone_ai_soc/installed-files-vendor.txt",
+        "Cuttlefish instance adb transport"
+      ]
+    },
+    {
+      "path": "docs/evidence/android/cts_virtual_device_subset.log",
+      "claim": "Reference-only bounded CTS virtual-device subset was run; this is not hello-chip/AP, CDD, or full CTS compatibility evidence",
+      "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset",
+      "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+      "external_artifacts": [
+        "Cuttlefish instance adb transport",
+        "cts-tradefed result directory"
+      ]
+    },
+    {
+      "path": "docs/evidence/android/vts_virtual_device_subset.log",
+      "claim": "Reference-only bounded VTS virtual-device subset was run; this is not hello-chip/AP, CDD, or full VTS compatibility evidence",
+      "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset",
+      "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+      "external_artifacts": [
+        "Cuttlefish instance adb transport",
+        "vts-tradefed result directory"
+      ]
+    }
+  ],
+  "blocked_until": [
+    "External AOSP checkout is present and imported",
+    "vendor.img build transcript is archived",
+    "VINTF check transcript is archived",
+    "riscv64 Cuttlefish or equivalent boot transcript is archived",
+    "CTS and VTS subset command transcripts are archived before any Android compatibility claim"
+  ]
+}

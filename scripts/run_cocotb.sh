@@ -6,22 +6,37 @@ if ! command -v make >/dev/null 2>&1; then
     exit 1
 fi
 
-PYTHON_BIN="${PYTHON:-python3}"
+REPO_ROOT="$(CDPATH=; cd -- "$(dirname "$0")/.." && pwd)"
+
+if [ -n "${PYTHON:-}" ]; then
+    PYTHON_BIN="$PYTHON"
+elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
+    PYTHON_BIN="$REPO_ROOT/.venv/bin/python"
+else
+    PYTHON_BIN=python3
+fi
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
     PYTHON_BIN=python3
 fi
-PYTHON_DIR="$(CDPATH= cd -- "$(dirname "$PYTHON_BIN")" && pwd)"
+PYTHON_DIR="$(CDPATH=; cd -- "$(dirname "$PYTHON_BIN")" && pwd)"
 if [ -x "$PYTHON_DIR/cocotb-config" ]; then
     PATH="$PYTHON_DIR:$PATH"
 fi
 PYTHON_SITE="$("$PYTHON_BIN" - <<'PY'
 import site
-print(site.getsitepackages()[0])
+paths = []
+for value in site.getsitepackages():
+    if value:
+        paths.append(value)
+user = site.getusersitepackages()
+if user:
+    paths.append(user)
+print(":".join(dict.fromkeys(paths)))
 PY
 )"
 PYTHONPATH="$PYTHON_SITE${PYTHONPATH:+:$PYTHONPATH}"
 export PATH PYTHONPATH
-PYTHON_PREFIX="$(CDPATH= cd -- "$PYTHON_DIR/.." && pwd)"
+PYTHON_PREFIX="$(CDPATH=; cd -- "$PYTHON_DIR/.." && pwd)"
 if [ -d "$PYTHON_PREFIX/lib" ]; then
     DYLD_LIBRARY_PATH="$PYTHON_PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
     LD_LIBRARY_PATH="$PYTHON_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
@@ -37,15 +52,19 @@ fi
 
 COCOTB_TOP="${COCOTB_TOPLEVEL:-hello_chip_top}"
 COCOTB_MOD="${COCOTB_MODULE:-test_hello_chip}"
-REPO_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 COCOTB_BUILD="$REPO_ROOT/build/cocotb/${COCOTB_TOP}_${COCOTB_MOD}"
 COCOTB_LOCK="$REPO_ROOT/build/cocotb/.${COCOTB_TOP}_${COCOTB_MOD}.lock"
+COCOTB_RESULTS_LOCK="$REPO_ROOT/build/cocotb/.results.lock"
+COCOTB_ARCHIVE_NAME="${COCOTB_TOP}_${COCOTB_MOD}"
 mkdir -p "$REPO_ROOT/build/cocotb"
 
 while ! mkdir "$COCOTB_LOCK" 2>/dev/null; do
     sleep 1
 done
-trap 'rmdir "$COCOTB_LOCK" 2>/dev/null || true' EXIT INT TERM
+while ! mkdir "$COCOTB_RESULTS_LOCK" 2>/dev/null; do
+    sleep 1
+done
+trap 'rmdir "$COCOTB_RESULTS_LOCK" "$COCOTB_LOCK" 2>/dev/null || true' EXIT INT TERM
 
 rm -rf "$COCOTB_BUILD" verify/cocotb/results.xml
 
@@ -64,4 +83,7 @@ else
     exit 1
 fi
 
-"$PYTHON_BIN" scripts/check_cocotb_results.py
+"$PYTHON_BIN" scripts/check_cocotb_results.py \
+    --archive-name "$COCOTB_ARCHIVE_NAME" \
+    --top "$COCOTB_TOP" \
+    --module "$COCOTB_MOD"

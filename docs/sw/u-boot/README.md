@@ -19,7 +19,15 @@ buildroot BSP check failed:
 linux BSP check failed:
   - linux BSP BLOCKED: missing evidence for external Linux kernel build, DTB validation, and runtime driver smoke transcript: docs/evidence/linux/openphone_hello_kernel_build.log, docs/evidence/linux/openphone_hello_dtb_check.log, docs/evidence/linux/hello-mmio-smoke.log
 aosp BSP check failed:
-  - aosp BSP BLOCKED: missing evidence for external AOSP lunch/vendorimage/VINTF logs plus Cuttlefish or equivalent boot transcript: docs/evidence/android/openphone_ai_soc_lunch.log, docs/evidence/android/openphone_ai_soc_vendorimage.log, docs/evidence/android/openphone_ai_soc_checkvintf.log, docs/evidence/android/cuttlefish_riscv64_boot.log
+  - aosp BSP BLOCKED: evidence for external AOSP lunch/vendorimage/VINTF logs, Cuttlefish or equivalent boot transcript, and Android compatibility subset transcripts is incomplete or invalid
+opensbi BSP check failed:
+  - opensbi BSP BLOCKED: evidence for external OpenSBI build and fw_dynamic handoff transcript is incomplete or invalid
+  - missing docs/evidence/linux/opensbi_openphone_build.log
+  - missing docs/evidence/linux/opensbi_fw_dynamic_handoff.log
+u-boot BSP check failed:
+  - u-boot BSP BLOCKED: evidence for external U-Boot build and OpenSBI-to-U-Boot boot-chain transcript is incomplete or invalid
+  - missing docs/evidence/linux/u_boot_openphone_build.log
+  - missing docs/evidence/linux/u_boot_opensbi_boot_chain.log
 boot: scaffold audit
   local command: make software-bsp-check
   expected output: buildroot BSP check passed.; linux BSP check passed.; aosp BSP check passed.

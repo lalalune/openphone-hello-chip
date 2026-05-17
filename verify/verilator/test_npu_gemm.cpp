@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
         write32(top, 0x10020080u + word * 4, value);
     }
 
-    write32(top, 0x10020034u, 1);
+    write32(top, 0x1002005cu, 1);
     write32(top, 0x10020020u, 2 | (2 << 8) | (3 << 16));
     write32(top, 0x10020024u, a_base | (b_base << 8) | (c_base << 16));
     write32(top, 0x10020028u, 3 | (2 << 8) | (8 << 16));
@@ -97,11 +97,22 @@ int main(int argc, char** argv) {
     write32(top, 0x1002000cu, 1);
 
     uint32_t status = poll_done(top, 0x1002000cu);
-    uint32_t cycles = read32(top, 0x1002002cu);
-    uint32_t macs = read32(top, 0x10020030u);
-    uint32_t errors = read32(top, 0x10020034u);
-    if (status != 0x2 || cycles != 12 || macs != 12 || errors != 0) {
-        std::fprintf(stderr, "bad status/counters: status=0x%x cycles=%u macs=%u errors=%u\n", status, cycles, macs, errors);
+    uint32_t unsupported_ops = read32(top, 0x1002002cu);
+    uint32_t cycles = read32(top, 0x10020050u);
+    uint32_t macs = read32(top, 0x10020054u);
+    uint32_t ops = read32(top, 0x10020058u);
+    uint32_t errors = read32(top, 0x1002005cu);
+    if (status != 0x2 || unsupported_ops != 0 || cycles != 12 || macs != 12 || ops != 1 || errors != 0) {
+        std::fprintf(
+            stderr,
+            "bad status/counters: status=0x%x unsupported=%u cycles=%u macs=%u ops=%u errors=%u\n",
+            status,
+            unsupported_ops,
+            cycles,
+            macs,
+            ops,
+            errors
+        );
         return 1;
     }
 

@@ -1,5 +1,6 @@
 build/
 .venv/
+.claude/
 sim_build/
 results.xml
 verify/cocotb/results.xml
@@ -19,5 +20,6 @@ external/
 tools/bin/
 pd/reports/*
 !pd/reports/.gitkeep
+pd/openlane/runs/
 benchmarks/results/*
 !benchmarks/results/.gitkeep

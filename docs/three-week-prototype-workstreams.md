@@ -3,12 +3,35 @@
 Generated on 2026-05-16 from subsystem agent reviews and local validation.
 Updated on 2026-05-17 after the critical gap review pass.
 
+Heartbeat update 2026-05-17 03:43 PDT: Renode, BSP, product/package, secure
+boot, and benchmark workstreams now have stricter evidence intake. Renode
+remains blocked by a missing host executable and missing real transcript.
+Software BSP evidence remains blocked by missing external Buildroot, Linux,
+OpenSBI, U-Boot, AOSP, CTS, and VTS logs. Benchmarks now reject repo-local
+smoke shims as real tools; fio host runs pass, while CoreMark, STREAM,
+lmbench, TensorFlow Lite `benchmark_model`, and hello-NPU NNAPI remain blocked
+until real target executables and `benchmarks/capabilities/hello_npu_nnapi.proof.json`
+capability evidence exist.
+
+Heartbeat update 2026-05-17 04:33 PDT: CPU/AP is now an explicit MVP blocker,
+not an implied Linux boot claim. The in-repo tiny CPU remains local contract
+evidence only; the selected Linux-capable AP path is pinned to the Chipyard
+Rocket manifest, and `make chipyard-generated-check cpu-ap-evidence-check`
+must stay blocked until generated RV64GC artifacts and OpenSBI/Linux/trap/timer
+logs exist.
+
+Heartbeat update 2026-05-17 04:43 PDT: the 2028 performance-heavy NPU target is
+now a checked project-plan input via `make npu-2028-target-check`, and smoke /
+ci-fast include that gate. The current RTL remains classified as `L0_RTL_UNIT`;
+the target file is an architecture and validation target, not a completion
+claim.
+
 ## Current executable baseline
 
-- Passing locally: `make docs-check project-plan-check platform-contract-check`, `make rtl-check`, `make synth`, `make formal`, `make verilator`, `make cocotb`, `make cocotb-contract`, `make cocotb-cpu`, `make qemu-check`, `make pipeline-check`, and `python3 scripts/check_mvp_status.py --fail-on-fail`.
+- Passing locally: `make docs-check project-plan-check npu-2028-target-check platform-contract-check`, `make rtl-check`, `make synth`, `make formal`, `make verilator`, `make cocotb`, `make cocotb-contract`, `make cocotb-cpu`, `make qemu-check`, `make pipeline-check`, and `python3 scripts/check_mvp_status.py --fail-on-fail`.
 - Blocked locally: `make openroad` and `make openlane` because OpenROAD/OpenLane/Magic/Netgen are not installed or pulled.
 - Tooling caveat: cocotb now runs from the repo `.venv` path through the Makefile wrapper. Release evidence still needs clean-checkout regeneration and archived tool/report checksums.
-- Blocked by evidence, not local syntax: Renode executable smoke, software BSP external build logs, product/package/board fabrication evidence, real benchmarks, and PD signoff artifacts.
+- Blocked by evidence, not local syntax: generated CPU/AP artifacts and boot logs, Renode executable smoke, software BSP external build logs, product/package/board fabrication evidence, real benchmarks, and PD signoff artifacts.
 
 ## Critical architecture boundary
 
@@ -40,6 +63,13 @@ Immediate work:
 - Keep `make formal` fallback evidence labeled as fallback unless `REQUIRE_SBY=1` is set, and require `REQUIRE_DEEP_FORMAL=1` before treating top-level BMC as more than routine structural coverage.
 - Decide whether week-one RTL work targets the hello debug-MMIO demonstrator or the Linux-capable scaffold; they are different prototypes.
 
+2026-05-17 05:10 PDT heartbeat update:
+
+- Ran the broad local validation stack: `make ci-local`, `make verify-all`, `make smoke`, `make qemu-check-strict`, host-capable `make benchmarks`, strict benchmark planning, and deep formal.
+- Fixed a stale top-level formal address-map predicate: `hello_soc_top` now exposes a CLINT window at `0x0200_0000`, and `verify/formal/hello_soc_top_formal.sv` now treats that window as mapped instead of expecting unmapped `32'hDEAD_BEEF`.
+- `REQUIRE_DEEP_FORMAL=1 make formal` passed after the CLINT predicate fix. This is local formal evidence only, not silicon/FPGA/OS boot evidence.
+- Remaining RTL/verification priorities are protocol-property expansion, coverage reporting, and replacement of the tiny CPU scaffold with generated CPU/AP artifacts plus boot evidence before claiming Linux-capable completion.
+
 ## Workstream B: software, boot, OS, simulation
 
 Primary gaps:
@@ -50,10 +80,14 @@ Primary gaps:
 - `qemu-check` now builds/runs the qemu-virt software-reference firmware and archives `build/reports/qemu_smoke.log`; this is still not hello-chip hardware boot proof.
 - `renode-check` remains a semantic scaffold plus explicit BLOCK until `renode` is installed and a transcript is archived.
 - Buildroot/AOSP/OpenSBI/U-Boot paths are placeholders around external trees.
+- CPU/AP completion is blocked until the selected Chipyard Rocket path produces
+  generated RTL/import manifests plus OpenSBI, Linux, and trap/timer/IRQ logs.
 
 Immediate work:
 
 - Generate DTS/include fragments from `sw/platform/hello_platform_contract.json`.
+- Keep `sw/platform/hello_platform_contract.json` at `has_cpu=false` until the
+  CPU/AP generated-artifact and boot-evidence gates pass.
 - Keep QEMU transcript evidence in `build/reports/qemu_smoke.log` and prevent qemu-virt success from being described as hello-chip hardware boot.
 - Split software checks into scaffold checks versus real boot/image checks.
 - Produce external Linux, Buildroot, and AOSP logs before allowing `make software-bsp-evidence-check` to pass.
@@ -87,6 +121,39 @@ Immediate work:
 - Add an explicit camera/ISP not-implemented contract if camera remains in product scope.
 - Add display validation around scanout DMA, format conversion, vsync semantics, underflow, mode programming, and software driver contract tests.
 - Define bring-up evidence: FPGA board, logic analyzer traces, power measurements, serial logs, and signed-off manufacturing artifacts.
+
+2026-05-17 05:57 PDT heartbeat update:
+
+- Local setup now has `repo`, `sigrok-cli`, `renode`, `kicad-cli`, RISC-V
+  bare-metal GCC, a RISC-V Linux compiler shim, the pinned OpenLane2 Docker
+  image, and repo-local Sky130/GF180 PDK installs under `external/pdks`.
+- `make qemu-check`, `make renode-check`, `make pd-preflight-check`, and
+  `scripts/check_tools.sh` pass for installed local tooling. `nix`, `cvd`, and
+  `launch_cvd` remain unavailable on this macOS host.
+- `make android-sim-boot-check` is correctly blocked until `AOSP_DIR` points
+  at a real AOSP checkout and Cuttlefish is available on a Linux-capable host.
+- A real OpenLane run now reaches tool/PDK execution instead of missing-tool
+  failure, but it is not clean: the first run failed at global placement with
+  771.788% utilization, and the Docker/manual-PDK path exposed Sky130 PDK
+  compatibility variables that still need a proper OpenLane-compatible PDK
+  pin or config update before claiming PD evidence.
+
+2026-05-17 06:07 PDT heartbeat update:
+
+- Completed the OpenLane-compatible Sky130 Volare revision
+  `0fe599b2afb6708d281543108caf8310912f54af` and switched
+  `external/pdks/sky130A` to that revision. The partial-PDK failure is closed.
+- Retried `OPENLANE_CONFIG=pd/openlane/config.sky130.json make openlane`.
+  The flow now starts cleanly, passes lint checks into Yosys synthesis, maps
+  DFFs to `sky130_fd_sc_hd`, and records a large scaffold netlist
+  (`438487` cells, `754058.201600` reported area) in
+  `build/reports/openlane_bounded_attempt.txt`.
+- The run was stopped intentionally during long synthesis/ABC to avoid leaving
+  a runaway heartbeat job active. The current blocker is no longer missing PDK
+  setup; it is that the hello-chip scaffold is too large/unstructured for a
+  fast PD smoke target. Next PD work should add a smaller PD smoke top or
+  parameterized synthesis configuration before asking OpenLane for full
+  placement/routing evidence.
 
 ## Workstream E: toolchain and upstreams
 

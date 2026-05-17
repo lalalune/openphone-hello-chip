@@ -1,0 +1,37 @@
+schema: openphone.fpga_release_manifest.v1
+target: hello_demo_fpga
+status: blocked
+release_class: fpga_bitstream
+next_commands:
+  target_preflight: python3 scripts/check_fpga_target.py
+  release_gate: python3 scripts/check_fpga_release.py
+  product_release_gate: python3 scripts/product_check.py --release
+  hash_bitstream: shasum -a 256 <real-bitstream-file>
+required_evidence:
+  exact_board_revision:
+    status: missing
+    source: board/fpga/hello_demo_fpga.yaml:board.exact_revision
+    required_action: Record the exact board revision and cite the board source used for pin mapping.
+  final_pin_constraints:
+    status: missing
+    source: board/fpga/hello_demo_fpga.yaml:constraints.final_lpf
+    required_action: Replace the skeleton LPF with a final LPF containing LOCATE COMP assignments for every required physical signal.
+  nextpnr_timing:
+    status: missing
+    source: board/fpga/hello_demo_fpga.yaml:release_evidence.timing_report
+    required_action: Archive nextpnr timing output from the final board revision and final LPF.
+  ecppack_bitstream:
+    status: missing
+    source: board/fpga/hello_demo_fpga.yaml:release_evidence.bitstream_path
+    required_action: Archive the ecppack bitstream and record its SHA-256 digest.
+  tool_versions:
+    status: missing
+    source: board/fpga/hello_demo_fpga.yaml:release_evidence.archived_tool_versions
+    required_action: Archive yosys, nextpnr-ecp5, and ecppack versions used for the released bitstream.
+known_local_tool_status:
+  yosys: optional_for_release_preflight
+  nextpnr-ecp5: required_for_real_timing
+  ecppack: required_for_real_bitstream
+notes:
+  - Do not mark this manifest release_ready without real board revision, final LOCATE pins, timing output, bitstream hash, and tool versions.
+  - The scaffold LPF intentionally has no concrete package pin assignments.
