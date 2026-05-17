@@ -58,3 +58,46 @@ latency tolerance, bandwidth coverage, and format expansion beyond `XR24`.
 The first Linux driver should treat this as a simple framebuffer or DRM/KMS
 scanout device. Android should initially use software rendering and a minimal
 HWC path.
+
+## v0 reference panel
+
+The hello chip v0 targets a **720x1280 portrait MIPI-DSI** panel as the
+software-visible reference. The concrete part is the **Raspberry Pi 7" DSI
+Touch Display v1.1-class** module (or any panel compatible with the Linux
+`simple-panel` driver advertising the same timing), chosen because:
+
+- Active resolution `720 x 1280` fits the `MODE.width/height` fields and
+  the current address-generator without modification.
+- Pixel clock is approximately `83 MHz` at 60 Hz with the v0 fixed porches
+  (`H_FRONT=16`, `H_SYNC=96`, `H_BACK=48`, `V_FRONT=10`, `V_SYNC=2`,
+  `V_BACK=33`), which is well within the contract fabric budget.
+- DSI 4-lane physical layer is well-supported by open-source bridge IP
+  (e.g., the Cadence MIPI-DSI controller open spec).
+- Native format is `RGB888` packed to `XR24` on the framebuffer side,
+  matching the existing `FORMAT.XR24` requirement; no format conversion
+  is needed for v0.
+
+### Initialization sequence summary
+
+The v0 panel init path is driven by the boot firmware before the kernel
+takes over. The full DSI command set lives in `fw/panel/v0_init.bin`; the
+high-level order is:
+
+1. Assert panel reset (`PANEL_RST_N = 0`) for `>= 10 ms`, then release
+   and wait `>= 120 ms` for the panel controller to come out of reset.
+2. Power up DSI PHY lanes; configure as 4-lane HS, `~1 Gbps/lane`.
+3. Send `DCS SOFT_RESET (0x01)`; wait `>= 5 ms`.
+4. Send `DCS SET_PIXEL_FORMAT (0x3A)` with `0x77` (24 bpp packed RGB888).
+5. Send vendor-specific PLL/voltage commands per the panel datasheet
+   (opaque blob from `fw/panel/v0_init.bin`).
+6. Send `DCS EXIT_SLEEP_MODE (0x11)`; wait `>= 120 ms`.
+7. Send `DCS SET_DISPLAY_ON (0x29)`.
+8. Begin scanout: program `FB_BASE`, `MODE = (1280 << 16) | 720`,
+   `FORMAT = XR24`, then `ENABLE = 1`.
+
+This sequence is the boot-time prerequisite; nothing in the current
+`hello_display` RTL implements the DSI command path. The DSI controller
+and its command FIFO are tracked under the
+`display-real-framebuffer-path` gap. Until that lands, the v0 contract
+is exercised in cocotb against a synthetic perfect or starved
+framebuffer client (see `verify/cocotb/display/`).

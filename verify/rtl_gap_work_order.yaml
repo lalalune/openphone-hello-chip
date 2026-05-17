@@ -111,6 +111,10 @@ areas:
           - verify/formal/hello_soc_top_formal.sv
           - scripts/yosys_formal_top_structural.ys
           - scripts/run_formal.sh
+        partial_closure_evidence:
+          - verify/properties/axi_lite.sv (parametric AXI-Lite property pack ready for bind to debug bridge, interconnect, DRAM, DMA master, and interrupt-controller paths)
+          - verify/properties/README.md (bind usage and SymbiYosys harness instructions)
+          - verify/properties/dma_axil_bind.sv + verify/properties/dma_axil.sby (first concrete bind targeting the DMA master)
         current_evidence: Top formal proves a few structural facts with shallow BMC or Yosys check fallback; it does not use an AXI-Lite property set.
         blocking_gate: Formal pass must be reported as shallow structural coverage only.
         closure_evidence: AXI-Lite assume/assert coverage for valid-ready stability, response liveness under bounded fairness, unmapped DECERR paths, and independent read/write channel stalls.
@@ -134,6 +138,8 @@ areas:
           - rtl/interconnect/hello_linux_soc_contract.sv
           - verify/cocotb/test_cpu_mem_intc_contract.py
           - verify/formal/hello_dma_formal.sv
+        partial_closure_evidence:
+          - verify/cocotb/dma/test_dma_long_transfer.py (1 KiB transfer, partial-tail byte strobes, unaligned-programming error, completion IRQ, SLVERR propagation; not yet wired into make cocotb)
         current_evidence: DMA is a word-copy AXI-Lite master with status/error counters; pad-level top connects it to a 4 KiB internal DRAM array, not a production memory hierarchy.
         blocking_gate: DMA throughput, coherency, burst, cache interaction, and software-driver performance claims remain blocked.
         closure_evidence: Verified production memory target, long transfer tests, partial-beat behavior, backpressure permutations, coherency policy, interrupt completion, and error injection coverage.
@@ -146,6 +152,10 @@ areas:
           - verify/formal/hello_dma_formal.sv
           - verify/formal/hello_dma.sby
           - scripts/yosys_formal_dma.ys
+        partial_closure_evidence:
+          - verify/properties/axi_lite.sv (reusable AXI-Lite property pack: VALID/payload stability, response legality, bounded liveness, outstanding-transaction balance)
+          - verify/properties/dma_axil_bind.sv (bind harness wrapping hello_dma master ports)
+          - verify/properties/dma_axil.sby (SymbiYosys bmc depth 32 + prove depth 16 tasks)
         current_evidence: Formal depth is 12 and checks basic status and signal relationships, but not full transfer completion, liveness, backpressure stability, or all response/error interleavings.
         blocking_gate: Formal pass must not be described as full DMA correctness.
         closure_evidence: Bounded and induction-style proofs or exhaustive constrained tests for transfer progress, no double issue, response matching, error propagation, and clear/restart sequencing.
@@ -169,6 +179,9 @@ areas:
           - verify/cocotb/test_hello_npu.py
           - verify/verilator/test_npu_gemm.cpp
           - verify/formal/hello_npu_formal.sv
+        partial_closure_evidence:
+          - docs/arch/npu-microarch.md (Gemmini v0 selection, MMIO map, 64-byte descriptor format, tensor memory ABI, v0 op set, IRQ/error registers, CPU fallback contract, validated envelope)
+          - verify/cocotb/npu/test_npu_queue_stress.py (skipped scaffolds for descriptor queue stress, completion IRQ, unsupported-op status pending hello_npu_gemmini_wrapper RTL)
         current_evidence: NPU is an MMIO datapath with scalar ops and bounded scratch GEMM registers; it has no queue, descriptor fetch, tensor memory interface, backpressure, or integration with a production accelerator.
         blocking_gate: AI accelerator, throughput, model execution, and software fallback percentage claims remain blocked.
         closure_evidence: Selected accelerator microarchitecture or wrapped IP with descriptor ABI, memory interface, tensor layout, interrupts, driver contract, performance counters, and coverage reports.
@@ -205,6 +218,9 @@ areas:
           - rtl/display/hello_display.sv
           - rtl/top/hello_soc_top.sv
           - verify/cocotb/test_hello_display.py
+        partial_closure_evidence:
+          - arch/display.md "v0 reference panel" section (720x1280 MIPI-DSI selection and DCS init sequence summary)
+          - verify/cocotb/display/test_display_timing.py (hsync/vsync cadence under perfect framebuffer; fetched+underflow invariant under backpressuring framebuffer)
         current_evidence: Display has timing registers and a top-level SRAM-backed framebuffer read path, but no panel PHY, DSI bridge, format conversion pipeline, production underflow policy, or real panel init path.
         blocking_gate: Display subsystem pass must not imply real panel bring-up or production scanout bandwidth.
         closure_evidence: Framebuffer fetch with production memory QoS, underflow detection, pixel format coverage, mode programming, panel init, timing validation, and hardware-in-loop or cycle-accurate trace evidence.
@@ -217,6 +233,8 @@ areas:
           - rtl/display/hello_display.sv
           - verify/formal/hello_soc_top_formal.sv
           - scripts/run_formal.sh
+        partial_closure_evidence:
+          - verify/cocotb/display/test_display_timing.py (starved-framebuffer underflow counter check drives UNDERFLOW_COUNT to exactly active_pixels)
         current_evidence: Display behavior is covered by cocotb smoke tests and top structural formal only; no dedicated formal properties constrain timing, coordinates, IRQ cadence, or read handshakes.
         blocking_gate: Formal pass does not cover display correctness.
         closure_evidence: Assertions for hsync/vsync cadence, active window bounds, framebuffer address monotonicity, disabled-state behavior, unsupported formats, and read-ready stalls.
