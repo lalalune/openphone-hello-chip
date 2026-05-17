@@ -11,11 +11,13 @@
   "generation": {
     "config": "OpenPhoneRocketConfig",
     "package": "openphone",
+    "bootstrap_preflight_report": "build/chipyard/openphone_rocket/bootstrap-preflight.json",
     "command": "",
     "tool_versions": "",
     "generated_at_utc": ""
   },
   "artifacts": {
+    "generated_src": "",
     "verilog": "",
     "dts": "",
     "simulator": "",
@@ -23,9 +25,23 @@
     "linux_image": "",
     "initramfs": ""
   },
+  "artifact_sha256": {
+    "generated_src_tree_sha256": "",
+    "verilog_sha256": "",
+    "dts_sha256": "",
+    "simulator_sha256": "",
+    "opensbi_image_sha256": "",
+    "linux_image_sha256": "",
+    "initramfs_sha256": ""
+  },
   "evidence": {
     "opensbi_boot_log": "",
     "linux_boot_log": "",
     "trap_timer_irq_log": ""
+  },
+  "evidence_sha256": {
+    "opensbi_boot_log_sha256": "",
+    "linux_boot_log_sha256": "",
+    "trap_timer_irq_log_sha256": ""
   }
 }

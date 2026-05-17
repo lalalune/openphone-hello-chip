@@ -25,6 +25,8 @@ required = [
     "board/fpga/hello_demo_fpga.yaml",
     "board/fpga/constraints/hello_demo_ulx3s.lpf",
     "docs/board/kicad/hello-demo/fab-notes.md",
+    "docs/board/kicad/hello-demo-commands.md",
+    "docs/board/kicad/hello-demo-artifact-manifest.yaml",
     "board/kicad/hello-demo/package-pinout-cross-probe.yaml",
     "docs/fw/board-smoke/tests/smoke_plan.md",
     "docs/manufacturing/hello-demo-checklist.md",
@@ -49,6 +51,10 @@ subprocess.run([sys.executable, "scripts/check_physical_closure_work_order.py"],
 subprocess.run([sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"], check=True)
 subprocess.run([sys.executable, "scripts/check_real_world_gates.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_board_package_evidence.py"], check=True)
+subprocess.run(
+    [sys.executable, "scripts/check_kicad_artifacts.py", "--manifest-only"],
+    check=True,
+)
 
 release_blockers: list[str] = []
 
@@ -69,6 +75,18 @@ if board_package_release.returncode != 0:
     release_blockers.append(
         "board/package/vendor/fab evidence is incomplete; run "
         "scripts/check_board_package_evidence.py --release for details"
+    )
+
+kicad_release = subprocess.run(
+    [sys.executable, "scripts/check_kicad_artifacts.py"],
+    check=False,
+    text=True,
+    capture_output=True,
+)
+if kicad_release.returncode != 0:
+    release_blockers.append(
+        "KiCad source/fab release evidence is incomplete; run "
+        "scripts/check_kicad_artifacts.py for details"
     )
 
 pinout = yaml.safe_load(Path("package/hello-demo-pinout.yaml").read_text())
@@ -168,6 +186,11 @@ if release_blockers:
         print(board_package_release.stdout.rstrip())
     if board_package_release.stderr:
         print(board_package_release.stderr.rstrip(), file=sys.stderr)
+    if kicad_release.stdout:
+        print("\nKiCad artifact detail:")
+        print(kicad_release.stdout.rstrip())
+    if kicad_release.stderr:
+        print(kicad_release.stderr.rstrip(), file=sys.stderr)
     if args.release:
         raise SystemExit(1)
     print("product artifact skeleton present; release blockers remain documented")

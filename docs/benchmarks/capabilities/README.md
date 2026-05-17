@@ -7,6 +7,10 @@ being mistaken for real target accelerator evidence.
 - `hello_npu_nnapi.proof.json`: present only after an Android/Linux target
   exposes a real `hello-npu` NNAPI accelerator or delegate and the validation
   job records the matching transcripts.
+- `docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json`: copy
+  shape for the validation job output. Do not copy it into
+  `benchmarks/capabilities/` as evidence; the harness requires real transcript
+  files and content markers.
 
 The proof JSON must use this schema:
 
@@ -17,6 +21,16 @@ The proof JSON must use this schema:
   "target": "android-device-or-linux-target-name",
   "generated_by": "validation job command or CI job id",
   "accelerator_name": "hello-npu",
+  "nnapi": {
+    "accelerator_name": "hello-npu",
+    "cpu_fallback_percent": 0,
+    "unsupported_op_count": 0
+  },
+  "model_artifacts": {
+    "benchmarks/models/mobile_smoke.tflite": {
+      "sha256": "64-character lowercase sha256 of the exact model used"
+    }
+  },
   "transcripts": {
     "adb_devices": "docs/evidence/android/hello-npu/adb-devices.log",
     "nnapi_accelerator_query": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
@@ -26,4 +40,23 @@ The proof JSON must use this schema:
 ```
 
 Each transcript path is relative to the repository root and must exist as a
-non-empty file. A blank marker file is not accepted by `benchmarks/run_benchmarks.py`.
+non-empty file. A blank marker file is not accepted by
+`benchmarks/run_benchmarks.py`.
+
+The proof must also bind to the exact checked-in model SHA-256, report the
+`hello-npu` accelerator name in both the top-level proof and `nnapi` object, and
+show zero CPU fallback plus zero unsupported ops. Missing or stale values keep
+`tflite_hello_npu` blocked.
+
+The current benchmark plan also validates transcript content before treating
+the proof as available:
+
+- `adb_devices` must contain `device`.
+- `nnapi_accelerator_query` must contain `hello-npu`.
+- `benchmark_model_nnapi` must contain `--use_nnapi=true`,
+  `--nnapi_accelerator_name=hello-npu`, and `NNAPI`.
+
+These markers are intentionally minimal. They prove the archived logs came from
+the expected NNAPI path, but they are not a substitute for benchmark review. The
+generated report records transcript SHA-256 values so release reviewers can tie
+the proof JSON to the archived logs.

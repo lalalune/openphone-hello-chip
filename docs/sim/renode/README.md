@@ -11,32 +11,45 @@ contract in `sw/platform/hello_platform_contract.json`; the overlapping
 `0x1000_0000` qemu-virt UART address must not be treated as the hello
 peripheral-control block in software that targets real hardware.
 
-`scripts/run_renode.sh --check` is fail-closed. It checks that the platform and
-documentation match the qemu-virt contract, then reports executable smoke as
-`STATUS: BLOCKED` unless Renode is installed, firmware exists, and a real Renode
-serial transcript has been provided for intake. Install Renode from the official
-packages, confirm the executable and version, then capture a serial log from an
-actual Renode run:
+`scripts/run_renode.sh --check` is fail-closed. It checks that the platform,
+documentation, and `sim/renode/expected_serial_banner.txt` match the qemu-virt
+contract, then runs the executable preflight. Missing `renode` or missing
+`build/qemu/hello_qemu_firmware.elf` reports `STATUS: BLOCKED` unless
+`REQUIRE_RENODE=1` is set. When both are present, check mode runs Renode for a
+bounded interval and only passes if the captured output contains the expected
+serial banner. Install Renode from the official packages, confirm the executable
+and version, then run:
 
 ```sh
 command -v renode
 renode --version
-scripts/run_renode.sh
+scripts/run_qemu.sh --build-firmware
+make renode-check
 ```
 
-Intake is explicit:
+Manual transcript intake is explicit:
 
 ```sh
 scripts/run_renode.sh --check --transcript path/to/real-renode-serial.log
 ```
 
-The transcript must contain the UART banner:
+Transcript intake also runs the local Renode preflight and checks for
+`build/qemu/hello_qemu_firmware.elf`. A copied banner in a text file is not
+enough on its own: if `renode` is missing, `renode --version` cannot run, or the
+firmware ELF is absent, intake remains `STATUS: BLOCKED`.
+
+The expected UART banner contract is:
 
 ```text
 openphone hello qemu
 ```
 
-Passing intake archives `build/reports/renode_smoke.log` and
-`build/reports/renode_smoke.manifest`. Until a real transcript is captured and
-ingested, Renode status may be described only as reference-only or blocked, not
-booted.
+Passing bounded check or intake archives `build/reports/renode_smoke.log` and
+`build/reports/renode_smoke.manifest`. A failed bounded run writes
+`build/reports/renode_smoke_attempt.log` but does not create passing evidence.
+The manifest is validated before `renode.run` can pass and must identify the
+evidence as `renode-executable-transcript`, bind it to the archived transcript
+hash, bind it to the firmware hash, record the Renode executable/version
+preflight, point at the banner contract, and repeat the required banner. Until a
+real transcript is captured by Renode or ingested from a real Renode serial run,
+Renode status may be described only as reference-only or blocked, not booted.

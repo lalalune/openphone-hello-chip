@@ -123,6 +123,19 @@ PLACEHOLDER_VALUES = {
     "na",
     "none",
 }
+FORBIDDEN_ARTIFACT_TEXT_MARKERS = (
+    "template_not_release_evidence",
+    "non_release_placeholder",
+    "release use: `prohibited`",
+    "release_use: prohibited",
+    "placeholder-only",
+    "placeholder signoff",
+    "dummy signoff",
+    "fake signoff",
+    "not release evidence",
+)
+REPOSITORY_MANIFEST_SCHEMA = "openphone.pd_signoff_manifest.v1"
+RUN_MANIFEST_SCHEMA_PATH = "pd/signoff/run-manifest.schema.json"
 
 
 def as_list(value: object) -> list[str]:
@@ -282,6 +295,19 @@ def check_reports(
     return dirty, missing_clean_marker
 
 
+def reject_placeholder_artifacts(name: str, paths: list[Path], root: Path) -> list[str]:
+    failures: list[str] = []
+    for path in paths:
+        text = path.read_text(errors="ignore").lower()
+        matched = [marker for marker in FORBIDDEN_ARTIFACT_TEXT_MARKERS if marker in text]
+        if matched:
+            failures.append(
+                f"{name}: artifact contains non-release marker(s): {path.relative_to(root)}: "
+                + ", ".join(matched)
+            )
+    return failures
+
+
 def artifact_label(name: str) -> str:
     return f"{ARTIFACT_LABELS.get(name, name)} ({name})"
 
@@ -320,6 +346,14 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
     required = manifest.get("required_artifacts")
     runner = manifest.get("runner")
 
+    if manifest.get("schema") != REPOSITORY_MANIFEST_SCHEMA:
+        failures.append(f"manifest schema must be {REPOSITORY_MANIFEST_SCHEMA}")
+    if manifest.get("run_manifest_schema") != RUN_MANIFEST_SCHEMA_PATH:
+        failures.append(f"manifest run_manifest_schema must be {RUN_MANIFEST_SCHEMA_PATH}")
+    elif not (manifest_path.parents[2] / RUN_MANIFEST_SCHEMA_PATH).is_file():
+        failures.append(
+            f"manifest run_manifest_schema points at missing file: {RUN_MANIFEST_SCHEMA_PATH}"
+        )
     if not isinstance(manifest.get("signoff"), str) or not manifest["signoff"]:
         failures.append("manifest must name signoff")
     if not isinstance(runner, dict):
@@ -639,6 +673,7 @@ def main() -> int:
                 failures.append(
                     f"{name}: artifact is smaller than min_bytes={min_bytes}: {path.relative_to(root)}"
                 )
+            failures.extend(reject_placeholder_artifacts(name, files, root))
             if name.endswith("_report"):
                 dirty, missing_clean = check_reports(
                     files, spec.get("fail_regex"), spec.get("pass_regex")

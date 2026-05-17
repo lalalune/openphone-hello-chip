@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "claim_boundary": "generated_chipyard_artifacts_and_external_transcripts_only",
+  "completion_claim": "blocked_until_all_required_artifacts_and_evidence_pass",
+  "selected_manifest": "generators/chipyard/openphone-rocket-manifest.json",
+  "generated_manifest": "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
+  "capture_helper": "scripts/capture_cpu_ap_evidence.py",
+  "generated_artifacts": {
+    "generated_src": {
+      "path": "build/chipyard/openphone_rocket/generated-src",
+      "manifest_key": "generated_src",
+      "sha256_key": "generated_src_tree_sha256",
+      "kind": "directory",
+      "claim": "Recursive generated source tree from the pinned Chipyard checkout."
+    },
+    "verilog": {
+      "path": "build/chipyard/openphone_rocket/openphone_rocket_ap.v",
+      "manifest_key": "verilog",
+      "sha256_key": "verilog_sha256",
+      "kind": "file",
+      "min_bytes": 1024,
+      "required_strings": [
+        "module openphone_rocket_ap"
+      ],
+      "claim": "Generated Rocket RV64GC AP wrapper Verilog."
+    },
+    "dts": {
+      "path": "build/chipyard/openphone_rocket/openphone-hello.dts",
+      "manifest_key": "dts",
+      "sha256_key": "dts_sha256",
+      "kind": "file",
+      "min_bytes": 512,
+      "required_strings": [
+        "/dts-v1/",
+        "cpus",
+        "memory",
+        "interrupt-controller",
+        "serial"
+      ],
+      "claim": "Generated DTS matching the AP integration being booted."
+    },
+    "simulator": {
+      "path": "build/chipyard/openphone_rocket/simulator",
+      "manifest_key": "simulator",
+      "sha256_key": "simulator_sha256",
+      "kind": "file_or_directory",
+      "claim": "Simulator or simulator run directory built from the pinned generated AP."
+    }
+  },
+  "transcripts": {
+    "opensbi_boot_log": {
+      "artifact": "OpenSBI AP boot transcript",
+      "path": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
+      "manifest_key": "opensbi_boot_log",
+      "sha256_key": "opensbi_boot_log_sha256",
+      "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake opensbi-boot --source /path/to/opensbi-serial.log --command '/exact/external/boot command'",
+      "min_bytes": 240,
+      "raw_required_strings": [
+        "Reset PC",
+        "hart ID",
+        "misa",
+        "mstatus",
+        "mtvec",
+        "timer source",
+        "interrupt controller",
+        "UART console",
+        "DRAM base",
+        "OpenSBI next-stage handoff"
+      ],
+      "required_strings": [
+        "openphone-evidence: target=cpu_ap artifact=openphone_hello_opensbi_boot",
+        "openphone-evidence: command=",
+        "openphone-evidence: generated_manifest=",
+        "Reset PC",
+        "hart ID",
+        "misa",
+        "mstatus",
+        "mtvec",
+        "timer source",
+        "interrupt controller",
+        "UART console",
+        "DRAM base",
+        "OpenSBI next-stage handoff",
+        "openphone-evidence: status=PASS"
+      ],
+      "forbidden_strings": [
+        "software reference only",
+        "qemu-virt",
+        "no real transcript"
+      ]
+    },
+    "linux_boot_log": {
+      "artifact": "Linux AP boot transcript",
+      "path": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+      "manifest_key": "linux_boot_log",
+      "sha256_key": "linux_boot_log_sha256",
+      "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake linux-boot --source /path/to/linux-serial.log --command '/exact/external/boot command'",
+      "min_bytes": 240,
+      "raw_required_strings": [
+        "Linux early console",
+        "generated DTS hash",
+        "memory node",
+        "CPU node",
+        "timer node",
+        "interrupt-controller node",
+        "UART node",
+        "initramfs start",
+        "hello MMIO smoke result"
+      ],
+      "required_strings": [
+        "openphone-evidence: target=cpu_ap artifact=openphone_hello_linux_boot",
+        "openphone-evidence: command=",
+        "openphone-evidence: generated_manifest=",
+        "Linux early console",
+        "generated DTS hash",
+        "memory node",
+        "CPU node",
+        "timer node",
+        "interrupt-controller node",
+        "UART node",
+        "initramfs start",
+        "hello MMIO smoke result",
+        "openphone-evidence: status=PASS"
+      ],
+      "forbidden_strings": [
+        "software reference only",
+        "qemu-virt",
+        "no real transcript"
+      ]
+    },
+    "trap_timer_irq_log": {
+      "artifact": "Trap, timer, and interrupt transcript",
+      "path": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
+      "manifest_key": "trap_timer_irq_log",
+      "sha256_key": "trap_timer_irq_log_sha256",
+      "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake trap-timer-irq --source /path/to/trap-timer-irq.log --command '/exact/external/test command'",
+      "min_bytes": 240,
+      "raw_required_strings": [
+        "mcause",
+        "mepc",
+        "mtval",
+        "access-fault",
+        "mtimecmp",
+        "msip",
+        "external interrupt claim/complete",
+        "mret"
+      ],
+      "required_strings": [
+        "openphone-evidence: target=cpu_ap artifact=openphone_hello_trap_timer_irq",
+        "openphone-evidence: command=",
+        "openphone-evidence: generated_manifest=",
+        "mcause",
+        "mepc",
+        "mtval",
+        "access-fault",
+        "mtimecmp",
+        "msip",
+        "external interrupt claim/complete",
+        "mret",
+        "openphone-evidence: status=PASS"
+      ],
+      "forbidden_strings": [
+        "software reference only",
+        "qemu-virt",
+        "no real transcript"
+      ]
+    }
+  }
+}

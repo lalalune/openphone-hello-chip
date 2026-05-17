@@ -12,9 +12,12 @@
           "required_strings": [
             "openphone-evidence: target=buildroot artifact=openphone_hello_defconfig",
             "openphone-evidence: command=make BR2_EXTERNAL=",
+            "openphone-evidence: started_utc=",
             "openphone_hello_defconfig",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
         },
         {
           "artifact": "Buildroot image manifest",
@@ -24,13 +27,20 @@
           "required_strings": [
             "openphone-evidence: target=buildroot artifact=openphone_hello_image_manifest",
             "openphone-evidence: command=find output/images",
+            "openphone-evidence: started_utc=",
             "output/images",
             "sha256",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
           ],
           "at_least_one": [
-            ["Image", "vmlinux", "rootfs"]
-          ]
+            [
+              "Image",
+              "vmlinux",
+              "rootfs"
+            ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
         },
         {
           "artifact": "Buildroot runtime MMIO smoke",
@@ -40,10 +50,13 @@
           "required_strings": [
             "openphone-evidence: target=buildroot artifact=hello-mmio-smoke",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "hello-mmio-smoke",
             "/dev/hello-npu",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
         }
       ]
     },
@@ -57,9 +70,12 @@
           "required_strings": [
             "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
             "openphone-evidence: command=make ARCH=riscv",
+            "openphone-evidence: started_utc=",
             "CONFIG_OPENPHONE_HELLO",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py linux --require-evidence"
         },
         {
           "artifact": "Linux DTB validation transcript",
@@ -69,10 +85,13 @@
           "required_strings": [
             "openphone-evidence: target=linux artifact=openphone_hello_dtb_check",
             "openphone-evidence: command=make ARCH=riscv",
+            "openphone-evidence: started_utc=",
             "openphone-hello",
             "openphone,hello-npu",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py linux --require-evidence"
         },
         {
           "artifact": "Linux runtime MMIO smoke",
@@ -82,10 +101,13 @@
           "required_strings": [
             "openphone-evidence: target=linux artifact=hello-mmio-smoke",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "HELLO_NPU_BASE=0x10020000",
             "/dev/hello-npu",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py linux --require-evidence"
         }
       ]
     },
@@ -99,10 +121,13 @@
           "required_strings": [
             "openphone-evidence: target=opensbi artifact=opensbi_openphone_build",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "OpenSBI",
             "fw_dynamic",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py opensbi --require-evidence"
         },
         {
           "artifact": "OpenSBI fw_dynamic handoff transcript",
@@ -112,11 +137,14 @@
           "required_strings": [
             "openphone-evidence: target=opensbi artifact=opensbi_fw_dynamic_handoff",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "OpenSBI",
             "fw_dynamic",
             "Next Address",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py opensbi --require-evidence"
         }
       ]
     },
@@ -130,10 +158,13 @@
           "required_strings": [
             "openphone-evidence: target=u-boot artifact=u_boot_openphone_build",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "U-Boot",
             "u-boot.bin",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py u-boot --require-evidence"
         },
         {
           "artifact": "U-Boot OpenSBI boot-chain transcript",
@@ -143,10 +174,13 @@
           "required_strings": [
             "openphone-evidence: target=u-boot artifact=u_boot_opensbi_boot_chain",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "OpenSBI",
             "U-Boot",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
-          ]
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py u-boot --require-evidence"
         }
       ]
     },
@@ -156,70 +190,138 @@
           "artifact": "AOSP lunch transcript",
           "path": "docs/evidence/android/openphone_ai_soc_lunch.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch",
+          "external_artifacts": [
+            "build/envsetup.sh",
+            "device/openphone/openphone_ai_soc/AndroidProducts.mk"
+          ],
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=openphone_ai_soc_lunch",
             "openphone-evidence: command=lunch openphone_ai_soc-userdebug",
+            "openphone-evidence: started_utc=",
             "openphone_ai_soc-userdebug",
             "TARGET_PRODUCT=openphone_ai_soc",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+          "forbidden_strings": [
+            "Android boot proven",
+            "Android compatible",
+            "CDD compliant",
+            "CTS passed",
+            "VTS passed"
           ]
         },
         {
           "artifact": "AOSP vendorimage transcript",
           "path": "docs/evidence/android/openphone_ai_soc_vendorimage.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage",
+          "external_artifacts": [
+            "out/target/product/openphone_ai_soc/vendor.img",
+            "out/target/product/openphone_ai_soc/installed-files-vendor.txt",
+            "out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml"
+          ],
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=openphone_ai_soc_vendorimage",
             "openphone-evidence: command=m vendorimage",
+            "openphone-evidence: started_utc=",
             "vendor.img",
             "installed-files-vendor.txt",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+          "forbidden_strings": [
+            "Android boot proven",
+            "Android compatible",
+            "CDD compliant",
+            "CTS passed",
+            "VTS passed"
           ]
         },
         {
           "artifact": "AOSP VINTF transcript",
           "path": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf",
+          "external_artifacts": [
+            "out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml",
+            "out/target/product/openphone_ai_soc/vendor.img"
+          ],
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=openphone_ai_soc_checkvintf",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "checkvintf",
             "openphone_ai_soc",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+          "forbidden_strings": [
+            "INCOMPATIBLE",
+            "Cannot fetch",
+            "Android boot proven",
+            "Android compatible",
+            "CDD compliant",
+            "CTS passed",
+            "VTS passed"
           ]
         },
         {
           "artifact": "AOSP Cuttlefish riscv64 boot transcript",
           "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot",
+          "external_artifacts": [
+            "out/target/product/openphone_ai_soc/vendor.img",
+            "out/target/product/openphone_ai_soc/installed-files-vendor.txt",
+            "Cuttlefish instance adb transport"
+          ],
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
             "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
             "launch_cvd",
             "adb shell",
             "ro.product.cpu.abi=riscv64",
+            "sys.boot_completed=1",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
           ],
-          "at_least_one": [
-            ["sys.boot_completed=1", "shell-only success"]
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+          "forbidden_strings": [
+            "shell-only success",
+            "boot timeout",
+            "adb: device offline",
+            "Android booted on hello_soc",
+            "Android compatible",
+            "CDD compliant",
+            "CTS passed",
+            "VTS passed"
           ]
         },
         {
           "artifact": "Android CTS virtual-device subset transcript",
           "path": "docs/evidence/android/cts_virtual_device_subset.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset",
+          "external_artifacts": [
+            "Cuttlefish instance adb transport",
+            "cts-tradefed result directory"
+          ],
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=cts_virtual_device_subset",
             "openphone-evidence: compatibility_scope=virtual_device_subset",
+            "openphone-evidence: started_utc=",
             "openphone-evidence: command=",
             "cts-tradefed",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
           ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
             "CDD compliant",
             "full CTS pass",
@@ -231,14 +333,21 @@
           "artifact": "Android VTS virtual-device subset transcript",
           "path": "docs/evidence/android/vts_virtual_device_subset.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset",
+          "external_artifacts": [
+            "Cuttlefish instance adb transport",
+            "vts-tradefed result directory"
+          ],
           "min_bytes": 160,
           "required_strings": [
             "openphone-evidence: target=aosp artifact=vts_virtual_device_subset",
             "openphone-evidence: compatibility_scope=virtual_device_subset",
+            "openphone-evidence: started_utc=",
             "openphone-evidence: command=",
             "vts-tradefed",
+            "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
           ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
             "CDD compliant",
             "full CTS pass",

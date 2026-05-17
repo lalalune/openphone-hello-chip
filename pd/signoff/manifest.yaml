@@ -1,5 +1,12 @@
+schema: openphone.pd_signoff_manifest.v1
 signoff: hello_chip_top_pd
 status: required_for_pd_release
+run_manifest_schema: pd/signoff/run-manifest.schema.json
+next_commands:
+  manifest_preflight: python3 scripts/check_pd_signoff.py --manifest-only
+  local_input_preflight: python3 scripts/check_pd_preflight.py --dry-run-commands --config pd/openlane/config.sky130.json
+  release_gate: python3 scripts/check_pd_signoff.py
+  product_release_gate: python3 scripts/product_check.py --release
 runner:
   openlane_image: ghcr.io/efabless/openlane2:2.4.0.dev1
   openlane_image_digest: sha256:bcaabac3b114dfb9e739af9f16b53a79ce1b744bcdb3ad4fc476c961581fe5d5

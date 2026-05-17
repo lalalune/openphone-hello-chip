@@ -23,6 +23,21 @@ fail_closed_policy:
   android_feature_claims: absent_until_framework_hal_and_runtime_evidence_exist
   firmware_artifacts: absent_until_selected_module_license_checksum_and_load_log_exist
   board_release: blocked_until_pin_bank_power_sequence_and_regulatory_evidence_exist
+power_sequence_contract:
+  status: required_not_implemented
+  rails:
+    - {name: VBAT, owner: board, required: true}
+    - {name: VDDIO_1V8, owner: board, required: true}
+  default_controls:
+    WIFI_EN: low
+    WIFI_RST_N: low
+  ordered_steps:
+    - Keep WIFI_EN and WIFI_RST_N low while VBAT and VDDIO_1V8 are absent or ramping.
+    - Bring up board rails and verify 1.8V VDDIO before enabling SDIO, UART, GPIO, IRQ, or wake pins.
+    - Assert WIFI_EN only after rails are stable.
+    - Release WIFI_RST_N only after the selected module datasheet delay.
+    - Start SDIO clock and UART RTS/CTS only after pinctrl and host controllers are ready.
+    - Validate WIFI_HOST_WAKE and WIFI_IRQ polarity before suspend/resume claims.
 groups:
   sdio:
     mode: sdr25_initial

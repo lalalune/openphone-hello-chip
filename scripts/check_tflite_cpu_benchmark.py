@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Check whether the TFLite CPU benchmark can run with real local evidence.
+"""Check whether TFLite benchmark entries can run with real local evidence.
 
 This is a CLI-only readiness check. It does not build TensorFlow Lite, download
 models, or run the benchmark. When the local machine lacks a real
 benchmark_model binary, it records that blocker instead of treating the
-repo-local smoke shim as product evidence.
+repo-local smoke shim as product evidence. It can also check the hello-npu
+NNAPI proof gate without fabricating proof files or target results.
 """
 
 from __future__ import annotations
@@ -29,6 +30,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--status-json", type=Path, help="Optional output path for the readiness JSON."
     )
     parser.add_argument(
+        "--benchmark",
+        choices=("tflite_cpu", "tflite_hello_npu", "all"),
+        default="tflite_cpu",
+        help="Benchmark readiness target to check.",
+    )
+    parser.add_argument(
         "--allow-host-smoke-tools",
         action="store_true",
         help="Diagnose host-smoke mode instead of strict real-tool mode.",
@@ -44,32 +51,45 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     config_path = args.config if args.config.is_absolute() else root / args.config
     config = run_benchmarks.load_config(config_path)
-    [bench] = run_benchmarks.selected_benchmarks(config, {"tflite_cpu"})
-    dependencies = run_benchmarks.dependency_status(
-        bench,
-        root,
-        allow_host_smoke=args.allow_host_smoke_tools,
-    )
-    missing_details = run_benchmarks.missing_dependency_details(dependencies)
-    blocked_assets = run_benchmarks.blocked_assets(dependencies)
-    ready = not missing_details and not blocked_assets
+    names = {"tflite_cpu", "tflite_hello_npu"} if args.benchmark == "all" else {args.benchmark}
+    benches = run_benchmarks.selected_benchmarks(config, names)
+    checks: list[dict[str, Any]] = []
+    ready = True
+    for bench in benches:
+        dependencies = run_benchmarks.dependency_status(
+            bench,
+            root,
+            allow_host_smoke=args.allow_host_smoke_tools,
+        )
+        missing_details = run_benchmarks.missing_dependency_details(dependencies)
+        blocked_assets = run_benchmarks.blocked_assets(dependencies)
+        bench_ready = not missing_details and not blocked_assets
+        ready = ready and bench_ready
+        check: dict[str, Any] = {
+            "benchmark": bench["name"],
+            "status": "ready" if bench_ready else "blocked",
+            "command": bench["command"],
+            "resolved_command": run_benchmarks.command_with_resolved_executable(
+                bench["command"], dependencies
+            ),
+            "dependencies": dependencies,
+            "missing_dependency_details": missing_details,
+            "blocked_assets": blocked_assets,
+        }
+        if not bench_ready:
+            blockers = missing_details + blocked_assets
+            check["blocker"] = blockers[0] if blockers else {"reason": "unknown"}
+        checks.append(check)
 
     status: dict[str, Any] = {
         "schema": "openphone.tflite_cpu_benchmark_readiness.v1",
-        "benchmark": "tflite_cpu",
+        "benchmark": args.benchmark,
         "strict_real_tools": not args.allow_host_smoke_tools,
         "status": "ready" if ready else "blocked",
-        "command": bench["command"],
-        "resolved_command": run_benchmarks.command_with_resolved_executable(
-            bench["command"], dependencies
-        ),
-        "dependencies": dependencies,
-        "missing_dependency_details": missing_details,
-        "blocked_assets": blocked_assets,
+        "checks": checks,
     }
-    if not ready:
-        blockers = missing_details + blocked_assets
-        status["blocker"] = blockers[0] if blockers else {"reason": "unknown"}
+    if len(checks) == 1:
+        status.update({key: checks[0][key] for key in checks[0] if key != "benchmark"})
 
     output = json.dumps(status, indent=2, sort_keys=True) + "\n"
     if args.status_json:

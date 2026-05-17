@@ -23,6 +23,25 @@ REQUIRED_BLOCKED = {
     "memory_qos_bandwidth",
 }
 
+REQUIRED_EVIDENCE_BY_CLAIM = {
+    "real_dram_controller_phy": {
+        "docs/evidence/memory/real_dram_controller_phy_report.json",
+        "docs/evidence/memory/dram_training_timing_report.json",
+    },
+    "uma_cache_coherency": {
+        "docs/evidence/memory/uma_coherency_report.json",
+        "docs/evidence/memory/shared_buffer_negative_sync_report.json",
+    },
+    "iommu_smmu_dma_isolation": {
+        "docs/evidence/memory/iommu_fault_injection_report.json",
+        "docs/evidence/memory/dma_isolation_fault_visibility_report.json",
+    },
+    "memory_qos_bandwidth": {
+        "docs/evidence/memory/memory_qos_report.json",
+        "docs/evidence/memory/contended_bandwidth_latency_report.json",
+    },
+}
+
 REQUIRED_DOC_TOKENS = {
     MEMORY: [
         "SRAM-backed",
@@ -61,6 +80,13 @@ def read(path: Path) -> str:
 def require(condition: bool, message: str, errors: list[str]) -> None:
     if not condition:
         errors.append(message)
+
+
+def valid_relative_path(value: object) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    path = Path(value)
+    return not path.is_absolute() and ".." not in path.parts
 
 
 def check_gate(errors: list[str]) -> None:
@@ -140,6 +166,31 @@ def check_gate(errors: list[str]) -> None:
             f"{claim_id} must list unblock requirements",
             errors,
         )
+        artifacts = claim.get("evidence_artifacts")
+        require(
+            isinstance(artifacts, list) and len(artifacts) >= 2,
+            f"{claim_id} must list evidence_artifacts",
+            errors,
+        )
+        artifact_set = set(artifacts or [])
+        missing_artifacts = sorted(REQUIRED_EVIDENCE_BY_CLAIM[claim_id] - artifact_set)
+        require(
+            not missing_artifacts,
+            f"{claim_id} missing required evidence_artifacts: " + ", ".join(missing_artifacts),
+            errors,
+        )
+        for artifact in artifacts or []:
+            require(
+                valid_relative_path(artifact),
+                f"{claim_id} evidence artifact must be a relative repo path: {artifact}",
+                errors,
+            )
+            if valid_relative_path(artifact):
+                require(
+                    not (ROOT / artifact).exists(),
+                    f"{claim_id} is still blocked but evidence artifact exists: {artifact}",
+                    errors,
+                )
 
     rules = "\n".join(data.get("claim_rules") or [])
     for token in ("must not", "real DRAM", "UMA coherency", "IOMMU/SMMU", "QoS", "executable RTL"):

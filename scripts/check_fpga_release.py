@@ -12,6 +12,25 @@ import yaml
 PLACEHOLDERS = {None, "", "unassigned", "missing", "todo", "tbd", "none"}
 VECTOR_PIN_RE = re.compile(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)(\d+)$")
 LOCATE_RE = re.compile(r'^\s*LOCATE\s+COMP\s+"([^"]+)"\s+SITE\s+"([^"]+)"\s*;', re.I)
+RELEASE_MANIFEST_SCHEMA = "openphone.fpga_release_manifest.v1"
+REQUIRED_RELEASE_EVIDENCE = {
+    "exact_board_revision",
+    "final_pin_constraints",
+    "nextpnr_timing",
+    "ecppack_bitstream",
+    "tool_versions",
+}
+FORBIDDEN_RELEASE_TEXT_MARKERS = (
+    "template_not_release_evidence",
+    "non_release_placeholder",
+    "release use: `prohibited`",
+    "release_use: prohibited",
+    "placeholder-only",
+    "skeleton lpf",
+    "dummy bitstream",
+    "fake bitstream",
+    "not release evidence",
+)
 
 
 def is_placeholder(value: object) -> bool:
@@ -67,6 +86,11 @@ def file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def contains_forbidden_release_marker(path: Path) -> list[str]:
+    text = path.read_text(errors="ignore").lower()
+    return [marker for marker in FORBIDDEN_RELEASE_TEXT_MARKERS if marker in text]
 
 
 def main() -> int:
@@ -140,10 +164,34 @@ def main() -> int:
         )
     else:
         manifest = load_yaml(root / str(manifest_value))
+        if manifest.get("schema") != RELEASE_MANIFEST_SCHEMA:
+            blockers.append(f"{manifest_value}: schema must be {RELEASE_MANIFEST_SCHEMA}")
         if manifest.get("status") != "release_ready":
             blockers.append(
                 f"{manifest_value}: status is {manifest.get('status')}, not release_ready"
             )
+        required_evidence = manifest.get("required_evidence")
+        if not isinstance(required_evidence, dict):
+            blockers.append(f"{manifest_value}: required_evidence must be a mapping")
+        else:
+            missing_evidence = sorted(REQUIRED_RELEASE_EVIDENCE - set(required_evidence))
+            if missing_evidence:
+                blockers.append(
+                    f"{manifest_value}: missing required evidence entries: "
+                    + ", ".join(missing_evidence)
+                )
+            for name, spec in required_evidence.items():
+                if not isinstance(spec, dict):
+                    blockers.append(f"{manifest_value}: required_evidence.{name} must be a mapping")
+                    continue
+                if spec.get("status") not in {"missing", "complete"}:
+                    blockers.append(
+                        f"{manifest_value}: required_evidence.{name}.status must be missing or complete"
+                    )
+                if not isinstance(spec.get("required_action"), str) or not spec["required_action"]:
+                    blockers.append(
+                        f"{manifest_value}: required_evidence.{name}.required_action is required"
+                    )
 
     release = cfg.get("release_evidence", {})
     for tool in ["nextpnr-ecp5", "ecppack"]:
@@ -158,6 +206,12 @@ def main() -> int:
             )
         elif not (root / str(value)).is_file():
             blockers.append(f"missing FPGA release evidence file: {value}")
+        else:
+            markers = contains_forbidden_release_marker(root / str(value))
+            if markers:
+                blockers.append(
+                    f"{value}: contains non-release marker(s): " + ", ".join(markers)
+                )
 
     bitstream_value = release.get("bitstream_path")
     bitstream_sha = release.get("bitstream_sha256")
@@ -167,6 +221,10 @@ def main() -> int:
         )
     elif not (root / str(bitstream_value)).is_file():
         blockers.append(f"missing FPGA bitstream file: {bitstream_value}")
+    elif markers := contains_forbidden_release_marker(root / str(bitstream_value)):
+        blockers.append(
+            f"{bitstream_value}: contains non-release marker(s): " + ", ".join(markers)
+        )
     elif is_placeholder(bitstream_sha):
         blockers.append(
             "board/fpga/hello_demo_fpga.yaml: release_evidence.bitstream_sha256 is unassigned"

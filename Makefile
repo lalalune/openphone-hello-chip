@@ -33,10 +33,10 @@ analysis:
 verify-all: lint typecheck smoke analysis cocotb cocotb-contract cocotb-cpu qemu-status-test renode-status-test
 	@echo "verify-all complete"
 
-smoke: lint typecheck docs-check project-plan-check platform-contract-check chipyard-generator-check cpu-ap-scaffold-check cpu-ap-completion-gate bootrom-check stub-audit software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
+smoke: lint typecheck docs-check project-plan-check npu-2028-target-check platform-contract-check chipyard-generator-check cpu-ap-scaffold-check cpu-ap-completion-gate bootrom-check stub-audit software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
 	@echo "smoke complete"
 
-ci-fast: lint typecheck docs-check project-plan-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
+ci-fast: lint typecheck docs-check project-plan-check npu-2028-target-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
 	@echo "ci-fast complete"
 
 ci-local: lint typecheck docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal tool-versions

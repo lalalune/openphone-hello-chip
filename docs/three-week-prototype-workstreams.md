@@ -10,14 +10,28 @@ Software BSP evidence remains blocked by missing external Buildroot, Linux,
 OpenSBI, U-Boot, AOSP, CTS, and VTS logs. Benchmarks now reject repo-local
 smoke shims as real tools; fio host runs pass, while CoreMark, STREAM,
 lmbench, TensorFlow Lite `benchmark_model`, and hello-NPU NNAPI remain blocked
-until real target executables/capability evidence exist.
+until real target executables and `benchmarks/capabilities/hello_npu_nnapi.proof.json`
+capability evidence exist.
+
+Heartbeat update 2026-05-17 04:33 PDT: CPU/AP is now an explicit MVP blocker,
+not an implied Linux boot claim. The in-repo tiny CPU remains local contract
+evidence only; the selected Linux-capable AP path is pinned to the Chipyard
+Rocket manifest, and `make chipyard-generated-check cpu-ap-evidence-check`
+must stay blocked until generated RV64GC artifacts and OpenSBI/Linux/trap/timer
+logs exist.
+
+Heartbeat update 2026-05-17 04:43 PDT: the 2028 performance-heavy NPU target is
+now a checked project-plan input via `make npu-2028-target-check`, and smoke /
+ci-fast include that gate. The current RTL remains classified as `L0_RTL_UNIT`;
+the target file is an architecture and validation target, not a completion
+claim.
 
 ## Current executable baseline
 
-- Passing locally: `make docs-check project-plan-check platform-contract-check`, `make rtl-check`, `make synth`, `make formal`, `make verilator`, `make cocotb`, `make cocotb-contract`, `make cocotb-cpu`, `make qemu-check`, `make pipeline-check`, and `python3 scripts/check_mvp_status.py --fail-on-fail`.
+- Passing locally: `make docs-check project-plan-check npu-2028-target-check platform-contract-check`, `make rtl-check`, `make synth`, `make formal`, `make verilator`, `make cocotb`, `make cocotb-contract`, `make cocotb-cpu`, `make qemu-check`, `make pipeline-check`, and `python3 scripts/check_mvp_status.py --fail-on-fail`.
 - Blocked locally: `make openroad` and `make openlane` because OpenROAD/OpenLane/Magic/Netgen are not installed or pulled.
 - Tooling caveat: cocotb now runs from the repo `.venv` path through the Makefile wrapper. Release evidence still needs clean-checkout regeneration and archived tool/report checksums.
-- Blocked by evidence, not local syntax: Renode executable smoke, software BSP external build logs, product/package/board fabrication evidence, real benchmarks, and PD signoff artifacts.
+- Blocked by evidence, not local syntax: generated CPU/AP artifacts and boot logs, Renode executable smoke, software BSP external build logs, product/package/board fabrication evidence, real benchmarks, and PD signoff artifacts.
 
 ## Critical architecture boundary
 
@@ -59,10 +73,14 @@ Primary gaps:
 - `qemu-check` now builds/runs the qemu-virt software-reference firmware and archives `build/reports/qemu_smoke.log`; this is still not hello-chip hardware boot proof.
 - `renode-check` remains a semantic scaffold plus explicit BLOCK until `renode` is installed and a transcript is archived.
 - Buildroot/AOSP/OpenSBI/U-Boot paths are placeholders around external trees.
+- CPU/AP completion is blocked until the selected Chipyard Rocket path produces
+  generated RTL/import manifests plus OpenSBI, Linux, and trap/timer/IRQ logs.
 
 Immediate work:
 
 - Generate DTS/include fragments from `sw/platform/hello_platform_contract.json`.
+- Keep `sw/platform/hello_platform_contract.json` at `has_cpu=false` until the
+  CPU/AP generated-artifact and boot-evidence gates pass.
 - Keep QEMU transcript evidence in `build/reports/qemu_smoke.log` and prevent qemu-virt success from being described as hello-chip hardware boot.
 - Split software checks into scaffold checks versus real boot/image checks.
 - Produce external Linux, Buildroot, and AOSP logs before allowing `make software-bsp-evidence-check` to pass.

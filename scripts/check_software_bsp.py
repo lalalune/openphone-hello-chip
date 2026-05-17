@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -9,7 +11,9 @@ from typing import TypedDict
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/software-bsp-evidence-manifest.json"
+EVIDENCE_SCHEMA = ROOT / "docs/evidence/software-bsp-evidence.schema.json"
 AOSP_EVIDENCE_MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
+AOSP_EVIDENCE_SCHEMA = ROOT / "docs/evidence/aosp-evidence.schema.json"
 
 DEFAULT_FORBIDDEN_EVIDENCE_TERMS = [
     "placeholder",
@@ -17,10 +21,26 @@ DEFAULT_FORBIDDEN_EVIDENCE_TERMS = [
     "sample only",
     "not real evidence",
     "todo",
+    "fake",
+    "synthetic evidence",
     "openphone-evidence: template=true",
     "openphone-evidence: status=FAIL",
     "openphone-evidence: status=BLOCKED",
 ]
+
+EVIDENCE_ITEM_KEYS = {
+    "artifact",
+    "path",
+    "capture_command",
+    "validation_command",
+    "external_artifacts",
+    "min_bytes",
+    "required_strings",
+    "at_least_one",
+    "forbidden_strings",
+}
+EVIDENCE_PATH_RE = re.compile(r"^docs/evidence/(buildroot|linux|android)/[^/]+\.(log|txt)$")
+STATUS_RE = re.compile(r"^openphone-evidence:\s*status=([^\s]+).*$", re.MULTILINE)
 
 
 class TargetSpec(TypedDict, total=False):
@@ -152,6 +172,156 @@ TARGETS: dict[str, TargetSpec] = {
 }
 
 
+def load_json_no_duplicate_keys(path: Path, errors: list[str]) -> dict:
+    def reject_duplicates(pairs: list[tuple[str, object]]) -> dict:
+        seen: set[str] = set()
+        data: dict[str, object] = {}
+        for key, value in pairs:
+            if key in seen:
+                raise ValueError(f"duplicate JSON key {key!r}")
+            seen.add(key)
+            data[key] = value
+        return data
+
+    try:
+        return json.loads(path.read_text(), object_pairs_hook=reject_duplicates)
+    except json.JSONDecodeError as exc:
+        errors.append(f"{path.relative_to(ROOT)} is invalid JSON: {exc}")
+    except ValueError as exc:
+        errors.append(f"{path.relative_to(ROOT)} is invalid JSON: {exc}")
+    return {}
+
+
+def validate_string_list(
+    value: object, path: str, errors: list[str], *, min_items: int = 0
+) -> None:
+    if not isinstance(value, list):
+        errors.append(f"{path} must be a list")
+        return
+    if len(value) < min_items:
+        errors.append(f"{path} must contain at least {min_items} item(s)")
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item:
+            errors.append(f"{path}[{index}] must be a non-empty string")
+
+
+def validate_evidence_manifest_schema(data: object, errors: list[str]) -> None:
+    rel = EVIDENCE_MANIFEST.relative_to(ROOT)
+    if not isinstance(data, dict):
+        errors.append(f"{rel} must be a JSON object")
+        return
+
+    allowed_top = {"schema_version", "claim_boundary", "targets"}
+    extra_top = sorted(set(data) - allowed_top)
+    if extra_top:
+        errors.append(f"{rel} has unsupported top-level keys: " + ", ".join(extra_top))
+    for key in allowed_top:
+        if key not in data:
+            errors.append(f"{rel} missing required key {key}")
+
+    targets = data.get("targets")
+    if not isinstance(targets, dict):
+        errors.append(f"{rel} targets must be an object")
+        return
+    missing_targets = sorted(set(TARGETS) - set(targets))
+    extra_targets = sorted(set(targets) - set(TARGETS))
+    if missing_targets:
+        errors.append(f"{rel} missing targets: " + ", ".join(missing_targets))
+    if extra_targets:
+        errors.append(f"{rel} has unsupported targets: " + ", ".join(extra_targets))
+
+    seen_paths: dict[str, str] = {}
+    for target, target_data in targets.items():
+        target_path = f"{rel}:targets.{target}"
+        if not isinstance(target_data, dict):
+            errors.append(f"{target_path} must be an object")
+            continue
+        extra_target_keys = sorted(set(target_data) - {"evidence"})
+        if extra_target_keys:
+            errors.append(f"{target_path} has unsupported keys: " + ", ".join(extra_target_keys))
+        items = target_data.get("evidence")
+        if not isinstance(items, list) or not items:
+            errors.append(f"{target_path}.evidence must be a non-empty list")
+            continue
+        for index, item in enumerate(items):
+            item_path = f"{target_path}.evidence[{index}]"
+            if not isinstance(item, dict):
+                errors.append(f"{item_path} must be an object")
+                continue
+            extra_item_keys = sorted(set(item) - EVIDENCE_ITEM_KEYS)
+            if extra_item_keys:
+                errors.append(f"{item_path} has unsupported keys: " + ", ".join(extra_item_keys))
+            for key in (
+                "artifact",
+                "path",
+                "capture_command",
+                "validation_command",
+                "min_bytes",
+                "required_strings",
+            ):
+                if key not in item:
+                    errors.append(f"{item_path} missing required key {key}")
+            artifact = item.get("artifact")
+            if not isinstance(artifact, str) or not artifact:
+                errors.append(f"{item_path}.artifact must be a non-empty string")
+            path = item.get("path")
+            if not isinstance(path, str) or not EVIDENCE_PATH_RE.match(path):
+                errors.append(f"{item_path}.path must be a docs/evidence log or txt path")
+            elif path in seen_paths:
+                errors.append(f"{item_path}.path duplicates {seen_paths[path]}: {path}")
+            elif target in TARGETS and path not in TARGETS[target]["evidence"]:
+                errors.append(f"{item_path}.path is not valid for target {target}: {path}")
+            elif isinstance(path, str):
+                seen_paths[path] = item_path
+            for key in ("capture_command", "validation_command"):
+                value = item.get(key)
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(f"{item_path}.{key} must be a non-empty string")
+            validation = item.get("validation_command")
+            if isinstance(validation, str) and (
+                "scripts/check_software_bsp.py" not in validation
+                or target not in validation
+                or "--require-evidence" not in validation
+            ):
+                errors.append(
+                    f"{item_path}.validation_command must run the fail-closed BSP evidence check"
+                )
+            min_bytes = item.get("min_bytes")
+            if not isinstance(min_bytes, int) or min_bytes < 80:
+                errors.append(f"{item_path}.min_bytes must be an integer >= 80")
+            validate_string_list(
+                item.get("required_strings"),
+                f"{item_path}.required_strings",
+                errors,
+                min_items=1,
+            )
+            if "forbidden_strings" in item:
+                validate_string_list(
+                    item.get("forbidden_strings"), f"{item_path}.forbidden_strings", errors
+                )
+            if "external_artifacts" in item:
+                validate_string_list(
+                    item.get("external_artifacts"),
+                    f"{item_path}.external_artifacts",
+                    errors,
+                    min_items=1,
+                )
+            if target == "aosp" and "external_artifacts" not in item:
+                errors.append(f"{item_path}.external_artifacts is required for AOSP evidence")
+            if "at_least_one" in item:
+                groups = item.get("at_least_one")
+                if not isinstance(groups, list) or not groups:
+                    errors.append(f"{item_path}.at_least_one must be a non-empty list")
+                else:
+                    for group_index, group in enumerate(groups):
+                        validate_string_list(
+                            group,
+                            f"{item_path}.at_least_one[{group_index}]",
+                            errors,
+                            min_items=1,
+                        )
+
+
 def check_contract(errors: list[str]) -> None:
     if not CONTRACT.is_file():
         errors.append("sw/platform/hello_platform_contract.json is missing")
@@ -199,13 +369,15 @@ def check_aosp_product_glue(errors: list[str]) -> None:
 
 
 def load_evidence_manifest(errors: list[str]) -> dict:
+    if not EVIDENCE_SCHEMA.is_file():
+        errors.append(f"{EVIDENCE_SCHEMA.relative_to(ROOT)} is missing")
+    else:
+        load_json_no_duplicate_keys(EVIDENCE_SCHEMA, errors)
     if not EVIDENCE_MANIFEST.is_file():
         errors.append(f"{EVIDENCE_MANIFEST.relative_to(ROOT)} is missing")
         return {}
-    try:
-        data = json.loads(EVIDENCE_MANIFEST.read_text())
-    except json.JSONDecodeError as exc:
-        errors.append(f"{EVIDENCE_MANIFEST.relative_to(ROOT)} is invalid JSON: {exc}")
+    data = load_json_no_duplicate_keys(EVIDENCE_MANIFEST, errors)
+    if not data:
         return {}
     if data.get("schema_version") != 1:
         errors.append(f"{EVIDENCE_MANIFEST.relative_to(ROOT)} must have schema_version=1")
@@ -213,6 +385,7 @@ def load_evidence_manifest(errors: list[str]) -> dict:
         errors.append(
             f"{EVIDENCE_MANIFEST.relative_to(ROOT)} must use claim_boundary=external_transcripts_only"
         )
+    validate_evidence_manifest_schema(data, errors)
     return data
 
 
@@ -224,15 +397,50 @@ def validate_manifest_item(target: str, item: dict, errors: list[str]) -> None:
         errors.append(
             f"{target} evidence item path is not listed in checker target evidence: {path}"
         )
-    for key in ("artifact", "capture_command", "required_strings"):
+    for key in (
+        "artifact",
+        "capture_command",
+        "validation_command",
+        "min_bytes",
+        "required_strings",
+    ):
         if key not in item:
             errors.append(f"{target} evidence item {path or '<unknown>'} missing {key}")
+    validation = item.get("validation_command")
+    if isinstance(validation, str) and (
+        "scripts/check_software_bsp.py" not in validation
+        or target not in validation
+        or "--require-evidence" not in validation
+    ):
+        errors.append(
+            f"{target} evidence item {path or '<unknown>'} validation_command must run the fail-closed BSP evidence check"
+        )
     if not isinstance(item.get("required_strings", []), list):
         errors.append(
             f"{target} evidence item {path or '<unknown>'} required_strings must be a list"
         )
+    elif not item.get("required_strings", []):
+        errors.append(
+            f"{target} evidence item {path or '<unknown>'} required_strings must not be empty"
+        )
+    if not isinstance(item.get("min_bytes", 0), int) or item.get("min_bytes", 0) < 80:
+        errors.append(f"{target} evidence item {path or '<unknown>'} min_bytes must be >= 80")
     if not isinstance(item.get("at_least_one", []), list):
         errors.append(f"{target} evidence item {path or '<unknown>'} at_least_one must be a list")
+    if not isinstance(item.get("external_artifacts", []), list):
+        errors.append(
+            f"{target} evidence item {path or '<unknown>'} external_artifacts must be a list"
+        )
+    if target == "aosp":
+        external_artifacts = item.get("external_artifacts")
+        if not isinstance(external_artifacts, list) or not external_artifacts:
+            errors.append(
+                f"{target} evidence item {path or '<unknown>'} must list exact external_artifacts"
+            )
+        elif not all(isinstance(artifact, str) and artifact for artifact in external_artifacts):
+            errors.append(
+                f"{target} evidence item {path or '<unknown>'} external_artifacts must be non-empty strings"
+            )
 
 
 def evidence_items_for(target: str, manifest: dict, errors: list[str]) -> list[dict]:
@@ -253,15 +461,14 @@ def evidence_items_for(target: str, manifest: dict, errors: list[str]) -> list[d
 
 
 def load_aosp_evidence_manifest(errors: list[str]) -> dict:
+    if not AOSP_EVIDENCE_SCHEMA.is_file():
+        errors.append(f"{AOSP_EVIDENCE_SCHEMA.relative_to(ROOT)} is missing")
+    else:
+        load_json_no_duplicate_keys(AOSP_EVIDENCE_SCHEMA, errors)
     if not AOSP_EVIDENCE_MANIFEST.is_file():
         errors.append(f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} is missing")
         return {}
-    try:
-        data = json.loads(AOSP_EVIDENCE_MANIFEST.read_text())
-    except json.JSONDecodeError as exc:
-        errors.append(f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} is invalid JSON: {exc}")
-        return {}
-    return data
+    return load_json_no_duplicate_keys(AOSP_EVIDENCE_MANIFEST, errors)
 
 
 def check_aosp_evidence_manifest(errors: list[str]) -> None:
@@ -326,6 +533,11 @@ def check_aosp_evidence_manifest(errors: list[str]) -> None:
             errors.append(
                 f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} missing claim"
             )
+        external_artifacts = item.get("external_artifacts")
+        if not isinstance(external_artifacts, list) or not external_artifacts:
+            errors.append(
+                f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} missing external_artifacts"
+            )
         central_item = next(
             (
                 central
@@ -337,6 +549,18 @@ def check_aosp_evidence_manifest(errors: list[str]) -> None:
         if central_item and item.get("capture_command") != central_item.get("capture_command"):
             errors.append(
                 f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} capture_command does not match central evidence manifest"
+            )
+        if central_item and item.get("validation_command") != central_item.get(
+            "validation_command"
+        ):
+            errors.append(
+                f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} validation_command does not match central evidence manifest"
+            )
+        if central_item and item.get("external_artifacts") != central_item.get(
+            "external_artifacts"
+        ):
+            errors.append(
+                f"{AOSP_EVIDENCE_MANIFEST.relative_to(ROOT)} evidence item {path} external_artifacts does not match central evidence manifest"
             )
 
 
@@ -384,6 +608,19 @@ def validate_evidence_file(item: dict) -> list[str]:
     if len(text.strip()) < int(item.get("min_bytes", 80)):
         problems.append(f"{rel} is too small to be an external command transcript")
 
+    status_lines = STATUS_RE.findall(text)
+    if not status_lines:
+        problems.append(f"{rel} missing openphone-evidence status line")
+    elif len(status_lines) > 1:
+        problems.append(f"{rel} has multiple openphone-evidence status lines")
+    elif status_lines[0] != "PASS":
+        problems.append(f"{rel} reports non-PASS evidence status: {status_lines[0]}")
+
+    if "openphone-evidence: command=" not in text:
+        problems.append(f"{rel} missing openphone-evidence command marker")
+    if not ("openphone-evidence: ended_utc=" in text or "openphone-evidence: end_utc=" in text):
+        problems.append(f"{rel} missing openphone-evidence end timestamp")
+
     forbidden = DEFAULT_FORBIDDEN_EVIDENCE_TERMS + item.get("forbidden_strings", [])
     lower = text.lower()
     found_forbidden = [term for term in forbidden if term.lower() in lower]
@@ -403,6 +640,289 @@ def validate_evidence_file(item: dict) -> list[str]:
             problems.append(f"{rel} must contain at least one marker from: " + ", ".join(group))
 
     return problems
+
+
+def print_evidence_plan(targets: list[str]) -> int:
+    errors: list[str] = []
+    manifest = load_evidence_manifest(errors)
+    if not manifest:
+        for error in errors:
+            print(f"error: {error}", file=sys.stderr)
+        return 1
+
+    failed = False
+    for target in targets:
+        items = evidence_items_for(target, manifest, errors)
+        print(f"{target}: external evidence capture plan")
+        print(f"  claim boundary: {manifest.get('claim_boundary')}")
+        for item in items:
+            path = item.get("path", "<missing>")
+            problems = validate_evidence_file(item)
+            status = "ready" if not problems else "blocked"
+            print(f"  - {item.get('artifact', '<missing artifact>')}")
+            print(f"    path: {path}")
+            print(f"    capture: {item.get('capture_command', '<missing>')}")
+            print(f"    validate: {item.get('validation_command', '<missing>')}")
+            print(f"    required markers: {', '.join(item.get('required_strings', []))}")
+            if item.get("at_least_one"):
+                groups = [" | ".join(group) for group in item["at_least_one"]]
+                print(f"    at least one marker: {'; '.join(groups)}")
+            if item.get("forbidden_strings"):
+                print(f"    forbidden markers: {', '.join(item['forbidden_strings'])}")
+            print(f"    current status: {status}")
+            if problems:
+                failed = True
+                for problem in problems:
+                    print(f"      {problem}")
+    for error in errors:
+        print(f"error: {error}", file=sys.stderr)
+        failed = True
+    return 1 if failed else 0
+
+
+def evidence_validation_status(item: dict) -> tuple[str, list[str]]:
+    problems = validate_evidence_file(item)
+    if not problems:
+        return "PASS", []
+    if problems[0].startswith("missing "):
+        return "MISSING", problems
+    return "INVALID", problems
+
+
+def target_names_from_arg(target: str) -> list[str]:
+    return list(TARGETS.keys()) if target == "all" else [target]
+
+
+def print_status(target: str) -> int:
+    errors: list[str] = []
+    manifest = load_evidence_manifest(errors)
+    if errors:
+        print("software BSP evidence manifest invalid:")
+        for error in errors:
+            print(f"  - {error}")
+        return 1
+
+    blocked = False
+    for name in target_names_from_arg(target):
+        print(f"{name}:")
+        for item in evidence_items_for(name, manifest, errors):
+            status, problems = evidence_validation_status(item)
+            if status != "PASS":
+                blocked = True
+            print(f"  [{status}] {item.get('artifact', '<missing artifact>')}")
+            print(f"    path: {item.get('path', '<missing path>')}")
+            print(f"    capture: {item.get('capture_command', '<missing capture command>')}")
+            print(f"    validate: {item.get('validation_command', '<missing validation command>')}")
+            for problem in problems:
+                print(f"    blocker: {problem}")
+    if errors:
+        print("software BSP evidence status failed:")
+        for error in errors:
+            print(f"  - {error}")
+        return 1
+    return 2 if blocked else 0
+
+
+def quote_env_assignment(name: str, value: str) -> str:
+    return f"{name}={shlex.quote(value)}"
+
+
+def render_capture_command(item: dict, args: argparse.Namespace) -> tuple[str, list[str]]:
+    rel = item["path"]
+    missing: list[str] = []
+
+    def require_arg(attr: str, label: str) -> str:
+        value = getattr(args, attr)
+        if not value:
+            missing.append(label)
+            return f"<{label}>"
+        return value
+
+    if rel.startswith("docs/evidence/buildroot/"):
+        buildroot = require_arg("buildroot", "--buildroot")
+        if rel.endswith("openphone_hello_defconfig.log"):
+            return (
+                f"sw/buildroot/scripts/capture-buildroot-evidence.sh {shlex.quote(buildroot)} defconfig",
+                missing,
+            )
+        if rel.endswith("openphone_hello_image_manifest.txt"):
+            return (
+                f"sw/buildroot/scripts/capture-buildroot-evidence.sh {shlex.quote(buildroot)} image-manifest",
+                missing,
+            )
+        smoke = args.buildroot_smoke_cmd or (
+            f"ssh {args.target_host} /usr/bin/hello-mmio-smoke" if args.target_host else ""
+        )
+        if not smoke:
+            missing.append("--buildroot-smoke-cmd or --target-host")
+            smoke = "<buildroot smoke command>"
+        return (
+            f"{quote_env_assignment('HELLO_SMOKE_CMD', smoke)} "
+            f"sw/buildroot/scripts/capture-buildroot-evidence.sh {shlex.quote(buildroot)} smoke",
+            missing,
+        )
+
+    if (
+        rel.startswith("docs/evidence/linux/openphone_hello_")
+        or rel == "docs/evidence/linux/hello-mmio-smoke.log"
+    ):
+        linux = require_arg("linux", "--linux")
+        prefix = ""
+        if args.cross_compile:
+            prefix += f"{quote_env_assignment('CROSS_COMPILE', args.cross_compile)} "
+        if args.jobs:
+            prefix += f"{quote_env_assignment('JOBS', str(args.jobs))} "
+        if rel.endswith("openphone_hello_kernel_build.log"):
+            return (
+                f"{prefix}sw/linux/scripts/capture-linux-bsp-evidence.sh {shlex.quote(linux)} kernel-build",
+                missing,
+            )
+        if rel.endswith("openphone_hello_dtb_check.log"):
+            return (
+                f"{prefix}sw/linux/scripts/capture-linux-bsp-evidence.sh {shlex.quote(linux)} dtb-check",
+                missing,
+            )
+        smoke = args.linux_smoke_cmd or (
+            f"ssh {args.target_host} /tmp/hello-mmio-smoke" if args.target_host else ""
+        )
+        if not smoke:
+            missing.append("--linux-smoke-cmd or --target-host")
+            smoke = "<linux smoke command>"
+        return (
+            f"{prefix}{quote_env_assignment('HELLO_SMOKE_CMD', smoke)} "
+            f"sw/linux/scripts/capture-linux-bsp-evidence.sh {shlex.quote(linux)} smoke",
+            missing,
+        )
+
+    if rel.startswith("docs/evidence/linux/opensbi_"):
+        opensbi = require_arg("opensbi", "--opensbi")
+        if rel.endswith("opensbi_openphone_build.log"):
+            command = args.opensbi_build_cmd or "make PLATFORM=generic FW_DYNAMIC=y"
+            return (
+                f"{quote_env_assignment('OPENPHONE_OPENSBI_CMD', command)} "
+                f"sw/opensbi/capture-opensbi-evidence.sh {shlex.quote(opensbi)} build",
+                missing,
+            )
+        handoff = args.opensbi_handoff_cmd
+        if not handoff:
+            missing.append("--opensbi-handoff-cmd")
+            handoff = "<OpenSBI handoff boot command>"
+        return (
+            f"{quote_env_assignment('OPENPHONE_OPENSBI_HANDOFF_CMD', handoff)} "
+            f"sw/opensbi/capture-opensbi-evidence.sh {shlex.quote(opensbi)} handoff",
+            missing,
+        )
+
+    if rel.startswith("docs/evidence/linux/u_boot_"):
+        uboot = require_arg("u_boot", "--u-boot")
+        if rel.endswith("u_boot_openphone_build.log"):
+            command = args.uboot_build_cmd
+            if not command:
+                missing.append("--uboot-build-cmd")
+                command = "<U-Boot build command>"
+            return (
+                f"{quote_env_assignment('OPENPHONE_UBOOT_CMD', command)} "
+                f"sw/u-boot/capture-u-boot-evidence.sh {shlex.quote(uboot)} build",
+                missing,
+            )
+        command = args.uboot_boot_cmd
+        if not command:
+            missing.append("--uboot-boot-cmd")
+            command = "<OpenSBI-to-U-Boot boot command>"
+        return (
+            f"{quote_env_assignment('OPENPHONE_UBOOT_BOOT_CMD', command)} "
+            f"sw/u-boot/capture-u-boot-evidence.sh {shlex.quote(uboot)} boot-chain",
+            missing,
+        )
+
+    if rel.startswith("docs/evidence/android/"):
+        aosp = require_arg("aosp", "--aosp")
+        mode_by_path = {
+            "docs/evidence/android/openphone_ai_soc_lunch.log": "lunch",
+            "docs/evidence/android/openphone_ai_soc_vendorimage.log": "vendorimage",
+            "docs/evidence/android/openphone_ai_soc_checkvintf.log": "checkvintf",
+            "docs/evidence/android/cuttlefish_riscv64_boot.log": "cuttlefish-boot",
+            "docs/evidence/android/cts_virtual_device_subset.log": "cts-subset",
+            "docs/evidence/android/vts_virtual_device_subset.log": "vts-subset",
+        }
+        prefix = (
+            f"{quote_env_assignment('AOSP_SHELL', args.aosp_shell)} " if args.aosp_shell else ""
+        )
+        return (
+            f"{prefix}sw/aosp-device/capture-aosp-evidence.sh {shlex.quote(aosp)} {mode_by_path[rel]}",
+            missing,
+        )
+
+    return item.get("capture_command", "<missing capture command>"), [f"no renderer for {rel}"]
+
+
+def print_capture_plan(args: argparse.Namespace) -> int:
+    errors: list[str] = []
+    manifest = load_evidence_manifest(errors)
+    if errors:
+        print("software BSP evidence manifest invalid:")
+        for error in errors:
+            print(f"  - {error}")
+        return 1
+
+    missing_inputs: list[str] = []
+    for name in target_names_from_arg(args.target):
+        print(f"{name}:")
+        for item in evidence_items_for(name, manifest, errors):
+            rendered, missing = render_capture_command(item, args)
+            missing_inputs.extend(f"{item['path']}: {value}" for value in missing)
+            print(f"  # {item.get('artifact', '<missing artifact>')}")
+            print(f"  # writes {item.get('path', '<missing path>')}")
+            print(f"  {rendered}")
+    if errors:
+        print("software BSP capture plan failed:")
+        for error in errors:
+            print(f"  - {error}")
+        return 1
+    if missing_inputs:
+        print("missing inputs for exact capture commands:")
+        for missing_input in missing_inputs:
+            print(f"  - {missing_input}")
+        return 2
+    return 0
+
+
+def parse_helper(argv: list[str]) -> argparse.Namespace | None:
+    if not argv or argv[0] not in {"status", "capture-plan"}:
+        return None
+    if argv[0] == "status":
+        parser = argparse.ArgumentParser(
+            description="Report software BSP external evidence status."
+        )
+        parser.add_argument("command", choices=["status"])
+        parser.add_argument("target", choices=[*TARGETS.keys(), "all"], nargs="?", default="all")
+        return parser.parse_args(argv)
+
+    parser = argparse.ArgumentParser(
+        description="Print exact external software BSP capture commands."
+    )
+    parser.add_argument("command", choices=["capture-plan"])
+    parser.add_argument("target", choices=[*TARGETS.keys(), "all"], nargs="?", default="all")
+    parser.add_argument("--buildroot", help="External Buildroot checkout path.")
+    parser.add_argument("--linux", help="External Linux checkout path.")
+    parser.add_argument("--opensbi", help="External OpenSBI checkout path.")
+    parser.add_argument("--u-boot", dest="u_boot", help="External U-Boot checkout path.")
+    parser.add_argument("--aosp", help="External AOSP checkout path.")
+    parser.add_argument(
+        "--target-host", help="SSH target used by Buildroot and Linux smoke commands."
+    )
+    parser.add_argument("--buildroot-smoke-cmd", help="Exact Buildroot target MMIO smoke command.")
+    parser.add_argument("--linux-smoke-cmd", help="Exact Linux target MMIO smoke command.")
+    parser.add_argument("--opensbi-build-cmd", help="Exact OpenSBI build command.")
+    parser.add_argument(
+        "--opensbi-handoff-cmd", help="Exact OpenSBI fw_dynamic handoff boot command."
+    )
+    parser.add_argument("--uboot-build-cmd", help="Exact U-Boot build command.")
+    parser.add_argument("--uboot-boot-cmd", help="Exact OpenSBI-to-U-Boot boot-chain command.")
+    parser.add_argument("--cross-compile", help="Linux CROSS_COMPILE prefix.")
+    parser.add_argument("--jobs", type=int, help="Linux build parallelism.")
+    parser.add_argument("--aosp-shell", help="Shell used to source AOSP envsetup.sh.")
+    return parser.parse_args(argv)
 
 
 def check_target(name: str) -> tuple[list[str], list[str]]:
@@ -471,6 +991,13 @@ def check_target(name: str) -> tuple[list[str], list[str]]:
 
 
 def main() -> int:
+    helper_args = parse_helper(sys.argv[1:])
+    if helper_args:
+        if helper_args.command == "status":
+            return print_status(helper_args.target)
+        if helper_args.command == "capture-plan":
+            return print_capture_plan(helper_args)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
     parser.add_argument(
@@ -483,9 +1010,17 @@ def main() -> int:
         action="store_true",
         help="Return nonzero when external build/boot evidence logs are missing.",
     )
+    parser.add_argument(
+        "--evidence-plan",
+        action="store_true",
+        help="Print manifest capture commands, validation commands, and required markers.",
+    )
     args = parser.parse_args()
 
-    names = TARGETS.keys() if args.target == "all" else [args.target]
+    names = target_names_from_arg(args.target)
+    if args.evidence_plan:
+        return print_evidence_plan(names)
+
     failed = False
     for name in names:
         errors, blockers = check_target(name)

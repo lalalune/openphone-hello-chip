@@ -38,7 +38,7 @@ run_capture() {
 		echo "openphone-evidence: target=aosp artifact=$artifact"
 		echo "openphone-evidence: external_tree=$aosp"
 		echo "openphone-evidence: command=$command_label"
-		echo "openphone-evidence: start_utc=$start_utc"
+		echo "openphone-evidence: started_utc=$start_utc"
 		cd "$aosp"
 		set +e
 		"$@"
@@ -48,7 +48,7 @@ run_capture() {
 		if [ "$rc" -eq 0 ]; then
 			status=PASS
 		fi
-		echo "openphone-evidence: end_utc=$end_utc"
+		echo "openphone-evidence: ended_utc=$end_utc"
 		echo "openphone-evidence: status=$status"
 		exit "$rc"
 	} 2>&1 | tee "$out"
@@ -77,12 +77,12 @@ case "$mode" in
 			"$aosp_shell" -lc 'source build/envsetup.sh && lunch openphone_ai_soc-userdebug >/dev/null && checkvintf --check-one --dirmap /vendor:out/target/product/openphone_ai_soc/vendor'
 		;;
 	cuttlefish-boot)
-			# shellcheck disable=SC2016
-			run_capture \
-				cuttlefish_riscv64_boot \
-				"$evidence_dir/cuttlefish_riscv64_boot.log" \
-				"launch_cvd openphone_ai_soc riscv64" \
-				"$aosp_shell" -lc 'launch_cvd -daemon && adb wait-for-device && echo "adb shell true" && adb shell true && echo "adb shell getprop ro.product.cpu.abi" && abi=$(adb shell getprop ro.product.cpu.abi | tr -d "\r") && echo "ro.product.cpu.abi=$abi" && echo "adb shell getprop sys.boot_completed" && boot=$(adb shell getprop sys.boot_completed | tr -d "\r") && echo "sys.boot_completed=$boot" && if [ "$abi" = riscv64 ] && [ "$boot" = 1 ]; then true; else echo "shell-only success"; [ "$abi" = riscv64 ]; fi'
+		# shellcheck disable=SC2016
+		run_capture \
+			cuttlefish_riscv64_boot \
+			"$evidence_dir/cuttlefish_riscv64_boot.log" \
+			"launch_cvd openphone_ai_soc riscv64" \
+			"$aosp_shell" -lc 'launch_cvd -daemon && adb wait-for-device && echo "adb shell true" && adb shell true && echo "adb shell getprop ro.product.cpu.abi" && abi=$(adb shell getprop ro.product.cpu.abi | tr -d "\r") && echo "ro.product.cpu.abi=$abi" && echo "adb shell getprop sys.boot_completed" && boot=$(adb shell getprop sys.boot_completed | tr -d "\r") && echo "sys.boot_completed=$boot" && [ "$abi" = riscv64 ] && [ "$boot" = 1 ]'
 		;;
 	cts-subset)
 		run_capture \

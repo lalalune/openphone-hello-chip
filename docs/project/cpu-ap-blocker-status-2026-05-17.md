@@ -58,8 +58,14 @@ generator integration, not on more hand-written tiny-CPU expansion.
 - `make chipyard-generator-check` verifies the selected AP path is pinned and
   non-claiming.
 - `make chipyard-generated-check` is expected to fail until generated artifacts
-  and evidence exist.
+  exist, the generated import manifest records recursive submodules, commands,
+  tool versions, artifact paths, and SHA-256 values, and those paths validate
+  against `docs/evidence/cpu-ap-evidence-manifest.json`.
 - `make cpu-ap-evidence-check` is expected to fail until real OpenSBI/Linux and
-  trap/timer/IRQ evidence logs exist.
+  trap/timer/IRQ evidence logs exist. Archive real external transcripts with
+  `python3 scripts/capture_cpu_ap_evidence.py intake ...`; the helper only
+  accepts logs containing the manifest-required AP boot/trap markers.
+- `make cpu-ap-completion-gate` stays blocked until the selected manifest makes
+  a real AP claim and the generated artifacts plus transcripts validate.
 - `sw/platform/hello_platform_contract.json` must remain `has_cpu=false` until
   generated CPU/AP artifacts and boot evidence exist.

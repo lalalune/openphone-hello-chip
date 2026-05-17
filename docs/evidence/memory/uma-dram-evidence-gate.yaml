@@ -30,6 +30,9 @@ blocked_real_claims:
   - id: real_dram_controller_phy
     status: blocked
     reason: Current RTL uses rtl/memory/hello_axi_lite_dram.sv, a small SRAM-backed AXI-Lite model.
+    evidence_artifacts:
+      - docs/evidence/memory/real_dram_controller_phy_report.json
+      - docs/evidence/memory/dram_training_timing_report.json
     unblock_requires:
       - DRAM controller and PHY boundary RTL or integrated IP configuration.
       - Timing, refresh, training, capacity, and error-policy evidence.
@@ -37,18 +40,27 @@ blocked_real_claims:
   - id: uma_cache_coherency
     status: blocked
     reason: No cache hierarchy, coherent interconnect, snoop path, or explicit cache-maintenance ABI is implemented.
+    evidence_artifacts:
+      - docs/evidence/memory/uma_coherency_report.json
+      - docs/evidence/memory/shared_buffer_negative_sync_report.json
     unblock_requires:
       - Coherency policy covering CPU, DMA, NPU, display, and GPU/2D clients.
       - Positive and negative shared-buffer tests proving fresh data or required sync failure.
   - id: iommu_smmu_dma_isolation
     status: blocked
     reason: DMA containment is address-response behavior in the scaffold, not page-table translation or kernel-visible faults.
+    evidence_artifacts:
+      - docs/evidence/memory/iommu_fault_injection_report.json
+      - docs/evidence/memory/dma_isolation_fault_visibility_report.json
     unblock_requires:
       - IOMMU/SMMU or explicit DMA allowlist implementation.
       - Fault injection evidence proving unauthorized DMA is blocked and reported to software.
   - id: memory_qos_bandwidth
     status: blocked
     reason: No production arbitration policy, QoS registers, latency budget, or bandwidth counters exist.
+    evidence_artifacts:
+      - docs/evidence/memory/memory_qos_report.json
+      - docs/evidence/memory/contended_bandwidth_latency_report.json
     unblock_requires:
       - Contended CPU, DMA, NPU, display, and GPU/2D bandwidth tests.
       - Display underflow and CPU latency evidence under sustained memory pressure.

@@ -1,3 +1,4 @@
+schema: openphone.kicad_artifact_manifest.v1
 board: hello-demo
 status: release_blocked
 kicad_project_dir: board/kicad/hello-demo

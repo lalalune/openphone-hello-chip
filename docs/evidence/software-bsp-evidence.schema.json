@@ -4,6 +4,7 @@
   "title": "OpenPhone software BSP evidence manifest",
   "type": "object",
   "required": ["schema_version", "claim_boundary", "targets"],
+  "additionalProperties": false,
   "properties": {
     "schema_version": { "const": 1 },
     "claim_boundary": {
@@ -38,7 +39,7 @@
     },
     "evidence_item": {
       "type": "object",
-      "required": ["artifact", "path", "capture_command", "required_strings"],
+      "required": ["artifact", "path", "capture_command", "validation_command", "min_bytes", "required_strings"],
       "additionalProperties": false,
       "properties": {
         "artifact": { "type": "string", "minLength": 1 },
@@ -47,18 +48,29 @@
           "pattern": "^docs/evidence/(buildroot|linux|android)/[^/]+\\.(log|txt)$"
         },
         "capture_command": { "type": "string", "minLength": 1 },
-        "min_bytes": { "type": "integer", "minimum": 1 },
+        "validation_command": {
+          "type": "string",
+          "pattern": "scripts/check_software_bsp.py .+ --require-evidence"
+        },
+        "min_bytes": { "type": "integer", "minimum": 80 },
         "required_strings": {
           "type": "array",
+          "minItems": 1,
           "items": { "type": "string", "minLength": 1 }
         },
         "at_least_one": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "array",
             "minItems": 1,
             "items": { "type": "string", "minLength": 1 }
           }
+        },
+        "external_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
         },
         "forbidden_strings": {
           "type": "array",

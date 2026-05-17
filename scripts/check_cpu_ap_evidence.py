@@ -4,35 +4,32 @@
 from __future__ import annotations
 
 import argparse
-import json
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "generators/chipyard/openphone-rocket-manifest.json"
+from cpu_ap_evidence_lib import (
+    EXPECTED_CHIPYARD,
+    ROOT,
+    SELECTED_MANIFEST,
+    load_evidence_manifest,
+    load_json,
+    require,
+    text_problems,
+    transcript_specs,
+)
 
 
 def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8", errors="ignore")
 
 
-def require(condition: bool, message: str, errors: list[str]) -> None:
-    if not condition:
-        errors.append(message)
-
-
-def load_json(path: str | Path) -> dict:
-    path = ROOT / path if isinstance(path, str) else path
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
 def check_scaffold(errors: list[str]) -> None:
+    evidence_manifest = load_evidence_manifest(errors)
     cpu = read("rtl/cpu/hello_cpu_subsystem_stub.sv")
     test = read("verify/cocotb/test_tiny_cpu_execution.py")
     tb = read("verify/cocotb/hello_tiny_cpu_contract_tb.sv")
     linux_contract = read("docs/arch/linux-capable-cpu-contract.md")
     blocker = read("docs/project/cpu-ap-blocker-status-2026-05-17.md")
-    contract = load_json("sw/platform/hello_platform_contract.json")
-    manifest = load_json(MANIFEST)
+    contract = load_json(ROOT / "sw/platform/hello_platform_contract.json")
+    manifest = load_json(SELECTED_MANIFEST)
     chipyard = manifest.get("chipyard", {})
     selected = manifest.get("selected_path", {})
     claim_policy = manifest.get("claim_policy", {})
@@ -79,10 +76,12 @@ def check_scaffold(errors: list[str]) -> None:
         errors,
     )
     require(
-        chipyard.get("tag") == "1.13.0", "Chipyard AP path must remain pinned to tag 1.13.0", errors
+        chipyard.get("tag") == EXPECTED_CHIPYARD["tag"],
+        "Chipyard AP path must remain pinned to tag 1.13.0",
+        errors,
     )
     require(
-        chipyard.get("commit") == "69eba860a352343e4ac6b6df0f3638a79a86ec78",
+        chipyard.get("commit") == EXPECTED_CHIPYARD["commit"],
         "Chipyard AP path must remain pinned to the selected commit",
         errors,
     )
@@ -97,13 +96,32 @@ def check_scaffold(errors: list[str]) -> None:
         errors,
     )
     require(
-        selected.get("config_name") == "OpenPhoneRocketConfig", "AP config name drifted", errors
+        selected.get("config_name") == "OpenPhoneRocketConfig",
+        "AP config name drifted",
+        errors,
     )
     require(
         claim_policy.get("linux_capable_cpu_claim") is False,
         "manifest must not claim Linux boot without evidence",
         errors,
     )
+    require(
+        manifest.get("evidence_manifest") == "docs/evidence/cpu-ap-evidence-manifest.json",
+        "selected manifest must point to CPU/AP evidence manifest",
+        errors,
+    )
+    require(
+        manifest.get("capture_helper") == "scripts/capture_cpu_ap_evidence.py",
+        "selected manifest must point to CPU/AP evidence capture helper",
+        errors,
+    )
+    for spec in transcript_specs(evidence_manifest).values():
+        path = spec.get("path")
+        require(
+            path in manifest.get("required_evidence", []),
+            f"selected manifest lacks required CPU/AP evidence path: {path}",
+            errors,
+        )
 
     for token in (
         "OpenSBI",
@@ -125,17 +143,28 @@ def check_scaffold(errors: list[str]) -> None:
         "has_cpu=false",
     ):
         require(
-            token in blocker, f"CPU/AP blocker status lacks required blocker token: {token}", errors
+            token in blocker,
+            f"CPU/AP blocker status lacks required blocker token: {token}",
+            errors,
         )
 
 
-def missing_evidence() -> list[str]:
-    required = (
-        "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-    )
-    return [path for path in required if not (ROOT / path).is_file()]
+def evidence_problems() -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    evidence_manifest = load_evidence_manifest(errors)
+    missing: list[str] = []
+    problems = errors[:]
+    for spec in transcript_specs(evidence_manifest).values():
+        rel_path = spec.get("path")
+        if not isinstance(rel_path, str):
+            continue
+        path = ROOT / rel_path
+        if not path.is_file():
+            missing.append(rel_path)
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        problems.extend(text_problems(text, spec, rel_path, raw=False))
+    return missing, problems
 
 
 def main() -> int:
@@ -152,11 +181,17 @@ def main() -> int:
         return 1
 
     print("STATUS: PASS cpu_ap.scaffold - tiny executable CPU path and gates are present")
-    absent = missing_evidence()
+    absent, problems = evidence_problems()
+    if problems:
+        print("STATUS: FAIL cpu_ap.linux_evidence - evidence logs are invalid:")
+        for problem in problems:
+            print(f"  - {problem}")
+        return 1
     if absent:
         print("STATUS: BLOCKED cpu_ap.linux_evidence - missing production boot/trap evidence:")
         for path in absent:
             print(f"  - {path}")
+        print("  next: python3 scripts/capture_cpu_ap_evidence.py --help")
         return 1 if args.require_evidence else 0
 
     print("STATUS: PASS cpu_ap.linux_evidence")

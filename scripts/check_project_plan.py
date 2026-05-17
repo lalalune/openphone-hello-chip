@@ -6,6 +6,8 @@ import yaml
 
 REQUIRED = [
     "docs/spec-db/mobile-sota-2026.yaml",
+    "docs/spec-db/npu-2028-target.yaml",
+    "docs/npu/2028-targets.md",
     "docs/benchmarks/benchmark-matrix.md",
     "docs/benchmarks/report-schema.yaml",
     "docs/android/riscv-bringup.md",
@@ -30,6 +32,18 @@ REQUIRED_TERMS = {
         "snapdragon_8_elite_gen_5",
         "dimensity_9500",
         "explicit_non_goals",
+    ],
+    "docs/spec-db/npu-2028-target.yaml": [
+        "openphone.npu_2028_target.v1",
+        "dense_int8_peak_tops_min",
+        "sparse_int4_peak_tops_min",
+        "current_repo_classification",
+    ],
+    "docs/npu/2028-targets.md": [
+        "2028 NPU Target",
+        "Dense INT8 peak",
+        "CPU fallback",
+        "Current Repo Gap",
     ],
     "docs/benchmarks/benchmark-matrix.md": [
         "Claim Levels",

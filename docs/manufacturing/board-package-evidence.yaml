@@ -1,10 +1,49 @@
+schema: openphone.board_package_evidence.v1
 evidence_manifest: board_package_vendor_fab_evidence
 status: release_blocked
 owner: product_physical_closure
 release_gate: board_fabrication_release
+capture_template: docs/manufacturing/board-package-release-evidence-template.yaml
+evidence_record_requirements:
+  linked_release_gate: board_fabrication_release
+  accepted_release_statuses:
+    - accepted
+    - approved
+    - pass
+  supersedes_placeholder_required: true
+  required_fields:
+    - blocker_id
+    - artifact_name
+    - artifact_class
+    - source_path
+    - source_owner
+    - captured_at
+    - captured_by
+    - immutable_revision_or_lot
+    - sha256
+    - vendor_or_tool
+    - revision
+    - source_document
+    - package_or_board_revision
+    - reviewer
+    - acceptance_status
+    - acceptance_criteria
+    - review_record
+    - linked_release_gate
+    - supersedes_placeholder
 policy:
   preflight: Verify placeholder board/package blockers are explicit and no missing vendor or KiCad artifact is claimed complete.
   release: Require real package-vendor, KiCad source, fab export, cross-probe, DFM, SI/PI, and current-limit evidence.
+next_commands:
+  preflight: python3 scripts/check_board_package_evidence.py
+  release_gate: python3 scripts/check_board_package_evidence.py --release
+  product_release_gate: python3 scripts/product_check.py --release
+  hash_artifact: shasum -a 256 <real-evidence-file>
+source_contracts:
+  package_pinout: package/hello-demo-pinout.yaml
+  padframe_contract: pd/padframe/hello_demo_padframe.yaml
+  board_cross_probe: board/kicad/hello-demo/package-pinout-cross-probe.yaml
+  board_fab_notes: docs/board/kicad/hello-demo/fab-notes.md
 placeholder_blockers:
   - id: placeholder_package_pinout
     file: package/hello-demo-pinout.yaml
@@ -104,6 +143,8 @@ artifact_groups:
         globs:
           - board/kicad/hello-demo/reports/*erc*.txt
           - board/kicad/hello-demo/reports/*erc*.log
+          - board/reports/fab/erc*.txt
+          - board/reports/fab/erc*.log
       - name: drc_transcript
         release_blocker_id: drc
         release_blocker: KiCad DRC transcript is missing.
@@ -111,6 +152,8 @@ artifact_groups:
         globs:
           - board/kicad/hello-demo/reports/*drc*.txt
           - board/kicad/hello-demo/reports/*drc*.log
+          - board/reports/fab/drc*.txt
+          - board/reports/fab/drc*.log
       - name: gerbers
         release_blocker_id: gerbers
         release_blocker: Gerber fabrication outputs are missing.
@@ -118,6 +161,8 @@ artifact_groups:
         globs:
           - board/kicad/hello-demo/fab/gerbers/*.gbr
           - board/kicad/hello-demo/fab/gerbers/*.gbrjob
+          - board/reports/fab/gerbers/*.gbr
+          - board/reports/fab/gerbers/*.gbrjob
       - name: drill
         release_blocker_id: drill
         release_blocker: Drill fabrication outputs are missing.
@@ -125,6 +170,8 @@ artifact_groups:
         globs:
           - board/kicad/hello-demo/fab/drill/*.drl
           - board/kicad/hello-demo/fab/drill/*.xln
+          - board/reports/fab/drill/*.drl
+          - board/reports/fab/drill/*.xln
       - name: bom
         release_blocker_id: bom
         release_blocker: Fabrication BOM export is missing.
@@ -132,6 +179,8 @@ artifact_groups:
         globs:
           - board/kicad/hello-demo/fab/bom/*.csv
           - board/kicad/hello-demo/fab/bom/*.xml
+          - board/reports/fab/bom*.csv
+          - board/reports/fab/bom*.xml
       - name: pick_and_place
         release_blocker_id: pick_and_place
         release_blocker: Pick-and-place/position export is missing.
@@ -139,6 +188,8 @@ artifact_groups:
         globs:
           - board/kicad/hello-demo/fab/position/*.pos
           - board/kicad/hello-demo/fab/position/*.csv
+          - board/reports/fab/position*.pos
+          - board/reports/fab/position*.csv
   release_reviews:
     owner: manufacturing_closure
     status: missing

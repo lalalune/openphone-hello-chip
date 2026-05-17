@@ -1,5 +1,5 @@
 openphone-evidence: template=true
-openphone-evidence: target=<buildroot|linux|aosp> artifact=<artifact-name>
+openphone-evidence: target=<buildroot|linux|opensbi|u-boot|aosp> artifact=<artifact-name>
 openphone-evidence: command=<exact command run from capture script>
 openphone-evidence: started_utc=<YYYY-MM-DDTHH:MM:SZ>
 

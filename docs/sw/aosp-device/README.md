@@ -75,9 +75,11 @@ aosp BSP external evidence blocked:
 Dependency blocker: a real Android build requires an external AOSP checkout,
 riscv64/Cuttlefish host dependencies, and actual `hello_npu.default` and
 `hwcomposer.openphone_ai_soc` HAL source or reviewed prebuilts that fail closed
-when their backing Linux nodes are absent. The checked-in `device.mk` and
-VINTF manifest intentionally do not list active HAL packages or HAL entries
-until that implementation and evidence exist.
+when their backing Linux nodes are absent. This repo includes a host-buildable
+`hello_npu` runtime probe under `hal/` so the absent-device behavior is locally
+checked; the checked-in `device.mk` and VINTF manifest intentionally do not
+list active HAL packages or HAL entries until Android integration and evidence
+exist.
 
 Evidence intake is defined by
 `docs/evidence/software-bsp-evidence-manifest.json` and validated by
@@ -123,6 +125,20 @@ transcripts only; they do not make a boot claim unless the external log contains
 real Cuttlefish/adb output and passes `make software-bsp-evidence-check`. The
 CTS/VTS modes are bounded virtual-device subset captures, not CDD, GMS, or full
 Android compatibility evidence.
+
+Required Android boot-evidence inputs are intentionally explicit:
+
+| Evidence log | External artifact or marker that must back it |
+|---|---|
+| `docs/evidence/android/openphone_ai_soc_lunch.log` | `build/envsetup.sh`, `device/openphone/openphone_ai_soc/AndroidProducts.mk`, `TARGET_PRODUCT=openphone_ai_soc` |
+| `docs/evidence/android/openphone_ai_soc_vendorimage.log` | `out/target/product/openphone_ai_soc/vendor.img`, `out/target/product/openphone_ai_soc/installed-files-vendor.txt`, `out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml` |
+| `docs/evidence/android/openphone_ai_soc_checkvintf.log` | `checkvintf` output against `out/target/product/openphone_ai_soc/vendor` and `openphone_hello.xml` |
+| `docs/evidence/android/cuttlefish_riscv64_boot.log` | `launch_cvd`, `adb shell`, `ro.product.cpu.abi=riscv64`, and `sys.boot_completed=1` |
+| `docs/evidence/android/cts_virtual_device_subset.log` | `cts-tradefed` virtual-device subset result directory |
+| `docs/evidence/android/vts_virtual_device_subset.log` | `vts-tradefed` virtual-device subset result directory |
+
+The Cuttlefish capture no longer accepts shell-only smoke as boot evidence:
+`sys.boot_completed=1` is required for a PASS transcript.
 
 `manifests/openphone-ai-soc-local.xml` is a local-manifest starting point for
 teams that mirror this repository into an AOSP `repo` workspace. The script
@@ -179,6 +195,8 @@ Android compatibility evidence.
 | SELinux types | `device/openphone/openphone_ai_soc/sepolicy/hello_npu.te` | Defines the fail-closed NPU device and HAL domains. |
 | Kernel fragment | `device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment` | Records Android kernel config needed by the scaffold. |
 | DTS scaffold | `device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts` | Mirrors the central platform contract for Android-facing nodes. |
+| HAL runtime skeleton | `device/openphone/openphone_ai_soc/hal/hello_npu_runtime.cc` | Host-buildable fail-closed probe for absent `/dev/hello-npu`; always reports `nnapi_acceleration=false` in local checks. |
+| HAL probe CLI | `device/openphone/openphone_ai_soc/hal/hello_npu_probe_main.cc` | CLI used by `sw/check_bsp_scaffolds.py aosp` to verify absent-device behavior without fake device evidence. |
 | HAL plan | `device/openphone/openphone_ai_soc/hal/README.md` | Defines fail-closed behavior required before package claims are enabled. |
 
 ## HAL stub policy

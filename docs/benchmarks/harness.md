@@ -52,6 +52,14 @@ python3 scripts/check_tflite_cpu_benchmark.py \
   --status-json benchmarks/results/tflite-cpu-readiness/status.json
 ```
 
+Check both TFLite entries, including the hello-npu NNAPI proof gate:
+
+```sh
+python3 scripts/check_tflite_cpu_benchmark.py \
+  --benchmark all \
+  --status-json benchmarks/results/tflite-readiness/status.json
+```
+
 ## Dry Run
 
 ```sh
@@ -184,7 +192,7 @@ unrelated `stream` utility with the memory benchmark.
 | fio sequential read | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-seq-read.fio`. |
 | fio random read/write | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-rand-rw.fio`. |
 | TFLite CPU | `benchmark_model` on `PATH` and `benchmarks/models/mobile_smoke.tflite` | Build TensorFlow Lite's benchmark tool and generate or supply a redistributable smoke model. Do not use proprietary app or vendor models unless the report is kept private and marked accordingly outside this harness. |
-| TFLite hello NPU | NNAPI-capable `benchmark_model` and `benchmarks/models/mobile_smoke.tflite` | Build `benchmark_model` with NNAPI support, generate or supply the smoke model, and run on a platform exposing the `hello-npu` accelerator name. |
+| TFLite hello NPU | NNAPI-capable `benchmark_model`, `benchmarks/models/mobile_smoke.tflite`, and `benchmarks/capabilities/hello_npu_nnapi.proof.json` | Build `benchmark_model` with NNAPI support, generate or supply the smoke model, and run on a platform exposing the `hello-npu` accelerator name. The proof JSON must reference non-empty transcripts with the expected `hello-npu` and NNAPI command markers. Use `docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json` as the job output shape, not as evidence. |
 
 The checked-in `benchmarks/tools/*` commands are host smoke tools for CI and
 developer machines. They intentionally preserve the command names and output
@@ -210,6 +218,12 @@ The helper still installs the other host smoke tools, but links lmbench to the
 supplied real binaries and refuses inputs containing the repo host-smoke marker.
 Generated reports include executable SHA-256, size, provenance, and any rejected
 host-smoke candidates in each executable dependency record.
+
+For hello-npu NNAPI evidence, the harness validates the proof JSON schema,
+accelerator name, transcript presence, and required transcript markers before
+the benchmark can move out of `blocked`. A strict release report that only has
+repo-local smoke tools, an empty proof, or copied template content must stay
+blocked or fail report validation.
 
 ## Report Shape
 

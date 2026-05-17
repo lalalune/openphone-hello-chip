@@ -4,31 +4,41 @@
 from __future__ import annotations
 
 import argparse
-import json
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SELECTED = ROOT / "generators/chipyard/openphone-rocket-manifest.json"
-TEMPLATE = ROOT / "generators/chipyard/import-manifest.template.json"
-BUILD_MANIFEST = ROOT / "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json"
-
-
-def load_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def require(condition: bool, message: str, errors: list[str]) -> None:
-    if not condition:
-        errors.append(message)
+from cpu_ap_evidence_lib import (
+    EXPECTED_CHIPYARD,
+    GENERATED_MANIFEST,
+    IMPORT_TEMPLATE,
+    ROOT,
+    SELECTED_MANIFEST,
+    artifact_specs,
+    load_evidence_manifest,
+    load_json,
+    rel,
+    require,
+    text_problems,
+    transcript_specs,
+    validate_path_kind,
+    validate_sha256,
+)
 
 
 def check_selected_manifest(errors: list[str]) -> None:
-    require(SELECTED.is_file(), f"missing selected generator manifest: {SELECTED}", errors)
-    require(TEMPLATE.is_file(), f"missing import manifest template: {TEMPLATE}", errors)
+    require(
+        SELECTED_MANIFEST.is_file(),
+        f"missing selected generator manifest: {rel(SELECTED_MANIFEST)}",
+        errors,
+    )
+    require(
+        IMPORT_TEMPLATE.is_file(),
+        f"missing import manifest template: {rel(IMPORT_TEMPLATE)}",
+        errors,
+    )
+    evidence_manifest = load_evidence_manifest(errors)
     if errors:
         return
 
-    manifest = load_json(SELECTED)
+    manifest = load_json(SELECTED_MANIFEST)
     chipyard = manifest.get("chipyard", {})
     selected = manifest.get("selected_path", {})
     policy = manifest.get("claim_policy", {})
@@ -44,13 +54,15 @@ def check_selected_manifest(errors: list[str]) -> None:
         errors,
     )
     require(
-        chipyard.get("repo") == "https://github.com/ucb-bar/chipyard.git",
+        chipyard.get("repo") == EXPECTED_CHIPYARD["repo"],
         "selected Chipyard repo drifted",
         errors,
     )
-    require(chipyard.get("tag") == "1.13.0", "Chipyard tag must stay pinned", errors)
     require(
-        chipyard.get("commit") == "69eba860a352343e4ac6b6df0f3638a79a86ec78",
+        chipyard.get("tag") == EXPECTED_CHIPYARD["tag"], "Chipyard tag must stay pinned", errors
+    )
+    require(
+        chipyard.get("commit") == EXPECTED_CHIPYARD["commit"],
         "Chipyard commit must stay pinned",
         errors,
     )
@@ -77,24 +89,32 @@ def check_selected_manifest(errors: list[str]) -> None:
         "platform has_cpu flip must remain blocked without generated artifacts",
         errors,
     )
+    require(
+        manifest.get("evidence_manifest") == "docs/evidence/cpu-ap-evidence-manifest.json",
+        "selected manifest must point to the CPU/AP evidence manifest",
+        errors,
+    )
+    require(
+        manifest.get("capture_helper") == "scripts/capture_cpu_ap_evidence.py",
+        "selected manifest must point to the CPU/AP evidence capture helper",
+        errors,
+    )
 
-    for path in (
-        "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
-        "build/chipyard/openphone_rocket/openphone-hello.dts",
-        "build/chipyard/openphone_rocket/openphone_rocket_ap.v",
-        "build/chipyard/openphone_rocket/simulator",
-    ):
+    expected_artifacts = [rel(GENERATED_MANIFEST)]
+    expected_artifacts.extend(
+        str(spec["path"])
+        for spec in artifact_specs(evidence_manifest).values()
+        if isinstance(spec.get("path"), str)
+    )
+    for path in expected_artifacts:
         require(
             path in manifest.get("expected_generated_artifacts", []),
             f"selected manifest lacks generated artifact: {path}",
             errors,
         )
 
-    for path in (
-        "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-    ):
+    for spec in transcript_specs(evidence_manifest).values():
+        path = spec.get("path")
         require(
             path in manifest.get("required_evidence", []),
             f"selected manifest lacks evidence artifact: {path}",
@@ -103,17 +123,22 @@ def check_selected_manifest(errors: list[str]) -> None:
 
 
 def check_generated_import_manifest(errors: list[str]) -> None:
+    evidence_manifest = load_evidence_manifest(errors)
     require(
-        BUILD_MANIFEST.is_file(), f"missing generated import manifest: {BUILD_MANIFEST}", errors
+        GENERATED_MANIFEST.is_file(),
+        f"missing generated import manifest: {rel(GENERATED_MANIFEST)}",
+        errors,
     )
     if errors:
         return
 
-    manifest = load_json(BUILD_MANIFEST)
+    manifest = load_json(GENERATED_MANIFEST)
     chipyard = manifest.get("chipyard", {})
     generation = manifest.get("generation", {})
     artifacts = manifest.get("artifacts", {})
     evidence = manifest.get("evidence", {})
+    artifact_hashes = manifest.get("artifact_sha256", {})
+    evidence_hashes = manifest.get("evidence_sha256", {})
 
     require(
         manifest.get("schema") == "openphone.cpu_ap_import_manifest.v1",
@@ -121,12 +146,22 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         errors,
     )
     require(
-        chipyard.get("tag") == "1.13.0",
+        manifest.get("status") in {"generated", "complete", "linux_complete"},
+        "generated manifest status must be generated, complete, or linux_complete",
+        errors,
+    )
+    require(
+        chipyard.get("repo") == EXPECTED_CHIPYARD["repo"],
+        "generated manifest uses an unapproved Chipyard repo",
+        errors,
+    )
+    require(
+        chipyard.get("tag") == EXPECTED_CHIPYARD["tag"],
         "generated manifest uses an unapproved Chipyard tag",
         errors,
     )
     require(
-        chipyard.get("commit") == "69eba860a352343e4ac6b6df0f3638a79a86ec78",
+        chipyard.get("commit") == EXPECTED_CHIPYARD["commit"],
         "generated manifest uses an unapproved Chipyard commit",
         errors,
     )
@@ -143,24 +178,91 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         "generated manifest must use OpenPhoneRocketConfig",
         errors,
     )
+    require(
+        generation.get("bootstrap_preflight_report")
+        == "build/chipyard/openphone_rocket/bootstrap-preflight.json",
+        "generated manifest must reference the bootstrap preflight report",
+        errors,
+    )
+    require(
+        bool(generation.get("command")), "generated manifest must record generation command", errors
+    )
+    require(
+        bool(generation.get("tool_versions")),
+        "generated manifest must record tool versions",
+        errors,
+    )
+    require(
+        bool(generation.get("generated_at_utc")),
+        "generated manifest must record generated_at_utc",
+        errors,
+    )
+    require(
+        isinstance(artifact_hashes, dict),
+        "generated manifest artifact_sha256 must be an object",
+        errors,
+    )
+    require(
+        isinstance(evidence_hashes, dict),
+        "generated manifest evidence_sha256 must be an object",
+        errors,
+    )
+    if not isinstance(artifacts, dict) or not isinstance(evidence, dict):
+        errors.append("generated manifest artifacts and evidence fields must be objects")
+        return
 
-    for name in ("verilog", "dts", "simulator"):
+    for name, spec in artifact_specs(evidence_manifest).items():
+        expected_path = spec.get("path")
         path = artifacts.get(name, "")
-        require(bool(path), f"generated manifest lacks artifact path: {name}", errors)
         require(
-            bool(path) and (ROOT / path).exists(),
-            f"generated artifact does not exist: {path}",
-            errors,
+            path == expected_path, f"generated manifest {name} path must be {expected_path}", errors
         )
+        if not isinstance(path, str) or not path:
+            continue
+        artifact_path = ROOT / path
+        validate_path_kind(artifact_path, spec, errors, name)
+        if artifact_path.exists():
+            if artifact_path.is_file():
+                required_strings = spec.get("required_strings", [])
+                text = artifact_path.read_text(encoding="utf-8", errors="ignore")
+                missing = [
+                    term for term in required_strings if isinstance(term, str) and term not in text
+                ]
+                if missing:
+                    errors.append(
+                        f"{path} missing required generated-artifact markers: " + ", ".join(missing)
+                    )
+                min_bytes = int(spec.get("min_bytes", 0))
+                if min_bytes and artifact_path.stat().st_size < min_bytes:
+                    errors.append(f"{path} is smaller than required minimum {min_bytes} bytes")
+            validate_sha256(
+                artifact_path,
+                artifact_hashes,
+                name,
+                str(spec.get("sha256_key")),
+                errors,
+            )
 
-    for name in ("opensbi_boot_log", "linux_boot_log", "trap_timer_irq_log"):
+    for name, spec in transcript_specs(evidence_manifest).items():
+        expected_path = spec.get("path")
         path = evidence.get(name, "")
-        require(bool(path), f"generated manifest lacks evidence path: {name}", errors)
         require(
-            bool(path) and (ROOT / path).is_file(),
-            f"evidence artifact does not exist: {path}",
-            errors,
+            path == expected_path, f"generated manifest {name} path must be {expected_path}", errors
         )
+        if not isinstance(path, str) or not path:
+            continue
+        evidence_path = ROOT / path
+        require(evidence_path.is_file(), f"evidence artifact does not exist: {path}", errors)
+        if evidence_path.is_file():
+            text = evidence_path.read_text(encoding="utf-8", errors="ignore")
+            errors.extend(text_problems(text, spec, path, raw=False))
+            validate_sha256(
+                evidence_path,
+                evidence_hashes,
+                name,
+                str(spec.get("sha256_key")),
+                errors,
+            )
 
 
 def main() -> int:
@@ -180,9 +282,12 @@ def main() -> int:
         return 1
 
     print("STATUS: PASS chipyard.generator_manifest - selected Rocket RV64GC AP path is pinned")
-    if not BUILD_MANIFEST.is_file():
+    if not GENERATED_MANIFEST.is_file():
         print(
-            f"STATUS: BLOCKED chipyard.generated_import - missing {BUILD_MANIFEST.relative_to(ROOT)}"
+            "STATUS: BLOCKED chipyard.generated_import - missing "
+            f"{rel(GENERATED_MANIFEST)}; run scripts/bootstrap_chipyard.sh, generate "
+            "OpenPhoneRocketConfig, fill the import manifest, then run make "
+            "chipyard-generated-check cpu-ap-evidence-check cpu-ap-completion-gate"
         )
     elif args.require_generated:
         print("STATUS: PASS chipyard.generated_import")

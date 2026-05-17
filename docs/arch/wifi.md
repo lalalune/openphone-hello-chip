@@ -57,6 +57,9 @@ Required board/software validation for this slice:
 
 - Confirm 1.8 V SDIO signaling and board-level pulls with the selected module.
 - Scope `WIFI_EN`, `WIFI_RST_N`, SDIO clock, and UART flow-control sequencing.
+- Keep `WIFI_EN` and `WIFI_RST_N` low until board `VBAT` and `VDDIO_1V8`
+  rails are stable, then release controls in the selected module datasheet
+  order before starting SDIO clock or UART RTS/CTS.
 - Enumerate SDIO function 1 and load the board-specific `brcmfmac` firmware.
 - Exercise `WIFI_IRQ` or OOB wake during traffic and suspend/resume.
 - Attach Bluetooth over UART with flow control enabled.

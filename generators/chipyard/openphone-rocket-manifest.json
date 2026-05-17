@@ -40,6 +40,8 @@
     "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
     "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log"
   ],
+  "evidence_manifest": "docs/evidence/cpu-ap-evidence-manifest.json",
+  "capture_helper": "scripts/capture_cpu_ap_evidence.py",
   "claim_policy": {
     "linux_capable_cpu_claim": false,
     "platform_contract_has_cpu_may_flip_to_true": false,

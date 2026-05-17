@@ -12,6 +12,7 @@ KICAD_DIR = ROOT / "board/kicad/hello-demo"
 FAB_REPORT_DIR = ROOT / "board/reports/fab"
 COMMANDS_DOC = ROOT / "docs/board/kicad/hello-demo-commands.md"
 MANIFEST = ROOT / "docs/board/kicad/hello-demo-artifact-manifest.yaml"
+FAB_NOTES = ROOT / "docs/board/kicad/hello-demo/fab-notes.md"
 PINOUT = ROOT / "package/hello-demo-pinout.yaml"
 PACKAGE_DOC = ROOT / "docs/package/hello-demo-package.md"
 
@@ -34,6 +35,17 @@ REQUIRED_FAB_OUTPUTS = {
     "command_transcript": ["command-transcript*.txt", "commands*.log"],
     "tool_versions": ["tool-versions*.txt", "tool_versions*.txt"],
 }
+REQUIRED_CLAIM_POLICY_KEYS = {"allowed", "forbidden_until_unblocked"}
+FORBIDDEN_RELEASE_TEXT_MARKERS = (
+    "template_not_release_evidence",
+    "non_release_placeholder",
+    "release use: `prohibited`",
+    "release_use: prohibited",
+    "placeholder-only",
+    "placeholder package",
+    "not a foundry-approved package",
+    "not fabrication release evidence",
+)
 
 
 def repo_rel(path: Path) -> str:
@@ -59,9 +71,20 @@ def require_file(path: Path, label: str, failures: list[str]) -> None:
         failures.append(f"missing {label}: {repo_rel(path)}")
 
 
+def reject_placeholder_files(files: list[Path], label: str, failures: list[str]) -> None:
+    for path in files:
+        text = path.read_text(errors="ignore").lower()
+        matched = [marker for marker in FORBIDDEN_RELEASE_TEXT_MARKERS if marker in text]
+        if matched:
+            failures.append(
+                f"{label} contains non-release marker(s): {repo_rel(path)}: "
+                + ", ".join(matched)
+            )
+
+
 def validate_manifest_only(failures: list[str]) -> None:
     for path, label in (
-        (KICAD_DIR / "fab-notes.md", "KiCad fabrication notes"),
+        (FAB_NOTES, "KiCad fabrication notes"),
         (COMMANDS_DOC, "KiCad command capture plan"),
         (MANIFEST, "KiCad artifact manifest"),
         (PINOUT, "package pinout"),
@@ -72,6 +95,10 @@ def validate_manifest_only(failures: list[str]) -> None:
         return
 
     manifest = load_yaml(MANIFEST)
+    if manifest.get("schema") != "openphone.kicad_artifact_manifest.v1":
+        failures.append(
+            "KiCad artifact manifest schema must be openphone.kicad_artifact_manifest.v1"
+        )
     if manifest.get("status") != "release_blocked":
         failures.append("KiCad artifact manifest status must remain release_blocked")
     if manifest.get("kicad_project_dir") != "board/kicad/hello-demo":
@@ -80,6 +107,16 @@ def validate_manifest_only(failures: list[str]) -> None:
         failures.append("KiCad artifact manifest must point at board/reports/fab")
     if manifest.get("command_capture_doc") != "docs/board/kicad/hello-demo-commands.md":
         failures.append("KiCad artifact manifest must link the command capture doc")
+    claim_policy = manifest.get("claim_policy")
+    if not isinstance(claim_policy, dict):
+        failures.append("KiCad artifact manifest must list claim_policy")
+    else:
+        missing_claim_keys = sorted(REQUIRED_CLAIM_POLICY_KEYS - set(claim_policy))
+        if missing_claim_keys:
+            failures.append(
+                "KiCad artifact manifest claim_policy missing keys: "
+                + ", ".join(missing_claim_keys)
+            )
     blocked_until = manifest.get("blocked_until")
     if not isinstance(blocked_until, list) or len(blocked_until) < 5:
         failures.append("KiCad artifact manifest must list concrete blocked_until prerequisites")
@@ -125,12 +162,18 @@ def validate_release_artifacts(failures: list[str]) -> None:
         failures.append("package contract is not vendor/foundry approved")
 
     for artifact, patterns in REQUIRED_KICAD_SOURCES.items():
-        if not matches(KICAD_DIR, patterns):
+        files = matches(KICAD_DIR, patterns)
+        if not files:
             failures.append(f"missing KiCad {artifact} under {repo_rel(KICAD_DIR)}")
+        else:
+            reject_placeholder_files(files, f"KiCad {artifact}", failures)
 
     for artifact, patterns in REQUIRED_FAB_OUTPUTS.items():
-        if not matches(FAB_REPORT_DIR, patterns):
+        files = matches(FAB_REPORT_DIR, patterns)
+        if not files:
             failures.append(f"missing KiCad fab {artifact} under {repo_rel(FAB_REPORT_DIR)}")
+        else:
+            reject_placeholder_files(files, f"KiCad fab {artifact}", failures)
 
 
 def main() -> int:

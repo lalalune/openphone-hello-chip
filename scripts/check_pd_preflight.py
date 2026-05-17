@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import json
+import os
 import shutil
 import subprocess
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +21,24 @@ REQUIRED_KEYS = {
     "CLOCK_PORT",
     "CLOCK_PERIOD",
 }
+OPENROAD_TCL = ROOT / "pd/openroad/hello_soc.tcl"
+PD_INPUTS = [
+    OPENROAD_TCL,
+    ROOT / "pd/constraints/hello_soc.sdc",
+    ROOT / "pd/constraints/hello_soc_gf180.sdc",
+    ROOT / "pd/pin_order.cfg",
+]
+CONFIG_BY_PDK = {
+    "sky130A": ROOT / "pd/openlane/config.sky130.json",
+    "gf180mcuD": ROOT / "pd/openlane/config.gf180.json",
+}
+
+
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def resolve_dir_path(config_path: Path, value: str) -> Path:
@@ -27,63 +47,171 @@ def resolve_dir_path(config_path: Path, value: str) -> Path:
     return (ROOT / value).resolve()
 
 
-def check_config(config_path: Path, failures: list[str]) -> None:
+def load_config(config_path: Path, failures: list[str]) -> dict | None:
     try:
-        config = json.loads(config_path.read_text())
+        return json.loads(config_path.read_text())
     except json.JSONDecodeError as exc:
-        failures.append(f"{config_path.relative_to(ROOT)}: invalid JSON: {exc}")
-        return
+        failures.append(f"{display_path(config_path)}: invalid JSON: {exc}")
+        return None
 
+
+def check_config(config_path: Path, failures: list[str]) -> dict | None:
+    config = load_config(config_path, failures)
+    if config is None:
+        return None
     missing_keys = sorted(REQUIRED_KEYS - set(config))
     if missing_keys:
-        failures.append(f"{config_path.relative_to(ROOT)}: missing keys: {', '.join(missing_keys)}")
+        failures.append(f"{display_path(config_path)}: missing keys: {', '.join(missing_keys)}")
 
     if config.get("DESIGN_NAME") != "hello_chip_top":
-        failures.append(f"{config_path.relative_to(ROOT)}: DESIGN_NAME must be hello_chip_top")
+        failures.append(f"{display_path(config_path)}: DESIGN_NAME must be hello_chip_top")
     if config.get("CLOCK_PORT") != "CLK_IN":
-        failures.append(f"{config_path.relative_to(ROOT)}: CLOCK_PORT must be CLK_IN")
+        failures.append(f"{display_path(config_path)}: CLOCK_PORT must be CLK_IN")
     if not isinstance(config.get("CLOCK_PERIOD"), (int, float)) or config["CLOCK_PERIOD"] <= 0:
-        failures.append(f"{config_path.relative_to(ROOT)}: CLOCK_PERIOD must be positive")
+        failures.append(f"{display_path(config_path)}: CLOCK_PERIOD must be positive")
 
     verilog_files = config.get("VERILOG_FILES")
     if not isinstance(verilog_files, list) or not verilog_files:
-        failures.append(f"{config_path.relative_to(ROOT)}: VERILOG_FILES must be a non-empty list")
-        return
+        failures.append(f"{display_path(config_path)}: VERILOG_FILES must be a non-empty list")
+        return config
     for entry in verilog_files:
         if not isinstance(entry, str):
-            failures.append(
-                f"{config_path.relative_to(ROOT)}: VERILOG_FILES entries must be strings"
-            )
+            failures.append(f"{display_path(config_path)}: VERILOG_FILES entries must be strings")
             continue
         path = resolve_dir_path(config_path, entry)
         if not path.is_file():
-            failures.append(f"{config_path.relative_to(ROOT)}: missing RTL source {entry}")
+            failures.append(f"{display_path(config_path)}: missing RTL source {entry}")
 
     for key in ("SIGNOFF_SDC_FILE", "FP_PIN_ORDER_CFG"):
         if key in config:
             value = config[key]
             if not isinstance(value, str):
-                failures.append(f"{config_path.relative_to(ROOT)}: {key} must be a string")
+                failures.append(f"{display_path(config_path)}: {key} must be a string")
                 continue
             path = resolve_dir_path(config_path, value)
             if not path.is_file():
-                failures.append(f"{config_path.relative_to(ROOT)}: missing {key} file {value}")
+                failures.append(f"{display_path(config_path)}: missing {key} file {value}")
+    return config
+
+
+def check_pdk_environment(
+    config_path: Path, config: dict, failures: list[str], blockers: list[str]
+) -> None:
+    pdk = config.get("PDK")
+    library = config.get("STD_CELL_LIBRARY")
+    if config_path.name != "config.json":
+        if not isinstance(pdk, str) or not pdk:
+            failures.append(f"{display_path(config_path)}: PDK must be a non-empty string")
+        if not isinstance(library, str) or not library:
+            failures.append(
+                f"{display_path(config_path)}: STD_CELL_LIBRARY must be a non-empty string"
+            )
+
+    pdk_root = os.environ.get("PDK_ROOT")
+    if not pdk_root:
+        if pdk:
+            blockers.append(
+                f"{display_path(config_path)}: PDK_ROOT is not set; cannot verify installed PDK {pdk}"
+            )
+        return
+    root_path = Path(pdk_root).expanduser()
+    if not root_path.is_dir():
+        failures.append(f"PDK_ROOT does not exist or is not a directory: {pdk_root}")
+        return
+    if pdk and not (root_path / pdk).is_dir():
+        blockers.append(
+            f"{display_path(config_path)}: PDK_ROOT is set but missing PDK directory {root_path / pdk}"
+        )
+
+
+def shell_join(args: list[str]) -> str:
+    return " ".join(
+        "'" + arg.replace("'", "'\"'\"'") + "'" if any(ch.isspace() for ch in arg) else arg
+        for arg in args
+    )
+
+
+def openlane_command(config_path: Path) -> tuple[str, list[str]]:
+    rel_config = str(config_path.relative_to(ROOT))
+    if shutil.which("openlane"):
+        return "openlane", ["openlane", rel_config]
+    if shutil.which("flow.tcl") and config_path.name == "config.json":
+        return "flow.tcl", ["flow.tcl", "-design", "pd/openlane"]
+    return "docker", [
+        "docker",
+        "run",
+        "--rm",
+        "-v",
+        "$PWD:/work",
+        "-w",
+        "/work",
+        OPENLANE_IMAGE,
+        "openlane",
+        rel_config,
+    ]
+
+
+def openroad_command() -> list[str]:
+    return ["openroad", str(OPENROAD_TCL.relative_to(ROOT))]
+
+
+def print_dry_run(config_path: Path) -> None:
+    runner, command = openlane_command(config_path)
+    print(f"PD dry-run OpenLane runner: {runner}")
+    print("PD dry-run OpenLane command: " + shell_join(command))
+    print("PD dry-run OpenROAD command: " + shell_join(openroad_command()))
 
 
 def main() -> int:
+    parser = ArgumentParser(
+        description="Validate local PD OpenLane/OpenROAD inputs and command construction."
+    )
+    parser.add_argument(
+        "--dry-run-commands",
+        action="store_true",
+        help="print command lines that would be used without running OpenLane/OpenROAD",
+    )
+    parser.add_argument(
+        "--config",
+        default="pd/openlane/config.sky130.json",
+        help="OpenLane config used for dry-run command construction",
+    )
+    args = parser.parse_args()
+
     failures: list[str] = []
+    blockers: list[str] = []
+    loaded_configs: dict[Path, dict] = {}
     for config_path in CONFIGS:
         if not config_path.is_file():
             failures.append(f"missing OpenLane config: {config_path.relative_to(ROOT)}")
             continue
-        check_config(config_path, failures)
+        config = check_config(config_path, failures)
+        if config is not None:
+            loaded_configs[config_path] = config
+            check_pdk_environment(config_path, config, failures, blockers)
 
-    for path in [
-        ROOT / "pd/openroad/hello_soc.tcl",
-        ROOT / "pd/constraints/hello_soc.sdc",
-        ROOT / "pd/constraints/hello_soc_gf180.sdc",
-        ROOT / "pd/pin_order.cfg",
-    ]:
+    seen_pdks = {
+        config.get("PDK"): config_path
+        for config_path, config in loaded_configs.items()
+        if isinstance(config.get("PDK"), str)
+    }
+    for pdk, expected_config in CONFIG_BY_PDK.items():
+        if seen_pdks.get(pdk) != expected_config:
+            failures.append(f"PDK {pdk} must be covered by {expected_config.relative_to(ROOT)}")
+
+    dry_run_config = (ROOT / args.config).resolve()
+    try:
+        dry_run_config.relative_to(ROOT)
+    except ValueError:
+        failures.append(f"--config must point inside this repository: {args.config}")
+    if not dry_run_config.is_file():
+        failures.append(f"dry-run config missing: {args.config}")
+    elif dry_run_config not in loaded_configs:
+        config = check_config(dry_run_config, failures)
+        if config is not None:
+            loaded_configs[dry_run_config] = config
+
+    for path in PD_INPUTS:
         if not path.is_file():
             failures.append(f"missing PD input: {path.relative_to(ROOT)}")
 
@@ -94,6 +222,12 @@ def main() -> int:
         return 1
 
     print("PD preflight check passed.")
+    if args.dry_run_commands:
+        print_dry_run(dry_run_config)
+    if blockers:
+        print("PD preflight blockers:")
+        for blocker in blockers:
+            print(f"  - {blocker}")
     if shutil.which("openlane") or shutil.which("flow.tcl"):
         print("PD tool status: OpenLane command found on PATH.")
     elif shutil.which("docker"):

@@ -2,12 +2,15 @@
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
-
-import check_software_bsp
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import check_software_bsp  # noqa: E402
 
 
 class SoftwareBspEvidenceTest(unittest.TestCase):
@@ -64,6 +67,83 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         self.assertIn("opensbi BSP check failed", result.stdout)
         self.assertIn("u-boot BSP check failed", result.stdout)
         self.assertIn("aosp BSP check failed", result.stdout)
+
+    def test_status_helper_reports_missing_external_logs(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "scripts/check_software_bsp.py", "status", "buildroot"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("[MISSING] Buildroot defconfig transcript", result.stdout)
+        self.assertIn("capture:", result.stdout)
+        self.assertIn("validate:", result.stdout)
+
+    def test_capture_plan_renders_exact_buildroot_commands(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "scripts/check_software_bsp.py",
+                "capture-plan",
+                "buildroot",
+                "--buildroot",
+                "/external/buildroot",
+                "--target-host",
+                "root@openphone-target",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            "sw/buildroot/scripts/capture-buildroot-evidence.sh /external/buildroot defconfig",
+            result.stdout,
+        )
+        self.assertIn(
+            "HELLO_SMOKE_CMD='ssh root@openphone-target /usr/bin/hello-mmio-smoke'",
+            result.stdout,
+        )
+
+    def test_placeholder_or_failed_log_cannot_pass_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            evidence = temp_root / "docs/evidence/linux/fake.log"
+            evidence.parent.mkdir(parents=True)
+            evidence.write_text(
+                "\n".join(
+                    [
+                        "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
+                        "openphone-evidence: command=make ARCH=riscv Image",
+                        "openphone-evidence: started_utc=2026-05-17T00:00:00Z",
+                        "CONFIG_OPENPHONE_HELLO=y",
+                        "placeholder output",
+                        "openphone-evidence: status=FAIL rc=1",
+                        "openphone-evidence: ended_utc=2026-05-17T00:00:01Z",
+                    ]
+                )
+            )
+            item = {
+                "path": "docs/evidence/linux/fake.log",
+                "min_bytes": 80,
+                "capture_command": "fake",
+                "required_strings": [
+                    "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
+                    "CONFIG_OPENPHONE_HELLO",
+                    "openphone-evidence: status=PASS",
+                ],
+            }
+
+            with mock.patch.object(check_software_bsp, "ROOT", temp_root):
+                problems = check_software_bsp.validate_evidence_file(item)
+
+        joined = "\n".join(problems)
+        self.assertIn("reports non-PASS evidence status: FAIL", joined)
+        self.assertIn("contains forbidden placeholder/failure markers", joined)
+        self.assertIn("missing required transcript markers", joined)
 
 
 if __name__ == "__main__":

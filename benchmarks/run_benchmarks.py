@@ -84,6 +84,17 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def display_path(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
+def is_json_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 def load_config(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
         config = json.load(f)
@@ -147,6 +158,47 @@ def validate_config(config: dict[str, Any], path: Path) -> None:
                     )
                 if proof.get("required_files") and not isinstance(proof["required_files"], list):
                     raise ValueError(f"{location} capability proof.required_files must be a list")
+                if proof.get("required_model_artifacts") and not isinstance(
+                    proof["required_model_artifacts"], list
+                ):
+                    raise ValueError(
+                        f"{location} capability proof.required_model_artifacts must be a list"
+                    )
+                for model_path in proof.get("required_model_artifacts", []):
+                    if not isinstance(model_path, str) or not model_path:
+                        raise ValueError(
+                            f"{location} capability proof.required_model_artifacts entries must be non-empty strings"
+                        )
+                if proof.get("max_cpu_fallback_percent") is not None and not is_json_number(
+                    proof["max_cpu_fallback_percent"]
+                ):
+                    raise ValueError(
+                        f"{location} capability proof.max_cpu_fallback_percent must be numeric"
+                    )
+                if proof.get("max_unsupported_op_count") is not None and (
+                    not isinstance(proof["max_unsupported_op_count"], int)
+                    or isinstance(proof["max_unsupported_op_count"], bool)
+                ):
+                    raise ValueError(
+                        f"{location} capability proof.max_unsupported_op_count must be an integer"
+                    )
+                markers = proof.get("required_transcript_markers")
+                if markers is not None:
+                    if not isinstance(markers, dict):
+                        raise ValueError(
+                            f"{location} capability proof.required_transcript_markers must be an object"
+                        )
+                    for name, values in markers.items():
+                        if not isinstance(name, str) or not name:
+                            raise ValueError(
+                                f"{location} capability proof.required_transcript_markers keys must be strings"
+                            )
+                        if not isinstance(values, list) or not all(
+                            isinstance(value, str) and value for value in values
+                        ):
+                            raise ValueError(
+                                f"{location} capability proof.required_transcript_markers values must be non-empty string lists"
+                            )
 
 
 def source_tree_sha(root: Path) -> str:
@@ -406,7 +458,58 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
     for field in ("target", "generated_by", "date_utc"):
         if not isinstance(data.get(field), str) or not data[field]:
             errors.append(f"{field} must be a non-empty string")
+
+    nnapi = data.get("nnapi")
+    if not isinstance(nnapi, dict):
+        errors.append("nnapi must be an object")
+    else:
+        if expected_accelerator and nnapi.get("accelerator_name") != expected_accelerator:
+            errors.append(f"nnapi.accelerator_name must be {expected_accelerator}")
+        fallback_percent = nnapi.get("cpu_fallback_percent")
+        max_fallback = proof.get("max_cpu_fallback_percent")
+        if not is_json_number(fallback_percent):
+            errors.append("nnapi.cpu_fallback_percent must be numeric")
+        elif max_fallback is not None and fallback_percent > max_fallback:
+            errors.append(
+                f"nnapi.cpu_fallback_percent must be <= {max_fallback}; got {fallback_percent}"
+            )
+        unsupported_ops = nnapi.get("unsupported_op_count")
+        max_unsupported = proof.get("max_unsupported_op_count")
+        if not isinstance(unsupported_ops, int) or isinstance(unsupported_ops, bool):
+            errors.append("nnapi.unsupported_op_count must be an integer")
+        elif max_unsupported is not None and unsupported_ops > max_unsupported:
+            errors.append(
+                f"nnapi.unsupported_op_count must be <= {max_unsupported}; got {unsupported_ops}"
+            )
+
+    model_artifacts = data.get("model_artifacts")
+    required_models = proof.get("required_model_artifacts", [])
+    if required_models and not isinstance(model_artifacts, dict):
+        errors.append("model_artifacts must be an object")
+    elif isinstance(model_artifacts, dict):
+        for model_path in required_models:
+            model_entry = model_artifacts.get(model_path)
+            if not isinstance(model_entry, dict):
+                errors.append(f"model_artifacts.{model_path} must be an object")
+                continue
+            recorded_sha = model_entry.get("sha256")
+            if not isinstance(recorded_sha, str) or not re.fullmatch(
+                r"[0-9a-fA-F]{64}", recorded_sha
+            ):
+                errors.append(f"model_artifacts.{model_path}.sha256 must be a SHA-256 hex string")
+                continue
+            local_model = root / model_path
+            if not local_model.is_file():
+                errors.append(f"model artifact {model_path} is missing")
+                continue
+            actual_sha = sha256_file(local_model)
+            if recorded_sha.lower() != actual_sha:
+                errors.append(
+                    f"model_artifacts.{model_path}.sha256 does not match current repository file"
+                )
+
     transcript = data.get("transcripts")
+    transcript_paths: dict[str, Path] = {}
     if not isinstance(transcript, dict) or not transcript:
         errors.append("transcripts must be a non-empty object")
     else:
@@ -418,6 +521,25 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
             transcript_path = root / rel
             if not transcript_path.is_file() or transcript_path.stat().st_size == 0:
                 errors.append(f"transcript {rel} is missing or empty")
+                continue
+            transcript_paths[name] = transcript_path
+
+    for name, markers in proof.get("required_transcript_markers", {}).items():
+        marker_transcript_path = transcript_paths.get(name)
+        if marker_transcript_path is None:
+            continue
+        try:
+            text = marker_transcript_path.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            errors.append(
+                f"transcript {marker_transcript_path.relative_to(root)} could not be read: {exc}"
+            )
+            continue
+        for marker in markers:
+            if marker not in text:
+                errors.append(
+                    f"transcript {transcript_path.relative_to(root)} must contain {marker!r}"
+                )
 
     if errors:
         status["available"] = False
@@ -427,6 +549,9 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
         status["proof_schema"] = data.get("schema")
         status["target"] = data.get("target")
         status["accelerator_name"] = data.get("accelerator_name")
+        status["transcript_sha256"] = {
+            name: sha256_file(path) for name, path in sorted(transcript_paths.items())
+        }
     return status
 
 
@@ -434,14 +559,15 @@ def missing_dependencies(statuses: list[dict[str, Any]]) -> list[str]:
     return [
         item["name"]
         for item in statuses
-        if not item["available"] and item.get("kind") != "model_artifact"
+        if not item["available"]
+        and item.get("kind") not in {"model_artifact", "capability_artifact"}
     ]
 
 
 def missing_dependency_details(statuses: list[dict[str, Any]]) -> list[dict[str, Any]]:
     details = []
     for item in statuses:
-        if item["available"] or item.get("kind") == "model_artifact":
+        if item["available"] or item.get("kind") in {"model_artifact", "capability_artifact"}:
             continue
         details.append(
             {
@@ -643,9 +769,18 @@ def validate_report(report: dict[str, Any]) -> list[str]:
             if result.get("blocked_assets"):
                 errors.append(f"{prefix} passed with blocked_assets")
             for dep in result.get("dependencies", []):
-                if dep.get("kind") == "model_artifact" and not dep.get("available"):
+                if dep.get("kind") in {"model_artifact", "capability_artifact"} and not dep.get(
+                    "available"
+                ):
                     errors.append(
-                        f"{prefix} passed with unavailable model artifact {dep.get('name')}"
+                        f"{prefix} passed with unavailable {dep.get('kind')} {dep.get('name')}"
+                    )
+                if (
+                    report.get("claim_level") != HOST_SMOKE_CLAIM_LEVEL
+                    and dep.get("release_claim_allowed") is False
+                ):
+                    errors.append(
+                        f"{prefix} {report.get('claim_level')} passed with non-release dependency {dep.get('name')}"
                     )
         if status == "blocked" and not result.get("blocked_assets"):
             errors.append(f"{prefix} blocked without blocked_assets")
@@ -916,7 +1051,7 @@ def run_plan_or_real(args: argparse.Namespace) -> int:
 
     report_path = run_dir / "report.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"wrote {report_path.relative_to(root)}")
+    print(f"wrote {display_path(report_path, root)}")
 
     if any_failed:
         return 1

@@ -78,6 +78,7 @@ required_fields:
               - executable
               - file
               - model_artifact
+              - capability_artifact
           available: boolean
           path: string_or_null
       artifacts:
@@ -103,9 +104,12 @@ optional_result_fields:
 validation_rules:
   - Generated reports must validate with `python3 benchmarks/run_benchmarks.py validate-report <report.json>`.
   - Results with unavailable model_artifact dependencies must use status `blocked`, not `passed`.
+  - Results with unavailable capability_artifact dependencies must use status `blocked`, not `passed`.
+  - Non-L2 reports must not pass with dependencies whose `release_claim_allowed` field is false.
   - Blocked model artifacts must carry stable `blocker_id`, `pipeline_visible`, and `release_blocking` fields so CI and release pipelines can gate on them.
   - Placeholder or undersized TFLite models are blocked until replaced by a declared non-proprietary model artifact.
   - Simulator wall-clock time must not be compared against commercial phone scores.
   - FPGA power must not be reported as mobile SoC power.
   - NPU reports must include unsupported op count and CPU fallback percentage.
+  - Hello-NPU NNAPI proof must bind to the exact model SHA-256, report the expected accelerator name, and show zero CPU fallback plus zero unsupported ops before `tflite_hello_npu` can run as target evidence.
   - Android reports must separate boot success from CTS/VTS compatibility.

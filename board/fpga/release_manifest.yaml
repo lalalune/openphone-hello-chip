@@ -1,6 +1,12 @@
+schema: openphone.fpga_release_manifest.v1
 target: hello_demo_fpga
 status: blocked
 release_class: fpga_bitstream
+next_commands:
+  target_preflight: python3 scripts/check_fpga_target.py
+  release_gate: python3 scripts/check_fpga_release.py
+  product_release_gate: python3 scripts/product_check.py --release
+  hash_bitstream: shasum -a 256 <real-bitstream-file>
 required_evidence:
   exact_board_revision:
     status: missing

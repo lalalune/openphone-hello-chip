@@ -95,7 +95,7 @@ def cpu_ap_status() -> Status:
             "cpu-ap",
             BLOCK,
             evidence,
-            "make chipyard-generated-check cpu-ap-evidence-check",
+            "make chipyard-generated-check cpu-ap-evidence-check cpu-ap-completion-gate",
             "release_blocker",
         )
     return Status("cpu-ap", FAIL, evidence, "make cpu-ap-completion-gate", "claim_gate_fail")
@@ -451,6 +451,29 @@ def benchmark_status() -> Status:
             "make benchmarks",
             "tool_blocker",
         )
+    non_release_deps = []
+    for result in data.get("results", []):
+        for dependency in result.get("dependencies", []):
+            if (
+                dependency.get("release_claim_allowed") is False
+                or dependency.get("evidence_kind") == "host_smoke_tool"
+            ):
+                non_release_deps.append(
+                    f"{result.get('name')}.{dependency.get('name')}:"
+                    f"{dependency.get('evidence_kind', 'non_release_dependency')}"
+                )
+    if non_release_deps:
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "benchmark report is host-smoke/developer evidence only and cannot satisfy MVP "
+            "real benchmark evidence: "
+            + rel(report)
+            + "; non-release deps: "
+            + ", ".join(sorted(set(non_release_deps))[:8]),
+            "python3 benchmarks/run_benchmarks.py --strict-missing",
+            "scaffold_only",
+        )
     return Status(
         "benchmarks",
         PASS,
@@ -476,7 +499,7 @@ def product_status() -> Status:
             "product-package",
             BLOCK,
             evidence,
-            "close package/FPGA/KiCad/PD release blockers or keep product claim below fabrication",
+            "python3 scripts/product_check.py --release; python3 scripts/check_board_package_evidence.py --release; python3 scripts/check_pd_signoff.py",
             "release_blocker",
         )
     if result.returncode == 0:
