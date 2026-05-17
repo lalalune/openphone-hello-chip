@@ -15,6 +15,14 @@ jobs:
         run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make clean ci-fast
       - name: Check generated pipeline artifacts
         run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make tool-versions && docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools python3 scripts/pipeline_check.py
+      - name: Record release-gate tool manifest
+        if: always()
+        continue-on-error: true
+        run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make record-tool-versions
+      - name: Emit mvp-status JSON
+        if: always()
+        continue-on-error: true
+        run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make mvp-status-json
       - name: Upload regression artifacts
         uses: actions/upload-artifact@v4
         if: always()
