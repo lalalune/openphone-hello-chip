@@ -1,0 +1,3 @@
+reason: no external Buildroot checkout has consumed sw/buildroot as BR2_EXTERNAL
+required: `cd /path/to/buildroot && make BR2_EXTERNAL=$PWD/sw/buildroot openphone_hello_defconfig | tee docs/evidence/buildroot/openphone_hello_defconfig.log`
+audit: docs/android/bsp-critical-gap-audit-2026-05-17.md
