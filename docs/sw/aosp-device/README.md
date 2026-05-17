@@ -17,6 +17,19 @@ before RTL simulation, but qemu-virt or Cuttlefish success is not hardware ABI
 validation. Device and HAL code must tie back to
 `sw/platform/hello_platform_contract.json` or generated artifacts from it.
 
+## AVB/A-B/recovery/OTA local status
+
+Current status is fail-closed scaffold only. The local fstab and product files
+do not define AVB keys, rollback indexes, recovery behavior, OTA payload
+verification, or lock-state policy. Do not claim AVB, A/B OTA, recovery, secure
+fastboot, or verified boot from this tree. Required negative evidence includes
+bad signatures, rollback OTA, interrupted install, low-battery update,
+full-storage update, corrupt slot metadata, and unauthorized flashing.
+
+Exact gate terms: AVB/A-B/recovery/OTA local status; fail-closed scaffold only;
+does not define AVB keys; Do not claim AVB; bad signatures; unauthorized
+flashing.
+
 Current local status: this repository has not verified Android booting on
 hello_soc or on Cuttlefish. The files here are an executable scaffold for the
 first external AOSP integration attempt.
@@ -63,13 +76,9 @@ aosp: scaffold audit
   status: clear
 aosp BSP check passed.
 aosp BSP external evidence blocked:
-  - aosp BSP BLOCKED: evidence for external AOSP lunch/vendorimage/VINTF logs, Cuttlefish or equivalent boot transcript, and Android compatibility subset transcripts is incomplete or invalid
-  - missing docs/evidence/android/openphone_ai_soc_lunch.log
-  - missing docs/evidence/android/openphone_ai_soc_vendorimage.log
-  - missing docs/evidence/android/openphone_ai_soc_checkvintf.log
-  - missing docs/evidence/android/cuttlefish_riscv64_boot.log
-  - missing docs/evidence/android/cts_virtual_device_subset.log
-  - missing docs/evidence/android/vts_virtual_device_subset.log
+  - aosp BSP BLOCKED: missing evidence for external AOSP lunch/vendorimage/VINTF/SELinux/CTS-VTS intake logs plus virtual-device smoke transcripts: ...
+aosp BSP check failed:
+  - aosp BSP BLOCKED: missing evidence for external AOSP lunch/vendorimage/VINTF/SELinux/CTS-VTS intake logs plus virtual-device smoke transcripts: ...
 ```
 
 Dependency blocker: a real Android build requires an external AOSP checkout,
@@ -81,11 +90,13 @@ checked; the checked-in `device.mk` and VINTF manifest intentionally do not
 list active HAL packages or HAL entries until Android integration and evidence
 exist.
 
-Evidence intake is defined by
-`docs/evidence/software-bsp-evidence-manifest.json` and validated by
+Evidence intake for `scripts/check_software_bsp.py` is defined by
+`docs/android/bsp-log-evidence-manifest.json` and validated by
 `make software-bsp-evidence-check`. The checker rejects non-evidence stubs:
-each transcript must include the `openphone-evidence` header/footer, command
-marker, and target-specific pass markers.
+each transcript must include the required provenance fields, command marker,
+claim-boundary markers, and target-specific pass markers.
+`hwcomposer.openphone_ai_soc` HAL binaries that fail closed when their backing
+Linux nodes are absent.
 
 ## External AOSP integration
 
@@ -110,8 +121,10 @@ AOSP_DIR=/path/to/aosp make android-sim-boot-check
 ```
 
 That target imports the device tree, captures `lunch`, `vendorimage`, and
-`checkvintf` evidence, then validates the AOSP evidence manifest. To attempt a
-Cuttlefish boot as well:
+`checkvintf` evidence, then validates the AOSP evidence manifest. The stricter
+AOSP BSP gate still remains BLOCKED until SELinux policy build, neverallow,
+CTS/VTS scope-intake, and Cuttlefish/QEMU/Renode smoke logs are also installed.
+To attempt a Cuttlefish run as well:
 
 ```sh
 AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish
@@ -122,10 +135,10 @@ AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish
 `build/reports/android_sim_boot.json` with `status=blocked` instead of treating
 missing simulator support as an Android boot failure.
 
-Android compatibility remains blocked separately from AOSP build and boot.
-`sw/aosp-device/evidence_manifest.json` requires bounded CTS and VTS
-virtual-device subset transcripts before any compatibility language is allowed;
-those logs are not full CDD, CTS, or VTS certification evidence.
+Android compatibility remains blocked separately from AOSP build and virtual
+device smoke. `sw/aosp-device/evidence_manifest.json` requires a bounded
+CTS/VTS plan transcript before any compatibility language is allowed; that plan
+is not full CDD, CTS, or VTS certification evidence.
 
 Capture external logs with the repo helper so the strict evidence gate sees the
 required provenance markers:
@@ -137,32 +150,42 @@ required provenance markers:
 /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
 /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset
 /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset
+python3 scripts/intake_android_evidence.py --target aosp --from-dir /path/to/logs --install
 ```
 
 These commands write under `docs/evidence/android/`. They capture command
-transcripts only; they do not make a boot claim unless the external log contains
-real Cuttlefish/adb output and passes `make software-bsp-evidence-check`. The
-CTS/VTS modes are bounded virtual-device subset captures, not CDD, GMS, or full
-Android compatibility evidence.
+transcripts only; they do not make a boot claim. The legacy `cuttlefish-boot`,
+`cts-subset`, and `vts-subset` capture modes may produce
+`cuttlefish_riscv64_boot.log`, `cts_virtual_device_subset.log`, and
+`vts_virtual_device_subset.log`; those filenames are backward-compatible
+aliases for simulator tooling and are not the full `scripts/check_software_bsp.py`
+AOSP gate. Install or validate the nine current gate logs with
+`scripts/intake_android_evidence.py`.
 
 The Cuttlefish boot capture defaults to `AOSP_PRODUCT=openphone_ai_soc-userdebug`
 and `AOSP_CUTTLEFISH_ARGS="--cpus=4 --memory_mb=8192 --gpu_mode=none"`.
 Override those environment variables when running a different riscv64
 Cuttlefish product or a home-screen launch.
 
-Required Android boot-evidence inputs are intentionally explicit:
+Required AOSP evidence inputs are intentionally explicit and do not, by
+themselves, claim Android boot or compatibility:
 
 | Evidence log | External artifact or marker that must back it |
 |---|---|
 | `docs/evidence/android/openphone_ai_soc_lunch.log` | `build/envsetup.sh`, `device/openphone/openphone_ai_soc/AndroidProducts.mk`, `TARGET_PRODUCT=openphone_ai_soc` |
 | `docs/evidence/android/openphone_ai_soc_vendorimage.log` | `out/target/product/openphone_ai_soc/vendor.img`, `out/target/product/openphone_ai_soc/installed-files-vendor.txt`, `out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml` |
 | `docs/evidence/android/openphone_ai_soc_checkvintf.log` | `checkvintf` output against `out/target/product/openphone_ai_soc/vendor` and `openphone_hello.xml` |
-| `docs/evidence/android/cuttlefish_riscv64_boot.log` | `launch_cvd`, `adb shell`, `ro.product.cpu.abi=riscv64`, and `sys.boot_completed=1` |
-| `docs/evidence/android/cts_virtual_device_subset.log` | `cts-tradefed` virtual-device subset result directory |
-| `docs/evidence/android/vts_virtual_device_subset.log` | `vts-tradefed` virtual-device subset result directory |
+| `docs/evidence/android/openphone_ai_soc_sepolicy_build.log` | `m vendor_sepolicy.cil selinux_policy`, `hello_npu_device`, and `hal_hello_npu_default` |
+| `docs/evidence/android/openphone_ai_soc_selinux_neverallow.log` | `m sepolicy_neverallows` and `hello_npu` neverallow coverage |
+| `docs/evidence/android/openphone_ai_soc_cts_vts_plan.log` | CTS/VTS build or list-module output, selected smoke scope, exclusions, and result directory path |
+| `docs/evidence/android/cuttlefish_riscv64_smoke.log` | Cuttlefish launch or `cvd start`, `adb` smoke checks, `ro.product.cpu.abi=riscv64`, and `openphone_ai_soc` |
+| `docs/evidence/android/qemu_riscv64_smoke.log` | `qemu-system-riscv64` transcript with AOSP-built artifacts and console or `adb` smoke checks |
+| `docs/evidence/android/renode_hello_soc_smoke.log` | Renode monitor/UART smoke transcript against the OpenPhone model and Android-capable handoff when available |
 
-The Cuttlefish capture no longer accepts shell-only smoke as boot evidence:
-`sys.boot_completed=1` is required for a PASS transcript.
+Legacy aliases, when produced by `capture-aosp-evidence.sh`, are
+`cuttlefish_riscv64_boot.log`, `cts_virtual_device_subset.log`, and
+`vts_virtual_device_subset.log`. Keep them with reports if useful, but do not
+describe them as satisfying the current AOSP BSP gate.
 
 `manifests/openphone-ai-soc-local.xml` is a local-manifest starting point for
 teams that mirror this repository into an AOSP `repo` workspace. The script
@@ -192,14 +215,15 @@ sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset
+python3 scripts/intake_android_evidence.py --target aosp --from-dir /path/to/logs --install
 make software-bsp-evidence-check
 ```
 
-The Cuttlefish capture requires `ro.product.cpu.abi=riscv64` and
-`sys.boot_completed=1`. It is Android userspace evidence only; it is not
-hello_soc hardware ABI proof. The CTS/VTS
-captures are virtual-device subsets only and must not be described as full
-Android compatibility evidence.
+The Cuttlefish smoke log requires `ro.product.cpu.abi=riscv64` and a real
+Cuttlefish/adb transcript. It is Android virtual-device evidence only; it is
+not hello_soc hardware ABI proof and must not be described as an Android boot
+claim for hello_soc. CTS/VTS intake is scope-planning evidence only and must
+not be described as full Android compatibility evidence.
 
 ## Artifact map
 
@@ -215,6 +239,10 @@ Android compatibility evidence.
 | Init | `device/openphone/openphone_ai_soc/init.openphone.rc` | Creates the hello device namespace and starts the NPU HAL only when enabled. |
 | Fstab | `device/openphone/openphone_ai_soc/fstab.openphone` | Documents first vendor/data mount contract for simulator integration. |
 | VINTF manifest | `device/openphone/openphone_ai_soc/manifest.xml` | Reserves graphics-composer and hello_npu names in comments only. |
+| Product makefile | `device/openphone/openphone_ai_soc/device.mk` | Copies init, fstab, VINTF manifest, and declares HAL packages. |
+| Init | `device/openphone/openphone_ai_soc/init.openphone.rc` | Creates the hello device namespace and starts the NPU HAL only when enabled. |
+| Fstab | `device/openphone/openphone_ai_soc/fstab.openphone` | Documents first vendor/data mount contract for simulator integration. |
+| VINTF manifest | `device/openphone/openphone_ai_soc/manifest.xml` | Declares only graphics-composer and hello_npu scaffolds. |
 | SELinux contexts | `device/openphone/openphone_ai_soc/sepolicy/file_contexts` | Labels HAL binaries and `/dev/hello-npu`. |
 | SELinux types | `device/openphone/openphone_ai_soc/sepolicy/hello_npu.te` | Defines the fail-closed NPU device and HAL domains. |
 | Kernel fragment | `device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment` | Records Android kernel config needed by the scaffold. |
@@ -246,4 +274,5 @@ make docs-check
 
 `docs-check` does not currently inspect this AOSP tree directly, so
 `aosp-bsp-check` is the primary local guard for this ownership area. It must
-remain BLOCKED until external AOSP build and boot evidence is checked in.
+remain BLOCKED until the strict external AOSP build, SELinux, CTS/VTS intake,
+and virtual-device smoke evidence is checked in.

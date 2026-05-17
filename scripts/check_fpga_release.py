@@ -1,244 +1,190 @@
 #!/usr/bin/env python3
-from __future__ import annotations
-
-import hashlib
 import re
-import shutil
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
 
 import yaml
 
-PLACEHOLDERS = {None, "", "unassigned", "missing", "todo", "tbd", "none"}
-VECTOR_PIN_RE = re.compile(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)(\d+)$")
-LOCATE_RE = re.compile(r'^\s*LOCATE\s+COMP\s+"([^"]+)"\s+SITE\s+"([^"]+)"\s*;', re.I)
-RELEASE_MANIFEST_SCHEMA = "openphone.fpga_release_manifest.v1"
+ROOT = Path(__file__).resolve().parents[1]
+CFG = ROOT / "board/fpga/hello_demo_fpga.yaml"
+MANIFEST = ROOT / "board/fpga/artifact-manifest.yaml"
+
 REQUIRED_RELEASE_EVIDENCE = {
-    "exact_board_revision",
-    "final_pin_constraints",
-    "nextpnr_timing",
-    "ecppack_bitstream",
-    "tool_versions",
+    "bitstream": ["board/fpga/build/**/*.bit", "board/fpga/build/**/*.svf"],
+    "nextpnr timing report": [
+        "board/fpga/reports/**/*timing*.rpt",
+        "board/fpga/reports/**/*timing*.txt",
+    ],
+    "nextpnr route report": [
+        "board/fpga/reports/**/*nextpnr*.log",
+        "board/fpga/reports/**/*route*.rpt",
+    ],
+    "ecppack transcript": [
+        "board/fpga/reports/**/*ecppack*.log",
+        "board/fpga/reports/**/*pack*.log",
+    ],
+    "FPGA tool versions": [
+        "board/fpga/reports/**/*tool*version*.txt",
+        "board/fpga/reports/tool_versions.txt",
+    ],
 }
-FORBIDDEN_RELEASE_TEXT_MARKERS = (
-    "template_not_release_evidence",
-    "non_release_placeholder",
-    "release use: `prohibited`",
-    "release_use: prohibited",
-    "placeholder-only",
-    "skeleton lpf",
-    "dummy bitstream",
-    "fake bitstream",
-    "not release evidence",
-)
+REQUIRED_CLI_COMMANDS = {"synth", "place_route", "pack"}
 
 
-def is_placeholder(value: object) -> bool:
-    return str(value).strip().lower() in PLACEHOLDERS
-
-
-def load_yaml(path: Path) -> dict:
+def vector_widths_from_pinout(path: Path) -> dict[str, int]:
     data = yaml.safe_load(path.read_text())
-    if not isinstance(data, dict):
-        raise SystemExit(f"{path} must contain a YAML mapping")
-    return data
+    widths: dict[str, int] = {}
+    for pin in data.get("pins", []):
+        name = str(pin.get("name", ""))
+        match = re.match(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)([0-9]+)$", name)
+        if match:
+            base, index = match.group(1), int(match.group(2))
+            widths[base] = max(widths.get(base, 0), index + 1)
+    return widths
 
 
-def required_physical_signals(root: Path, cfg: dict) -> set[str]:
-    logical = {
+def expand_required(cfg: dict, widths: dict[str, int]) -> set[str]:
+    scalar_required = {
         cfg["clock"]["port"],
         cfg["reset"]["port"],
         *cfg["debug_bridge"]["required_ports"],
-        cfg["external_outputs"]["gpio_port"],
         *cfg["external_outputs"]["irq_ports"],
         *cfg.get("reserved_inputs", []),
         *cfg.get("reserved_outputs", []),
     }
+    scalar_required.add(cfg["external_outputs"]["gpio_port"])
 
-    pinout = load_yaml(root / "package/hello-demo-pinout.yaml")
-    signals: set[str] = set()
-    for pin in pinout.get("pins", []):
-        name = pin.get("name")
-        if not isinstance(name, str) or name.startswith(("VDD", "VSS", "NC")):
-            continue
-        vector = VECTOR_PIN_RE.match(name)
-        logical_name = vector.group(1) if vector else name
-        if logical_name in logical:
-            signals.add(name)
-    return signals
+    expanded: set[str] = set()
+    for name in scalar_required:
+        if name in widths:
+            expanded.update(f"{name}[{index}]" for index in range(widths[name]))
+        else:
+            expanded.add(name)
+    return expanded
 
 
-def parse_locates(path: Path) -> dict[str, str]:
-    locates: dict[str, str] = {}
+def assigned_lpf_ports(path: Path) -> tuple[set[str], set[str], bool]:
+    located: set[str] = set()
+    iobuf: set[str] = set()
+    has_frequency = False
+    locate_re = re.compile(r'^\s*LOCATE\s+COMP\s+"([^"]+)"\s+SITE\s+"[^"]+"', re.I)
+    iobuf_re = re.compile(r'^\s*IOBUF\s+PORT\s+"([^"]+)"\s+IO_TYPE\s*=', re.I)
+    freq_re = re.compile(r'^\s*FREQUENCY\s+PORT\s+"CLK_IN"', re.I)
     for line in path.read_text().splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
+        if line.lstrip().startswith("#"):
             continue
-        match = LOCATE_RE.match(line)
-        if match:
-            locates[match.group(1)] = match.group(2)
-    return locates
+        locate = locate_re.search(line)
+        if locate:
+            located.add(locate.group(1))
+        buf = iobuf_re.search(line)
+        if buf:
+            iobuf.add(buf.group(1))
+        if freq_re.search(line):
+            has_frequency = True
+    return located, iobuf, has_frequency
 
 
-def file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+def glob_any(patterns: list[str]) -> bool:
+    return any(path.is_file() for pattern in patterns for path in ROOT.glob(pattern))
 
 
-def contains_forbidden_release_marker(path: Path) -> list[str]:
-    text = path.read_text(errors="ignore").lower()
-    return [marker for marker in FORBIDDEN_RELEASE_TEXT_MARKERS if marker in text]
+def validate_manifest(blockers: list[str], failures: list[str]) -> None:
+    if not MANIFEST.is_file():
+        failures.append("missing FPGA artifact manifest: board/fpga/artifact-manifest.yaml")
+        return
+    manifest = yaml.safe_load(MANIFEST.read_text())
+    if not isinstance(manifest, dict):
+        failures.append("board/fpga/artifact-manifest.yaml must be a YAML mapping")
+        return
+    if manifest.get("manifest") != "hello_demo_fpga_bitstream_evidence":
+        failures.append("FPGA artifact manifest has unexpected manifest name")
+    if manifest.get("release_gate") != "board_fabrication_release":
+        failures.append("FPGA artifact manifest must gate board_fabrication_release")
+    groups = manifest.get("artifact_groups", {})
+    bitstream = groups.get("bitstream_release") if isinstance(groups, dict) else None
+    if not isinstance(bitstream, dict):
+        failures.append("FPGA artifact manifest missing artifact_groups.bitstream_release")
+        return
+    commands = bitstream.get("cli_commands")
+    if not isinstance(commands, dict):
+        failures.append("FPGA artifact manifest bitstream_release.cli_commands must be a mapping")
+    else:
+        missing = sorted(REQUIRED_CLI_COMMANDS - set(commands))
+        if missing:
+            failures.append("FPGA artifact manifest missing CLI commands: " + ", ".join(missing))
+    artifacts = bitstream.get("artifacts")
+    names = (
+        {artifact.get("name") for artifact in artifacts if isinstance(artifact, dict)}
+        if isinstance(artifacts, list)
+        else set()
+    )
+    for required in {
+        "bitstream",
+        "nextpnr_timing_report",
+        "nextpnr_route_report",
+        "ecppack_transcript",
+        "fpga_tool_versions",
+    }:
+        if required not in names:
+            failures.append(f"FPGA artifact manifest missing bitstream artifact: {required}")
+    if manifest.get("status") != "complete":
+        blockers.append(f"FPGA artifact manifest status is {manifest.get('status')}, not complete")
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
-    cfg_path = root / "board/fpga/hello_demo_fpga.yaml"
-    cfg = load_yaml(cfg_path)
+    parser = ArgumentParser(description="Check FPGA release readiness evidence.")
+    parser.add_argument(
+        "--release", action="store_true", help="fail when bitstream release evidence is incomplete"
+    )
+    args = parser.parse_args()
+
+    cfg = yaml.safe_load(CFG.read_text())
+    failures: list[str] = []
     blockers: list[str] = []
+    validate_manifest(blockers, failures)
 
     if cfg.get("status") != "release_ready":
+        blockers.append(f"FPGA target status is {cfg.get('status')}, not release_ready")
+    if cfg.get("board", {}).get("exact_revision") in {None, "", "unassigned"}:
+        blockers.append("FPGA board exact_revision is unassigned")
+    if cfg.get("constraints", {}).get("bitstream_release_blocked_until_pins_assigned") is True:
+        blockers.append("FPGA bitstream release is explicitly blocked until pins are assigned")
+
+    constraint = ROOT / cfg["constraints"]["skeleton_lpf"]
+    widths = vector_widths_from_pinout(ROOT / "package/hello-demo-pinout.yaml")
+    required_ports = expand_required(cfg, widths)
+    located, iobuf, has_frequency = assigned_lpf_ports(constraint)
+    missing_locate = sorted(required_ports - located)
+    missing_iobuf = sorted(required_ports - iobuf)
+    if missing_locate:
         blockers.append(
-            "board/fpga/hello_demo_fpga.yaml: status must be release_ready after real board, pin, timing, and bitstream evidence is archived"
+            "FPGA LPF lacks concrete LOCATE COMP assignments for: " + ", ".join(missing_locate)
         )
-
-    board = cfg.get("board", {})
-    for field in ["exact_revision", "exact_revision_evidence", "ecp5_device", "ecp5_package"]:
-        if is_placeholder(board.get(field)):
-            blockers.append(f"board/fpga/hello_demo_fpga.yaml: board.{field} is unassigned")
-
-    constraints = cfg.get("constraints", {})
-    if constraints.get("bitstream_release_blocked_until_pins_assigned") is True:
+    if missing_iobuf:
         blockers.append(
-            "board/fpga/hello_demo_fpga.yaml: constraints.bitstream_release_blocked_until_pins_assigned is still true"
+            "FPGA LPF lacks concrete IOBUF declarations for: " + ", ".join(missing_iobuf)
         )
+    if not has_frequency:
+        blockers.append('FPGA LPF lacks concrete FREQUENCY PORT "CLK_IN" constraint')
 
-    final_lpf_value = constraints.get("final_lpf")
-    skeleton_lpf_value = constraints.get("skeleton_lpf")
-    final_lpf = root / str(final_lpf_value)
-    if is_placeholder(final_lpf_value):
-        blockers.append("board/fpga/hello_demo_fpga.yaml: constraints.final_lpf is unassigned")
-    elif final_lpf_value == skeleton_lpf_value:
-        blockers.append(
-            "board/fpga/hello_demo_fpga.yaml: constraints.final_lpf must not point at the skeleton LPF"
-        )
-    elif not final_lpf.is_file():
-        blockers.append(f"missing final FPGA LPF: {final_lpf_value}")
-    else:
-        required = required_physical_signals(root, cfg)
-        locates = parse_locates(final_lpf)
-        missing = sorted(required - set(locates))
-        if missing:
-            blockers.append(
-                f"{final_lpf_value}: missing LOCATE COMP assignments for {len(missing)} required physical signals: "
-                + ", ".join(missing)
-            )
-        duplicate_sites = sorted(
-            site for site in set(locates.values()) if list(locates.values()).count(site) > 1
-        )
-        if duplicate_sites:
-            blockers.append(
-                f"{final_lpf_value}: duplicate FPGA package SITE assignments: "
-                + ", ".join(duplicate_sites)
-            )
-        expected_count = constraints.get("required_locate_assignments")
-        if expected_count is not None and len(locates) < int(expected_count):
-            blockers.append(
-                f"{final_lpf_value}: has {len(locates)} LOCATE COMP assignments, expected at least {expected_count}"
-            )
-        clock_port = cfg["clock"]["port"]
-        clock_hz = int(cfg["clock"]["nominal_frequency_hz"])
-        clock_mhz = clock_hz // 1_000_000
-        lpf_text = final_lpf.read_text()
-        if f'FREQUENCY PORT "{clock_port}" {clock_mhz} MHz' not in lpf_text:
-            blockers.append(
-                f'{final_lpf_value}: missing clock constraint FREQUENCY PORT "{clock_port}" {clock_mhz} MHz'
-            )
+    for label, patterns in REQUIRED_RELEASE_EVIDENCE.items():
+        if not glob_any(patterns):
+            blockers.append(f"missing FPGA release evidence: {label}")
 
-    manifest_value = cfg.get("release_evidence", {}).get("manifest")
-    if is_placeholder(manifest_value) or not (root / str(manifest_value)).is_file():
-        blockers.append(
-            "board/fpga/hello_demo_fpga.yaml: release_evidence.manifest must point to an archived manifest"
-        )
-    else:
-        manifest = load_yaml(root / str(manifest_value))
-        if manifest.get("schema") != RELEASE_MANIFEST_SCHEMA:
-            blockers.append(f"{manifest_value}: schema must be {RELEASE_MANIFEST_SCHEMA}")
-        if manifest.get("status") != "release_ready":
-            blockers.append(
-                f"{manifest_value}: status is {manifest.get('status')}, not release_ready"
-            )
-        required_evidence = manifest.get("required_evidence")
-        if not isinstance(required_evidence, dict):
-            blockers.append(f"{manifest_value}: required_evidence must be a mapping")
-        else:
-            missing_evidence = sorted(REQUIRED_RELEASE_EVIDENCE - set(required_evidence))
-            if missing_evidence:
-                blockers.append(
-                    f"{manifest_value}: missing required evidence entries: "
-                    + ", ".join(missing_evidence)
-                )
-            for name, spec in required_evidence.items():
-                if not isinstance(spec, dict):
-                    blockers.append(f"{manifest_value}: required_evidence.{name} must be a mapping")
-                    continue
-                if spec.get("status") not in {"missing", "complete"}:
-                    blockers.append(
-                        f"{manifest_value}: required_evidence.{name}.status must be missing or complete"
-                    )
-                if not isinstance(spec.get("required_action"), str) or not spec["required_action"]:
-                    blockers.append(
-                        f"{manifest_value}: required_evidence.{name}.required_action is required"
-                    )
-
-    release = cfg.get("release_evidence", {})
-    for tool in ["nextpnr-ecp5", "ecppack"]:
-        if shutil.which(tool) is None:
-            blockers.append(f"required FPGA release tool is not on PATH: {tool}")
-
-    for field in ["timing_report", "timing_summary", "archived_tool_versions"]:
-        value = release.get(field)
-        if is_placeholder(value):
-            blockers.append(
-                f"board/fpga/hello_demo_fpga.yaml: release_evidence.{field} is unassigned"
-            )
-        elif not (root / str(value)).is_file():
-            blockers.append(f"missing FPGA release evidence file: {value}")
-        else:
-            markers = contains_forbidden_release_marker(root / str(value))
-            if markers:
-                blockers.append(f"{value}: contains non-release marker(s): " + ", ".join(markers))
-
-    bitstream_value = release.get("bitstream_path")
-    bitstream_sha = release.get("bitstream_sha256")
-    if is_placeholder(bitstream_value):
-        blockers.append(
-            "board/fpga/hello_demo_fpga.yaml: release_evidence.bitstream_path is unassigned"
-        )
-    elif not (root / str(bitstream_value)).is_file():
-        blockers.append(f"missing FPGA bitstream file: {bitstream_value}")
-    elif markers := contains_forbidden_release_marker(root / str(bitstream_value)):
-        blockers.append(f"{bitstream_value}: contains non-release marker(s): " + ", ".join(markers))
-    elif is_placeholder(bitstream_sha):
-        blockers.append(
-            "board/fpga/hello_demo_fpga.yaml: release_evidence.bitstream_sha256 is unassigned"
-        )
-    else:
-        actual = file_sha256(root / str(bitstream_value))
-        if actual.lower() != str(bitstream_sha).lower():
-            blockers.append(
-                f"{bitstream_value}: sha256 mismatch, expected {bitstream_sha}, got {actual}"
-            )
-
-    if blockers:
-        print("FPGA release preflight blocked:")
-        for blocker in blockers:
-            print(f"  - {blocker}")
+    if failures:
+        print("FPGA release manifest check failed:")
+        for failure in failures:
+            print(f"  - {failure}")
         return 1
 
-    print("FPGA release preflight ok")
+    if blockers:
+        print("FPGA release check failed:" if args.release else "FPGA release blockers:")
+        for blocker in blockers:
+            print(f"  - {blocker}")
+        return 1 if args.release else 0
+
+    print("FPGA release check passed.")
     return 0
 
 

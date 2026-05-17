@@ -4,6 +4,12 @@ The hello NPU is a small synthesizable datapath behind a single-cycle MMIO
 control interface. Software programs operands, selects an opcode, starts the
 command, then polls `CTRL_STATUS.done` or waits for `irq_npu`.
 
+This block is not a phone-class accelerator. It has no DMA-fed command queue,
+IOMMU, cache coherency, tensor compiler backend, Android NNAPI delegate,
+production SRAM, or sustained TOPS/power evidence. It may be cited only as
+L0 RTL/unit evidence unless a higher-level report supplies the proof artifacts
+listed in `docs/benchmarks/capabilities/README.md`.
+
 ```text
 write OP_A
 write OP_B
@@ -16,6 +22,7 @@ read RESULT
 
 `OPCODE` is read/write; readback returns the programmed low 4 bits. `RESULT_HI`
 contains the high word for `MUL_LO` and sign-extension for signed 32-bit
+`MAC_S16`/`DOT4_S8`/`DOT8_S4` results.
 `MAC_S16`/`DOT4_S8` results.
 
 Implemented opcodes:
@@ -29,6 +36,7 @@ Implemented opcodes:
 | `4` | `DOT4_S8` | four packed signed INT8 products plus signed `ACC` |
 | `5` | `MAX_U32` | unsigned max |
 | `6` | `MIN_U32` | unsigned min |
+| `7` | `DOT8_S4` | eight packed signed INT4 products plus signed `ACC` |
 | `8` | `GEMM_S8` | bounded scratchpad INT8 GEMM tile, signed int32 output |
 
 Status bits:
@@ -59,6 +67,16 @@ Additional registers:
 | `0x20` | `GEMM_CFG` | `M[1:0]`, `N[9:8]`, `K[18:16]` |
 | `0x24` | `GEMM_BASE` | byte bases: `A[5:0]`, `B[13:8]`, `C[21:16]` |
 | `0x28` | `GEMM_STRIDE` | byte strides: `A[3:0]`, `B[11:8]`, `C[19:16]` |
+| `0x2c` | `PERF_UNSUPPORTED_OPS` | unsupported opcode/configuration counter |
+| `0x30` | `CMD_PARAM` | reserved command parameter word for future queue/runtime work |
+| `0x40` | `DESC_BASE` | reserved descriptor base for future queue/runtime work |
+| `0x44` | `DESC_HEAD` | reserved descriptor head for future queue/runtime work |
+| `0x48` | `DESC_TAIL` | reserved descriptor tail for future queue/runtime work |
+| `0x4c` | `DESC_STATUS` | reserved descriptor status for future queue/runtime work |
+| `0x50` | `PERF_CYCLES` | cycles spent in active state |
+| `0x54` | `PERF_MACS` | signed INT8 MAC operations issued |
+| `0x58` | `PERF_OPS` | accepted operation counter |
+| `0x5c` | `PERF_ERRORS` | rejected commands/configurations; write bit 0 to clear all perf counters |
 | `0x2c` | `PERF_CYCLES` | cycles spent in GEMM active state |
 | `0x30` | `PERF_MACS` | signed INT8 MAC operations issued |
 | `0x34` | `PERF_ERRORS` | rejected commands/configurations |
@@ -81,6 +99,41 @@ completion interrupt
 performance counters
 ```
 
+Current integration is still an MMIO-visible datapath model. The descriptor
+registers are reserved ABI placeholders only; there is no implemented valid /
+ready descriptor ring, queue-depth enforcement, timeout path, or host runtime
+submission contract. The DMA block tracks aligned 32-bit beat issue, byte
+completion, last source/destination addresses, and final write strobe, but it
+does not yet drive a real memory master or feed an NPU scratchpad/command
+queue.
+
+## Evidence gates
+
+Before any `hello-npu` benchmark is treated as accelerator evidence, the report
+must include:
+
+- exact model SHA-256 and Android/Linux target identity,
+- NNAPI accelerator query showing `hello-npu`,
+- total/delegated NNAPI node count, zero CPU fallback, and zero unsupported ops,
+- precision actually used by the delegate,
+- dataflow name and description from the measured path,
+- DMA path plus bytes read and written by the NPU workload,
+- descriptor queue depth, head/tail completion evidence, and timeout/error
+  behavior for queued commands,
+- MACs per inference, NPU cycles, NPU clock, DMA byte counters, operation/error
+  counters, observed TOPS, and the TOPS formula,
+- Android HAL service, SELinux fail-closed policy, VTS result, and CTS result
+  when any Android accelerator claim is made,
+- transcript hashes for adb, NNAPI query, benchmark output, and DMA trace.
+
+TOPS is a derived review field, not proof by itself:
+
+```text
+observed_tops <= macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12
+```
+
+The current RTL cannot satisfy those gates because its GEMM input/output path is
+the 64-byte MMIO scratchpad, not a hardware DMA tensor path.
 Current integration is still an MMIO-visible datapath model. The DMA block
 tracks aligned 32-bit beat issue, byte completion, last source/destination
 addresses, and final write strobe, but it does not yet drive a real memory

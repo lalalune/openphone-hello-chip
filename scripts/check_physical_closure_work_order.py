@@ -25,6 +25,7 @@ FORBIDDEN_LOCAL_CLAIMS = {
     "Lab verified.",
     "SI/PI closed.",
     "IR-drop or EM closed.",
+    "Thermal closed.",
 }
 
 

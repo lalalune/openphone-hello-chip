@@ -45,4 +45,47 @@
         reg = <0x0 0x10030000 0x0 0x1000>;
         status = "disabled";
     };
+
+    wifi_pwrseq: wifi-pwrseq {
+        compatible = "mmc-pwrseq-simple";
+        status = "disabled";
+        /*
+         * Android-facing mirror of the Linux WiFi scaffold. Do not set this
+         * node or the SDIO/UART nodes to okay until the board has real GPIO,
+         * pinctrl, regulators, IRQ wake, firmware, and regulatory evidence.
+         */
+        post-power-on-delay-ms = <200>;
+    };
+
+    sdio0: mmc@10050000 {
+        compatible = "openphone,hello-sdio-host";
+        status = "disabled";
+        reg = <0x0 0x10050000 0x0 0x1000>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+        bus-width = <4>;
+        non-removable;
+        cap-sd-highspeed;
+        mmc-pwrseq = <&wifi_pwrseq>;
+
+        wifi@1 {
+            compatible = "brcm,bcm4329-fmac";
+            reg = <1>;
+            interrupt-names = "host-wake";
+        };
+    };
+
+    uart1: serial@10051000 {
+        compatible = "openphone,hello-uart";
+        status = "disabled";
+        reg = <0x0 0x10051000 0x0 0x1000>;
+
+        bluetooth {
+            compatible = "brcm,bcm43438-bt";
+            max-speed = <3000000>;
+            shutdown-gpios = <0>;
+            device-wakeup-gpios = <0>;
+            host-wakeup-gpios = <0>;
+        };
+    };
 };

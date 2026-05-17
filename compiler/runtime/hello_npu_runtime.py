@@ -87,23 +87,33 @@ class HelloNpuRuntime:
     def write_scratch(self, offset: int, data: bytes):
         if offset < 0 or offset + len(data) > self.SCRATCH_BYTES:
             raise ValueError("scratch write exceeds 64-byte NPU scratchpad")
-        padded = bytearray(self.SCRATCH_BYTES)
-        for word in range(self.SCRATCH_BYTES // 4):
-            padded[word * 4 : word * 4 + 4] = self.read32(self.SCRATCH + word * 4).to_bytes(
-                4, "little"
-            )
-        padded[offset : offset + len(data)] = data
-        for word in range(self.SCRATCH_BYTES // 4):
-            value = int.from_bytes(padded[word * 4 : word * 4 + 4], "little")
+        if not data:
+            return
+        first_word = offset // 4
+        last_word = (offset + len(data) - 1) // 4
+        base = first_word * 4
+        padded = bytearray()
+        for word in range(first_word, last_word + 1):
+            padded.extend(self.read32(self.SCRATCH + word * 4).to_bytes(4, "little"))
+        relative_offset = offset - base
+        padded[relative_offset : relative_offset + len(data)] = data
+        for word in range(first_word, last_word + 1):
+            start = (word - first_word) * 4
+            value = int.from_bytes(padded[start : start + 4], "little")
             self.write32(self.SCRATCH + word * 4, value)
 
     def read_scratch(self, offset: int, size: int) -> bytes:
         if offset < 0 or offset + size > self.SCRATCH_BYTES:
             raise ValueError("scratch read exceeds 64-byte NPU scratchpad")
+        if size == 0:
+            return b""
+        first_word = offset // 4
+        last_word = (offset + size - 1) // 4
         data = bytearray()
-        for word in range(self.SCRATCH_BYTES // 4):
+        for word in range(first_word, last_word + 1):
             data.extend(self.read32(self.SCRATCH + word * 4).to_bytes(4, "little"))
-        return bytes(data[offset : offset + size])
+        relative_offset = offset - first_word * 4
+        return bytes(data[relative_offset : relative_offset + size])
 
     def gemm_s8(self, a, b):
         """Run bounded INT8 GEMM, returning an MxN int32 matrix.

@@ -10,3 +10,10 @@ DMA descriptor queue
 display register block
 interrupt aggregation glue
 ```
+
+CPU/AP rule: do not grow a repo-local Chisel application core here. The
+Linux-capable AP path is the pinned Chipyard/Rocket path in
+`generators/chipyard/openphone-rocket-manifest.json`. Chisel blocks in this
+directory may provide MMIO peripherals or glue consumed by
+`OpenPhoneRocketConfig`, but CPU privilege, CSR, trap, cache, MMU, and Linux
+boot behavior must come from the selected Rocket/Chipyard integration.

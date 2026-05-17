@@ -33,11 +33,20 @@ required_gap_categories:
   - signal_integrity
   - power_integrity
   - pdn_current_budget
+  - thermal
   - board_fabrication
   - manufacturing_test
-  - rtl_peripherals
-  - bringup_characterization
-  - rf_compliance
+  - modem_cellular
+  - wireless_gnss_nfc
+  - camera_isp
+  - audio
+  - sensors_input_haptics
+  - usb_storage_update
+  - battery_pmic_thermal
+  - secure_boot_key_debug
+  - privacy_data
+  - regulatory_compliance
+  - factory_test
 gaps:
   - id: routed_pd_signoff
     category: physical_design
@@ -86,7 +95,7 @@ gaps:
     release_gate: tapeout_release
     status: missing_vendor_artifact
     evidence_manifest: pd/signoff/manifest.yaml
-    local_check: scripts/check_real_world_gates.py
+    local_check: scripts/check_package_cross_probe.py
     required_evidence:
       - Bond diagram mapping die pads to package pins.
       - Cross-probe report proving package, padframe, RTL, and board net names agree.
@@ -158,15 +167,23 @@ gaps:
     evidence_manifest: pd/signoff/manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - Bench supply current limits for first article bring-up (100mA initial, per rail).
-      - Fuse, regulator (TPS62150, TLV74033, TLV74018), and thermal current-limit review for VDDCORE and VDDIO.
-
+      - Bench supply current limits for first article bring-up.
+      - Fuse, regulator, and thermal current-limit review for VDDCORE and VDDIO.
+  - id: package_board_thermal_review
+    category: thermal
+    release_gate: board_fabrication_release
+    status: missing_board_artifact
+    evidence_manifest: pd/signoff/manifest.yaml
+    local_check: scripts/check_pd_signoff.py
+    required_evidence:
+      - Package and board thermal model or review tied to post-route power, regulator loss, ambient, and enclosure assumptions.
+      - Thermal stop conditions, measurement points, and first-article temperature limits for VDDCORE/VDDIO bring-up.
   - id: board_footprint_release
     category: board_fabrication
     release_gate: board_fabrication_release
     status: missing_board_artifact
     evidence_manifest: docs/manufacturing/release-manifest.yaml
-    local_check: scripts/check_real_world_gates.py
+    local_check: scripts/check_package_cross_probe.py
     required_evidence:
       - PCB symbol and footprint generated from the package vendor drawing (not placeholder QFN64 assumptions).
       - Pin-1, courtyard, paste, solder mask, and assembly-layer review.
@@ -176,7 +193,7 @@ gaps:
     release_gate: board_fabrication_release
     status: missing_board_artifact
     evidence_manifest: docs/manufacturing/release-manifest.yaml
-    local_check: scripts/check_real_world_gates.py
+    local_check: scripts/check_kicad_artifacts.py
     required_evidence:
       - KiCad project, schematic (5-page hierarchy), and PCB files checked in under board/kicad/hello-demo.
       - Headless ERC, DRC, plot, Gerber, drill, BOM, and position export transcripts.
@@ -208,141 +225,188 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - First-article power-on limits (100mA per rail initial limit), expected rail currents, and stop conditions (>85°C surface temperature or overcurrent latch).
-      - Oscillator (24 MHz), reset (MAX823L 140ms pulse), debug (JTAG IDCODE), IRQ, GPIO, and UART smoke-test record.
-
-  # RTL peripheral gaps — partially addressed by new work order items (2026-05-17)
-
-  - id: uart_rtl_and_test
-    category: rtl_peripherals
-    release_gate: pd_release
-    status: open
-    evidence_manifest: pd/signoff/manifest.yaml
-    local_check: scripts/check_pd_signoff.py
-    required_evidence:
-      - hello_uart.sv implementing 8N1 UART with programmable baud divisor, RX/TX FIFOs, error status, and RX interrupt.
-      - cocotb test covering baud programming, loopback, FIFO, framing error, and interrupt; results_uart.xml with 0 failures.
-    work_order_item: uart_rtl_implementation
-
-  - id: clint_rtl_and_formal
-    category: rtl_peripherals
-    release_gate: pd_release
-    status: open
-    evidence_manifest: pd/signoff/manifest.yaml
-    local_check: scripts/check_pd_signoff.py
-    required_evidence:
-      - hello_clint.sv implementing RISC-V CLINT (mtime, mtimecmp, msip) per SiFive CLINT specification.
-      - Formal proof of monotonic mtime, correct MTIP assertion, and msip behavior; SBY transcript with PASS for all properties.
-    work_order_item: clint_rtl_implementation
-
-  - id: security_lifecycle_rtl
-    category: rtl_peripherals
-    release_gate: tapeout_release
-    status: open
-    evidence_manifest: pd/signoff/manifest.yaml
-    local_check: scripts/check_pd_signoff.py
-    required_evidence:
-      - hello_lifecycle_ctrl.sv implementing UNLOCKED/LOCKED/CLOSED FSM with OTP model.
-      - Updated hello_bootrom.sv gating boot on lifecycle state.
-      - cocotb test covering all three states and all illegal transition attempts.
-    work_order_item: security_lifecycle_controller
-
-  - id: opensbi_platform_bringup
-    category: rtl_peripherals
-    release_gate: tapeout_release
-    status: open
-    evidence_manifest: pd/signoff/manifest.yaml
-    local_check: scripts/check_pd_signoff.py
-    required_evidence:
-      - sw/opensbi/platform/hello/ directory with platform.c, config.mk, and platform.h matching hello_platform_contract.json.
-      - Simulated boot transcript (Renode or QEMU, clearly labeled) showing OpenSBI banner and handoff.
-    work_order_item: opensbi_platform_code
-
-  - id: linux_dts_build
-    category: rtl_peripherals
-    release_gate: tapeout_release
-    status: open
-    evidence_manifest: pd/signoff/manifest.yaml
-    local_check: scripts/check_pd_signoff.py
-    required_evidence:
-      - sw/linux/arch/riscv/boot/dts/hello/hello_soc.dts with CPU, memory, CLINT, UART, and chosen nodes.
-      - dtbs_check passing with 0 schema errors against upstream Linux DT schema.
-    work_order_item: linux_dts_dtb_build
-
-  # Bring-up characterization gaps — new entries (2026-05-17)
-
-  - id: isp_bringup_csi_phy
-    category: bringup_characterization
+      - First-article power-on limits, expected rail currents, and stop conditions.
+      - Oscillator, reset, debug, JTAG, IRQ, and GPIO smoke-test record.
+  - id: cellular_modem_stack
+    category: modem_cellular
     release_gate: board_fabrication_release
-    status: open
+    status: draft_local_plan
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
+    claim_boundary: Modem, baseband, RF front-end, SIM/eSIM, carrier provisioning, and cellular data/voice/SMS are not implemented.
     required_evidence:
-      - CSI-2 PHY characterization on first silicon: lane-to-lane skew measurement (target < 100ps between differential pairs), HS clock frequency verification at target rate (e.g., 400 MHz for a 800 Mbps lane), LP/HS transition timing captured on oscilloscope.
-      - Camera sensor (e.g., OV5647 or IMX219 on CSI adapter board) streaming test: V4L2 device node appears, at least one frame captured without CRC errors.
-      - Note: ISP block is a non-goal for v0 (see risk register); this gap covers the PHY characterization only, not full ISP bring-up.
-    notes: >
-      ISP computational photography and HAL3 are explicit v0 non-goals. This gap covers only
-      the physical layer characterization needed to confirm CSI PHY integrity on first silicon.
-      UVC/simple camera path per the risk register mitigation is the v0 target.
-
-  - id: audio_codec_i2s_timing
-    category: bringup_characterization
+      - Selected modem module or chipset integration record with host interface, power, reset, wake, SIM or eSIM, antenna, RF, firmware, and driver ownership.
+      - Hardware transcript proving modem enumeration, firmware identity, SIM or eSIM presence, network registration, data session, voice or IMS disposition, SMS disposition, suspend wake, and recovery from reset.
+      - Carrier, PTCRB, GCF, SAR, RF exposure, and regional certification evidence or explicit product-scope waiver.
+    future_cli_evidence_commands:
+      - mmcli -L
+      - mmcli -m <modem-index> --output-keyvalue
+      - nmcli dev status
+      - journalctl -b -u ModemManager --no-pager
+  - id: wifi_bluetooth_gnss_nfc_stack
+    category: wireless_gnss_nfc
     release_gate: board_fabrication_release
-    status: open
+    status: draft_local_plan
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
+    claim_boundary: Wi-Fi, Bluetooth, GNSS, and NFC product functions are not implemented; current Wi-Fi files are reference scaffolds only.
     required_evidence:
-      - I2S bus timing verification between SoC I2S master and audio codec (e.g., PCM5102A or ES8388) on evaluation board: BCLK frequency matches configured sample rate (e.g., 48kHz * 64 = 3.072 MHz BCLK), LRCLK period matches frame size, DATA setup/hold meets codec requirements.
-      - Logic analyzer capture of BCLK, LRCLK, and DOUT during a sine wave playback; capture archived as .sal or .csv.
-      - ALSA/AOSP audio HAL successfully plays a 1 kHz 0 dBFS sine wave without underruns (measure SNDR >= 60 dB on audio analyzer or sound card ADC).
-    notes: >
-      Audio codec bring-up requires the audio peripheral to be implemented beyond its current
-      stub state. This gap tracks the physical verification step that occurs after RTL completion
-      and first-silicon bring-up.
-
-  - id: pmic_sequencing_verification
-    category: bringup_characterization
+      - Selected module or chip records for Wi-Fi, Bluetooth, GNSS, and NFC with host buses, firmware, antennas, coexistence, clocks, resets, and regulatory boundaries.
+      - Hardware transcripts proving Wi-Fi scan/association/IP throughput, Bluetooth controller attach/pairing/audio or data role, GNSS fix or simulator lock, and NFC tag or reader operation.
+      - RF coexistence, antenna, country-code, MAC address provisioning, and module or board certification evidence.
+    future_cli_evidence_commands:
+      - iw dev
+      - nmcli device wifi list
+      - bluetoothctl show
+      - gpspipe -w -n 20
+      - nfc-list
+  - id: camera_isp_stack
+    category: camera_isp
     release_gate: board_fabrication_release
-    status: open
+    status: draft_local_plan
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
+    claim_boundary: Camera sensors, CSI, ISP, tuning, autofocus, flash, and Android camera HAL are not implemented.
     required_evidence:
-      - Oscilloscope capture of power-on rail sequencing on first article: VDDIO_3V3 ramp, VDDIO_1V8 ramp (follows 3.3V LDO chain), VDDCORE ramp (TPS62150 startup), nRST deassertion (140ms after VDDIO_3V3 stable), all captured on a single time base with >= 4-channel oscilloscope.
-      - Measurement shows VDDIO_1V8 starts rising no earlier than VDDIO_3V3 reaches 3.0V; VDDCORE ramp rate <= 2 ms from 0V to 0.8V; nRST deassertion occurs after all rails are within ±5% of target.
-      - Power-off sequencing capture: nRST asserts before VDDCORE falls below 0.7V; all rails discharge to < 0.1V within 500ms of input power removal.
-      - Capture archived as oscilloscope screenshot and raw waveform file (.csv or oscilloscope native format).
-
-  - id: thermal_characterization
-    category: bringup_characterization
+      - Selected image sensor, lens, actuator, flash, CSI lane mapping, clock, reset, regulator, and ISP ownership records.
+      - Hardware transcripts proving media graph enumeration, frame capture, exposure/gain control, color pipeline, still capture, video capture, and failure recovery.
+      - Tuning package, calibration records, privacy indicator policy, and Android camera HAL or Linux V4L2 compliance evidence.
+    future_cli_evidence_commands:
+      - media-ctl -p
+      - v4l2-ctl --list-devices
+      - v4l2-ctl --stream-mmap --stream-count=60 --stream-to=/tmp/camera.raw
+      - dumpsys media.camera
+  - id: audio_codec_dsp_stack
+    category: audio
     release_gate: board_fabrication_release
-    status: open
+    status: draft_local_plan
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
+    claim_boundary: Audio codec, speakers, microphones, headset, DSP, routing, and Android audio HAL are not implemented.
     required_evidence:
-      - Sustained workload thermal measurement: run NPU GEMM smoke workload (or equivalent synthetic CPU loop) for >= 10 minutes at ambient temperature 25°C; measure SoC package surface temperature with thermocouple or IR camera at 1-minute intervals.
-      - Report: peak junction temperature estimate (package surface + θJC from package datasheet * measured power dissipation), ambient, airflow (natural convection baseline), and current draw from bench supply during workload.
-      - Pass criteria: package surface temperature stabilizes and does not continue rising after 5 minutes; estimated junction temperature < 85°C at 25°C ambient with no forced cooling; if > 85°C, document thermal mitigation (heatspreader, airflow) needed.
-      - Thermal image or thermocouple log file archived.
-    notes: >
-      Thermal characterization is not possible before first silicon is received. This gap
-      documents the required measurement procedure and pass criteria for the first article
-      bring-up record. The power and thermal risk is tracked in the risk register.
-
-  - id: rf_compliance_wifi
-    category: rf_compliance
+      - Selected codec, amplifier, microphone, speaker, headset, I2S or PDM or SLIMbus, clocks, power, jack detect, and acoustic path records.
+      - Hardware transcripts proving playback, capture, loopback, volume, mute, routing, underrun handling, suspend resume, and thermal or current limits.
+      - Acoustic, safety, privacy, and Android audio policy or ALSA UCM evidence.
+    future_cli_evidence_commands:
+      - aplay -l
+      - arecord -l
+      - speaker-test -D <device> -c 2 -t wav
+      - arecord -D <device> -f S16_LE -r 48000 -d 5 /tmp/mic.wav
+      - dumpsys audio
+  - id: sensors_input_haptics_stack
+    category: sensors_input_haptics
     release_gate: board_fabrication_release
-    status: open
+    status: draft_local_plan
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
+    claim_boundary: Touch, buttons, IMU, proximity, ambient light, magnetometer, fingerprint, and haptics are not implemented.
     required_evidence:
-      - WiFi module TX power measurement: connect evaluation board running WiFi (external module per risk register — no integrated baseband) to a spectrum analyzer via calibrated attenuator; measure transmit power at the antenna connector or antenna port in 2.4 GHz and 5 GHz bands.
-      - Pass criteria: TX power within the module's certified maximum (per module FCC ID certificate); no harmonics exceeding FCC Part 15 limits (Section 15.247: <= 30 dBm EIRP at 2.4 GHz; verify against module cert).
-      - FCC Part 15 radiated emissions pre-scan: measure radiated emissions from the evaluation board (SoC + WiFi module + board) in a semi-anechoic chamber or using a LISN/near-field scan for preliminary compliance screening.
-      - Note: Full FCC certification is out of scope for v0 evaluation board; pre-scan is required to identify gross violations before product development.
-      - Capture: spectrum analyzer screenshots for 2.4 GHz and 5 GHz channels during TX burst; near-field scan or chamber measurement report.
-    notes: >
-      The integrated cellular baseband, carrier certification, and GMS certification are
-      explicit v0 non-goals per the risk register. This gap covers only WiFi TX power
-      verification and a preliminary FCC Part 15 scan for the external WiFi module path.
-      Full FCC/IC/CE certification is a later product milestone.
+      - Selected sensors, touch controller, buttons, haptic driver, interrupt lines, regulators, calibration storage, and mechanical stack records.
+      - Hardware transcripts proving input event delivery, sensor enumeration, sampling, calibration, suspend wake, haptic actuation, and error recovery.
+      - Android sensor HAL, input device, factory calibration, ESD, and environmental validation evidence.
+    future_cli_evidence_commands:
+      - getevent -lp
+      - evtest
+      - iio_info
+      - dumpsys sensorservice
+      - cmd vibrator vibrate 250
+  - id: usb_storage_update_stack
+    category: usb_storage_update
+    release_gate: board_fabrication_release
+    status: draft_local_plan
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    claim_boundary: USB-C, removable or managed storage, fastboot/ADB, update, rollback, and recovery product flows are not implemented.
+    required_evidence:
+      - Selected USB PHY or controller, Type-C/PD policy, ESD, storage device, partition map, boot slots, recovery, and update ownership records.
+      - Hardware transcripts proving USB enumeration, role switching, charging/data policy, storage read/write integrity, ADB or fastboot access, OTA install, rollback, and recovery boot.
+      - Filesystem wear, data retention, factory reset, secure wipe, and update failure-mode evidence.
+    future_cli_evidence_commands:
+      - lsusb -t
+      - adb devices -l
+      - fastboot devices
+      - lsblk -o NAME,SIZE,MODEL,SERIAL
+      - update_engine_client --status
+  - id: battery_pmic_thermal_stack
+    category: battery_pmic_thermal
+    release_gate: board_fabrication_release
+    status: draft_local_plan
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    claim_boundary: Battery, charger, PMIC, fuel gauge, regulators, thermal sensors, throttling, and safety policy are not implemented.
+    required_evidence:
+      - Selected cell, pack protection, charger, PMIC, fuel gauge, regulators, thermistors, thermal zones, and enclosure thermal path records.
+      - Hardware transcripts proving charge/discharge, fuel-gauge reporting, regulator telemetry, thermal readings, throttling, shutdown, suspend resume, and fault handling.
+      - Battery safety, shipping, charger compliance, thermal chamber, and current-limit evidence.
+    future_cli_evidence_commands:
+      - upower -d
+      - cat /sys/class/power_supply/*/uevent
+      - cat /sys/class/thermal/thermal_zone*/temp
+      - dmesg | grep -Ei 'pmic|charger|thermal|battery|fuel'
+  - id: secure_boot_key_debug_policy
+    category: secure_boot_key_debug
+    release_gate: board_fabrication_release
+    status: draft_local_plan
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    claim_boundary: Secure boot, key provisioning, verified boot, debug lock, anti-rollback, and attestation are not implemented.
+    required_evidence:
+      - Root-of-trust, ROM, bootloader, key ladder, fuse or OTP, debug-auth, rollback index, recovery, and manufacturing provisioning records.
+      - Hardware transcripts proving signed boot acceptance, unsigned image rejection, rollback rejection, debug lock/unlock policy, key erasure handling, and attestation or device identity behavior.
+      - Threat model, key ceremony, HSM or signer logs, manufacturing station controls, and vulnerability-response evidence.
+    future_cli_evidence_commands:
+      - fastboot getvar all
+      - adb shell getprop ro.boot.verifiedbootstate
+      - adb shell getprop ro.boot.flash.locked
+      - adb shell dmesg | grep -Ei 'secure|verified|avb|rollback|fuse|jtag'
+  - id: regulatory_compliance_release
+    category: regulatory_compliance
+    release_gate: board_fabrication_release
+    status: draft_local_plan
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    claim_boundary: FCC, CE, UKCA, ISED, PTCRB/GCF, SAR, safety, RoHS/REACH, WEEE, and privacy/compliance release are not implemented.
+    required_evidence:
+      - Product compliance matrix naming target countries, radio technologies, safety standards, EMC standards, environmental obligations, labels, manuals, and responsible owners.
+      - Accredited lab reports or module grant reuse analysis for EMC, radio, SAR/RF exposure, safety, battery, charger, and regional markings.
+      - Software compliance evidence for licenses, privacy permissions, telemetry defaults, accessibility scope, emergency/regulatory behavior, and post-market obligations.
+    future_cli_evidence_commands:
+      - cat /proc/device-tree/model
+      - getprop ro.product.model
+      - getprop ro.boot.hardware.sku
+      - scripts/check_real_world_gates.py
+  - id: privacy_data_protection_policy
+    category: privacy_data
+    release_gate: board_fabrication_release
+    status: draft_local_plan
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    claim_boundary: Privacy permissions, telemetry defaults, data retention, secure wipe, sensor indicators, and user data protection are not implemented.
+    required_evidence:
+      - Privacy threat model and data-flow inventory for camera, microphone, location, radios, sensors, identifiers, crash logs, update logs, and factory logs.
+      - Hardware or target-OS transcripts proving permission enforcement, privacy indicators, telemetry opt-in or disabled defaults, identifier reset behavior, secure wipe, factory reset, and log redaction.
+      - Regional privacy, retention, deletion, export, consent, child-safety if applicable, and post-market incident-response evidence.
+    future_cli_evidence_commands:
+      - adb shell appops get --uid
+      - adb shell cmd sensor_privacy list
+      - adb shell dumpsys permission
+      - adb shell dumpsys dropbox
+      - adb shell settings get secure advertising_id
+  - id: factory_test_provisioning_flow
+    category: factory_test
+    release_gate: board_fabrication_release
+    status: draft_local_plan
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
+    local_check: scripts/check_real_world_gates.py
+    claim_boundary: Factory test, calibration, serialization, key provisioning, radio calibration, and outgoing quality release are not implemented.
+    required_evidence:
+      - Factory station plan covering board ID, serial, MAC addresses, IMEI if cellular, keys, calibration blobs, radio test mode, labels, rework, and audit logs.
+      - Hardware transcripts proving automated test coverage for power rails, boot, storage, USB, display, touch, camera, audio, radios, sensors, haptics, thermal sensors, secure boot state, and debug lock state.
+      - Yield, retest, quarantine, calibration-limit, label, traceability, and manufacturing data-retention evidence.
+    future_cli_evidence_commands:
+      - adb shell getprop ro.serialno
+      - adb shell getprop ro.boot.verifiedbootstate
+      - adb shell getprop ro.boot.flash.locked
+      - adb shell dumpsys battery
+      - adb shell cmd wifi status
+      - scripts/check_real_world_gates.py

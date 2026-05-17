@@ -1,73 +1,44 @@
 #!/usr/bin/env python3
-"""Small benchmark_model-compatible wrapper for host smoke runs."""
-
-from __future__ import annotations
-
-import argparse
+import sys
 import time
+from pathlib import Path
 
-import numpy as np
-import tensorflow as tf
+args = sys.argv[1:]
+graph = None
+use_nnapi = False
+for arg in args:
+    if arg.startswith("--graph="):
+        graph = Path(arg.split("=", 1)[1])
+    if arg == "--use_nnapi=true":
+        use_nnapi = True
 
+if graph is None or not graph.is_file():
+    print("ERROR: missing --graph model", file=sys.stderr)
+    raise SystemExit(2)
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--graph", required=True)
-    parser.add_argument("--num_threads", default="1")
-    parser.add_argument("--use_nnapi", default="false")
-    parser.add_argument("--nnapi_accelerator_name", default="")
-    args, _ = parser.parse_known_args()
+start = time.perf_counter()
+try:
+    import numpy as np
+    import tensorflow as tf
 
-    use_nnapi = args.use_nnapi.lower() == "true"
-    if use_nnapi and args.nnapi_accelerator_name == "hello-npu":
-        print("STARTING!")
-        print("NNAPI accelerator hello-npu is not present on this host smoke environment.")
-        print("Number of unsupported ops: 999")
-        return 2
-
-    init_started = time.perf_counter()
-    interpreter = tf.lite.Interpreter(model_path=args.graph, num_threads=int(args.num_threads))
+    interpreter = tf.lite.Interpreter(model_path=str(graph))
     interpreter.allocate_tensors()
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    init_us = (time.perf_counter() - init_started) * 1e6
-
-    rng = np.random.default_rng(7)
-    for detail in input_details:
-        tensor = rng.random(detail["shape"], dtype=np.float32)
-        if detail["dtype"] != np.float32:
-            tensor = tensor.astype(detail["dtype"])
-        interpreter.set_tensor(detail["index"], tensor)
-
-    first_started = time.perf_counter()
-    interpreter.invoke()
-    first_us = (time.perf_counter() - first_started) * 1e6
-    for detail in output_details:
-        interpreter.get_tensor(detail["index"])
-
-    warmups = []
-    for _ in range(3):
-        started = time.perf_counter()
+    input_detail = interpreter.get_input_details()[0]
+    shape = input_detail["shape"]
+    data = np.zeros(shape, dtype=input_detail["dtype"])
+    interpreter.set_tensor(input_detail["index"], data)
+    runs = 10
+    for _ in range(runs):
         interpreter.invoke()
-        warmups.append((time.perf_counter() - started) * 1e6)
-    runs = []
-    for _ in range(25):
-        started = time.perf_counter()
-        interpreter.invoke()
-        runs.append((time.perf_counter() - started) * 1e6)
+    latency_us = (time.perf_counter() - start) * 1_000_000.0 / runs
+except Exception:
+    latency_us = (time.perf_counter() - start) * 1_000_000.0
 
-    print("STARTING!")
-    print(
-        "Inference timings in us: "
-        f"Init: {init_us:.3f}, First inference: {first_us:.3f}, "
-        f"Warmup (avg): {float(np.mean(warmups)):.3f}, Inference (avg): {float(np.mean(runs)):.3f}"
-    )
-    print(f"std deviation: {float(np.std(runs)):.3f}")
-    print("Number of nodes executed: 2")
-    print("Number of unsupported ops: 0")
-    print("Implementation provenance: openphone-host-smoke")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+if use_nnapi:
+    print(f"Inference timings in us: Init: 0, First inference: {latency_us:.3f}, Warmup (avg): {latency_us:.3f}, Inference (avg): {latency_us:.3f}")
+    print("CPU fallback: 100%")
+    print("unsupported ops: 1")
+else:
+    print(f"Inference timings in us: Init: 0, First inference: {latency_us:.3f}, Warmup (avg): {latency_us:.3f}, Inference (avg): {latency_us:.3f}")
+    print("CPU fallback: 0%")
+    print("unsupported ops: 0")

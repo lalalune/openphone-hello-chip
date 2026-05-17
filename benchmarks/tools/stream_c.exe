@@ -1,47 +1,27 @@
 #!/usr/bin/env python3
-"""STREAM-shaped host smoke benchmark command."""
-
-from __future__ import annotations
-
+import array
 import time
 
-import numpy as np
+n = 250000
+a = array.array("d", [1.0]) * n
+b = array.array("d", [2.0]) * n
+c = array.array("d", [0.0]) * n
 
 
-def rate_mb_s(bytes_moved: int, seconds: float) -> float:
-    return bytes_moved / max(seconds, 1e-9) / 1_000_000.0
+def rate(bytes_moved, fn):
+    start = time.perf_counter()
+    fn()
+    elapsed = max(time.perf_counter() - start, 1e-9)
+    return bytes_moved / elapsed / 1_000_000.0
 
 
-def main() -> int:
-    n = 2_000_000
-    scalar = 3.0
-    a = np.ones(n, dtype=np.float64)
-    b = np.full(n, 2.0, dtype=np.float64)
-    c = np.empty(n, dtype=np.float64)
+copy = rate(16 * n, lambda: c.__setitem__(slice(None), a))
+scale = rate(16 * n, lambda: b.__setitem__(slice(None), array.array("d", (3.0 * x for x in c))))
+add = rate(24 * n, lambda: c.__setitem__(slice(None), array.array("d", (a[i] + b[i] for i in range(n)))))
+triad = rate(24 * n, lambda: a.__setitem__(slice(None), array.array("d", (b[i] + 3.0 * c[i] for i in range(n)))))
 
-    started = time.perf_counter()
-    c[:] = a
-    copy = rate_mb_s(2 * a.nbytes, time.perf_counter() - started)
-
-    started = time.perf_counter()
-    b[:] = scalar * c
-    scale = rate_mb_s(2 * b.nbytes, time.perf_counter() - started)
-
-    started = time.perf_counter()
-    c[:] = a + b
-    add = rate_mb_s(3 * c.nbytes, time.perf_counter() - started)
-
-    started = time.perf_counter()
-    a[:] = b + scalar * c
-    triad = rate_mb_s(3 * a.nbytes, time.perf_counter() - started)
-
-    print("Function    Best Rate MB/s  Avg time     Min time     Max time")
-    for name, value in (("Copy", copy), ("Scale", scale), ("Add", add), ("Triad", triad)):
-        seconds = 1.0 / max(value, 1e-9)
-        print(f"{name:8s}: {value:14.4f} {seconds:11.6f} {seconds:11.6f} {seconds:11.6f}")
-    print("Implementation provenance: openphone-host-smoke")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+print("STREAM local-host-smoke")
+print(f"Copy:  {copy:.3f}")
+print(f"Scale: {scale:.3f}")
+print(f"Add:   {add:.3f}")
+print(f"Triad: {triad:.3f}")

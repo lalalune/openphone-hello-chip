@@ -11,13 +11,6 @@ reference_module:
   integration_file: package/wifi/murata-1dx-sdio.yaml
   evidence_manifest: package/wifi/evidence-gates.yaml
   commitment: reference_integration_slice_not_committed_bom
-integration_state:
-  rtl_host_controller: not_implemented
-  gpio_pinctrl_regulator: not_implemented
-  padframe_bonding: not_bonded_in_hello_chip
-  firmware_driver: not_implemented
-  android_framework: not_enabled
-  rf_certification: module_and_board_responsibility
 fail_closed_policy:
   linux_dts_nodes: disabled_until_host_controller_gpio_pinctrl_regulator_irq_exist
   android_feature_claims: absent_until_framework_hal_and_runtime_evidence_exist
@@ -38,6 +31,35 @@ power_sequence_contract:
     - Release WIFI_RST_N only after the selected module datasheet delay.
     - Start SDIO clock and UART RTS/CTS only after pinctrl and host controllers are ready.
     - Validate WIFI_HOST_WAKE and WIFI_IRQ polarity before suspend/resume claims.
+  firmware_manifest: package/wifi/firmware-artifacts.yaml
+  commitment: reference_integration_slice_not_committed_bom
+integration_state:
+  rtl_host_controller: not_implemented
+  gpio_controller: not_implemented
+  pinctrl: not_implemented
+  regulator_control: not_implemented
+  padframe_bonding: not_bonded_in_hello_chip
+  firmware_driver: not_implemented
+  android_wifi_framework: not_enabled
+  rf_certification: module_and_board_responsibility
+host_controller_contract:
+  required_before_enable:
+    - SDIO host controller with 4-bit SDR25 timing and non-removable card support.
+    - UART with RTS/CTS hardware flow control for Bluetooth HCI.
+    - GPIO controller and pinctrl states for WIFI_EN, WIFI_RST_N, WIFI_IRQ, and WIFI_HOST_WAKE.
+    - Regulator or fixed-rail model for module VBAT and 1.8 V VDDIO sequencing.
+    - Interrupt-controller binding for OOB wake and suspend/resume tests.
+power_sequence:
+  default_state: radios_disabled
+  rails:
+    - {name: module_vbat, owner: board, status: missing}
+    - {name: module_vddio_1v8, owner: board, status: missing}
+  reset_order:
+    - Keep WIFI_EN low and WIFI_RST_N low while rails are off or unstable.
+    - Enable board rails and wait for module-specific stabilization time.
+    - Assert WIFI_EN, then release WIFI_RST_N after the module datasheet delay.
+    - Start SDIO clock only after the host pinctrl state and 1.8 V bank are valid.
+  fail_closed_rule: Do not set any DTS node to okay or Android WiFi feature to present until this sequence is backed by board measurements.
 groups:
   sdio:
     mode: sdr25_initial
@@ -82,6 +104,8 @@ board_requirements:
   - Keep Linux and Android WiFi/Bluetooth nodes disabled until SDIO, UART, GPIO, pinctrl, regulator, IRQ, and wake bindings exist.
   - Keep firmware blobs, NVRAM, clm_blob, and Bluetooth patchram as missing evidence until module licensing, checksums, and load logs are archived.
   - Treat antenna gain, SAR, modular approval scope, country-code handling, and regional regulatory filings as board release blockers.
+  - Linux and Android DTS nodes must remain disabled until SDIO, UART, GPIO, pinctrl, regulator, and interrupt phandles bind to real controllers.
+  - Regulatory domain, antenna gain, SAR exposure, FCC/CE/IC modular approval, and country-code handling are release blockers.
 maturity_gates_before_product_claim:
   - Select a concrete WiFi/Bluetooth combo module and bind this contract to its datasheet pins.
   - Add an SDIO host controller and Bluetooth UART/PCM ownership in RTL or platform integration.
@@ -89,3 +113,5 @@ maturity_gates_before_product_claim:
   - Add firmware and OS driver bring-up tests for reset sequencing, SDIO enumeration, IRQ, and wake.
   - Archive Android framework evidence for feature XML, supplicant or hostapd, dumpsys wifi, Bluetooth HCI attach, and CTS/VTS subsets.
   - Close the evidence manifest in package/wifi/evidence-gates.yaml before changing status from scaffold.
+  - Archive module firmware, NVRAM/clm_blob provenance, licenses, checksums, and regulatory-domain evidence.
+  - Prove Android WiFi framework integration with vendorimage, VINTF, supplicant/hostapd, dumpsys wifi, and CTS/VTS logs.

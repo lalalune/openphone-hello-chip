@@ -15,12 +15,24 @@ elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
 else
     PYTHON_BIN=python3
 fi
+case "$PYTHON_BIN" in
+    */*) PYTHON_BIN="$(CDPATH=; cd -- "$(dirname "$PYTHON_BIN")" && pwd)/$(basename "$PYTHON_BIN")" ;;
+esac
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
     PYTHON_BIN=python3
 fi
 PYTHON_DIR="$(CDPATH=; cd -- "$(dirname "$PYTHON_BIN")" && pwd)"
-if [ -x "$PYTHON_DIR/cocotb-config" ]; then
+if [ -x "$PYTHON_DIR/cocotb-config" ] && "$PYTHON_DIR/cocotb-config" --version >/dev/null 2>&1; then
     PATH="$PYTHON_DIR:$PATH"
+else
+    COCOTB_BIN_DIR="$REPO_ROOT/build/cocotb/bin"
+    mkdir -p "$COCOTB_BIN_DIR"
+    cat >"$COCOTB_BIN_DIR/cocotb-config" <<EOF
+#!/usr/bin/env sh
+exec "$PYTHON_BIN" -m cocotb.config "\$@"
+EOF
+    chmod +x "$COCOTB_BIN_DIR/cocotb-config"
+    PATH="$COCOTB_BIN_DIR:$PATH"
 fi
 PYTHON_SITE="$("$PYTHON_BIN" - <<'PY'
 import site
@@ -55,8 +67,18 @@ COCOTB_MOD="${COCOTB_MODULE:-test_hello_chip}"
 COCOTB_BUILD="$REPO_ROOT/build/cocotb/${COCOTB_TOP}_${COCOTB_MOD}"
 COCOTB_LOCK="$REPO_ROOT/build/cocotb/.${COCOTB_TOP}_${COCOTB_MOD}.lock"
 COCOTB_RESULTS_LOCK="$REPO_ROOT/build/cocotb/.results.lock"
-COCOTB_ARCHIVE_NAME="${COCOTB_TOP}_${COCOTB_MOD}"
+COCOTB_RESULT_DIR="$REPO_ROOT/verify/cocotb/results"
+COCOTB_RESULT_FILE="$COCOTB_RESULT_DIR/${COCOTB_TOP}_${COCOTB_MOD}.xml"
+COCOTB_REPORT_DIR="$REPO_ROOT/build/reports/cocotb"
+COCOTB_RAW_RESULT="$COCOTB_REPORT_DIR/${COCOTB_TOP}_${COCOTB_MOD}.raw.xml"
 mkdir -p "$REPO_ROOT/build/cocotb"
+mkdir -p "$COCOTB_RESULT_DIR"
+mkdir -p "$COCOTB_REPORT_DIR"
+
+if [ "$COCOTB_TOP" = "hello_chip_top" ] && [ "$COCOTB_MOD" = "test_hello_chip" ]; then
+    rm -f "$COCOTB_REPORT_DIR/manifest.json"
+    rm -f "$COCOTB_REPORT_DIR"/*.xml "$COCOTB_RESULT_DIR"/*.xml 2>/dev/null || true
+fi
 
 while ! mkdir "$COCOTB_LOCK" 2>/dev/null; do
     sleep 1
@@ -66,24 +88,28 @@ while ! mkdir "$COCOTB_RESULTS_LOCK" 2>/dev/null; do
 done
 trap 'rmdir "$COCOTB_RESULTS_LOCK" "$COCOTB_LOCK" 2>/dev/null || true' EXIT INT TERM
 
-rm -rf "$COCOTB_BUILD" verify/cocotb/results.xml
+rm -rf "$COCOTB_BUILD" verify/cocotb/results.xml "$COCOTB_RESULT_FILE" "$COCOTB_RAW_RESULT"
 
 if command -v verilator >/dev/null 2>&1; then
     $(command -v make) -C verify/cocotb SIM=verilator \
         MODULE="$COCOTB_MOD" \
         TOPLEVEL="$COCOTB_TOP" \
+        PYTHON="$PYTHON_BIN" \
         SIM_BUILD="$COCOTB_BUILD"
 elif command -v iverilog >/dev/null 2>&1; then
     $(command -v make) -C verify/cocotb SIM=icarus \
         MODULE="$COCOTB_MOD" \
         TOPLEVEL="$COCOTB_TOP" \
+        PYTHON="$PYTHON_BIN" \
         SIM_BUILD="$COCOTB_BUILD"
 else
     echo "No cocotb simulator found. Install Verilator or Icarus Verilog."
     exit 1
 fi
 
+cp verify/cocotb/results.xml "$COCOTB_RESULT_FILE"
+cp verify/cocotb/results.xml "$COCOTB_RAW_RESULT"
 "$PYTHON_BIN" scripts/check_cocotb_results.py \
-    --archive-name "$COCOTB_ARCHIVE_NAME" \
-    --top "$COCOTB_TOP" \
-    --module "$COCOTB_MOD"
+    --result "$COCOTB_RAW_RESULT" \
+    --module "$COCOTB_MOD" \
+    --top "$COCOTB_TOP"

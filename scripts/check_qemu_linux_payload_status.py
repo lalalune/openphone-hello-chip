@@ -4,7 +4,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PAYLOAD_MANIFEST = ROOT / "build/qemu/linux_payload/debian-installer-riscv64/manifest.json"
+PAYLOAD_MANIFEST_CANDIDATES = [
+    ROOT / "build/qemu/linux_payload/debian-installer-riscv64/manifest.json",
+    *sorted((ROOT / "build/qemu/linux_payload").glob("debian-installer-riscv64-*/manifest.json")),
+]
 BOOT_MANIFEST = ROOT / "build/reports/qemu_os_boot_attempt.json"
 BOOT_LOG = ROOT / "build/reports/qemu_os_boot_attempt.log"
 
@@ -29,15 +32,35 @@ def sha256_path(path: Path) -> str:
     return digest.hexdigest()
 
 
+def find_payload_manifest() -> tuple[Path | None, list[Path]]:
+    checked: list[Path] = []
+    for path in PAYLOAD_MANIFEST_CANDIDATES:
+        if path in checked:
+            continue
+        checked.append(path)
+        if path.is_file():
+            return path, checked
+    return None, checked
+
+
 def main() -> int:
     errors: list[str] = []
-    for path in (PAYLOAD_MANIFEST, BOOT_MANIFEST, BOOT_LOG):
+    payload_manifest, checked_payload_manifests = find_payload_manifest()
+    if payload_manifest is None:
+        searched = ", ".join(
+            path.relative_to(ROOT).as_posix() for path in checked_payload_manifests
+        )
+        errors.append(
+            f"missing qemu-virt reference artifact: payload manifest; searched {searched}"
+        )
+    for path in (BOOT_MANIFEST, BOOT_LOG):
         if not path.is_file():
             errors.append(f"missing qemu-virt reference artifact: {path.relative_to(ROOT)}")
     if errors:
         return report(errors)
 
-    payload = json.loads(PAYLOAD_MANIFEST.read_text())
+    assert payload_manifest is not None
+    payload = json.loads(payload_manifest.read_text())
     boot = json.loads(BOOT_MANIFEST.read_text())
     log_text = BOOT_LOG.read_text(errors="ignore")
 

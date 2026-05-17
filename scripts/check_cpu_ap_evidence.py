@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 
@@ -39,18 +40,18 @@ def check_scaffold(errors: list[str]) -> None:
         errors,
     )
 
-    evidence_manifest = load_evidence_manifest(errors)
     cpu = read("rtl/cpu/hello_cpu_subsystem_stub.sv")
     test = read("verify/cocotb/test_tiny_cpu_execution.py")
     tb = read("verify/cocotb/hello_tiny_cpu_contract_tb.sv")
     linux_contract = read("docs/arch/linux-capable-cpu-contract.md")
     blocker = read("docs/project/cpu-ap-blocker-status-2026-05-17.md")
-    contract = load_json(ROOT / "sw/platform/hello_platform_contract.json")
+    contract = json.loads(read("sw/platform/hello_platform_contract.json"))
     manifest = load_json(SELECTED_MANIFEST)
     chipyard = manifest.get("chipyard", {})
     selected = manifest.get("selected_path", {})
     claim_policy = manifest.get("claim_policy", {})
     phone_target = manifest.get("phone_2028_target_boundary", {})
+    evidence_manifest = load_evidence_manifest(errors)
 
     require(
         "FETCH_REQ" in cpu and "EXECUTE" in cpu,
@@ -161,6 +162,11 @@ def check_scaffold(errors: list[str]) -> None:
             errors,
         )
 
+    require(
+        (ROOT / "docs/arch/linux-capable-cpu-contract.md").is_file(),
+        "Linux-capable CPU requirements gate is missing",
+        errors,
+    )
     for token in (
         "OpenSBI",
         "Linux early console",
@@ -200,9 +206,7 @@ def check_scaffold(errors: list[str]) -> None:
         "openphone_hello_ap_benchmarks.log",
     ):
         require(
-            token in blocker,
-            f"CPU/AP blocker status lacks required blocker token: {token}",
-            errors,
+            token in blocker, f"CPU/AP blocker status lacks required blocker token: {token}", errors
         )
 
 

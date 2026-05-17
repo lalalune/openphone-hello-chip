@@ -66,32 +66,28 @@ def generate_model() -> bytes:
     zeros = tf.keras.initializers.Zeros
     model = tf.keras.Sequential(
         [
-            tf.keras.layers.Input(shape=INPUT_SHAPE[1:], name="input"),
-            # CONV_2D + RELU (covered by tflite CONV_2D fused activation)
-            tf.keras.layers.Conv2D(
-                filters=CONV_FILTERS,
-                kernel_size=CONV_KERNEL,
-                strides=1,
-                padding="same",
+            tf.keras.layers.Input(shape=(32,), name="input"),
+            tf.keras.layers.Dense(
+                64,
                 activation="relu",
-                kernel_initializer=glorot(seed=SEED),
-                bias_initializer=zeros(),
-                name="conv",
+                kernel_initializer=tf.keras.initializers.GlorotUniform(seed=7),
+                bias_initializer=tf.keras.initializers.Zeros(),
+                name="dense0",
             ),
             # Standalone RELU op
             tf.keras.layers.ReLU(name="relu"),
             # RESHAPE + FULLY_CONNECTED (matmul) + RELU
             tf.keras.layers.Flatten(name="flatten"),
             tf.keras.layers.Dense(
-                FC_HIDDEN,
+                32,
                 activation="relu",
-                kernel_initializer=glorot(seed=SEED + 1),
-                bias_initializer=zeros(),
-                name="fc_hidden",
+                kernel_initializer=tf.keras.initializers.GlorotUniform(seed=9),
+                bias_initializer=tf.keras.initializers.Zeros(),
+                name="dense1",
             ),
             # Final matmul + softmax
             tf.keras.layers.Dense(
-                NUM_CLASSES,
+                8,
                 activation="softmax",
                 kernel_initializer=glorot(seed=SEED + 2),
                 bias_initializer=zeros(),

@@ -28,9 +28,13 @@ module hello_tiny_cpu_contract_tb (
     output logic [1:0]  loader_rresp,
 
     input  logic [3:0]  irq_sources,
+    input  logic        timer_irq,
+    input  logic        software_irq,
     output logic        cpu_halted,
     output logic        cpu_irq_pending,
     output logic        cpu_external_irq,
+    output logic [31:0] cpu_reset_pc,
+    output logic [31:0] cpu_hart_id,
     output logic [31:0] irq_pending
 );
     logic        cpu_awvalid;
@@ -99,10 +103,8 @@ module hello_tiny_cpu_contract_tb (
     assign loader_rdata   = bus_rdata;
     assign loader_rresp   = bus_rresp;
 
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic unused_cpu_identity;
-    assign unused_cpu_identity = ^{reset_pc, hart_id};
-    /* verilator lint_on UNUSEDSIGNAL */
+    assign cpu_reset_pc = reset_pc;
+    assign cpu_hart_id  = hart_id;
 
     hello_cpu_subsystem_stub #(
         .RESET_PC(32'h8000_0000),
@@ -127,8 +129,8 @@ module hello_tiny_cpu_contract_tb (
         .m_axil_rready(cpu_rready),
         .m_axil_rdata(cpu_rdata),
         .m_axil_rresp(cpu_rresp),
-        .timer_irq(1'b0),
-        .software_irq(1'b0),
+        .timer_irq(timer_irq),
+        .software_irq(software_irq),
         .external_irq(cpu_external_irq),
         .reset_pc(reset_pc),
         .hart_id(hart_id),

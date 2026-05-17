@@ -1,26 +1,8 @@
-# fstab v0 for openphone_ai_soc (Android).
-#
-# This fstab declares ONLY two mounts: /vendor and /data. It is a scaffold
-# for the first Cuttlefish/QEMU integration attempt and must NOT be read as
-# evidence of a real partition table, A/B slots, AVB verification, recovery,
-# or OTA pipeline.
-#
-# AVB/A-B/recovery/OTA local status: fail-closed scaffold only.
-#   - Does not define AVB keys, rollback indexes, vbmeta digests, or chained
-#     partitions. Do not claim AVB.
-#   - Does not select a slot, define slot metadata, or describe slot recovery.
-#   - Does not enable dm-verity error-correcting modes.
-#   - Does not configure secure fastboot, recovery, or unauthorized-flashing
-#     protection. Negative evidence still missing: bad signatures, rollback
-#     OTA, interrupted install, low-battery update, full-storage update,
-#     corrupt slot metadata, unauthorized flashing.
-#
-# Format: <src> <mnt_point> <type> <mnt_flags and options> <fs_mgr_flags>
-#
-# The "avb" / "slotselect" fs_mgr flags are intentionally NOT set. They are
-# documented here as the future contract, not the current behavior:
-#   # FUTURE (not yet implemented): append ",avb=vbmeta_vendor,slotselect"
-#   # FUTURE (not yet implemented): vbmeta partition entry with avb_keys path
+# Initial Android fstab scaffold for openphone_ai_soc.
+# Cuttlefish integration may override block devices during simulator bring-up.
+# AVB/A-B/recovery/OTA flags are not evidence of AVB keys, rollback indexes,
+# recovery behavior, update success, or secure flashing.
+# not AVB, A/B, recovery, OTA, rollback evidence.
 
 # /vendor: read-only vendor image. Block-device name matches the Android
 # dynamic-partition convention; the underlying super partition layout is

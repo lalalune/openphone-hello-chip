@@ -29,7 +29,13 @@ if [ "$resolved" != "$OPENLANE2_SHA" ]; then
 fi
 echo "OpenLane2 checked out at $OPENLANE2_SHA (tag $OPENLANE2_TAG)."
 
-python3 -m venv .venv
+if ! python3 -m venv .venv; then
+    if ! python3 -m virtualenv .venv; then
+        echo "bootstrap_openlane2: python3 venv failed and virtualenv is unavailable." >&2
+        echo "Install python3-venv or run: python3 -m pip install --user --break-system-packages virtualenv" >&2
+        exit 1
+    fi
+fi
 # shellcheck disable=SC1091
 . .venv/bin/activate
 pip install --upgrade pip

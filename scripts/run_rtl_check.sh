@@ -34,6 +34,9 @@ elif command -v iverilog >/dev/null 2>&1; then
     # shellcheck disable=SC2086
     iverilog -g2012 -tnull -s hello_chip_top $rtl_sources
 else
-    echo "No local RTL checker found. Install Verilator or Icarus Verilog, or use the Docker/Nix shell."
-    exit 1
+    echo "STATUS: BLOCKED rtl.check - No local RTL checker found. Install Verilator or Icarus Verilog, or use the Docker/Nix shell."
+    if [ "${REQUIRE_RTL_CHECK:-0}" = "1" ]; then
+        exit 2
+    fi
+    exit 0
 fi

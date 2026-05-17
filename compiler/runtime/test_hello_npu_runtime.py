@@ -1,0 +1,239 @@
+import pytest
+from hello_npu_runtime import HelloNpuRuntime, golden_gemm_s8
+
+
+class FakeMmio:
+    def __init__(self):
+        self.regs = {}
+        self.reads = []
+        self.writes = []
+
+    def read32(self, addr):
+        self.reads.append(addr)
+        return self.regs.get(addr, 0)
+
+    def write32(self, addr, value):
+        self.writes.append((addr, value & 0xFFFF_FFFF))
+        self.regs[addr] = value & 0xFFFF_FFFF
+
+
+class CommandCompletingMmio(FakeMmio):
+    def __init__(self, runtime_cls=HelloNpuRuntime):
+        super().__init__()
+        self.runtime_cls = runtime_cls
+        self.commands = []
+
+    @staticmethod
+    def _s32(value):
+        value &= 0xFFFF_FFFF
+        return value - 0x1_0000_0000 if value & 0x8000_0000 else value
+
+    @staticmethod
+    def _s16(value):
+        value &= 0xFFFF
+        return value - 0x1_0000 if value & 0x8000 else value
+
+    @staticmethod
+    def _s8(value):
+        value &= 0xFF
+        return value - 0x100 if value & 0x80 else value
+
+    def write32(self, addr, value):
+        super().write32(addr, value)
+        if addr == self.runtime_cls.CTRL_STATUS and (value & 0x1):
+            self._complete_command()
+
+    def _complete_command(self):
+        opcode = self.regs.get(self.runtime_cls.OPCODE, 0)
+        self.commands.append(opcode)
+        if opcode == self.runtime_cls.OP_ADD:
+            result = self.regs.get(self.runtime_cls.OP_A, 0) + self.regs.get(
+                self.runtime_cls.OP_B, 0
+            )
+            self.regs[self.runtime_cls.RESULT] = result & 0xFFFF_FFFF
+        elif opcode == self.runtime_cls.OP_SUB:
+            result = self.regs.get(self.runtime_cls.OP_A, 0) - self.regs.get(
+                self.runtime_cls.OP_B, 0
+            )
+            self.regs[self.runtime_cls.RESULT] = result & 0xFFFF_FFFF
+        elif opcode == self.runtime_cls.OP_MUL_LO:
+            result = self.regs.get(self.runtime_cls.OP_A, 0) * self.regs.get(
+                self.runtime_cls.OP_B, 0
+            )
+            self.regs[self.runtime_cls.RESULT] = result & 0xFFFF_FFFF
+        elif opcode == self.runtime_cls.OP_MAC_S16:
+            a = self._s16(self.regs.get(self.runtime_cls.OP_A, 0))
+            b = self._s16(self.regs.get(self.runtime_cls.OP_B, 0))
+            result = self._s32(self.regs.get(self.runtime_cls.ACC, 0)) + a * b
+            self.regs[self.runtime_cls.RESULT] = result & 0xFFFF_FFFF
+        elif opcode == self.runtime_cls.OP_DOT4_S8:
+            a = self.regs.get(self.runtime_cls.OP_A, 0)
+            b = self.regs.get(self.runtime_cls.OP_B, 0)
+            acc = self._s32(self.regs.get(self.runtime_cls.ACC, 0))
+            result = acc + sum(
+                self._s8(a >> (8 * index)) * self._s8(b >> (8 * index)) for index in range(4)
+            )
+            self.regs[self.runtime_cls.RESULT] = result & 0xFFFF_FFFF
+        elif opcode == self.runtime_cls.OP_GEMM_S8:
+            self._complete_gemm()
+        else:
+            self.regs[self.runtime_cls.CTRL_STATUS] = 0x4
+            return
+        self.regs[self.runtime_cls.CTRL_STATUS] = 0x2
+
+    def _read_scratch_byte(self, offset):
+        word = self.regs.get(self.runtime_cls.SCRATCH + (offset & ~0x3), 0)
+        return (word >> (8 * (offset & 0x3))) & 0xFF
+
+    def _write_scratch_i32(self, offset, value):
+        self.regs[self.runtime_cls.SCRATCH + offset] = value & 0xFFFF_FFFF
+
+    def _complete_gemm(self):
+        cfg = self.regs.get(self.runtime_cls.GEMM_CFG, 0)
+        base = self.regs.get(self.runtime_cls.GEMM_BASE, 0)
+        stride = self.regs.get(self.runtime_cls.GEMM_STRIDE, 0)
+        m = cfg & 0xFF
+        n = (cfg >> 8) & 0xFF
+        k = (cfg >> 16) & 0xFF
+        a_base = base & 0xFF
+        b_base = (base >> 8) & 0xFF
+        c_base = (base >> 16) & 0xFF
+        a_stride = stride & 0xFF
+        b_stride = (stride >> 8) & 0xFF
+        c_stride = (stride >> 16) & 0xFF
+        macs = 0
+        for row in range(m):
+            for col in range(n):
+                acc = 0
+                for kk in range(k):
+                    a = self._s8(self._read_scratch_byte(a_base + row * a_stride + kk))
+                    b = self._s8(self._read_scratch_byte(b_base + kk * b_stride + col))
+                    acc += a * b
+                    macs += 1
+                self._write_scratch_i32(c_base + row * c_stride + col * 4, acc)
+        self.regs[self.runtime_cls.PERF_CYCLES] = (
+            self.regs.get(self.runtime_cls.PERF_CYCLES, 0) + macs
+        )
+        self.regs[self.runtime_cls.PERF_MACS] = self.regs.get(self.runtime_cls.PERF_MACS, 0) + macs
+
+
+class RejectingMmio(FakeMmio):
+    def write32(self, addr, value):
+        super().write32(addr, value)
+        if addr == HelloNpuRuntime.CTRL_STATUS and (value & 0x1):
+            self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x4
+
+
+def make_runtime():
+    mmio = FakeMmio()
+    return HelloNpuRuntime(mmio.read32, mmio.write32), mmio
+
+
+def make_completing_runtime():
+    mmio = CommandCompletingMmio()
+    return HelloNpuRuntime(mmio.read32, mmio.write32), mmio
+
+
+def test_scratch_write_only_touches_overlapped_words_and_preserves_bytes():
+    runtime, mmio = make_runtime()
+    mmio.regs[runtime.SCRATCH + 0] = 0x11223344
+    mmio.regs[runtime.SCRATCH + 4] = 0x55667788
+    mmio.regs[runtime.SCRATCH + 8] = 0x99AABBCC
+
+    runtime.write_scratch(3, bytes([0xDE, 0xAD, 0xBE]))
+
+    assert mmio.reads == [runtime.SCRATCH + 0, runtime.SCRATCH + 4]
+    assert mmio.writes == [
+        (runtime.SCRATCH + 0, 0xDE223344),
+        (runtime.SCRATCH + 4, 0x5566BEAD),
+    ]
+    assert mmio.regs[runtime.SCRATCH + 8] == 0x99AABBCC
+
+
+def test_scratch_read_only_touches_overlapped_words():
+    runtime, mmio = make_runtime()
+    mmio.regs[runtime.SCRATCH + 4] = 0x04030201
+    mmio.regs[runtime.SCRATCH + 8] = 0x08070605
+
+    assert runtime.read_scratch(6, 4) == bytes([0x03, 0x04, 0x05, 0x06])
+    assert mmio.reads == [runtime.SCRATCH + 4, runtime.SCRATCH + 8]
+
+
+@pytest.mark.parametrize(
+    ("method", "args"),
+    [
+        ("write_scratch", (-1, b"x")),
+        ("write_scratch", (64, b"x")),
+        ("read_scratch", (-1, 1)),
+        ("read_scratch", (63, 2)),
+    ],
+)
+def test_scratch_accesses_fail_closed_outside_64_byte_window(method, args):
+    runtime, mmio = make_runtime()
+
+    with pytest.raises(ValueError, match="64-byte NPU scratchpad"):
+        getattr(runtime, method)(*args)
+
+    assert mmio.reads == []
+    assert mmio.writes == []
+
+
+def test_golden_gemm_s8_reference_model():
+    assert golden_gemm_s8([[1, -2, 3], [4, 5, -6]], [[7, -8], [9, 10], [-11, 12]]) == [
+        [-44, 8],
+        [139, -54],
+    ]
+
+
+def test_scalar_commands_program_mmio_and_return_completed_results():
+    runtime, mmio = make_completing_runtime()
+
+    assert runtime.add(0xFFFF_FFFE, 5) == 3
+    assert runtime.sub(2, 5) == 0xFFFF_FFFD
+    assert runtime.mul_lo(0x1_0001, 0x1_0001) == 0x0002_0001
+    assert runtime.mac_s16(0xFFFF, 3, 10) == 7
+    assert runtime.dot4_s8(0x04_03_FE_01, 0xFD_02_05_06, 1) == (1 + 6 - 10 + 6 - 12) & 0xFFFF_FFFF
+
+    assert mmio.commands == [
+        runtime.OP_ADD,
+        runtime.OP_SUB,
+        runtime.OP_MUL_LO,
+        runtime.OP_MAC_S16,
+        runtime.OP_DOT4_S8,
+    ]
+    assert (runtime.CTRL_STATUS, 2) in mmio.writes
+    assert (runtime.CTRL_STATUS, 1) in mmio.writes
+
+
+def test_scalar_command_reject_and_timeout_paths_fail_closed():
+    mmio = RejectingMmio()
+    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+    with pytest.raises(RuntimeError, match="rejected command"):
+        runtime.add(1, 2)
+
+    runtime, mmio = make_runtime()
+    with pytest.raises(TimeoutError, match="did not complete"):
+        runtime.add(1, 2)
+
+
+def test_gemm_s8_programs_scratchpad_and_matches_golden_model():
+    runtime, mmio = make_completing_runtime()
+    a = [[1, -2, 3], [4, 5, -6]]
+    b = [[7, -8], [9, 10], [-11, 12]]
+
+    assert runtime.gemm_s8(a, b) == golden_gemm_s8(a, b)
+    assert mmio.commands[-1] == runtime.OP_GEMM_S8
+    assert mmio.regs[runtime.GEMM_CFG] == 2 | (2 << 8) | (3 << 16)
+    assert mmio.regs[runtime.PERF_MACS] == 12
+
+
+def test_gemm_s8_rejects_invalid_tiles_before_touching_mmio():
+    runtime, mmio = make_runtime()
+    with pytest.raises(ValueError, match="prototype limits"):
+        runtime.gemm_s8([[1] * 8], [[1]])
+    with pytest.raises(ValueError, match="outside signed INT8 range"):
+        runtime.gemm_s8([[128]], [[1]])
+    with pytest.raises(ValueError, match="ragged"):
+        runtime.gemm_s8([[1], [1, 2]], [[1]])
+
+    assert mmio.writes == []

@@ -134,7 +134,7 @@ def check_generated_header(contract: dict, errors: list[str]) -> None:
 
 def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
     rtl = read_text(ROOT / "rtl/bootrom/hello_bootrom.sv")
-    localparams = {
+    constants = {
         name: h(value)
         for name, value in re.findall(
             r"localparam\s+logic\s+\[31:0\]\s+(\w+)\s*=\s*32'h([0-9A-Fa-f_]+)",
@@ -142,12 +142,17 @@ def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
         )
     }
     rtl_words = {}
-    for index, expr in re.findall(r"[68]'h([0-9A-Fa-f]+):\s*\w+\s*=\s*([^;]+);", rtl):
-        expr = expr.strip()
-        literal = re.fullmatch(r"32'h([0-9A-Fa-f_]+)", expr)
-        value = h(literal.group(1)) if literal else localparams.get(expr)
-        if value is not None:
-            rtl_words[int(index, 16) * 4] = value
+    for index, value in re.findall(
+        r"6'h([0-9A-Fa-f]+):\s*rdata\s*=\s*(?:32'h)?([A-Za-z0-9_]+)",
+        rtl,
+    ):
+        if value in constants:
+            resolved = constants[value]
+        elif re.fullmatch(r"[0-9A-Fa-f_]+", value):
+            resolved = h(value)
+        else:
+            resolved = -1
+        rtl_words[int(index, 16) * 4] = resolved
     for word in contract["hello_chip"]["boot_rom"]["words"]:
         offset = h(word["offset"])
         expected = h(word["value"])
@@ -163,14 +168,12 @@ def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
 def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
     top = read_text(ROOT / "rtl/top/hello_soc_top.sv")
     decoded = {}
-    for rtl_name, expr in re.findall(r"assign\s+(\w+)_sel\s*=\s*(.*?);", top, re.S):
+    for rtl_name, value in re.findall(
+        r"assign\s+(\w+)_sel\s*=.*?mmio_addr\[31:12\]\s*==\s*20'h([0-9A-Fa-f_]+)",
+        top,
+    ):
         if rtl_name in REGION_RTL_NAMES:
-            match_20 = re.search(r"mmio_addr\[31:12\]\s*==\s*20'h([0-9A-Fa-f_]+)", expr)
-            match_16 = re.search(r"mmio_addr\[31:16\]\s*==\s*16'h([0-9A-Fa-f_]+)", expr)
-            if match_20:
-                decoded[REGION_RTL_NAMES[rtl_name]] = h(match_20.group(1)) << 12
-            elif match_16:
-                decoded[REGION_RTL_NAMES[rtl_name]] = h(match_16.group(1)) << 16
+            decoded[REGION_RTL_NAMES[rtl_name]] = h(value) << 12
 
     checked_regions = set(REGION_RTL_NAMES.values())
     for name, region in regions_by_name(contract).items():
@@ -199,10 +202,9 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
     for region_name, path in MODULE_BY_REGION.items():
         rtl = read_text(path)
         rtl_offsets = {
-            int(index, 16) * 4
-            for index in re.findall(r"(?:6|12)'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
+            int(index, 16) * 4 for index in re.findall(r"6'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
         }
-        if region_name == "npu" and "addr[5:4] == 2'b10" in rtl:
+        if region_name == "npu" and "addr[5:4] == 2'b10" in rtl and "scratch[addr[3:0]]" in rtl:
             rtl_offsets.update(range(0x80, 0xC0, 4))
         contract_offsets = set()
         for reg in regions[region_name]["registers"]:

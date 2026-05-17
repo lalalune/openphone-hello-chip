@@ -37,6 +37,8 @@ module hello_display (
     logic        enable;
     logic [31:0] underflow_count;
     logic [31:0] fetched_pixel_count;
+    logic [63:0] frame_byte_count;
+    logic [31:0] line_stride_bytes;
 
     logic [16:0] h_count;
     logic [16:0] v_count;
@@ -73,6 +75,8 @@ module hello_display (
     assign scan_fb_addr = scan_active ? fb_base + (active_pixel_index << 2) : 32'h0;
     assign fb_read_valid = scan_active;
     assign fb_read_addr = scan_fb_addr;
+    assign frame_byte_count = {32'h0, width} * {32'h0, height} * 64'd4;
+    assign line_stride_bytes = {14'h0, width, 2'b00};
     assign unused_fb_alpha = ^fb_read_data[31:24];
     assign scan_rgb = (scan_active && fb_read_ready) ? fb_read_data[23:0] : 24'h0;
 
@@ -140,6 +144,9 @@ module hello_display (
             6'h04: rdata = {31'h0, irq_vsync};
             6'h05: rdata = underflow_count;
             6'h06: rdata = fetched_pixel_count;
+            6'h07: rdata = line_stride_bytes;
+            6'h08: rdata = frame_byte_count[31:0];
+            6'h09: rdata = frame_byte_count[63:32];
             default: rdata = 32'h0;
         endcase
     end

@@ -53,6 +53,9 @@ module hello_dma (
     logic [31:0] error_count;
     logic [3:0]  last_wstrb;
     logic [2:0]  state;
+    logic        read_addr_sent;
+    logic        write_addr_sent;
+    logic        write_data_sent;
 
     wire clear_req = valid && write && addr == 6'h03 && wdata[1];
     wire unsupported_align = (src[1:0] != 2'b00) || (dst[1:0] != 2'b00);
@@ -61,18 +64,20 @@ module hello_dma (
     wire [31:0] beat_bytes = (remaining >= 32'd4) ? 32'd4 : remaining;
     wire read_fire = m_axil_arvalid && m_axil_arready;
     wire read_done = m_axil_rvalid && m_axil_rready;
-    wire write_fire = m_axil_awvalid && m_axil_awready &&
-                      m_axil_wvalid && m_axil_wready;
+    wire write_addr_fire = m_axil_awvalid && m_axil_awready;
+    wire write_data_fire = m_axil_wvalid && m_axil_wready;
+    wire write_issue_done = (write_addr_sent || write_addr_fire) &&
+                            (write_data_sent || write_data_fire);
     wire write_done = m_axil_bvalid && m_axil_bready;
 
     assign irq = status[1];
 
-    assign m_axil_arvalid = status[0] && state == DMA_READ;
+    assign m_axil_arvalid = status[0] && state == DMA_READ && !read_addr_sent;
     assign m_axil_araddr  = cur_src;
     assign m_axil_rready  = status[0] && state == DMA_READ;
-    assign m_axil_awvalid = status[0] && state == DMA_WRITE;
+    assign m_axil_awvalid = status[0] && state == DMA_WRITE && !write_addr_sent;
     assign m_axil_awaddr  = cur_dst;
-    assign m_axil_wvalid  = status[0] && state == DMA_WRITE;
+    assign m_axil_wvalid  = status[0] && state == DMA_WRITE && !write_data_sent;
     assign m_axil_wdata   = read_data_q;
     assign m_axil_wstrb   = next_wstrb;
     assign m_axil_bready  = status[0] && state == DMA_WRESP;
@@ -97,6 +102,9 @@ module hello_dma (
             error_count <= 32'h0;
             last_wstrb <= 4'h0;
             state <= DMA_IDLE;
+            read_addr_sent <= 1'b0;
+            write_addr_sent <= 1'b0;
+            write_data_sent <= 1'b0;
         end else begin
             status[3] <= 1'b0;
             status[4] <= 1'b0;
@@ -112,10 +120,12 @@ module hello_dma (
                         if (read_fire) begin
                             last_src <= cur_src;
                             status[3] <= 1'b1;
+                            read_addr_sent <= 1'b1;
                         end
                         if (read_done) begin
                             read_data_q <= m_axil_rdata;
                             read_beats <= read_beats + 32'd1;
+                            read_addr_sent <= 1'b0;
                             if (m_axil_rresp != 2'b00) begin
                                 status[0] <= 1'b0;
                                 status[1] <= 1'b1;
@@ -128,12 +138,20 @@ module hello_dma (
                         end
                     end
                     DMA_WRITE: begin
-                        if (write_fire) begin
+                        if (write_addr_fire) begin
+                            write_addr_sent <= 1'b1;
+                        end
+                        if (write_data_fire) begin
+                            write_data_sent <= 1'b1;
+                        end
+                        if (write_issue_done) begin
                             last_dst <= cur_dst;
                             last_wstrb <= next_wstrb;
                             status[4] <= 1'b1;
                             beats_issued <= beats_issued + 32'd1;
                             write_beats <= write_beats + 32'd1;
+                            write_addr_sent <= 1'b0;
+                            write_data_sent <= 1'b0;
                             state <= DMA_WRESP;
                         end
                     end
@@ -145,6 +163,9 @@ module hello_dma (
                                 status[2] <= 1'b1;
                                 error_count <= error_count + 32'd1;
                                 state <= DMA_IDLE;
+                                read_addr_sent <= 1'b0;
+                                write_addr_sent <= 1'b0;
+                                write_data_sent <= 1'b0;
                             end else if (remaining <= 32'd4) begin
                                 bytes_done <= bytes_done + beat_bytes;
                                 remaining <= 32'h0;
@@ -166,6 +187,9 @@ module hello_dma (
                     default: begin
                         state <= DMA_IDLE;
                         status[0] <= 1'b0;
+                        read_addr_sent <= 1'b0;
+                        write_addr_sent <= 1'b0;
+                        write_data_sent <= 1'b0;
                     end
                 endcase
             end
@@ -189,6 +213,9 @@ module hello_dma (
                             last_dst <= dst;
                             remaining <= len;
                             last_wstrb <= 4'h0;
+                            read_addr_sent <= 1'b0;
+                            write_addr_sent <= 1'b0;
+                            write_data_sent <= 1'b0;
                             if (unsupported_align) begin
                                 status <= 32'h0000_0006;
                                 error_count <= 32'd1;

@@ -8,7 +8,7 @@ Date: 2026-05-17
 
 The project commits to a two-stage FPGA prototyping strategy:
 
-1. **Stage 1 (now, hello-demo MMIO):** Lattice ECP5 on a **ULX3S 85F** board.
+1. **Stage 1 (now, hello-demo MMIO):** Lattice ECP5 on a **Radiona/FER ULX3S 85F** board.
    Bring-up runs entirely on the open-source toolchain (Yosys / nextpnr-ecp5 /
    ecppack / openFPGALoader). No vendor license, no NDA, no closed binary in
    the bitstream path.
@@ -78,6 +78,17 @@ benchmark sweeps.
 - Analog and RF blocks: not FPGA-targetable; covered by board-level
   external modules per `board/fpga/package/wifi_external_module_adapter.yaml`.
 
+## Stage 1 board facts
+
+- Demo board class: ULX3S 85F.
+- FPGA part family used by the scaffold: `LFE5U-85F-6BG381C`.
+- nextpnr target: `--85k --package CABGA381`.
+- Clock assumption: 25 MHz onboard `clk_25mhz`.
+- Programming assumption: SRAM programming with `openFPGALoader -b ulx3s`.
+- Release blocker: the exact purchased/assembled board revision is still
+  `unassigned`, so the LPF remains a scaffold even though it has concrete
+  preliminary package sites.
+
 ## References
 
 - `docs/board/fpga/README.md`
@@ -85,5 +96,4 @@ benchmark sweeps.
 - `docs/project/board-package-pd-fpga-critical-gap-audit.md`
 - `docs/generators/chipyard/README.md`
 - `docs/toolchain/headless-cli-audit.md`
-- `board/fpga/vcu118/README.md`
-- `docs/board/fpga/firesim-bringup.md`
+- Future VCU118 and FireSim bring-up docs once those stage-2 paths exist.

@@ -1,0 +1,55 @@
+{
+  "software": {
+    "os": "example-os-or-simulator",
+    "kernel": "example-kernel-or-none",
+    "firmware": "example-firmware-build-id",
+    "runtime": "example-runtime",
+    "build_id": "example-build-id"
+  },
+  "clocks": {
+    "source": "example-clock-source",
+    "cpu_hz": 0,
+    "npu_hz": 0,
+    "memory_hz": 0,
+    "governor": "example-governor-or-fixed"
+  },
+  "memory": {
+    "type": "example-memory-model",
+    "capacity_bytes": 0,
+    "bandwidth_bytes_per_second": 0,
+    "channels": 0
+  },
+  "thermal": {
+    "ambient_c": 0,
+    "die_c": 0,
+    "cooling": "example-cooling",
+    "throttle_state": "example-throttle-state"
+  },
+  "power": {
+    "source": "example-power-source",
+    "watts": 0,
+    "measurement_method": "example-measurement-method",
+    "sample_count": 0,
+    "averaging_window_seconds": 0
+  },
+  "calibration": {
+    "status": "calibrated",
+    "source": "example-calibration-lab-or-script",
+    "ground_truth_reference": "example-reference-device-or-simulator-baseline",
+    "last_calibrated_utc": "1970-01-01T00:00:00+00:00",
+    "assets": {
+      "clock_source": {
+        "status": "calibrated",
+        "source": "example-clock-readback-log",
+        "sha256": "example-sha256",
+        "evidence": "example-clock-evidence-path"
+      },
+      "power_meter": {
+        "status": "calibrated",
+        "source": "example-meter-calibration-record",
+        "sha256": "example-sha256",
+        "evidence": "example-power-evidence-path"
+      }
+    }
+  }
+}

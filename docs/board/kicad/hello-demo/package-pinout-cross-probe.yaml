@@ -1,5 +1,5 @@
 cross_probe: hello_demo_package_pinout_board
-status: non_release_placeholder
+status: non_release_demo_planning
 release_use: prohibited
 scope:
   package_pinout: package/hello-demo-pinout.yaml
@@ -15,5 +15,5 @@ coverage:
 release_blockers:
   - No package-vendor drawing or immutable source checksum is archived.
   - No bond diagram maps die pads to package pins.
-  - No KiCad schematic symbol or footprint exists to cross-probe.
+  - KiCad schematic, PCB, and footprint sources are planning artifacts, not vendor-derived fabrication evidence.
   - Board nets are planning names from package/hello-demo-pinout.yaml, not fabrication evidence.

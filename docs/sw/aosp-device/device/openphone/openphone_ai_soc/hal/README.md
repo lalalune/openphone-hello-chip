@@ -50,3 +50,7 @@ Evidence required before enabling packages:
 - SELinux policy and neverallow build logs.
 - Bounded Cuttlefish, QEMU, or Renode smoke transcript that keeps Android boot
   claims separate from virtual-device smoke evidence.
+# HAL Evidence Boundary
+
+HAL source or prebuilts are not checked in. `hello_npu.default` and
+`hwcomposer.openphone_ai_soc` remain blocked until external AOSP evidence exists.

@@ -86,7 +86,7 @@ def main() -> int:
 
     ok &= run("yaml yamllint", ["yamllint", "."], optional=True)
     ok &= validate_json()
-    ok &= run("git whitespace", ["git", "diff", "--check"])
+    ok &= run("git whitespace", ["git", "-c", f"safe.directory={ROOT}", "diff", "--check"])
 
     return 0 if ok else 1
 

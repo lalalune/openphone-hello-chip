@@ -7,7 +7,7 @@ import argparse
 import json
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -142,7 +142,7 @@ def main() -> int:
     checks: dict[str, object] = {}
     evidence: dict[str, object] = {
         "schema": "openphone.cpu_ap_bootstrap_preflight.v1",
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "manifest": str(MANIFEST.relative_to(ROOT)),
         "checkout": str(checkout),
         "chipyard": {

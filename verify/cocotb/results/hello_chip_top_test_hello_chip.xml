@@ -1,0 +1,8 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1779050968" />
+    <testcase name="chip_debug_bridge_bootrom_gpio_npu" classname="test_hello_chip" file="/work/verify/cocotb/test_hello_chip.py" lineno="72" time="0.0689697265625" sim_time_ns="12320.001" ratio_time="178629.1118442478" />
+    <testcase name="chip_interrupt_smoke" classname="test_hello_chip" file="/work/verify/cocotb/test_hello_chip.py" lineno="123" time="0.23010706901550293" sim_time_ns="45340.001000000004" ratio_time="197038.7141689477" />
+    <testcase name="chip_rejects_unimplemented_alias_offsets" classname="test_hello_chip" file="/work/verify/cocotb/test_hello_chip.py" lineno="185" time="0.01219034194946289" sim_time_ns="2120.0009999999966" ratio_time="173908.24710158393" />
+  </testsuite>
+</testsuites>

@@ -108,8 +108,12 @@ def main() -> int:
                     }
                 )
             else:
-                errors.append(
-                    f"generated artifact {name} is missing or invalid: {artifact['path']}"
+                blockers.append(
+                    {
+                        "name": name,
+                        "detail": f"generated artifact {name} is missing or invalid: {artifact['path']}",
+                        "next": "python3 scripts/check_chipyard_verilator_preflight.py, then generate/import the OpenPhoneRocketConfig artifacts",
+                    }
                 )
 
     dts_checks: dict[str, bool] = {}

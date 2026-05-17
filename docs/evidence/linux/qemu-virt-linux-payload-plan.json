@@ -13,12 +13,12 @@
     {
       "name": "linux",
       "relative_url": "netboot/debian-installer/riscv64/linux",
-      "local_path": "build/qemu/linux_payload/debian-installer-riscv64/linux"
+      "local_path": "build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/linux"
     },
     {
       "name": "initrd.gz",
       "relative_url": "netboot/debian-installer/riscv64/initrd.gz",
-      "local_path": "build/qemu/linux_payload/debian-installer-riscv64/initrd.gz"
+      "local_path": "build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/initrd.gz"
     }
   ],
   "commands": [
@@ -28,7 +28,7 @@
     "python3 scripts/check_bsp_next_import_step.py"
   ],
   "required_real_outputs": [
-    "build/qemu/linux_payload/debian-installer-riscv64/manifest.json",
+    "build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/manifest.json",
     "build/reports/qemu_os_boot_attempt.log with STATUS: PASS qemu.os_boot output",
     "build/reports/qemu_os_boot_attempt.json with claim_boundary=qemu_virt_reference_only_not_hello_chip_rtl"
   ],

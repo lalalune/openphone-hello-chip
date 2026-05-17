@@ -28,30 +28,16 @@
 		stdout-path = &uart0;
 	};
 
-	cpus {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		timebase-frequency = <10000000>;
-
-		cpu0: cpu@0 {
-			compatible = "riscv";
-			device_type = "cpu";
-			reg = <0>;
-			riscv,isa = "rv64imafdc";
-			mmu-type = "riscv,sv39";
-			status = "okay";
-
-			cpu0_intc: interrupt-controller {
-				compatible = "riscv,cpu-intc";
-				interrupt-controller;
-				#interrupt-cells = <1>;
-			};
-		};
-	};
-
-	memory@80000000 {
-		device_type = "memory";
-		reg = <0x80000000 0x10000000>;
+	wifi_pwrseq: wifi-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		status = "disabled";
+		/*
+		 * Stub for a Murata Type 1DX / CYW4343W-class external module.
+		 * Bind WIFI_EN/WIFI_RST_N to real GPIO phandles after hello-chip
+		 * grows a GPIO/pinctrl-backed SDIO host integration.
+		 */
+		post-power-on-delay-ms = <200>;
+		/* reset-gpios = <&gpioX N GPIO_ACTIVE_LOW>; required before enable. */
 	};
 
 	soc {
@@ -124,6 +110,11 @@
 			non-removable;
 			cap-sd-highspeed;
 			mmc-pwrseq = <&wifi_pwrseq>;
+			/*
+			 * WIFI_SDIO_CLK/CMD/D0/D1/D2/D3: RTL host, pinctrl,
+			 * regulators, clocks, and GPIO-backed power sequencing are
+			 * not implemented. Keep disabled until real phandles exist.
+			 */
 
 			wifi@1 {
 				compatible = "brcm,bcm4329-fmac";
@@ -134,8 +125,11 @@
 		uart1: uart@10051000 {
 			compatible = "hello,uart-1.0";
 			status = "disabled";
-			reg = <0x10051000 0x00001000>;
-			clock-frequency = <10000000>;
+			reg = <0x0 0x10051000 0x0 0x1000>;
+			/*
+			 * BT_UART_TX/RX/CTS_N/RTS_N: RTL UART and flow-control
+			 * pinctrl are not implemented.
+			 */
 
 			bluetooth {
 				compatible = "brcm,bcm43438-bt";
