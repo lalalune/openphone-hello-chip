@@ -2,7 +2,7 @@ version: 2
 owner_scope: rtl_verification
 fail_closed_required: true
 last_review: 2026-05-17
-audit_doc: docs/project/critical-gap-review.md
+audit_doc: docs/project/rtl-soc-critical-gap-audit.md
 allowed_statuses:
   - open
 required_gap_fields:

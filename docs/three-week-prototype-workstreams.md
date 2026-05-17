@@ -1,12 +1,14 @@
 # Three-week prototype workstreams
 
 Generated on 2026-05-16 from subsystem agent reviews and local validation.
+Updated on 2026-05-17 after the critical gap review pass.
 
 ## Current executable baseline
 
-- Passing locally: `make docs-check platform-contract-check product-check`, `make rtl-check`, `make synth`, `make formal`, `make verilator`, `make cocotb`, and `make cocotb-contract`.
+- Passing locally: `make docs-check project-plan-check platform-contract-check`, `make rtl-check`, `make synth`, `make formal`, `make verilator`, `make cocotb`, `make cocotb-contract`, `make cocotb-cpu`, `make qemu-check`, `make pipeline-check`, and `python3 scripts/check_mvp_status.py --fail-on-fail`.
 - Blocked locally: `make openroad` and `make openlane` because OpenROAD/OpenLane/Magic/Netgen are not installed or pulled.
-- Tooling caveat: cocotb now runs from the user Python site. A repo-local virtual environment is still needed so NumPy/pytest/cocotb do not perturb unrelated Python packages.
+- Tooling caveat: cocotb now runs from the repo `.venv` path through the Makefile wrapper. Release evidence still needs clean-checkout regeneration and archived tool/report checksums.
+- Blocked by evidence, not local syntax: Renode executable smoke, software BSP external build logs, product/package/board fabrication evidence, real benchmarks, and PD signoff artifacts.
 
 ## Critical architecture boundary
 
@@ -27,7 +29,7 @@ Primary gaps:
 - No real CPU, cache/MMU, memory controller, or shared-memory path in pad-level RTL.
 - DMA has a prototype AXI-Lite memory master, but no production memory hierarchy, coherency policy, long-burst coverage, or throughput evidence.
 - NPU is register-datapath only: no descriptors, queue, scratchpad, tensor layout, or backpressure.
-- Display has a top-level SRAM-backed framebuffer read path, but no production framebuffer client, panel PHY/DSI bridge, format conversion pipeline, or hardware-in-loop evidence.
+- Display has a top-level SRAM-backed framebuffer read path verified by cocotb, but no production framebuffer client, panel PHY/DSI bridge, format conversion pipeline, or hardware-in-loop evidence.
 - Formal is shallow BMC and misses AXI-Lite, DRAM, interrupt controller, display, reset, and CPU-contract wrappers.
 
 Immediate work:
@@ -43,17 +45,18 @@ Immediate work:
 Primary gaps:
 
 - Platform contract had drifted behind extended DMA/NPU RTL registers. This report run updated the JSON/header and checker to catch future undocumented readable RTL offsets.
-- Linux drivers still hardcode constants instead of consuming generated contract headers.
+- Linux drivers now consume the generated platform contract import header, and the platform-contract checker rejects stale generated/imported headers.
 - DTS is not bootable: no CPU, memory, timer, interrupt-parent, UART, or complete RISC-V platform shape.
-- `qemu-check` and `renode-check` are scaffold echoes, not boot validation.
+- `qemu-check` now builds/runs the qemu-virt software-reference firmware and archives `build/reports/qemu_smoke.log`; this is still not hello-chip hardware boot proof.
+- `renode-check` remains a semantic scaffold plus explicit BLOCK until `renode` is installed and a transcript is archived.
 - Buildroot/AOSP/OpenSBI/U-Boot paths are placeholders around external trees.
 
 Immediate work:
 
 - Generate DTS/include fragments from `sw/platform/hello_platform_contract.json`.
-- Build `sw/bootrom/hello_qemu_firmware.S` into an ELF and make `qemu-check` assert serial output under timeout.
+- Keep QEMU transcript evidence in `build/reports/qemu_smoke.log` and prevent qemu-virt success from being described as hello-chip hardware boot.
 - Split software checks into scaffold checks versus real boot/image checks.
-- Replace driver constants with generated headers or generated local include files.
+- Produce external Linux, Buildroot, and AOSP logs before allowing `make software-bsp-evidence-check` to pass.
 
 ## Workstream C: PD, package, board, SI/PI
 
@@ -68,7 +71,7 @@ Primary gaps:
 Immediate work:
 
 - Produce real OpenLane/OpenROAD signoff output for every artifact class named by `scripts/check_pd_signoff.py` and `pd/signoff/manifest.yaml`.
-- Add board/package gates for footprint checksum, current budget, SI/PI report, DFM review, and first-article checklist.
+- Keep `docs/manufacturing/physical-closure-work-order.yaml` in sync with footprint checksum, current budget, SI/PI report, DFM review, and first-article checklist gates.
 - Add an FPGA build target after pins are assigned: Yosys, nextpnr-ecp5, ecppack, and timing report parse.
 
 ## Workstream D: ISP, display, real-world verification
@@ -76,7 +79,7 @@ Immediate work:
 Primary gaps:
 
 - No camera/ISP contract exists: no CSI/MIPI, sensor power/reset/I2C, calibration assets, tuning tables, image-quality tests, or board constraints.
-- Display lacks framebuffer fetch, pixel formats beyond scaffold registers, panel init, DSI/PHY bridge, gamma/color, underflow handling, and real panel validation.
+- Display now has SRAM-backed framebuffer fetch and underflow accounting in the top-level demonstrator, but still lacks pixel formats beyond scaffold registers, panel init, DSI/PHY bridge, gamma/color, buffering, bandwidth checks, and real panel validation.
 - Real-world verification is currently artifact/contract oriented, not hardware-in-loop.
 
 Immediate work:
@@ -93,7 +96,7 @@ Primary gaps:
 - Bootstrap scripts clone moving OpenLane2/Chipyard branches.
 - OpenLane/OpenROAD/Magic/Netgen/Renode/KiCad are missing locally.
 - Boolector is end-of-maintenance; Bitwuzla should be evaluated for future formal work.
-- A repo-local `.venv` is not yet guaranteed; cocotb evidence from user-site Python is not release-grade.
+- Repo-local `.venv` is the current cocotb path. Release-grade reproducibility still needs clean-checkout regeneration and archived package/tool checksums.
 
 Upstream review targets:
 
@@ -117,7 +120,6 @@ Validation commands:
 
 Blockers to close before release-grade reproducibility:
 
-- create `.venv` from `requirements.txt` and use it for cocotb/docs checks,
 - commit or archive a Python lock/constraints file,
 - pin Docker by digest or archive an apt package manifest,
 - commit `flake.lock` if Nix is a supported path,

@@ -238,7 +238,11 @@ def main() -> int:
         return 1
 
     yosys_log = (root / "build/reports/hello_soc_yosys.log").read_text(errors="ignore")
-    if "Number of cells:" not in yosys_log and "=== design hierarchy ===" not in yosys_log:
+    if (
+        "Number of cells:" not in yosys_log
+        and "=== design hierarchy ===" not in yosys_log
+        and ("End of script." not in yosys_log or "Dumping module `\\hello_chip_top'." not in yosys_log)
+    ):
         print("Yosys report does not look like a completed synthesis log.")
         return 1
 
