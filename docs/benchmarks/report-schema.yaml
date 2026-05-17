@@ -88,13 +88,22 @@ required_fields:
     traces: list
 optional_result_fields:
   missing_dependencies: list
-  blocked_assets: list
+  blocked_assets:
+    type: list
+    item:
+      name: string
+      reason: string
+      blocker_id: string
+      pipeline_visible: boolean
+      release_blocking: boolean
+      resolution: string
   returncode: integer
   elapsed_seconds: number
   error: string
 validation_rules:
   - Generated reports must validate with `python3 benchmarks/run_benchmarks.py validate-report <report.json>`.
   - Results with unavailable model_artifact dependencies must use status `blocked`, not `passed`.
+  - Blocked model artifacts must carry stable `blocker_id`, `pipeline_visible`, and `release_blocking` fields so CI and release pipelines can gate on them.
   - Placeholder or undersized TFLite models are blocked until replaced by a declared non-proprietary model artifact.
   - Simulator wall-clock time must not be compared against commercial phone scores.
   - FPGA power must not be reported as mobile SoC power.

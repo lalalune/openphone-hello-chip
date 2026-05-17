@@ -1,8 +1,11 @@
     .section .text
     .globl _start
+
+#include "../platform/generated/hello_platform_contract.h"
+
 _start:
     la a0, message
-    li a1, 0x10000000
+    li a1, HELLO_QEMU_VIRT_UART_BASE
 1:
     lbu a2, 0(a0)
     beqz a2, 2f

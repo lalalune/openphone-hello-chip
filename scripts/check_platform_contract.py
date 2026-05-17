@@ -17,6 +17,7 @@ REGION_RTL_NAMES = {
     "dma": "dma",
     "npu": "npu",
     "display": "display",
+    "dram": "dram",
 }
 
 MODULE_BY_REGION = {
@@ -77,6 +78,7 @@ def generate_header(contract: dict) -> str:
         f"#define HELLO_DMA_BASE {fmt_hex(h(regions['dma']['base']))}u",
         f"#define HELLO_NPU_BASE {fmt_hex(h(regions['npu']['base']))}u",
         f"#define HELLO_DISPLAY_BASE {fmt_hex(h(regions['display']['base']))}u",
+        f"#define HELLO_DRAM_BASE {fmt_hex(h(regions['dram']['base']))}u",
         "",
     ]
 

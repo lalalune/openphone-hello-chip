@@ -12,6 +12,8 @@ REQUIRED = [
     "docs/android/riscv-bringup.md",
     "docs/project/three-week-execution-plan.md",
     "docs/project/workstreams.md",
+    "docs/project/critical-gap-review.md",
+    "docs/project/workstream-gap-review.md",
     "docs/toolchain/README.md",
     "docs/risks/risk-register.md",
     "rtl/open_rtl_prototype_path.md",
@@ -49,6 +51,22 @@ REQUIRED_TERMS = {
         "Parallel Workstreams",
         "Agent Queue",
         "Completion Bar",
+        "Gap Review",
+    ],
+    "docs/project/critical-gap-review.md": [
+        "Active Subagent Assignments",
+        "Workstream A: RTL, CPU, Interconnect, Memory",
+        "Workstream E: Phone Product Features Not Started",
+        "A scaffold check is never a boot proof",
+    ],
+    "docs/project/workstream-gap-review.md": [
+        "Workstream Gap Review",
+        "Status terms",
+        "Global claim gates",
+        "Complete gap",
+        "LARP",
+        "Untested",
+        "Blocked",
     ],
     "docs/toolchain/README.md": [
         "CLI/headless audit matrix",
@@ -211,6 +229,118 @@ def check_board_plan(root: Path) -> list[str]:
     return errors
 
 
+def parse_markdown_table(text: str, required_header: str) -> tuple[list[str], list[dict[str, str]]]:
+    lines = text.splitlines()
+    header_index = next((idx for idx, line in enumerate(lines) if line.strip() == required_header), -1)
+    if header_index < 0 or header_index + 1 >= len(lines):
+        return [], []
+
+    header = [cell.strip() for cell in lines[header_index].strip().strip("|").split("|")]
+    rows: list[dict[str, str]] = []
+    for line in lines[header_index + 2:]:
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            break
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) != len(header):
+            continue
+        rows.append(dict(zip(header, cells)))
+    return header, rows
+
+
+def check_risk_register(root: Path) -> list[str]:
+    errors: list[str] = []
+    path = root / "docs/risks/risk-register.md"
+    text = path.read_text()
+    expected_header = "| Risk | Owner | Status | Severity | Likelihood | Trigger | Failure mode | Mitigation | Evidence |"
+    header, rows = parse_markdown_table(text, expected_header)
+    required_columns = [
+        "Risk",
+        "Owner",
+        "Status",
+        "Severity",
+        "Likelihood",
+        "Trigger",
+        "Failure mode",
+        "Mitigation",
+        "Evidence",
+    ]
+
+    if header != required_columns:
+        errors.append("docs/risks/risk-register.md must use the operational risk table schema")
+        return errors
+    if len(rows) < 15:
+        errors.append("docs/risks/risk-register.md must track at least 15 named risks")
+
+    allowed_status = {"Active", "Monitoring", "Blocked", "Closed"}
+    for row in rows:
+        risk = row.get("Risk", "<unnamed risk>")
+        for column in required_columns:
+            if not row.get(column):
+                errors.append(f"risk register row '{risk}' has empty column: {column}")
+        if row.get("Status") not in allowed_status:
+            errors.append(f"risk register row '{risk}' has invalid status: {row.get('Status')}")
+        if "`" not in row.get("Evidence", ""):
+            errors.append(f"risk register row '{risk}' must cite versioned evidence paths")
+
+    required_risks = [
+        "OpenLane/PDK reproducibility",
+        "FPGA bitstream bring-up",
+        "Board DFM and procurement",
+        "Scaffold check mistaken for proof",
+        "Gap inventory drift",
+    ]
+    present = {row.get("Risk") for row in rows}
+    missing = [risk for risk in required_risks if risk not in present]
+    if missing:
+        errors.append("docs/risks/risk-register.md missing operational risks: " + ", ".join(missing))
+
+    return errors
+
+
+def check_gap_review(root: Path) -> list[str]:
+    errors: list[str] = []
+    path = root / "docs/project/workstream-gap-review.md"
+    text = path.read_text()
+    required_sections = [
+        "## Workstream A: Program Controls And Release Claims",
+        "## Workstream B: SOTA References And Benchmark Boundaries",
+        "## Workstream C: RTL, Formal, And Verification",
+        "## Workstream D: Software, Boot, OS, QEMU, And Renode",
+        "## Workstream E: Android BSP And Compatibility",
+        "## Workstream F: PD, Package, Board, FPGA, SI/PI",
+        "## Workstream G: Product Interfaces, Display, Camera, WiFi, Sensors",
+        "## Workstream H: Toolchain, Reproducibility, And Upstreams",
+        "## Workstream I: Risk, Legal, Certification, And Non-Goals",
+    ]
+    for section in required_sections:
+        if section not in text:
+            errors.append(f"docs/project/workstream-gap-review.md missing section: {section}")
+
+    required_terms = [
+        "Stub",
+        "Scaffold",
+        "LARP",
+        "Untested",
+        "Complete gap",
+        "not-implemented",
+        "Completion criteria",
+        "Gate",
+        "make mvp-status",
+    ]
+    for term in required_terms:
+        if term not in text:
+            errors.append(f"docs/project/workstream-gap-review.md missing gap term: {term}")
+
+    if text.count("| Gap class | Inventory | Completion criteria | Gate |") < 9:
+        errors.append("docs/project/workstream-gap-review.md must include a gap table for each workstream")
+    execution_plan = (root / "docs/project/three-week-execution-plan.md").read_text()
+    if "proof that subsystem gates passed" not in execution_plan:
+        errors.append("three-week execution plan must keep gap review separate from subsystem proof")
+
+    return errors
+
+
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     missing = [path for path in REQUIRED if not (root / path).is_file()]
@@ -234,6 +364,8 @@ def main() -> int:
     errors.extend(check_benchmark_schema(root))
     errors.extend(check_android_plan(root))
     errors.extend(check_board_plan(root))
+    errors.extend(check_risk_register(root))
+    errors.extend(check_gap_review(root))
     if errors:
         print("Project plan artifact checks failed:")
         for error in errors:

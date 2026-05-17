@@ -19,3 +19,5 @@ external/
 tools/bin/
 pd/reports/*
 !pd/reports/.gitkeep
+benchmarks/results/*
+!benchmarks/results/.gitkeep

@@ -12,8 +12,8 @@ allowed only when their CLI/export path is the repo-controlled interface.
 | Yosys | `make synth`, formal fallback | Works headless | Full proof still needs SymbiYosys. |
 | SymbiYosys | `make ci-strict` with `REQUIRE_SBY=1` | CLI-only | Not installed in fast Docker image. |
 | cocotb | `make cocotb`, `make cocotb-contract`, `make cocotb-cpu` | Works headless | Requires Python env plus Verilator/Icarus. |
-| QEMU | `make qemu-check`, `make qemu` | CLI-only | Executable smoke needs RISC-V ELF compiler. |
-| Renode | `make renode` | CLI-only | Not installed in fast Docker image; `renode-check` is scaffold only. |
+| QEMU | `make qemu-check`, `make qemu` | CLI-only; stage output is `STATUS: PASS`, `STATUS: BLOCKED`, or `STATUS: FAIL` | Executable smoke needs RISC-V ELF compiler and `qemu-system-riscv64`. |
+| Renode | `make renode`, `make renode-check` | CLI-only | Not installed in fast Docker image; `renode-check` is scaffold only. |
 | Buildroot | `make buildroot-check` and `sw/buildroot/scripts/import-buildroot-external.sh` | CLI-only | Full image build needs external Buildroot checkout. |
 | Linux kernel | `make linux-bsp-check` | CLI-only | Full kernel build needs external kernel tree/toolchain. |
 | AOSP/Cuttlefish | `make aosp-bsp-check`, runbook in `docs/android` | CLI-only | Full build needs external AOSP checkout and Cuttlefish deps. |
@@ -22,6 +22,10 @@ allowed only when their CLI/export path is the repo-controlled interface.
 | lmbench | `make benchmarks-dry-run`, `make benchmarks` | CLI-only | `bw_mem` and `lat_mem_rd` not installed by default. |
 | fio | `benchmarks/configs/*.fio` | CLI-only | `fio` not installed by default. |
 | TFLite benchmark | `benchmark_model` via benchmark harness | CLI-only | Binary and `mobile_smoke.tflite` artifact absent. |
+| BSP scaffold audit | `make software-bsp-check`, `make bsp-scaffold-check` | CLI-only | Full Linux/Buildroot/AOSP builds still need external trees. |
+| MVP gap report | `make mvp-status`, `make mvp-status-strict` | CLI-only | Reports each subsystem as `PASS`, `BLOCK`, or `FAIL` with evidence and next command. |
+| Release pipeline check | `make pipeline-check` | CLI-only | Requires generated synth/sim/formal artifacts under `build/` and `verify/cocotb/results.xml`. |
+| Release archive | `make archive-release` | CLI-only | Runs `pipeline-check` first; archive is blocked until required evidence exists. |
 | MLPerf Mobile | Benchmark methodology docs | CLI-capable | Not wired as a local repo command yet. |
 | OpenLane | `make openlane` | CLI-only | Docker image or local OpenLane install required. |
 | OpenROAD | `make openroad` | CLI-only | Local OpenROAD install required. |
@@ -43,7 +47,10 @@ requires one of:
 
 ```sh
 make smoke
+make mvp-status
 make benchmarks-dry-run
 make software-bsp-check aosp-bsp-check qemu-check renode-check
+make pipeline-check
+make archive-release
 docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make ci-fast
 ```

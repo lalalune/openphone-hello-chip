@@ -11,11 +11,18 @@ REQUIRED_ARTIFACTS = {
     "gds": ".gds",
     "def": ".def",
     "gate_netlist": ".v",
+    "corner_manifest": ".yaml",
     "sdc": ".sdc",
+    "spef": ".spef",
+    "sdf": ".sdf",
     "drc_report": ".rpt",
     "lvs_report": ".rpt",
     "antenna_report": ".rpt",
     "sta_report": ".rpt",
+    "utilization_report": ".rpt",
+    "congestion_report": ".rpt",
+    "density_fill_report": ".rpt",
+    "tool_versions": ".txt",
 }
 
 REQUIRED_BLOCKED_GATES = {
@@ -59,7 +66,19 @@ def validate_relative_globs(section: str, name: str, globs: object, failures: li
             failures.append(f"{section}.{name}: glob must be a relative repo path: {pattern}")
 
 
-def validate_blocked_gates(manifest: dict) -> list[str]:
+def validate_relative_file(root: Path, field: str, value: object, failures: list[str]) -> None:
+    if not isinstance(value, str) or not value:
+        failures.append(f"{field}: missing evidence_manifest")
+        return
+    path = Path(value)
+    if path.is_absolute() or ".." in path.parts:
+        failures.append(f"{field}: evidence_manifest must be a relative repo path: {value}")
+        return
+    if not (root / path).is_file():
+        failures.append(f"{field}: evidence_manifest points at missing file: {value}")
+
+
+def validate_blocked_gates(root: Path, manifest: dict) -> list[str]:
     failures: list[str] = []
     gates = manifest.get("blocked_gates")
     if not isinstance(gates, dict):
@@ -84,6 +103,7 @@ def validate_blocked_gates(manifest: dict) -> list[str]:
                 )
         if not isinstance(gate.get("reason"), str) or not gate["reason"]:
             failures.append(f"blocked_gates.{gate_name}: missing reason")
+        validate_relative_file(root, f"blocked_gates.{gate_name}", gate.get("evidence_manifest"), failures)
         if not as_list(gate.get("unblock_requires")):
             failures.append(f"blocked_gates.{gate_name}: missing unblock_requires")
     return failures
@@ -209,7 +229,7 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
 
     if manifest_path.name != "manifest.yaml":
         failures.append("signoff manifest file must be named manifest.yaml")
-    failures.extend(validate_blocked_gates(manifest))
+    failures.extend(validate_blocked_gates(manifest_path.parents[2], manifest))
     failures.extend(validate_readiness_sections(manifest))
     return failures
 

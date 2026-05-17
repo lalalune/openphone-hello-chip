@@ -108,6 +108,15 @@ def validate_config(config: dict[str, Any], path: Path) -> None:
         for asset in bench.get("model_artifacts", []):
             if not isinstance(asset, dict) or not isinstance(asset.get("path"), str):
                 raise ValueError(f"{location} model_artifacts entries must contain a string path")
+            for bool_key in ("pipeline_visible", "release_blocking"):
+                if bool_key in asset and not isinstance(asset[bool_key], bool):
+                    raise ValueError(f"{location} model_artifacts {bool_key} must be a boolean")
+            if "generator" in asset:
+                generator = asset["generator"]
+                if not isinstance(generator, dict) or not isinstance(generator.get("command"), list):
+                    raise ValueError(f"{location} model_artifacts generator.command must be a list")
+                if not all(isinstance(part, str) for part in generator["command"]):
+                    raise ValueError(f"{location} model_artifacts generator.command must contain strings")
 
 
 def source_tree_sha(root: Path) -> str:
@@ -164,7 +173,14 @@ def model_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str, Any
         "available": path.is_file(),
         "path": str(path),
         "placeholder_allowed": bool(artifact.get("placeholder_allowed", False)),
+        "blocker_id": artifact.get("blocker_id", "MODEL_ARTIFACT_UNAVAILABLE"),
+        "pipeline_visible": bool(artifact.get("pipeline_visible", True)),
+        "release_blocking": bool(artifact.get("release_blocking", True)),
     }
+    if artifact.get("generator"):
+        status["generator"] = artifact["generator"]
+    if artifact.get("resolution"):
+        status["resolution"] = artifact["resolution"]
     if not path.is_file():
         status["blocked_reason"] = "missing_model_artifact"
         return status
@@ -196,7 +212,14 @@ def missing_dependencies(statuses: list[dict[str, Any]]) -> list[str]:
 
 def blocked_assets(statuses: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [
-        {"name": item["name"], "reason": item.get("blocked_reason", "unavailable_model_artifact")}
+        {
+            "name": item["name"],
+            "reason": item.get("blocked_reason", "unavailable_model_artifact"),
+            "blocker_id": item.get("blocker_id", "MODEL_ARTIFACT_UNAVAILABLE"),
+            "pipeline_visible": item.get("pipeline_visible", True),
+            "release_blocking": item.get("release_blocking", True),
+            "resolution": item.get("resolution", ""),
+        }
         for item in statuses
         if not item["available"] and item.get("kind") == "model_artifact"
     ]
@@ -277,6 +300,13 @@ def validate_report(report: dict[str, Any]) -> list[str]:
                     errors.append(f"{prefix} passed with unavailable model artifact {dep.get('name')}")
         if status == "blocked" and not result.get("blocked_assets"):
             errors.append(f"{prefix} blocked without blocked_assets")
+        for asset_index, asset in enumerate(result.get("blocked_assets", [])):
+            asset_prefix = f"{prefix}.blocked_assets[{asset_index}]"
+            if not isinstance(asset.get("blocker_id"), str) or not asset.get("blocker_id"):
+                errors.append(f"{asset_prefix}.blocker_id must be non-empty string")
+            for field in ("pipeline_visible", "release_blocking"):
+                if not isinstance(asset.get(field), bool):
+                    errors.append(f"{asset_prefix}.{field} must be bool")
         if not all(isinstance(part, str) for part in result.get("command", [])):
             errors.append(f"{prefix}.command must contain only strings")
         for dep_index, dep in enumerate(result.get("dependencies", [])):
@@ -425,6 +455,9 @@ def print_benchmark_list(config: dict[str, Any]) -> None:
             print("  files: " + ", ".join(bench["required_files"]))
         if bench.get("model_artifacts"):
             print("  model artifacts: " + ", ".join(asset["path"] for asset in bench["model_artifacts"]))
+            for asset in bench["model_artifacts"]:
+                if asset.get("generator"):
+                    print("  model generator: " + " ".join(asset["generator"]["command"]))
         if bench.get("install"):
             print("  install: " + bench["install"])
 

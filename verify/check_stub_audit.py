@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail closed on silent RTL/sim/verification placeholders.
 
-This intentionally covers only Worker I owned paths. It allows named stubs only
+This intentionally covers only Worker A owned paths. It allows named stubs only
 when they have an executable test, fail-closed behavior, or a documented blocker.
 """
 
@@ -12,18 +12,22 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 OWNED_ROOTS = (ROOT / "rtl", ROOT / "sim", ROOT / "verify")
 SKIP_PARTS = {
     "__pycache__",
     "sim_build_hello_chip_top_test_hello_chip.EkHwvK",
+    "sim_build",
     "model",
     "engine_0",
     "src",
 }
 SKIP_SUFFIXES = {".pyc", ".sqlite", ".log", ".xml"}
-TERMS = re.compile(r"\b(stub|placeholder|TODO|FIXME|not implemented|dummy|mock)\b", re.IGNORECASE)
+TERMS = re.compile(r"\b(stub|placeholder|TODO|FIXME|not implemented|dummy|mock|scaffold)\b", re.IGNORECASE)
+REQUIRED_GAP_AREAS = ("cpu", "interconnect", "display", "dma", "npu")
 
 
 @dataclass(frozen=True)
@@ -56,18 +60,8 @@ ALLOWLIST = (
     ),
     AllowedFinding(
         "sim/qemu/README.md",
-        "hello_qemu_stub",
-        "QEMU target is a qemu-virt reference with semantic checks and blocked-smoke wording.",
-    ),
-    AllowedFinding(
-        "sim/qemu/README.md",
         "--build-stub",
-        "QEMU README documents the explicit firmware build command for the bounded smoke.",
-    ),
-    AllowedFinding(
-        "sim/qemu/README.md",
-        "builds the stub",
-        "QEMU README states when the executable smoke is attempted and when it is blocked.",
+        "QEMU README documents the compatibility alias while the preferred path is firmware.",
     ),
 )
 
@@ -143,9 +137,49 @@ def check_renode_scaffold() -> list[str]:
     return errors
 
 
+def check_gap_work_order() -> list[str]:
+    errors: list[str] = []
+    path = ROOT / "verify/rtl_gap_work_order.yaml"
+    require(path.exists(), "RTL gap work order must exist at verify/rtl_gap_work_order.yaml.", errors)
+    if errors:
+        return errors
+
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    require(isinstance(data, dict), "RTL gap work order must be a YAML mapping.", errors)
+    if not isinstance(data, dict):
+        return errors
+
+    require(data.get("fail_closed_required") is True, "RTL gap work order must require fail-closed behavior.", errors)
+    areas = data.get("areas")
+    require(isinstance(areas, dict), "RTL gap work order must define an areas mapping.", errors)
+    if not isinstance(areas, dict):
+        return errors
+
+    for area in REQUIRED_GAP_AREAS:
+        entry = areas.get(area)
+        require(isinstance(entry, dict), f"RTL gap work order missing area: {area}.", errors)
+        if not isinstance(entry, dict):
+            continue
+        require(bool(entry.get("current_posture")), f"{area} must describe current_posture.", errors)
+        require(bool(entry.get("fail_closed")), f"{area} must list fail_closed behavior.", errors)
+        require(bool(entry.get("checks")), f"{area} must list executable checks.", errors)
+        gaps = entry.get("critical_gaps")
+        require(isinstance(gaps, list) and bool(gaps), f"{area} must list critical_gaps.", errors)
+        if not isinstance(gaps, list):
+            continue
+        for gap in gaps:
+            require(isinstance(gap, dict), f"{area} critical_gaps entries must be mappings.", errors)
+            if not isinstance(gap, dict):
+                continue
+            require(gap.get("status") == "open", f"{area}:{gap.get('id', '<missing>')} must remain status=open until closed by RTL and checks.", errors)
+            require(bool(gap.get("work_order")), f"{area}:{gap.get('id', '<missing>')} must include work_order.", errors)
+    return errors
+
+
 def main() -> int:
     errors = check_placeholder_terms()
     errors.extend(check_renode_scaffold())
+    errors.extend(check_gap_work_order())
 
     if errors:
         print("Stub audit failed:")

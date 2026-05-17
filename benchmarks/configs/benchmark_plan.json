@@ -88,10 +88,24 @@
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
           "placeholder_allowed": false,
-          "min_size_bytes": 4096
+          "min_size_bytes": 4096,
+          "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
+          "pipeline_visible": true,
+          "release_blocking": true,
+          "resolution": "Run benchmarks/models/generate_mobile_smoke_tflite.py in an environment with TensorFlow installed, or supply a redistributable TFLite model and pin sha256.",
+          "generator": {
+            "command": [
+              "python3",
+              "benchmarks/models/generate_mobile_smoke_tflite.py",
+              "--out",
+              "benchmarks/models/mobile_smoke.tflite"
+            ],
+            "network": "none",
+            "deterministic": true
+          }
         }
       ],
-      "install": "Build TensorFlow Lite benchmark_model for the target and supply a non-proprietary smoke .tflite model at benchmarks/models/mobile_smoke.tflite.",
+      "install": "Build TensorFlow Lite benchmark_model for the target and generate or supply a non-proprietary smoke .tflite model at benchmarks/models/mobile_smoke.tflite.",
       "input_dataset": "mobile_smoke.tflite synthetic input",
       "primary_metric": "inference latency",
       "units": "us",
@@ -112,10 +126,24 @@
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
           "placeholder_allowed": false,
-          "min_size_bytes": 4096
+          "min_size_bytes": 4096,
+          "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
+          "pipeline_visible": true,
+          "release_blocking": true,
+          "resolution": "Run benchmarks/models/generate_mobile_smoke_tflite.py in an environment with TensorFlow installed, or supply a redistributable TFLite model and pin sha256.",
+          "generator": {
+            "command": [
+              "python3",
+              "benchmarks/models/generate_mobile_smoke_tflite.py",
+              "--out",
+              "benchmarks/models/mobile_smoke.tflite"
+            ],
+            "network": "none",
+            "deterministic": true
+          }
         }
       ],
-      "install": "Build TensorFlow Lite benchmark_model with NNAPI support and supply a non-proprietary smoke .tflite model at benchmarks/models/mobile_smoke.tflite.",
+      "install": "Build TensorFlow Lite benchmark_model with NNAPI support and generate or supply a non-proprietary smoke .tflite model at benchmarks/models/mobile_smoke.tflite.",
       "input_dataset": "mobile_smoke.tflite synthetic input",
       "primary_metric": "inference latency",
       "units": "us",

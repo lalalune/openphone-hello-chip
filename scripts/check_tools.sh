@@ -28,9 +28,14 @@ check_tool() {
     gate="$3"
     required="$4"
     if command -v "$tool" >/dev/null 2>&1; then
-        printf "%-22s %-12s %-28s %s\n" "$tool" "$tier" "$gate" "$(command -v "$tool")"
+        printf "%-22s %-8s %-12s %-28s %s\n" "$tool" "PASS" "$tier" "$gate" "$(command -v "$tool")"
     else
-        printf "%-22s %-12s %-28s MISSING\n" "$tool" "$tier" "$gate"
+        if [ "$required" = "required" ]; then
+            status="FAIL"
+        else
+            status="BLOCK"
+        fi
+        printf "%-22s %-8s %-12s %-28s MISSING\n" "$tool" "$status" "$tier" "$gate"
         if [ "$required" = "required" ]; then
             missing_required=1
         fi
@@ -60,15 +65,15 @@ __import__(sys.argv[1])
 print(importlib.metadata.version(sys.argv[2]))
 PY
 )"
-        printf "%-22s %-12s %-28s %s\n" "$dist" "python" "$gate" "$version"
+        printf "%-22s %-8s %-12s %-28s %s\n" "$dist" "PASS" "python" "$gate" "$version"
     else
-        printf "%-22s %-12s %-28s MISSING\n" "$dist" "python" "$gate"
+        printf "%-22s %-8s %-12s %-28s MISSING\n" "$dist" "FAIL" "python" "$gate"
         missing_required=1
     fi
 }
 
-printf "%-22s %-12s %-28s %s\n" "TOOL" "TIER" "GATE" "PATH_OR_STATUS"
-printf "%-22s %-12s %-28s %s\n" "----" "----" "----" "--------------"
+printf "%-22s %-8s %-12s %-28s %s\n" "TOOL" "STATUS" "TIER" "GATE" "PATH_OR_STATUS"
+printf "%-22s %-8s %-12s %-28s %s\n" "----" "------" "----" "----" "--------------"
 
 check_tool python3 fast "repo scripts/docs" required
 check_tool pip3 fast ".venv bootstrap" required
@@ -95,7 +100,7 @@ check_tool dtc heavy "Linux devicetree build" optional
 check_tool bc heavy "Linux kernel build" optional
 check_tool flex heavy "Linux/AOSP builds" optional
 check_tool bison heavy "Linux/AOSP builds" optional
-check_tool riscv64-unknown-elf-gcc heavy "qemu stub build" optional
+check_tool riscv64-unknown-elf-gcc heavy "qemu firmware build" optional
 check_tool riscv64-linux-gnu-gcc heavy "Linux/Buildroot cross build" optional
 check_tool gtkwave host "wave debug" optional
 check_tool sby heavy "strict formal" optional
@@ -120,10 +125,10 @@ check_tool sigrok-cli heavy "board signal capture" optional
 
 if [ -x "$repo_dir/.venv/bin/python" ]; then
     python_bin="$repo_dir/.venv/bin/python"
-    printf "%-22s %-12s %-28s %s\n" ".venv" "python" "isolated repo env" "$repo_dir/.venv"
+    printf "%-22s %-8s %-12s %-28s %s\n" ".venv" "PASS" "python" "isolated repo env" "$repo_dir/.venv"
 else
     python_bin="$(command -v python3)"
-    printf "%-22s %-12s %-28s %s\n" ".venv" "python" "isolated repo env" "MISSING"
+    printf "%-22s %-8s %-12s %-28s %s\n" ".venv" "BLOCK" "python" "isolated repo env" "MISSING"
 fi
 
 check_python_package cocotb cocotb "cocotb"

@@ -78,8 +78,10 @@ async def timer_dma_npu_display_interrupts(dut):
         await RisingEdge(dut.clk)
     assert int(dut.irq_timer.value) == 1
 
-    await write32(dut, 0x1001_0000, 0x1000)
-    await write32(dut, 0x1001_0004, 0x2000)
+    for idx in range(16):
+        await write32(dut, 0x8000_0000 + idx * 4, 0xC000_0000 + idx)
+    await write32(dut, 0x1001_0000, 0x8000_0000)
+    await write32(dut, 0x1001_0004, 0x8000_0080)
     await write32(dut, 0x1001_0008, 64)
     await write32(dut, 0x1001_000C, 1)
     status = await poll_done(dut, 0x1001_000C)
@@ -87,8 +89,10 @@ async def timer_dma_npu_display_interrupts(dut):
     assert int(dut.irq_dma.value) == 1
     assert await read32(dut, 0x1001_0014) == 64
     assert await read32(dut, 0x1001_0018) == 16
-    assert await read32(dut, 0x1001_0024) == 0x103C
-    assert await read32(dut, 0x1001_0028) == 0x203C
+    assert await read32(dut, 0x1001_0024) == 0x8000_003C
+    assert await read32(dut, 0x1001_0028) == 0x8000_00BC
+    for idx in range(16):
+        assert await read32(dut, 0x8000_0080 + idx * 4) == 0xC000_0000 + idx
     dma_trace = await read32(dut, 0x1001_002C)
     assert ((dma_trace >> 7) & 0xF) == 0xF
     assert (dma_trace & 0x7) == 0x0
@@ -209,8 +213,8 @@ async def reset_unmapped_and_clear_edges(dut):
     await write32(dut, 0x1001_000C, 2)
     assert int(dut.irq_dma.value) == 0
 
-    await write32(dut, 0x1001_0000, 0x1001)
-    await write32(dut, 0x1001_0004, 0x2000)
+    await write32(dut, 0x1001_0000, 0x8000_0001)
+    await write32(dut, 0x1001_0004, 0x8000_0080)
     await write32(dut, 0x1001_0008, 16)
     await write32(dut, 0x1001_000C, 1)
     assert await poll_done(dut, 0x1001_000C) == 0x6
@@ -218,15 +222,22 @@ async def reset_unmapped_and_clear_edges(dut):
     assert await read32(dut, 0x1001_0018) == 0
 
     await write32(dut, 0x1001_000C, 2)
-    await write32(dut, 0x1001_0000, 0x3000)
-    await write32(dut, 0x1001_0004, 0x4000)
+    await write32(dut, 0x8000_0030, 0x1122_3344)
+    await write32(dut, 0x8000_0034, 0x5566_7788)
+    await write32(dut, 0x8000_0038, 0x99AA_BBCC)
+    await write32(dut, 0x8000_0048, 0)
+    await write32(dut, 0x1001_0000, 0x8000_0030)
+    await write32(dut, 0x1001_0004, 0x8000_0040)
     await write32(dut, 0x1001_0008, 10)
     await write32(dut, 0x1001_000C, 1)
     assert await poll_done(dut, 0x1001_000C) == 0x2
     assert await read32(dut, 0x1001_0014) == 10
     assert await read32(dut, 0x1001_0018) == 3
-    assert await read32(dut, 0x1001_0024) == 0x3008
-    assert await read32(dut, 0x1001_0028) == 0x4008
+    assert await read32(dut, 0x1001_0024) == 0x8000_0038
+    assert await read32(dut, 0x1001_0028) == 0x8000_0048
+    assert await read32(dut, 0x8000_0040) == 0x1122_3344
+    assert await read32(dut, 0x8000_0044) == 0x5566_7788
+    assert await read32(dut, 0x8000_0048) == 0x0000_BBCC
     dma_trace = await read32(dut, 0x1001_002C)
     assert ((dma_trace >> 7) & 0xF) == 0x3
     assert (dma_trace & 0x7) == 0x0

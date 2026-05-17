@@ -8,11 +8,12 @@ All addresses are byte addresses. The hello chip uses a single-cycle MMIO reques
 | Peripheral control | `0x1000_0000` | `4 KiB` | ID, scratch, GPIO, timer |
 | DMA | `0x1001_0000` | `4 KiB` | DMA master contract model |
 | NPU | `0x1002_0000` | `4 KiB` | Small NPU datapath |
-| Display | `0x1003_0000` | `4 KiB` | Framebuffer/display stub |
+| Display | `0x1003_0000` | `4 KiB` | Framebuffer scanout controller |
+| DRAM aperture | `0x8000_0000` | `4 KiB` | SRAM-backed test DRAM visible to debug MMIO and DMA |
 
 ## Linux-capable AXI-Lite scaffold map
 
-The CPU/DRAM/interconnect scaffold is separate from the hello-chip debug MMIO path. It uses AXI-Lite-style channels and establishes the future software contract:
+The CPU/interconnect scaffold is separate from the hello-chip debug MMIO path. It uses AXI-Lite-style channels and establishes the future software contract. The hello-chip top now exposes a small debug-visible DRAM aperture for DMA integration, while the Linux-capable scaffold keeps its own AXI-Lite DRAM model:
 
 | Region | Base | Size | Purpose |
 | --- | ---: | ---: | --- |

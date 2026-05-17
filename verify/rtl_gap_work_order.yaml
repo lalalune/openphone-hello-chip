@@ -1,0 +1,64 @@
+version: 1
+owner_scope: rtl_verification
+fail_closed_required: true
+areas:
+  cpu:
+    current_posture: executable_tiny_riscv_contract_model
+    fail_closed:
+      - unsupported_opcodes_halt
+      - fetch_error_halts
+      - unaligned_lw_sw_halt_before_bus_request
+    checks:
+      - make cocotb-cpu
+    critical_gaps:
+      - id: cpu-real-core-integration
+        status: open
+        work_order: Replace the tiny contract model with a production RV64 core integration and privileged boot path.
+  interconnect:
+    current_posture: axi_lite_contract_fabric
+    fail_closed:
+      - unmapped_cpu_reads_return_decerr
+      - unmapped_cpu_writes_return_decerr
+      - dma_memory_errors_propagate_to_status
+    checks:
+      - make cocotb-contract
+    critical_gaps:
+      - id: interconnect-full-soc-routing
+        status: open
+        work_order: Add complete SoC address routing, ordering, and arbitration coverage beyond the current contract windows.
+  dma:
+    current_posture: word_copy_engine_with_error_status
+    fail_closed:
+      - unaligned_programming_sets_error
+      - memory_response_errors_set_error
+    checks:
+      - make cocotb-contract
+      - make formal
+    critical_gaps:
+      - id: dma-real-memory-system
+        status: open
+        work_order: Verify DMA against the production memory hierarchy, coherency policy, and long burst behavior.
+  npu:
+    current_posture: mmio_datapath_and_small_scratch_gemm
+    fail_closed:
+      - unsupported_opcode_sets_error
+      - invalid_gemm_config_sets_error
+    checks:
+      - make cocotb
+      - make verilator
+      - make formal
+    critical_gaps:
+      - id: npu-production-accelerator
+        status: open
+        work_order: Replace the bounded scratch GEMM path with the selected accelerator microarchitecture and system memory interface.
+  display:
+    current_posture: timing_generator_with_framebuffer_read_contract
+    fail_closed:
+      - disabled_display_keeps_vsync_low
+      - unsupported_pixel_format_write_is_ignored
+    checks:
+      - make cocotb
+    critical_gaps:
+      - id: display-real-framebuffer-path
+        status: open
+        work_order: Connect scanout to a real framebuffer read path with bandwidth, underflow, and format coverage.

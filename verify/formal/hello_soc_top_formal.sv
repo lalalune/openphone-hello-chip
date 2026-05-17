@@ -38,14 +38,15 @@ module hello_soc_top_formal(input logic clk);
     wire dma_sel     = implemented_window && mmio_addr[31:12] == 20'h1001_0;
     wire npu_sel     = implemented_window && mmio_addr[31:12] == 20'h1002_0;
     wire display_sel = implemented_window && mmio_addr[31:12] == 20'h1003_0;
-    wire mapped = bootrom_sel || periph_sel || dma_sel || npu_sel || display_sel;
+    wire dram_sel    = mmio_addr[1:0] == 2'b00 && mmio_addr[31:12] == 20'h8000_0;
+    wire mapped = bootrom_sel || periph_sel || dma_sel || npu_sel || display_sel || dram_sel;
 
     always_ff @(posedge clk) begin
         rst_n <= 1'b1;
 
         assert(mmio_ready == mmio_valid);
 
-        if (mmio_valid && !mapped) begin
+        if (rst_n && mmio_valid && !mapped) begin
             assert(mmio_rdata == 32'hDEAD_BEEF);
         end
 

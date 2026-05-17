@@ -7,7 +7,7 @@ This repository is the CLI-first pre-tapeout scaffold for an open RISC-V AI phon
 - cocotb verification
 - formal checks
 - Verilator simulation
-- QEMU/Renode software-facing stubs
+- QEMU/Renode software-facing reference targets
 - Yosys synthesis
 - OpenLane/OpenROAD physical-design entry points
 - documentation and tapeout checklist
@@ -46,8 +46,9 @@ make formal         run SymbiYosys formal checks
 make synth          synthesize hello chip with Yosys
 make openlane       run OpenLane block flow when available
 make openroad       run OpenROAD Tcl entry point when available
-make qemu           launch the QEMU RISC-V software stub
+make qemu           launch the QEMU RISC-V software reference firmware
 make renode         launch the Renode platform stub when available
+make mvp-status     report every MVP subsystem as PASS, BLOCK, or FAIL
 make docs-check     validate architecture/doc skeleton
 make smoke          run the locally available low-cost checks
 ```

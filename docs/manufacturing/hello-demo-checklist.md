@@ -2,6 +2,12 @@
 
 This checklist is for the simple demo chip/board product slice.
 
+The machine-readable inventory of release-blocking physical, package, SI/PI,
+PDN/current-budget, board-fabrication, and first-article gaps is
+`docs/manufacturing/real-world-verification-gaps.yaml`. Run
+`make real-world-gates-check` before any PD, tapeout, or board-fabrication
+release claim.
+
 ## Tapeout package
 
 - Release status: blocked until `pd/signoff/manifest.yaml` has no blocked gates.
@@ -21,6 +27,7 @@ This checklist is for the simple demo chip/board product slice.
 - Padframe/power strategy approved.
 - SI/PI artifacts archived: package model, board SI report, and power-integrity report.
 - PDN/current budget archived for `VDDCORE` and `VDDIO`, including post-route power, IR-drop/EM, decoupling, and board current limits.
+- Every gap in `docs/manufacturing/real-world-verification-gaps.yaml` is closed by archived evidence and the linked release gate is unblocked.
 
 ## Board package
 

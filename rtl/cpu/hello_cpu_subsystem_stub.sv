@@ -69,6 +69,8 @@ module hello_cpu_subsystem_stub #(
     logic [63:0] rs1_value;
     logic [63:0] rs2_value;
     logic [31:0] next_pc;
+    logic [31:0] load_addr_next;
+    logic [31:0] store_addr_next;
 
     integer i;
 
@@ -88,6 +90,8 @@ module hello_cpu_subsystem_stub #(
     assign rs1_value = (rs1 == 5'd0) ? 64'h0 : regs_q[rs1];
     assign rs2_value = (rs2 == 5'd0) ? 64'h0 : regs_q[rs2];
     assign next_pc   = pc_q + 32'd4;
+    assign load_addr_next  = rs1_value[31:0] + imm_i[31:0];
+    assign store_addr_next = rs1_value[31:0] + imm_s[31:0];
 
     assign m_axil_bready = 1'b1;
     assign m_axil_rready = 1'b1;
@@ -191,18 +195,26 @@ module hello_cpu_subsystem_stub #(
                         end
                         7'b0000011: begin // Loads
                             if (funct3 == 3'b010) begin
-                                load_addr_q <= rs1_value[31:0] + imm_i[31:0];
-                                load_rd_q   <= rd;
-                                state_q     <= ST_LOAD_REQ;
+                                if (load_addr_next[1:0] == 2'b00) begin
+                                    load_addr_q <= load_addr_next;
+                                    load_rd_q   <= rd;
+                                    state_q     <= ST_LOAD_REQ;
+                                end else begin
+                                    state_q <= ST_HALT;
+                                end
                             end else begin
                                 state_q <= ST_HALT;
                             end
                         end
                         7'b0100011: begin // Stores
                             if (funct3 == 3'b010) begin
-                                store_addr_q <= rs1_value[31:0] + imm_s[31:0];
-                                store_data_q <= rs2_value[31:0];
-                                state_q      <= ST_STORE_REQ;
+                                if (store_addr_next[1:0] == 2'b00) begin
+                                    store_addr_q <= store_addr_next;
+                                    store_data_q <= rs2_value[31:0];
+                                    state_q      <= ST_STORE_REQ;
+                                end else begin
+                                    state_q <= ST_HALT;
+                                end
                             end else begin
                                 state_q <= ST_HALT;
                             end

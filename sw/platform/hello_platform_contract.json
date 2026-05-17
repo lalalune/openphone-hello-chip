@@ -326,6 +326,13 @@
             "reset": "0x00000000"
           }
         ]
+      },
+      {
+        "name": "dram",
+        "base": "0x80000000",
+        "size": "0x00001000",
+        "access": "RW",
+        "description": "Small debug-visible SRAM-backed DRAM aperture used by top-level DMA integration tests."
       }
     ],
     "interrupts": [

@@ -22,14 +22,22 @@ module hello_soc_top (
     logic [31:0] display_rdata;
     logic [31:0] periph_rdata;
     logic dma_m_awvalid;
+    logic dma_m_awready;
     logic [31:0] dma_m_awaddr;
     logic dma_m_wvalid;
+    logic dma_m_wready;
     logic [31:0] dma_m_wdata;
     logic [3:0] dma_m_wstrb;
+    logic dma_m_bvalid;
     logic dma_m_bready;
+    logic [1:0] dma_m_bresp;
     logic dma_m_arvalid;
+    logic dma_m_arready;
     logic [31:0] dma_m_araddr;
+    logic dma_m_rvalid;
     logic dma_m_rready;
+    logic [31:0] dma_m_rdata;
+    logic [1:0] dma_m_rresp;
     logic display_scan_hsync;
     logic display_scan_vsync;
     logic display_scan_active;
@@ -45,8 +53,18 @@ module hello_soc_top (
     logic npu_sel;
     logic display_sel;
     logic periph_sel;
+    logic dram_sel;
     logic word_aligned;
     logic implemented_window;
+    logic [31:0] dram_mem [0:1023];
+
+    wire [9:0]  mmio_dram_word = mmio_addr[11:2];
+    wire [9:0]  dma_wr_word = dma_m_awaddr[11:2];
+    wire [9:0]  dma_rd_word = dma_m_araddr[11:2];
+    wire        dma_wr_fire = dma_m_awvalid && dma_m_awready && dma_m_wvalid && dma_m_wready;
+    wire        dma_rd_fire = dma_m_arvalid && dma_m_arready;
+    wire        dma_wr_ok = (dma_m_awaddr[31:12] == 20'h8000_0) && (dma_m_awaddr[1:0] == 2'b00);
+    wire        dma_rd_ok = (dma_m_araddr[31:12] == 20'h8000_0) && (dma_m_araddr[1:0] == 2'b00);
 
     assign word_aligned       = mmio_addr[1:0] == 2'b00;
     assign implemented_window = mmio_addr[11:8] == 4'h0 && word_aligned;
@@ -55,6 +73,7 @@ module hello_soc_top (
     assign dma_sel     = implemented_window && mmio_addr[31:12] == 20'h1001_0;
     assign npu_sel     = implemented_window && mmio_addr[31:12] == 20'h1002_0;
     assign display_sel = implemented_window && mmio_addr[31:12] == 20'h1003_0;
+    assign dram_sel    = word_aligned && mmio_addr[31:12] == 20'h8000_0;
 
     /* verilator lint_off UNUSEDSIGNAL */
     logic unused_display_scanout;
@@ -71,17 +90,55 @@ module hello_soc_top (
     };
     /* verilator lint_on UNUSEDSIGNAL */
 
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic unused_dma_write_payload;
-    assign unused_dma_write_payload = ^{
-        dma_m_awvalid,
-        dma_m_awaddr,
-        dma_m_wvalid,
-        dma_m_wdata,
-        dma_m_wstrb,
-        dma_m_arvalid
-    };
-    /* verilator lint_on UNUSEDSIGNAL */
+    assign dma_m_awready = !dma_m_bvalid;
+    assign dma_m_wready  = !dma_m_bvalid;
+    assign dma_m_arready = !dma_m_rvalid;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            dma_m_bvalid <= 1'b0;
+            dma_m_bresp  <= 2'b00;
+            dma_m_rvalid <= 1'b0;
+            dma_m_rdata  <= 32'h0;
+            dma_m_rresp  <= 2'b00;
+        end else begin
+            if (dma_m_bvalid && dma_m_bready) begin
+                dma_m_bvalid <= 1'b0;
+            end
+
+            if (dma_m_rvalid && dma_m_rready) begin
+                dma_m_rvalid <= 1'b0;
+            end
+
+            if (mmio_valid && mmio_write && dram_sel) begin
+                dram_mem[mmio_dram_word] <= mmio_wdata;
+            end
+
+            if (dma_wr_fire) begin
+                if (dma_wr_ok) begin
+                    if (dma_m_wstrb[0]) dram_mem[dma_wr_word][7:0]   <= dma_m_wdata[7:0];
+                    if (dma_m_wstrb[1]) dram_mem[dma_wr_word][15:8]  <= dma_m_wdata[15:8];
+                    if (dma_m_wstrb[2]) dram_mem[dma_wr_word][23:16] <= dma_m_wdata[23:16];
+                    if (dma_m_wstrb[3]) dram_mem[dma_wr_word][31:24] <= dma_m_wdata[31:24];
+                    dma_m_bresp <= 2'b00;
+                end else begin
+                    dma_m_bresp <= 2'b10;
+                end
+                dma_m_bvalid <= 1'b1;
+            end
+
+            if (dma_rd_fire) begin
+                if (dma_rd_ok) begin
+                    dma_m_rdata <= dram_mem[dma_rd_word];
+                    dma_m_rresp <= 2'b00;
+                end else begin
+                    dma_m_rdata <= 32'hDEAD_BEEF;
+                    dma_m_rresp <= 2'b10;
+                end
+                dma_m_rvalid <= 1'b1;
+            end
+        end
+    end
 
     hello_bootrom u_bootrom (
         .addr(mmio_addr[7:2]),
@@ -110,22 +167,22 @@ module hello_soc_top (
         .rdata(dma_rdata),
         .irq(irq_dma),
         .m_axil_awvalid(dma_m_awvalid),
-        .m_axil_awready(1'b1),
+        .m_axil_awready(dma_m_awready),
         .m_axil_awaddr(dma_m_awaddr),
         .m_axil_wvalid(dma_m_wvalid),
-        .m_axil_wready(1'b1),
+        .m_axil_wready(dma_m_wready),
         .m_axil_wdata(dma_m_wdata),
         .m_axil_wstrb(dma_m_wstrb),
-        .m_axil_bvalid(dma_m_bready),
+        .m_axil_bvalid(dma_m_bvalid),
         .m_axil_bready(dma_m_bready),
-        .m_axil_bresp(2'b00),
+        .m_axil_bresp(dma_m_bresp),
         .m_axil_arvalid(dma_m_arvalid),
-        .m_axil_arready(1'b1),
+        .m_axil_arready(dma_m_arready),
         .m_axil_araddr(dma_m_araddr),
-        .m_axil_rvalid(dma_m_rready),
+        .m_axil_rvalid(dma_m_rvalid),
         .m_axil_rready(dma_m_rready),
-        .m_axil_rdata(dma_m_araddr ^ 32'hA5A5_0000),
-        .m_axil_rresp(2'b00)
+        .m_axil_rdata(dma_m_rdata),
+        .m_axil_rresp(dma_m_rresp)
     );
 
     hello_npu u_npu (
@@ -169,6 +226,7 @@ module hello_soc_top (
             dma_sel:      mmio_rdata = dma_rdata;
             npu_sel:      mmio_rdata = npu_rdata;
             display_sel:  mmio_rdata = display_rdata;
+            dram_sel:     mmio_rdata = dram_mem[mmio_dram_word];
             default:      mmio_rdata = 32'hDEAD_BEEF;
         endcase
     end

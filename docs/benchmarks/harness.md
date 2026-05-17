@@ -99,9 +99,18 @@ commands. Keep command arrays shell-free and explicit. The runner checks:
 - `required_files`: repository-relative files, such as a TFLite model
 - `timeout_seconds`: per-benchmark timeout override
 
-The TFLite entries reference `benchmarks/models/mobile_smoke.tflite` as a future
-small model artifact. Until a real non-proprietary model exists, plan and run
-commands report those entries as `blocked` rather than passing them as real
+The TFLite entries reference `benchmarks/models/mobile_smoke.tflite` as a tiny
+smoke model artifact. The optional generator is offline-only:
+
+```sh
+python3 benchmarks/models/generate_mobile_smoke_tflite.py \
+  --out benchmarks/models/mobile_smoke.tflite
+```
+
+It uses an already-installed TensorFlow package and does not download anything.
+If TensorFlow is not installed, it exits with code `2` and prints/writes a
+machine-readable blocker. Until a real non-proprietary model exists, plan and
+run commands report those entries as `blocked` rather than passing them as real
 performance. A tiny placeholder file is also blocked by the configured
 `min_size_bytes` check.
 
@@ -118,8 +127,8 @@ unrelated `stream` utility with the memory benchmark.
 | lmbench latency | `lat_mem_rd` on `PATH` | Build lmbench for the target and expose `lat_mem_rd` on `PATH`. |
 | fio sequential read | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-seq-read.fio`. |
 | fio random read/write | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-rand-rw.fio`. |
-| TFLite CPU | `benchmark_model` on `PATH` and `benchmarks/models/mobile_smoke.tflite` | Build TensorFlow Lite's benchmark tool and supply a redistributable smoke model. Do not use proprietary app or vendor models unless the report is kept private and marked accordingly outside this harness. |
-| TFLite hello NPU | NNAPI-capable `benchmark_model` and `benchmarks/models/mobile_smoke.tflite` | Build `benchmark_model` with NNAPI support, supply the smoke model, and run on a platform exposing the `hello-npu` accelerator name. |
+| TFLite CPU | `benchmark_model` on `PATH` and `benchmarks/models/mobile_smoke.tflite` | Build TensorFlow Lite's benchmark tool and generate or supply a redistributable smoke model. Do not use proprietary app or vendor models unless the report is kept private and marked accordingly outside this harness. |
+| TFLite hello NPU | NNAPI-capable `benchmark_model` and `benchmarks/models/mobile_smoke.tflite` | Build `benchmark_model` with NNAPI support, generate or supply the smoke model, and run on a platform exposing the `hello-npu` accelerator name. |
 
 ## Report Shape
 
@@ -129,3 +138,7 @@ before writing them and can validate an existing report with `validate-report`.
 The skeleton does not parse benchmark scores yet; it records raw output logs and
 a declared primary metric for each benchmark so parsers can be added
 incrementally.
+
+Blocked model assets include stable `blocker_id`, `pipeline_visible`, and
+`release_blocking` fields. Release and CI jobs should fail on any blocked asset
+where both booleans are true.

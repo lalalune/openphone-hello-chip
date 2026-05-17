@@ -9,11 +9,12 @@ boot ROM
 MMIO peripheral block
 timer interrupt
 GPIO output
-DMA command stub
-NPU command stub
-display controller stub
+DMA memory-copy engine
+NPU scalar/SIMD/GEMM datapath
+display scanout controller
 CPU subsystem AXI-Lite boundary stub
-AXI-Lite DRAM boundary model
+debug-visible SRAM-backed DRAM aperture
+AXI-Lite DRAM boundary model for the Linux-capable scaffold
 AXI-Lite interconnect scaffold
 PLIC-style interrupt controller scaffold
 ```
@@ -40,4 +41,4 @@ The hello chip keeps the same contract style while making the first end-to-end f
 
 ## Contract scaffold
 
-The Linux-capable scaffold is not wired into the hello-chip pad-level design yet. It lives under `rtl/cpu`, `rtl/interconnect`, `rtl/memory`, and `rtl/interrupts`, with `hello_linux_soc_contract` serving as the integration wrapper for verification. This keeps the first chip stable while establishing the future CPU, DRAM, interconnect, and interrupt-controller boundary.
+The Linux-capable CPU/interconnect/interrupt scaffold is not wired into the hello-chip pad-level design yet. It lives under `rtl/cpu`, `rtl/interconnect`, `rtl/memory`, and `rtl/interrupts`, with `hello_linux_soc_contract` serving as the integration wrapper for verification. This keeps the first chip stable while establishing the future CPU, external DRAM controller, interconnect, and interrupt-controller boundary.

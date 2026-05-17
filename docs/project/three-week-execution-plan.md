@@ -11,6 +11,7 @@ open Android-capable SoC research platform:
 - open RTL SoC expansion path
 - benchmark harness definitions
 - risk register and explicit non-goals
+- workstream gap review with completion criteria and blocked gates
 
 ## Week 1: Control Plane And Baselines
 
@@ -56,6 +57,11 @@ open Android-capable SoC research platform:
   pinned by digest, lockfile, tag, SHA, or checksum.
 - Heavy tools can be absent during scaffold work, but absent tools must be tied
   to blocked gates instead of reported as passing.
+- `make mvp-status` is the cross-workstream summary gate: every subsystem must
+  show `PASS`, `BLOCK`, or `FAIL` with evidence and a next command.
+- `docs/project/workstream-gap-review.md` is the backlog gate for stubs,
+  scaffolds, LARPs, incomplete work, untested claims, not-implemented areas, and
+  complete gaps. It must not be used as proof that subsystem gates passed.
 
 ## Ten-Minute Operating Loop
 
@@ -80,6 +86,8 @@ board artifacts keep their safety boundaries:
   and the `make aosp-bsp-check` evidence path,
 - board and FPGA artifacts remain scaffold-only until board revision, package
   pins, and bitstream release blockers are resolved.
+- the workstream gap review keeps project/program backlog status separate from
+  subsystem-owned implementation evidence.
 
 Release archives should carry the project-plan artifacts with the generated RTL
 and verification evidence, so a reviewer can reproduce both the commands and

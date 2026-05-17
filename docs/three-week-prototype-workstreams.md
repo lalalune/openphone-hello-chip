@@ -49,7 +49,7 @@ Primary gaps:
 Immediate work:
 
 - Generate DTS/include fragments from `sw/platform/hello_platform_contract.json`.
-- Build `sw/bootrom/hello_qemu_stub.S` into an ELF and make `qemu-check` assert serial output under timeout.
+- Build `sw/bootrom/hello_qemu_firmware.S` into an ELF and make `qemu-check` assert serial output under timeout.
 - Split software checks into scaffold checks versus real boot/image checks.
 - Replace driver constants with generated headers or generated local include files.
 
@@ -59,13 +59,13 @@ Primary gaps:
 
 - Padless PD only; no foundry IO cells, ESD clamps, corner pads, padframe-inclusive DRC/LVS, or package-approved bond diagram.
 - No complete PD signoff run artifacts under the manifest.
-- Signoff checker does not yet enforce all README requirements: liberty/corners, SPEF/SDF, utilization/congestion, density/fill, and waiver metadata.
+- Signoff checker now names liberty/corners, SPEF/SDF, utilization/congestion, density/fill, tool-version, and waiver evidence as release artifacts, but no real run has produced them yet.
 - Board/package are planning placeholders. No vendor-derived footprint, real KiCad project, rail current budget, PDN target impedance, decap plan, SI/PI report, or DFM review exists.
 - FPGA LPF is a skeleton; no bitstream build target can be released until pins and IO standards are real.
 
 Immediate work:
 
-- Extend `scripts/check_pd_signoff.py` and `pd/signoff/manifest.yaml` for the missing signoff classes.
+- Produce real OpenLane/OpenROAD signoff output for every artifact class named by `scripts/check_pd_signoff.py` and `pd/signoff/manifest.yaml`.
 - Add board/package gates for footprint checksum, current budget, SI/PI report, DFM review, and first-article checklist.
 - Add an FPGA build target after pins are assigned: Yosys, nextpnr-ecp5, ecppack, and timing report parse.
 

@@ -19,6 +19,7 @@ required = [
     "fw/board-smoke/tests/smoke_plan.md",
     "docs/manufacturing/hello-demo-checklist.md",
     "docs/manufacturing/release-manifest.yaml",
+    "docs/manufacturing/real-world-verification-gaps.yaml",
 ]
 
 missing = [p for p in required if not Path(p).exists()]
@@ -33,5 +34,6 @@ subprocess.run([sys.executable, "scripts/check_fpga_target.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_wifi_interface.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_padframe_contract.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"], check=True)
+subprocess.run([sys.executable, "scripts/check_real_world_gates.py"], check=True)
 
 print("product artifact skeleton present")

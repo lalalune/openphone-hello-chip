@@ -14,6 +14,12 @@ only advance when the gate passes.
 | Risk/legal/cert | `docs/risks/**` | project-plan check | Explicit exclusions and escalation gates before product claims. |
 | Toolchain reproducibility | `docs/toolchain/**`, `scripts/check_tools.sh`, `scripts/tool_versions.sh`, `Dockerfile`, `flake.nix`, `requirements.txt` | `scripts/check_tools.sh` and `scripts/tool_versions.sh` | Pinned fast-path evidence plus named blockers for floating/heavy tools. |
 
+## Gap Review
+
+The detailed gap inventory lives in `docs/project/workstream-gap-review.md`.
+It is authoritative for project/program backlog status and must stay stricter
+than subsystem completion claims.
+
 ## Agent Queue
 
 When a worker becomes available, assign the next unblocked item:

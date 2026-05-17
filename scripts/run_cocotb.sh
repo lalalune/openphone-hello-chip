@@ -37,8 +37,17 @@ fi
 
 COCOTB_TOP="${COCOTB_TOPLEVEL:-hello_chip_top}"
 COCOTB_MOD="${COCOTB_MODULE:-test_hello_chip}"
-COCOTB_BUILD="sim_build_${COCOTB_TOP}_${COCOTB_MOD}"
-rm -rf "verify/cocotb/$COCOTB_BUILD" verify/cocotb/results.xml
+REPO_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
+COCOTB_BUILD="$REPO_ROOT/build/cocotb/${COCOTB_TOP}_${COCOTB_MOD}"
+COCOTB_LOCK="$REPO_ROOT/build/cocotb/.${COCOTB_TOP}_${COCOTB_MOD}.lock"
+mkdir -p "$REPO_ROOT/build/cocotb"
+
+while ! mkdir "$COCOTB_LOCK" 2>/dev/null; do
+    sleep 1
+done
+trap 'rmdir "$COCOTB_LOCK" 2>/dev/null || true' EXIT INT TERM
+
+rm -rf "$COCOTB_BUILD" verify/cocotb/results.xml
 
 if command -v verilator >/dev/null 2>&1; then
     $(command -v make) -C verify/cocotb SIM=verilator \

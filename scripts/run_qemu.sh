@@ -2,22 +2,29 @@
 set -eu
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-src="$repo_dir/sw/bootrom/hello_qemu_stub.S"
+src="$repo_dir/sw/bootrom/hello_qemu_firmware.S"
 linker="$repo_dir/sw/bootrom/linker.ld"
-checked_elf="$repo_dir/build/qemu/hello_qemu_stub.elf"
-legacy_elf="$repo_dir/sw/bootrom/hello_qemu_stub.elf"
+checked_elf="$repo_dir/build/qemu/hello_qemu_firmware.elf"
 banner="openphone hello qemu"
 load_addr="0x80000000"
 uart_addr="0x10000000"
 
 usage() {
     cat <<EOF
-usage: scripts/run_qemu.sh [--check|--build-stub|--elf PATH]
+usage: scripts/run_qemu.sh [--check|--build-firmware|--build-stub|--elf PATH]
 
-  --check       run semantic checks, build if possible, then bounded QEMU smoke
-  --build-stub  build build/qemu/hello_qemu_stub.elf with a local RISC-V toolchain
-  --elf PATH    launch an explicit ELF instead of the default stub path
+  --check           run semantic checks, build if possible, then bounded QEMU smoke
+  --build-firmware  build build/qemu/hello_qemu_firmware.elf with a local RISC-V toolchain
+  --build-stub      compatibility alias for --build-firmware
+  --elf PATH        launch an explicit ELF instead of the default firmware path
 EOF
+}
+
+status_line() {
+    state=$1
+    check=$2
+    detail=$3
+    printf 'STATUS: %s %s - %s\n' "$state" "$check" "$detail"
 }
 
 find_toolchain() {
@@ -39,12 +46,22 @@ find_toolchain() {
     return 1
 }
 
+explain_toolchain_blocker() {
+    cat <<EOF
+BLOCKED: no RISC-V ELF toolchain found on PATH.
+Install one of:
+  - Ubuntu/Debian: apt-get install gcc-riscv64-unknown-elf
+  - Other systems: riscv64-unknown-elf-gcc or riscv64-elf-gcc
+Or set RISCV_CC to a compatible compiler.
+EOF
+}
+
 semantic_check() {
     failed=0
 
     for path in "$src" "$linker" "$repo_dir/sim/qemu/README.md"; do
         if [ ! -f "$path" ]; then
-            echo "missing required qemu-virt artifact: ${path#$repo_dir/}"
+            status_line "FAIL" "qemu.semantic" "missing required artifact ${path#$repo_dir/}"
             failed=1
         fi
     done
@@ -54,46 +71,52 @@ semantic_check() {
     fi
 
     grep -q "$banner" "$src" || {
-        echo "sw/bootrom/hello_qemu_stub.S must print '$banner'"
+        status_line "FAIL" "qemu.semantic" "sw/bootrom/hello_qemu_firmware.S must print '$banner'"
         failed=1
     }
-    grep -Eqi "li[[:space:]]+a1,[[:space:]]*$uart_addr" "$src" || {
-        echo "sw/bootrom/hello_qemu_stub.S must write the qemu-virt UART at $uart_addr"
+    grep -q "HELLO_QEMU_VIRT_UART_BASE" "$src" || grep -Eqi "li[[:space:]]+a1,[[:space:]]*$uart_addr" "$src" || {
+        status_line "FAIL" "qemu.semantic" "firmware must write the qemu-virt UART at $uart_addr via the platform contract"
         failed=1
     }
     grep -q "$load_addr" "$linker" || {
-        echo "sw/bootrom/linker.ld must link the qemu-virt stub at $load_addr"
+        status_line "FAIL" "qemu.semantic" "sw/bootrom/linker.ld must link qemu-virt firmware at $load_addr"
         failed=1
     }
     grep -q "ENTRY(_start)" "$linker" || {
-        echo "sw/bootrom/linker.ld must keep _start as the ELF entry"
+        status_line "FAIL" "qemu.semantic" "sw/bootrom/linker.ld must keep _start as the ELF entry"
         failed=1
     }
     grep -q "software reference only" "$repo_dir/sim/qemu/README.md" || {
-        echo "sim/qemu/README.md must mark qemu-virt as software reference only"
+        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must mark qemu-virt as software reference only"
         failed=1
     }
-    grep -q "scripts/run_qemu.sh --build-stub" "$repo_dir/sim/qemu/README.md" || {
-        echo "sim/qemu/README.md must document the stub ELF build path"
+    grep -q "scripts/run_qemu.sh --build-firmware" "$repo_dir/sim/qemu/README.md" || {
+        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must document the firmware ELF build path"
         failed=1
     }
 
+    if [ "$failed" -eq 0 ]; then
+        status_line "PASS" "qemu.semantic" "source, linker, and docs match qemu-virt contract"
+    fi
     return "$failed"
 }
 
-build_stub() {
+build_firmware() {
     cc=$(find_toolchain) || {
-        echo "BLOCKED: no RISC-V ELF toolchain found on PATH."
-        echo "Install riscv64-unknown-elf-gcc or set RISCV_CC to a compatible compiler."
+        explain_toolchain_blocker
+        status_line "BLOCKED" "qemu.build" "install a RISC-V ELF compiler or set RISCV_CC"
         return 2
     }
 
     mkdir -p "$repo_dir/build/qemu"
-    "$cc" -nostdlib -nostartfiles -ffreestanding \
+    if ! "$cc" -nostdlib -nostartfiles -ffreestanding \
         -march=rv64imac -mabi=lp64 \
         -Wl,-T,"$linker" -Wl,--build-id=none \
-        -o "$checked_elf" "$src"
-    echo "Built ${checked_elf#$repo_dir/} with $cc"
+        -o "$checked_elf" "$src"; then
+        status_line "FAIL" "qemu.build" "$cc could not build ${src#$repo_dir/}"
+        return 1
+    fi
+    status_line "PASS" "qemu.build" "built ${checked_elf#$repo_dir/} with $cc"
 }
 
 run_bounded_smoke() {
@@ -101,6 +124,7 @@ run_bounded_smoke() {
 
     if ! command -v qemu-system-riscv64 >/dev/null 2>&1; then
         echo "BLOCKED: qemu-system-riscv64 missing."
+        status_line "BLOCKED" "qemu.run" "install qemu-system-riscv64 for executable serial smoke"
         return 2
     fi
 
@@ -115,12 +139,12 @@ run_bounded_smoke() {
     wait "$qemu_pid" >/dev/null 2>&1 || true
 
     if grep -q "$banner" "$log"; then
-        echo "qemu-virt bounded smoke passed: saw '$banner'"
+        status_line "PASS" "qemu.run" "bounded smoke saw '$banner'"
         rm -f "$log"
         return 0
     fi
 
-    echo "qemu-virt bounded smoke failed: did not see '$banner'"
+    status_line "FAIL" "qemu.run" "bounded smoke did not see '$banner'"
     echo "QEMU log: $log"
     return 1
 }
@@ -133,7 +157,7 @@ while [ "$#" -gt 0 ]; do
         --check)
             mode=check
             ;;
-        --build-stub)
+        --build-firmware|--build-stub)
             mode=build
             ;;
         --elf)
@@ -157,20 +181,35 @@ while [ "$#" -gt 0 ]; do
 done
 
 cd "$repo_dir"
-semantic_check
+if ! semantic_check; then
+    exit 1
+fi
 
 case "$mode" in
     build)
-        build_stub
+        build_firmware
         ;;
     check)
-        if build_stub; then
-            run_bounded_smoke "$checked_elf"
+        if build_firmware; then
+            if run_bounded_smoke "$checked_elf"; then
+                status_line "PASS" "qemu.check" "semantic, build, and executable smoke passed"
+            else
+                status=$?
+                if [ "$status" -eq 2 ]; then
+                    status_line "BLOCKED" "qemu.check" "semantic/build passed; executable smoke needs qemu-system-riscv64"
+                    if [ "${REQUIRE_QEMU:-0}" != "1" ]; then
+                        exit 0
+                    fi
+                fi
+                exit "$status"
+            fi
         else
             status=$?
             if [ "$status" -eq 2 ]; then
-                echo "qemu-virt semantic checks passed; executable smoke is blocked until the toolchain is installed."
-                exit 0
+                status_line "BLOCKED" "qemu.check" "semantic checks passed; executable smoke needs a RISC-V ELF toolchain"
+                if [ "${REQUIRE_QEMU:-0}" != "1" ]; then
+                    exit 0
+                fi
             fi
             exit "$status"
         fi
@@ -179,20 +218,19 @@ case "$mode" in
         if [ -z "$elf" ]; then
             if [ -f "$checked_elf" ]; then
                 elf=$checked_elf
-            elif [ -f "$legacy_elf" ]; then
-                elf=$legacy_elf
             else
-                build_stub || exit $?
+                build_firmware || exit $?
                 elf=$checked_elf
             fi
         fi
 
         if ! command -v qemu-system-riscv64 >/dev/null 2>&1; then
-            echo "qemu-system-riscv64 missing."
-            exit 1
+            echo "BLOCKED: qemu-system-riscv64 missing."
+            status_line "BLOCKED" "qemu.run" "install qemu-system-riscv64 or run scripts/run_qemu.sh --check for non-strict status"
+            exit 2
         fi
         if [ ! -f "$elf" ]; then
-            echo "$elf missing."
+            status_line "FAIL" "qemu.run" "$elf missing"
             exit 1
         fi
 

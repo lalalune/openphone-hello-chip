@@ -3,13 +3,15 @@ status: required_for_pd_release
 blocked_gates:
   pd_release:
     blocked: true
-    reason: No complete routed run has archived all required physical signoff artifacts.
+    evidence_manifest: pd/signoff/manifest.yaml
+    reason: No complete routed run has archived all required physical signoff artifacts, corners, backannotation, and run-quality reports.
     unblock_requires:
-      - Complete one selected OpenLane/OpenROAD run with final GDS, DEF, netlist, SDC, DRC, LVS, antenna, and STA reports.
+      - Complete one selected OpenLane/OpenROAD run with final GDS, DEF, netlist, SDC, SPEF, SDF, DRC, LVS, antenna, STA, utilization, congestion, density/fill, and tool-version reports.
       - Archive waiver files for any non-clean report.
       - Record selected PDK, library, RC, and timing corners.
   tapeout_release:
     blocked: true
+    evidence_manifest: pd/signoff/manifest.yaml
     reason: Standalone-chip signoff is missing SI/PI, PDN/current budget, and padframe/package release evidence.
     unblock_requires:
       - Close SI/PI and PDN/current-budget sections in this manifest.
@@ -17,6 +19,7 @@ blocked_gates:
       - Approve tapeout checklist and manufacturing release manifest.
   board_fabrication_release:
     blocked: true
+    evidence_manifest: docs/manufacturing/release-manifest.yaml
     reason: Board package is a placeholder and has no DFM, footprint, SI, PI, or current-limit review evidence.
     unblock_requires:
       - Release package drawing, footprint, and pin-1 orientation evidence.
@@ -122,11 +125,34 @@ required_artifacts:
     globs:
       - "pd/openlane/runs/*/final/verilog/gl/*.v"
       - "runs/*/final/verilog/gl/*.v"
+  corner_manifest:
+    min_bytes: 64
+    globs:
+      - "pd/openlane/runs/*/reports/signoff/*corner*.yaml"
+      - "pd/openlane/runs/*/reports/signoff/*corners*.yaml"
+      - "pd/openlane/runs/*/signoff-corners.yaml"
+      - "runs/*/reports/signoff/*corner*.yaml"
+      - "runs/*/reports/signoff/*corners*.yaml"
+      - "runs/*/signoff-corners.yaml"
   sdc:
     min_bytes: 32
     globs:
       - "pd/openlane/runs/*/final/sdc/*.sdc"
       - "runs/*/final/sdc/*.sdc"
+  spef:
+    min_bytes: 128
+    globs:
+      - "pd/openlane/runs/*/final/spef/*.spef"
+      - "pd/openlane/runs/*/signoff/*.spef"
+      - "runs/*/final/spef/*.spef"
+      - "runs/*/signoff/*.spef"
+  sdf:
+    min_bytes: 128
+    globs:
+      - "pd/openlane/runs/*/final/sdf/*.sdf"
+      - "pd/openlane/runs/*/signoff/*.sdf"
+      - "runs/*/final/sdf/*.sdf"
+      - "runs/*/signoff/*.sdf"
   drc_report:
     min_bytes: 32
     globs:
@@ -163,6 +189,40 @@ required_artifacts:
       - "runs/*/reports/signoff/*sta*.rpt"
     fail_regex: "(?i)(\\bslack\\s*[-:]\\s*-[0-9]|wns\\s*[:=]\\s*-[0-9])"
     pass_regex: "(?i)(wns\\s*[:=]\\s*[+]?(0|[1-9][0-9]*)(\\.[0-9]+)?|no\\s+timing\\s+violations|timing\\s+(clean|pass(?:ed)?))"
+  utilization_report:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/reports/signoff/*util*.rpt"
+      - "pd/openlane/runs/*/reports/final/*util*.rpt"
+      - "runs/*/reports/signoff/*util*.rpt"
+      - "runs/*/reports/final/*util*.rpt"
+    fail_regex: "(?i)(\\bfail\\b|overflow\\s*[:=]\\s*[1-9][0-9]*)"
+    pass_regex: "(?i)(utili[sz]ation|die\\s+area|cell\\s+area|\\bpass(?:ed)?\\b|\\bclean\\b)"
+  congestion_report:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/reports/signoff/*congestion*.rpt"
+      - "pd/openlane/runs/*/reports/routing/*congestion*.rpt"
+      - "runs/*/reports/signoff/*congestion*.rpt"
+      - "runs/*/reports/routing/*congestion*.rpt"
+    fail_regex: "(?i)(\\bfail\\b|overflow\\s*[:=]\\s*[1-9][0-9]*|congested)"
+    pass_regex: "(?i)(overflow\\s*[:=]\\s*0|congestion\\s+(clean|pass(?:ed)?)|\\bpass(?:ed)?\\b|\\bclean\\b)"
+  density_fill_report:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/reports/signoff/*density*.rpt"
+      - "pd/openlane/runs/*/reports/signoff/*fill*.rpt"
+      - "runs/*/reports/signoff/*density*.rpt"
+      - "runs/*/reports/signoff/*fill*.rpt"
+    fail_regex: "(?i)(\\bfail\\b|violations?\\s*[:=]\\s*[1-9][0-9]*|density\\s+violation)"
+    pass_regex: "(?i)(violations?\\s*[:=]\\s*0|density\\s+(clean|pass(?:ed)?)|fill\\s+(clean|pass(?:ed)?)|\\bpass(?:ed)?\\b|\\bclean\\b)"
+  tool_versions:
+    min_bytes: 32
+    globs:
+      - "pd/openlane/runs/*/reports/signoff/tool_versions.txt"
+      - "pd/openlane/runs/*/tool_versions.txt"
+      - "runs/*/reports/signoff/tool_versions.txt"
+      - "runs/*/tool_versions.txt"
 waivers:
   required_if_any_report_dirty: true
   globs:
