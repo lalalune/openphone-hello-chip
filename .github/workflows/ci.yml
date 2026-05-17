@@ -18,6 +18,7 @@ jobs:
       - name: Upload regression artifacts
         uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: hello-chip-regression
           path: |
