@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""STREAM-shaped host smoke benchmark command."""
+
+from __future__ import annotations
+
+import time
+
+import numpy as np
+
+
+def rate_mb_s(bytes_moved: int, seconds: float) -> float:
+    return bytes_moved / max(seconds, 1e-9) / 1_000_000.0
+
+
+def main() -> int:
+    n = 2_000_000
+    scalar = 3.0
+    a = np.ones(n, dtype=np.float64)
+    b = np.full(n, 2.0, dtype=np.float64)
+    c = np.empty(n, dtype=np.float64)
+
+    started = time.perf_counter()
+    c[:] = a
+    copy = rate_mb_s(2 * a.nbytes, time.perf_counter() - started)
+
+    started = time.perf_counter()
+    b[:] = scalar * c
+    scale = rate_mb_s(2 * b.nbytes, time.perf_counter() - started)
+
+    started = time.perf_counter()
+    c[:] = a + b
+    add = rate_mb_s(3 * c.nbytes, time.perf_counter() - started)
+
+    started = time.perf_counter()
+    a[:] = b + scalar * c
+    triad = rate_mb_s(3 * a.nbytes, time.perf_counter() - started)
+
+    print("Function    Best Rate MB/s  Avg time     Min time     Max time")
+    for name, value in (("Copy", copy), ("Scale", scale), ("Add", add), ("Triad", triad)):
+        seconds = 1.0 / max(value, 1e-9)
+        print(f"{name:8s}: {value:14.4f} {seconds:11.6f} {seconds:11.6f} {seconds:11.6f}")
+    print("Implementation provenance: openphone-host-smoke")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

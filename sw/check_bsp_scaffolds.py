@@ -11,18 +11,26 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-
+from typing import TypedDict
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-CHECKS = {
+class CheckSpec(TypedDict):
+    local: str
+    expected: str
+    blocker: str
+    files: list[str]
+    terms: list[str]
+
+
+CHECKS: dict[str, CheckSpec] = {
     "linux": {
         "local": "make linux-bsp-check",
         "expected": "linux BSP check passed.",
         "blocker": "external Linux kernel checkout plus integration of drivers/misc/openphone-hello",
         "files": [
-            "sw/linux/README.md",
+            "docs/sw/linux/README.md",
             "sw/linux/scripts/import-linux-bsp.sh",
             "sw/linux/dts/openphone-hello.dts",
             "sw/linux/drivers/hello/hello_platform_contract.h",
@@ -47,7 +55,7 @@ CHECKS = {
         "expected": "buildroot BSP check passed.",
         "blocker": "external Buildroot checkout and external Linux kernel tarball/tree",
         "files": [
-            "sw/buildroot/README.md",
+            "docs/sw/buildroot/README.md",
             "sw/buildroot/external.desc",
             "sw/buildroot/Config.in",
             "sw/buildroot/external.mk",
@@ -69,8 +77,9 @@ CHECKS = {
         "expected": "aosp BSP check passed.",
         "blocker": "external AOSP checkout with riscv64/Cuttlefish host dependencies and HAL binaries",
         "files": [
-            "sw/aosp-device/README.md",
+            "docs/sw/aosp-device/README.md",
             "sw/aosp-device/import-aosp-device.sh",
+            "sw/aosp-device/capture-aosp-evidence.sh",
             "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
             "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
             "sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk",
@@ -83,6 +92,7 @@ CHECKS = {
             "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts",
             "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
             "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te",
+            "docs/sw/aosp-device/device/openphone/openphone_ai_soc/hal/README.md",
         ],
         "terms": [
             "sw/platform/hello_platform_contract.json",
@@ -97,8 +107,8 @@ CHECKS = {
         "expected": "buildroot BSP check passed.; linux BSP check passed.; aosp BSP check passed.",
         "blocker": "CPU-capable SoC integration with RAM, UART, timer, interrupt controller, OpenSBI handoff",
         "files": [
-            "sw/opensbi/README.md",
-            "sw/u-boot/README.md",
+            "docs/sw/opensbi/README.md",
+            "docs/sw/u-boot/README.md",
         ],
         "terms": [
             "sw/platform/hello_platform_contract.json",
@@ -110,7 +120,9 @@ CHECKS = {
 
 
 def read_joined(files: list[str]) -> str:
-    return "\n".join((ROOT / path).read_text(errors="ignore") for path in files if (ROOT / path).is_file())
+    return "\n".join(
+        (ROOT / path).read_text(errors="ignore") for path in files if (ROOT / path).is_file()
+    )
 
 
 def check(name: str) -> list[str]:

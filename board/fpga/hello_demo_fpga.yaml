@@ -9,6 +9,9 @@ flow:
 board:
   class: ulx3s_style
   exact_revision: unassigned
+  exact_revision_evidence: unassigned
+  ecp5_device: unassigned
+  ecp5_package: unassigned
 clock:
   port: CLK_IN
   nominal_frequency_hz: 25000000
@@ -41,4 +44,14 @@ reserved_outputs:
   - JTAG_TDO
 constraints:
   skeleton_lpf: board/fpga/constraints/hello_demo_ulx3s.lpf
+  final_lpf: unassigned
   bitstream_release_blocked_until_pins_assigned: true
+  required_locate_assignments: 35
+  pin_assignment_source: unassigned
+release_evidence:
+  manifest: board/fpga/release_manifest.yaml
+  bitstream_path: unassigned
+  bitstream_sha256: unassigned
+  timing_report: unassigned
+  timing_summary: unassigned
+  archived_tool_versions: unassigned

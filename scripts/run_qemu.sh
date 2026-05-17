@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+repo_dir=$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)
 src="$repo_dir/sw/bootrom/hello_qemu_firmware.S"
 linker="$repo_dir/sw/bootrom/linker.ld"
 checked_elf="$repo_dir/build/qemu/hello_qemu_firmware.elf"
@@ -72,9 +72,9 @@ EOF
 semantic_check() {
     failed=0
 
-    for path in "$src" "$linker" "$repo_dir/sim/qemu/README.md"; do
+    for path in "$src" "$linker" "$repo_dir/docs/sim/qemu/README.md"; do
         if [ ! -f "$path" ]; then
-            status_line "FAIL" "qemu.semantic" "missing required artifact ${path#$repo_dir/}"
+            status_line "FAIL" "qemu.semantic" "missing required artifact ${path#"$repo_dir"/}"
             failed=1
         fi
     done
@@ -99,12 +99,12 @@ semantic_check() {
         status_line "FAIL" "qemu.semantic" "sw/bootrom/linker.ld must keep _start as the ELF entry"
         failed=1
     }
-    grep -q "software reference only" "$repo_dir/sim/qemu/README.md" || {
-        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must mark qemu-virt as software reference only"
+    grep -q "software reference only" "$repo_dir/docs/sim/qemu/README.md" || {
+        status_line "FAIL" "qemu.semantic" "docs/sim/qemu/README.md must mark qemu-virt as software reference only"
         failed=1
     }
-    grep -q "scripts/run_qemu.sh --build-firmware" "$repo_dir/sim/qemu/README.md" || {
-        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must document the firmware ELF build path"
+    grep -q "scripts/run_qemu.sh --build-firmware" "$repo_dir/docs/sim/qemu/README.md" || {
+        status_line "FAIL" "qemu.semantic" "docs/sim/qemu/README.md must document the firmware ELF build path"
         failed=1
     }
 
@@ -132,10 +132,10 @@ build_firmware() {
         -march=rv64imac -mabi=lp64 \
         -Wl,-T,"$linker" -Wl,--build-id=none \
         -o "$checked_elf" "$src"; then
-        status_line "FAIL" "qemu.build" "$cc could not build ${src#$repo_dir/}"
+        status_line "FAIL" "qemu.build" "$cc could not build ${src#"$repo_dir"/}"
         return 1
     fi
-    status_line "PASS" "qemu.build" "built ${checked_elf#$repo_dir/} with $cc"
+    status_line "PASS" "qemu.build" "built ${checked_elf#"$repo_dir"/} with $cc"
 }
 
 run_bounded_smoke() {
@@ -160,7 +160,7 @@ run_bounded_smoke() {
     if grep -q "$banner" "$log"; then
         mkdir -p "$repo_dir/build/reports"
         cp "$log" "$smoke_log"
-        status_line "PASS" "qemu.run" "bounded smoke saw '$banner'; archived ${smoke_log#$repo_dir/}"
+        status_line "PASS" "qemu.run" "bounded smoke saw '$banner'; archived ${smoke_log#"$repo_dir"/}"
         rm -f "$log"
         return 0
     fi

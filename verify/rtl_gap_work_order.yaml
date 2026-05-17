@@ -222,12 +222,15 @@ areas:
         closure_evidence: Assertions for hsync/vsync cadence, active window bounds, framebuffer address monotonicity, disabled-state behavior, unsupported formats, and read-ready stalls.
         work_order: Add display-specific formal or property-driven cocotb coverage.
   bootrom:
-    current_posture: identity_contract_rom
+    current_posture: identity_contract_rom_plus_executable_reset_scaffold
     local_closures:
       - ROM words expose magic, contract version, and the current handoff address for debug smoke tests
+      - fw/boot-rom contains a minimal RV64 reset vector that sets mtvec, disables machine interrupts, and jumps to the current DRAM handoff address
     fail_closed:
       - unmapped_bootrom_words_read_zero
+      - bootrom_check_blocks_or_builds_reset_artifact
     checks:
+      - make bootrom-check
       - make cocotb
       - make platform-contract-check
     critical_gaps:
@@ -236,13 +239,16 @@ areas:
         category: incomplete_subsystem
         severity: critical
         affected_paths:
+          - fw/boot-rom/reset.S
+          - fw/boot-rom/linker.ld
+          - fw/boot-rom/check_boot_rom.py
           - rtl/bootrom/hello_bootrom.sv
           - sw/bootrom/hello_qemu_firmware.S
           - scripts/run_qemu.sh
-        current_evidence: ROM returns identity/version words and a placeholder boot vector, not executable reset code.
-        blocking_gate: Firmware and OS boot gates remain blocked.
-        closure_evidence: Executable reset ROM initializes machine state, validates handoff address, and is covered by RTL or emulator boot transcript checks.
-        work_order: Replace the identity contract ROM with executable reset code that initializes M-mode state and hands off to OpenSBI or equivalent firmware.
+        current_evidence: ROM returns identity/version words and a debug-visible handoff word. fw/boot-rom now builds a minimal executable RV64 reset scaffold when a local RISC-V toolchain is available.
+        blocking_gate: Firmware, secure boot, OpenSBI, and OS boot gates remain blocked until the scaffold is integrated into an RTL CPU reset path and covered by a transcript.
+        closure_evidence: Executable reset ROM is consumed by RTL or an equivalent emulator target, initializes the required machine state, validates the selected handoff address, and emits checked boot transcript evidence.
+        work_order: Integrate the reset ROM artifact into the CPU reset path and replace the fixed handoff with the selected firmware payload policy.
   dram:
     current_posture: small_sram_backed_dram_aperture
     local_closures:

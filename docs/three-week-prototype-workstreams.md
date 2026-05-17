@@ -3,6 +3,15 @@
 Generated on 2026-05-16 from subsystem agent reviews and local validation.
 Updated on 2026-05-17 after the critical gap review pass.
 
+Heartbeat update 2026-05-17 03:43 PDT: Renode, BSP, product/package, secure
+boot, and benchmark workstreams now have stricter evidence intake. Renode
+remains blocked by a missing host executable and missing real transcript.
+Software BSP evidence remains blocked by missing external Buildroot, Linux,
+OpenSBI, U-Boot, AOSP, CTS, and VTS logs. Benchmarks now reject repo-local
+smoke shims as real tools; fio host runs pass, while CoreMark, STREAM,
+lmbench, TensorFlow Lite `benchmark_model`, and hello-NPU NNAPI remain blocked
+until real target executables/capability evidence exist.
+
 ## Current executable baseline
 
 - Passing locally: `make docs-check project-plan-check platform-contract-check`, `make rtl-check`, `make synth`, `make formal`, `make verilator`, `make cocotb`, `make cocotb-contract`, `make cocotb-cpu`, `make qemu-check`, `make pipeline-check`, and `python3 scripts/check_mvp_status.py --fail-on-fail`.

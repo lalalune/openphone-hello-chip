@@ -9,7 +9,7 @@
 
 set -u
 
-repo_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
 out_dir="$repo_dir/build/reports"
 out_file="$out_dir/tool_versions.txt"
 sidecar="$out_dir/tool_versions_release_gate.txt"

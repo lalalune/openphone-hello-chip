@@ -1,5 +1,9 @@
 signoff: hello_chip_top_pd
 status: required_for_pd_release
+runner:
+  openlane_image: ghcr.io/efabless/openlane2:2.4.0.dev1
+  openlane_image_digest: sha256:bcaabac3b114dfb9e739af9f16b53a79ce1b744bcdb3ad4fc476c961581fe5d5
+  require_pinned_runner_for_release: true
 blocked_gates:
   pd_release:
     blocked: true
@@ -81,8 +85,26 @@ pdn_current_budget:
     - name: board_current_limit_plan
       status: draft
       globs:
-        - "board/kicad/hello-demo/fab-notes.md"
+        - "docs/board/kicad/hello-demo/fab-notes.md"
         - "docs/manufacturing/hello-demo-checklist.md"
+thermal_package_board:
+  status: blocked
+  release_blocking: true
+  blockers:
+    - Package and board thermal evidence is not tied to post-route power, regulator loss, ambient, airflow, or enclosure assumptions.
+    - First-article temperature limits, measurement points, and thermal stop conditions are not archived.
+  required_artifacts:
+    - name: package_board_thermal_model_or_review
+      status: missing
+      globs:
+        - "docs/manufacturing/evidence/thermal/**/*"
+        - "board/reports/thermal/**/*"
+        - "pd/signoff/thermal/**/*"
+    - name: first_article_temperature_limits
+      status: missing
+      globs:
+        - "docs/manufacturing/evidence/lab/*thermal*"
+        - "docs/manufacturing/evidence/thermal/*first-article*"
 padframe_package:
   status: blocked
   release_blocking: true
@@ -95,21 +117,32 @@ padframe_package:
       status: draft
       globs:
         - "pd/padframe/hello_demo_padframe.yaml"
-        - "pd/padframe/hello_demo_padframe.md"
+        - "docs/pd/padframe/hello_demo_padframe.md"
     - name: package_pinout
       status: draft
       globs:
         - "package/hello-demo-pinout.yaml"
-        - "package/hello-demo-package.md"
-        - "package/hello-demo-pad-ring.md"
+        - "docs/package/hello-demo-package.md"
+        - "docs/package/hello-demo-pad-ring.md"
     - name: board_footprint_notes
       status: draft
       globs:
-        - "board/kicad/hello-demo/fab-notes.md"
+        - "docs/board/kicad/hello-demo/fab-notes.md"
+    - name: package_pinout_board_cross_probe
+      status: draft
+      globs:
+        - "board/kicad/hello-demo/package-pinout-cross-probe.yaml"
 run_roots:
   - pd/openlane/runs
   - runs
 required_artifacts:
+  run_manifest:
+    min_bytes: 128
+    globs:
+      - "pd/openlane/runs/*/signoff-run.yaml"
+      - "pd/openlane/runs/*/reports/signoff/signoff-run.yaml"
+      - "runs/*/signoff-run.yaml"
+      - "runs/*/reports/signoff/signoff-run.yaml"
   gds:
     min_bytes: 128
     globs:

@@ -30,6 +30,7 @@ fi
 echo "OpenLane2 checked out at $OPENLANE2_SHA (tag $OPENLANE2_TAG)."
 
 python3 -m venv .venv
+# shellcheck disable=SC1091
 . .venv/bin/activate
 pip install --upgrade pip
 pip install .

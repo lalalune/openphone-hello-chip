@@ -5,7 +5,6 @@ import re
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "sw/platform/hello_platform_contract.json"
 GENERATED_HEADER = ROOT / "sw/platform/generated/hello_platform_contract.h"
@@ -135,10 +134,20 @@ def check_generated_header(contract: dict, errors: list[str]) -> None:
 
 def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
     rtl = read_text(ROOT / "rtl/bootrom/hello_bootrom.sv")
-    rtl_words = {
-        int(index, 16) * 4: h(value)
-        for index, value in re.findall(r"6'h([0-9A-Fa-f]+):\s*rdata\s*=\s*32'h([0-9A-Fa-f_]+)", rtl)
+    localparams = {
+        name: h(value)
+        for name, value in re.findall(
+            r"localparam\s+logic\s+\[31:0\]\s+(\w+)\s*=\s*32'h([0-9A-Fa-f_]+)",
+            rtl,
+        )
     }
+    rtl_words = {}
+    for index, expr in re.findall(r"[68]'h([0-9A-Fa-f]+):\s*\w+\s*=\s*([^;]+);", rtl):
+        expr = expr.strip()
+        literal = re.fullmatch(r"32'h([0-9A-Fa-f_]+)", expr)
+        value = h(literal.group(1)) if literal else localparams.get(expr)
+        if value is not None:
+            rtl_words[int(index, 16) * 4] = value
     for word in contract["hello_chip"]["boot_rom"]["words"]:
         offset = h(word["offset"])
         expected = h(word["value"])
@@ -154,12 +163,14 @@ def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
 def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
     top = read_text(ROOT / "rtl/top/hello_soc_top.sv")
     decoded = {}
-    for rtl_name, value in re.findall(
-        r"assign\s+(\w+)_sel\s*=.*?mmio_addr\[31:12\]\s*==\s*20'h([0-9A-Fa-f_]+)",
-        top,
-    ):
+    for rtl_name, expr in re.findall(r"assign\s+(\w+)_sel\s*=\s*(.*?);", top, re.S):
         if rtl_name in REGION_RTL_NAMES:
-            decoded[REGION_RTL_NAMES[rtl_name]] = h(value) << 12
+            match_20 = re.search(r"mmio_addr\[31:12\]\s*==\s*20'h([0-9A-Fa-f_]+)", expr)
+            match_16 = re.search(r"mmio_addr\[31:16\]\s*==\s*16'h([0-9A-Fa-f_]+)", expr)
+            if match_20:
+                decoded[REGION_RTL_NAMES[rtl_name]] = h(match_20.group(1)) << 12
+            elif match_16:
+                decoded[REGION_RTL_NAMES[rtl_name]] = h(match_16.group(1)) << 16
 
     for name, region in regions_by_name(contract).items():
         expected = h(region["base"])
@@ -173,10 +184,11 @@ def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
     require("mmio_addr[11:8] == 4'h0" in top, "RTL implemented-window decode changed", errors)
     unmapped = f"{h(contract['hello_chip']['unmapped_read_value']):08X}"
     rtl_unmapped_values = {
-        value.replace("_", "").upper()
-        for value in re.findall(r"32'h([0-9A-Fa-f_]+)", top)
+        value.replace("_", "").upper() for value in re.findall(r"32'h([0-9A-Fa-f_]+)", top)
     }
-    require(unmapped in rtl_unmapped_values, "RTL unmapped read value does not match contract", errors)
+    require(
+        unmapped in rtl_unmapped_values, "RTL unmapped read value does not match contract", errors
+    )
 
 
 def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> None:
@@ -185,7 +197,7 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
         rtl = read_text(path)
         rtl_offsets = {
             int(index, 16) * 4
-            for index in re.findall(r"6'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
+            for index in re.findall(r"(?m)^\s*(?:\d+)?'h([0-9A-Fa-f]+):\s*rdata\s*=", rtl)
         }
         contract_offsets = set()
         for reg in regions[region_name]["registers"]:
@@ -206,32 +218,72 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
 
 def check_debug_contract(errors: list[str]) -> None:
     bridge = read_text(ROOT / "rtl/debug/hello_dbg_mmio_bridge.sv")
-    require("DBG_LAUNCH" in read_text(ROOT / "arch/debug.md"), "arch/debug.md no longer names DBG_LAUNCH", errors)
-    require("addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors)
-    require("wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors)
-    require("rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors)
+    require(
+        "DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"),
+        "docs/arch/debug.md no longer names DBG_LAUNCH",
+        errors,
+    )
+    require(
+        "addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors
+    )
+    require(
+        "wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors
+    )
+    require(
+        "rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors
+    )
 
 
 def check_qemu_virt_separation(contract: dict, errors: list[str]) -> None:
     qemu = contract["qemu_virt"]
     qemu_script = read_text(ROOT / "scripts/run_qemu.sh")
     renode_script = read_text(ROOT / "scripts/run_renode.sh")
-    qemu_readme = read_text(ROOT / "sim/qemu/README.md")
+    qemu_readme = read_text(ROOT / "docs/sim/qemu/README.md")
     renode_repl = read_text(ROOT / "sim/renode/openphone_hello.repl")
 
-    require("-machine virt" in qemu_script, "scripts/run_qemu.sh must launch qemu-system-riscv64 -machine virt", errors)
-    require("qemu-virt" in qemu_script, "scripts/run_qemu.sh must label the target as qemu-virt", errors)
-    require("qemu-virt" in renode_script, "scripts/run_renode.sh must label the target as qemu-virt", errors)
-    require("software reference only" in qemu_readme, "sim/qemu/README.md must mark QEMU as software reference only", errors)
-    require("not the hello-chip hardware ABI" in qemu_readme, "sim/qemu/README.md must separate qemu-virt from hardware ABI", errors)
-    require(f"0x{h(qemu['load_address']):08x}" in renode_repl.lower(), "Renode RAM does not cover qemu-virt load address", errors)
-    require(f"0x{h(qemu['uart_base']):08x}" in renode_repl.lower(), "Renode UART base does not match qemu-virt contract", errors)
+    require(
+        "-machine virt" in qemu_script,
+        "scripts/run_qemu.sh must launch qemu-system-riscv64 -machine virt",
+        errors,
+    )
+    require(
+        "qemu-virt" in qemu_script, "scripts/run_qemu.sh must label the target as qemu-virt", errors
+    )
+    require(
+        "qemu-virt" in renode_script,
+        "scripts/run_renode.sh must label the target as qemu-virt",
+        errors,
+    )
+    require(
+        "software reference only" in qemu_readme,
+        "docs/sim/qemu/README.md must mark QEMU as software reference only",
+        errors,
+    )
+    require(
+        "not the hello-chip hardware ABI" in qemu_readme,
+        "docs/sim/qemu/README.md must separate qemu-virt from hardware ABI",
+        errors,
+    )
+    require(
+        f"0x{h(qemu['load_address']):08x}" in renode_repl.lower(),
+        "Renode RAM does not cover qemu-virt load address",
+        errors,
+    )
+    require(
+        f"0x{h(qemu['uart_base']):08x}" in renode_repl.lower(),
+        "Renode UART base does not match qemu-virt contract",
+        errors,
+    )
 
 
 def check_contract(contract: dict) -> list[str]:
     errors: list[str] = []
     hello = contract.get("hello_chip", {})
-    require(contract["contract"]["version"] == 1, "contract version must be 1 for current hello chip", errors)
+    require(
+        contract["contract"]["version"] == 1,
+        "contract version must be 1 for current hello chip",
+        errors,
+    )
     require(hello.get("has_cpu") is False, "hello chip contract must state has_cpu=false", errors)
     require(
         hello.get("bus_master") == "package_debug_nibble_bridge",

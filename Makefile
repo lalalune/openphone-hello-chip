@@ -7,23 +7,39 @@ RTL_TOP := hello_chip_top
 RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
 BUILD := build
 
-.PHONY: venv tools smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict mvp-status-json project-plan-check product-check product-release-check pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions record-tool-versions pipeline-check archive-release clean
+.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks mvp-status mvp-status-strict mvp-status-json chipyard-generator-check chipyard-generated-check cpu-ap-scaffold-check cpu-ap-evidence-check cpu-ap-completion-gate memory-uma-claim-gate npu-2028-target-check project-plan-check product-check product-release-check pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check physical-closure-work-order-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openroad qemu renode qemu-check qemu-check-strict qemu-status-test renode-check renode-check-strict renode-status-test platform-contract-check software-contract-check buildroot-check linux-bsp-check aosp-bsp-check bsp-scaffold-check software-bsp-check software-bsp-evidence-check docs-check tool-versions record-tool-versions pipeline-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
 	@$(VENV_PYTHON) -m pip install --upgrade pip
 	@$(VENV_PYTHON) -m pip install -r requirements.txt
+	@scripts/install_benchmark_smoke_tools.sh
 
 tools:
 	@scripts/check_tools.sh
 
-smoke: docs-check project-plan-check platform-contract-check stub-audit software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
+lint:
+	@$(PYTHON) scripts/run_lint.py
+
+lint-fix:
+	@$(PYTHON) scripts/run_lint.py --fix
+
+typecheck:
+	@$(PYTHON) scripts/run_typecheck.py
+
+analysis:
+	@$(PYTHON) scripts/run_analysis.py
+
+verify-all: lint typecheck smoke analysis cocotb cocotb-contract cocotb-cpu qemu-status-test renode-status-test
+	@echo "verify-all complete"
+
+smoke: lint typecheck docs-check project-plan-check platform-contract-check chipyard-generator-check cpu-ap-scaffold-check cpu-ap-completion-gate bootrom-check stub-audit software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
 	@echo "smoke complete"
 
-ci-fast: docs-check project-plan-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
+ci-fast: lint typecheck docs-check project-plan-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
 	@echo "ci-fast complete"
 
-ci-local: docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal tool-versions
+ci-local: lint typecheck docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal tool-versions
 	@echo "ci-local complete"
 
 ci-strict: REQUIRE_SBY=1
@@ -35,10 +51,12 @@ ci-pd: openlane pd-signoff-check
 	@echo "ci-pd complete"
 
 benchmarks-dry-run:
-	@$(PYTHON) benchmarks/run_benchmarks.py --dry-run --report-id dry-run
+	@scripts/install_benchmark_smoke_tools.sh
+	@PATH="$(CURDIR)/$(VENV)/bin:$(CURDIR)/benchmarks/tools:$$PATH" $(VENV_PYTHON) benchmarks/run_benchmarks.py --dry-run --report-id dry-run
 
 benchmarks:
-	@$(PYTHON) benchmarks/run_benchmarks.py
+	@scripts/install_benchmark_smoke_tools.sh
+	@PATH="$(CURDIR)/$(VENV)/bin:$(CURDIR)/benchmarks/tools:$$PATH" $(VENV_PYTHON) benchmarks/run_benchmarks.py --allow-host-smoke-tools
 
 mvp-status:
 	@$(PYTHON) scripts/check_mvp_status.py
@@ -52,10 +70,31 @@ mvp-status-json:
 	@mkdir -p build/reports
 	@$(PYTHON) scripts/check_mvp_status.py --json | tee build/reports/mvp_status.json
 
-product-check: pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check pd-signoff-manifest-check real-world-gates-check
+chipyard-generator-check:
+	@$(PYTHON) scripts/check_chipyard_generator_manifest.py
+
+chipyard-generated-check:
+	@$(PYTHON) scripts/check_chipyard_generator_manifest.py --require-generated
+
+cpu-ap-scaffold-check:
+	@$(PYTHON) scripts/check_cpu_ap_evidence.py
+
+cpu-ap-evidence-check:
+	@$(PYTHON) scripts/check_cpu_ap_evidence.py --require-evidence
+
+cpu-ap-completion-gate:
+	@$(PYTHON) scripts/check_cpu_ap_completion_gate.py
+
+memory-uma-claim-gate:
+	@$(PYTHON) scripts/check_memory_uma_claim_gate.py
+
+npu-2028-target-check:
+	@$(PYTHON) scripts/check_npu_2028_targets.py
+
+product-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check physical-closure-work-order-check pd-signoff-manifest-check real-world-gates-check memory-uma-claim-gate
 	@$(PYTHON) scripts/product_check.py
 
-product-release-check: pinout-check fpga-check wifi-interface-check padframe-check physical-closure-work-order-check pd-signoff-manifest-check real-world-gates-check
+product-release-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check physical-closure-work-order-check pd-signoff-manifest-check real-world-gates-check memory-uma-claim-gate
 	@$(PYTHON) scripts/product_check.py --release
 
 project-plan-check:
@@ -67,11 +106,17 @@ pinout-check:
 fpga-check:
 	@$(PYTHON) scripts/check_fpga_target.py
 
+fpga-release-check: fpga-check
+	@$(PYTHON) scripts/check_fpga_release.py
+
 wifi-interface-check:
 	@$(PYTHON) scripts/check_wifi_interface.py
 
 padframe-check:
 	@$(PYTHON) scripts/check_padframe_contract.py
+
+board-package-evidence-check:
+	@$(PYTHON) scripts/check_board_package_evidence.py
 
 physical-closure-work-order-check:
 	@$(PYTHON) scripts/check_physical_closure_work_order.py
@@ -90,6 +135,9 @@ pd-signoff-manifest-check:
 
 pd-signoff-check:
 	@$(PYTHON) scripts/check_pd_signoff.py
+
+bootrom-check:
+	@$(PYTHON) fw/boot-rom/check_boot_rom.py
 
 rtl-check:
 	@scripts/run_rtl_check.sh

@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import json
-import re
 import subprocess
 import sys
-
+from pathlib import Path
 
 REQUIRED = [
     "build/netlist/hello_chip_synth.v",
     "build/reports/hello_soc_yosys.log",
     "build/reports/tool_versions.txt",
-    "verify/cocotb/results.xml",
+    "build/reports/cocotb/manifest.json",
     "build/verilator/Vhello_chip_top",
 ]
 
 REQUIRED_SOURCE = [
     "scripts/check_software_bsp.py",
     "scripts/check_mvp_status.py",
+    "scripts/check_cpu_ap_completion_gate.py",
     "scripts/check_real_world_gates.py",
     "scripts/check_physical_closure_work_order.py",
     "docs/toolchain/headless-cli-audit.md",
@@ -34,13 +33,13 @@ REQUIRED_SOURCE = [
     "benchmarks/configs/fio-rand-rw.fio",
     "benchmarks/configs/fio-seq-read.fio",
     "benchmarks/configs/benchmark_plan.json",
-    "benchmarks/models/README.md",
+    "docs/benchmarks/models/README.md",
     "benchmarks/run_benchmarks.py",
     "sw/platform/hello_platform_contract.json",
     "sw/platform/generated/hello_platform_contract.h",
     "sw/bootrom/hello_qemu_firmware.S",
     "sw/bootrom/linker.ld",
-    "sw/buildroot/README.md",
+    "docs/sw/buildroot/README.md",
     "sw/buildroot/external.desc",
     "sw/buildroot/Config.in",
     "sw/buildroot/external.mk",
@@ -48,7 +47,7 @@ REQUIRED_SOURCE = [
     "sw/buildroot/configs/openphone_hello_defconfig",
     "sw/buildroot/board/openphone/hello/linux.fragment",
     "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke",
-    "sw/linux/README.md",
+    "docs/sw/linux/README.md",
     "sw/linux/scripts/import-linux-bsp.sh",
     "sw/linux/dts/openphone-hello.dts",
     "sw/linux/drivers/hello/hello_platform_contract.h",
@@ -57,7 +56,7 @@ REQUIRED_SOURCE = [
     "sw/linux/drivers/hello/hello-npu.c",
     "sw/linux/drivers/hello/hello-dma.c",
     "sw/linux/tests/hello-mmio-smoke.c",
-    "sw/aosp-device/README.md",
+    "docs/sw/aosp-device/README.md",
     "sw/aosp-device/import-aosp-device.sh",
     "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
     "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
@@ -71,8 +70,8 @@ REQUIRED_SOURCE = [
     "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts",
     "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
     "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te",
-    "sw/opensbi/README.md",
-    "sw/u-boot/README.md",
+    "docs/sw/opensbi/README.md",
+    "docs/sw/u-boot/README.md",
     "sw/check_bsp_scaffolds.py",
     "verify/check_stub_audit.py",
 ]
@@ -83,8 +82,7 @@ def run_check(root: Path, command: list[str]) -> bool:
         command,
         cwd=root,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     if result.returncode != 0:
         print(f"Command failed: {' '.join(command)}")
@@ -108,7 +106,11 @@ def check_headless_audit(root: Path) -> list[str]:
         "make archive-release",
         "No milestone may be marked complete because a GUI action was possible",
     ]
-    return [f"headless CLI audit missing required evidence path: {term}" for term in required_terms if term not in text]
+    return [
+        f"headless CLI audit missing required evidence path: {term}"
+        for term in required_terms
+        if term not in text
+    ]
 
 
 def check_benchmark_report(root: Path) -> list[str]:
@@ -133,10 +135,40 @@ def check_benchmark_report(root: Path) -> list[str]:
         if status == "planned_missing_deps" and not result.get("missing_dependencies"):
             errors.append(f"benchmark dry-run result missing dependency list: {name}")
 
+    model_exists = (root / "benchmarks/models/mobile_smoke.tflite").is_file()
     for name in ("tflite_cpu", "tflite_hello_npu"):
         result = result_by_name.get(name)
-        if result and result.get("status") != "blocked":
-            errors.append(f"{name} must stay blocked until a real mobile_smoke.tflite artifact exists")
+        if result and not model_exists and result.get("status") != "blocked":
+            errors.append(
+                f"{name} must stay blocked until a real mobile_smoke.tflite artifact exists"
+            )
+    result = result_by_name.get("tflite_hello_npu")
+    if result and result.get("status") != "blocked":
+        errors.append(
+            "tflite_hello_npu must stay blocked until hello-npu NNAPI capability evidence exists"
+        )
+
+    return errors
+
+
+def check_cocotb_manifest(root: Path) -> list[str]:
+    manifest_path = root / "build/reports/cocotb/manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    targets = manifest.get("targets", {})
+    if not isinstance(targets, dict) or not targets:
+        return ["cocotb manifest is missing target entries"]
+
+    errors: list[str] = []
+    for name, entry in targets.items():
+        if not isinstance(entry, dict):
+            errors.append(f"cocotb {name} manifest entry is not a mapping")
+            continue
+        xml = root / entry.get("result_xml", "")
+        stats = entry.get("stats", {})
+        if not xml.is_file():
+            errors.append(f"cocotb {name} is missing result XML")
+        if stats.get("failures") or stats.get("errors") or not stats.get("testcases"):
+            errors.append(f"cocotb {name} is missing a passing non-empty result")
 
     return errors
 
@@ -146,8 +178,7 @@ def check_mvp_status_semantics(root: Path) -> list[str]:
         [sys.executable, "scripts/check_mvp_status.py", "--json"],
         cwd=root,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     if result.returncode != 0:
         return ["mvp-status JSON command failed"]
@@ -156,20 +187,29 @@ def check_mvp_status_semantics(root: Path) -> list[str]:
     by_name = {item.get("subsystem"): item for item in statuses}
     errors: list[str] = []
 
-    for name in ("qemu", "renode", "benchmarks"):
+    for name in ("cpu-ap", "qemu", "renode", "benchmarks"):
         item = by_name.get(name)
         if not item:
             errors.append(f"mvp-status missing subsystem: {name}")
             continue
-        if item.get("status") == "pass" and item.get("evidence_class") in {"scaffold_only", "source_present", "tool_available"}:
-            errors.append(f"mvp-status lets scaffold/tool/source evidence pass as implementation proof: {name}")
+        if item.get("status") == "pass" and item.get("evidence_class") in {
+            "scaffold_only",
+            "source_present",
+            "tool_available",
+        }:
+            errors.append(
+                f"mvp-status lets scaffold/tool/source evidence pass as implementation proof: {name}"
+            )
 
     for item in statuses:
         evidence = item.get("evidence", "").lower()
         if item.get("status") == "pass" and "release check failed" in evidence:
-            errors.append(f"mvp-status pass row contains release failure text: {item.get('subsystem')}")
+            errors.append(
+                f"mvp-status pass row contains release failure text: {item.get('subsystem')}"
+            )
 
     expected_blockers = {
+        "cpu-ap": ("cpu_ap.completion_gate", "release_blocker", "claim_gate_fail"),
         "qemu": ("qemu_smoke.log", "regen_required", "tool_blocker"),
         "renode": ("renode_smoke.log", "regen_required", "tool_blocker"),
         "benchmarks": ("dry-run planning evidence only", "scaffold_only", "tool_blocker"),
@@ -241,7 +281,10 @@ def main() -> int:
     if (
         "Number of cells:" not in yosys_log
         and "=== design hierarchy ===" not in yosys_log
-        and ("End of script." not in yosys_log or "Dumping module `\\hello_chip_top'." not in yosys_log)
+        and (
+            "End of script." not in yosys_log
+            or "Dumping module `\\hello_chip_top'." not in yosys_log
+        )
     ):
         print("Yosys report does not look like a completed synthesis log.")
         return 1
@@ -251,14 +294,11 @@ def main() -> int:
         print("Synthesized netlist does not contain hello_chip_top.")
         return 1
 
-    cocotb = (root / "verify/cocotb/results.xml").read_text(errors="ignore")
-    failures = sum(int(value) for value in re.findall(r'failures="(\d+)"', cocotb))
-    errors = sum(int(value) for value in re.findall(r'errors="(\d+)"', cocotb))
-    failure_elements = len(re.findall(r"<failure\b", cocotb))
-    error_elements = len(re.findall(r"<error\b", cocotb))
-    testcases = re.findall(r"<testcase\b", cocotb)
-    if failures or errors or failure_elements or error_elements or not testcases:
-        print("cocotb results.xml is missing a passing non-empty result.")
+    cocotb_errors = check_cocotb_manifest(root)
+    if cocotb_errors:
+        print("cocotb manifest evidence check failed:")
+        for error in cocotb_errors:
+            print(f"  - {error}")
         return 1
 
     formal_evidence = {
@@ -283,7 +323,9 @@ def main() -> int:
     for name, paths in formal_evidence.items():
         status_paths = [path for path in paths if path.name == "status"]
         log_paths = [path for path in paths if path.name != "status"]
-        has_sby_pass = any(path.is_file() and "PASS" in path.read_text(errors="ignore") for path in status_paths)
+        has_sby_pass = any(
+            path.is_file() and "PASS" in path.read_text(errors="ignore") for path in status_paths
+        )
         has_yosys_log = any(
             path.is_file()
             and (
@@ -307,9 +349,16 @@ def main() -> int:
         [sys.executable, "verify/check_stub_audit.py"],
         [sys.executable, "scripts/check_physical_closure_work_order.py"],
         [sys.executable, "scripts/check_real_world_gates.py"],
+        [sys.executable, "scripts/check_cpu_ap_completion_gate.py"],
         [sys.executable, "scripts/check_software_bsp.py", "all", "--scaffold-only"],
         [sys.executable, "sw/check_bsp_scaffolds.py", "all"],
-        [sys.executable, "benchmarks/run_benchmarks.py", "--dry-run", "--report-id", "pipeline-check"],
+        [
+            sys.executable,
+            "benchmarks/run_benchmarks.py",
+            "--dry-run",
+            "--report-id",
+            "pipeline-check",
+        ],
         [
             sys.executable,
             "benchmarks/run_benchmarks.py",

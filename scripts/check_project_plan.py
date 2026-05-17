@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import yaml
-
 
 REQUIRED = [
     "docs/spec-db/mobile-sota-2026.yaml",
@@ -17,12 +16,12 @@ REQUIRED = [
     "docs/project/workstream-gap-review.md",
     "docs/toolchain/README.md",
     "docs/risks/risk-register.md",
-    "rtl/open_rtl_prototype_path.md",
-    "board/README.md",
-    "board/fpga/README.md",
+    "docs/rtl/open_rtl_prototype_path.md",
+    "docs/board/README.md",
+    "docs/board/fpga/README.md",
     "board/fpga/hello_demo_fpga.yaml",
     "board/fpga/constraints/hello_demo_ulx3s.lpf",
-    "fw/board-smoke/tests/smoke_plan.md",
+    "docs/fw/board-smoke/tests/smoke_plan.md",
     "docs/toolchain/headless-cli-audit.md",
 ]
 
@@ -91,17 +90,17 @@ REQUIRED_TERMS = {
         "claim_level",
         "Simulator wall-clock time",
     ],
-    "rtl/open_rtl_prototype_path.md": [
+    "docs/rtl/open_rtl_prototype_path.md": [
         "Chipyard",
         "Rocket",
         "FireSim",
     ],
-    "board/README.md": [
+    "docs/board/README.md": [
         "contract artifact",
         "not a manufacturable PCB yet",
         "must not be released for fabrication",
     ],
-    "board/fpga/README.md": [
+    "docs/board/fpga/README.md": [
         "hello_demo_fpga",
         "make fpga-check",
         "Bitstream generation must remain blocked",
@@ -112,7 +111,7 @@ REQUIRED_TERMS = {
         "DBG_VALID",
         "GPIO",
     ],
-    "fw/board-smoke/tests/smoke_plan.md": [
+    "docs/fw/board-smoke/tests/smoke_plan.md": [
         "bring-up",
         "power",
         "GPIO",
@@ -154,9 +153,21 @@ def check_benchmark_schema(root: Path) -> list[str]:
         )
 
     required_fields = data.get("required_fields", {})
-    for field in ("platform", "workload", "software", "clocks", "memory", "thermal", "power", "results", "artifacts"):
+    for field in (
+        "platform",
+        "workload",
+        "software",
+        "clocks",
+        "memory",
+        "thermal",
+        "power",
+        "results",
+        "artifacts",
+    ):
         if field not in required_fields:
-            errors.append(f"docs/benchmarks/report-schema.yaml missing required field block: {field}")
+            errors.append(
+                f"docs/benchmarks/report-schema.yaml missing required field block: {field}"
+            )
 
     required_rules = [
         "Simulator wall-clock time must not be compared against commercial phone scores.",
@@ -198,7 +209,9 @@ def check_android_plan(root: Path) -> list[str]:
     ]
     missing = [path for path in aosp_artifacts if not (root / path).is_file()]
     if missing:
-        errors.append("Android project plan references missing BSP artifacts: " + ", ".join(missing))
+        errors.append(
+            "Android project plan references missing BSP artifacts: " + ", ".join(missing)
+        )
 
     return errors
 
@@ -228,30 +241,37 @@ def check_board_plan(root: Path) -> list[str]:
     }
     required_ports.discard(None)
     constraint_path = root / cfg.get("constraints", {}).get("skeleton_lpf", "")
-    constraint_text = constraint_path.read_text(errors="ignore") if constraint_path.is_file() else ""
+    constraint_text = (
+        constraint_path.read_text(errors="ignore") if constraint_path.is_file() else ""
+    )
     missing_mentions = sorted(port for port in required_ports if port not in constraint_text)
     if missing_mentions:
-        errors.append("FPGA constraint skeleton missing required signal mentions: " + ", ".join(missing_mentions))
+        errors.append(
+            "FPGA constraint skeleton missing required signal mentions: "
+            + ", ".join(missing_mentions)
+        )
 
     return errors
 
 
 def parse_markdown_table(text: str, required_header: str) -> tuple[list[str], list[dict[str, str]]]:
     lines = text.splitlines()
-    header_index = next((idx for idx, line in enumerate(lines) if line.strip() == required_header), -1)
+    header_index = next(
+        (idx for idx, line in enumerate(lines) if line.strip() == required_header), -1
+    )
     if header_index < 0 or header_index + 1 >= len(lines):
         return [], []
 
     header = [cell.strip() for cell in lines[header_index].strip().strip("|").split("|")]
     rows: list[dict[str, str]] = []
-    for line in lines[header_index + 2:]:
+    for line in lines[header_index + 2 :]:
         stripped = line.strip()
         if not stripped.startswith("|"):
             break
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
         if len(cells) != len(header):
             continue
-        rows.append(dict(zip(header, cells)))
+        rows.append(dict(zip(header, cells, strict=True)))
     return header, rows
 
 
@@ -300,7 +320,9 @@ def check_risk_register(root: Path) -> list[str]:
     present = {row.get("Risk") for row in rows}
     missing = [risk for risk in required_risks if risk not in present]
     if missing:
-        errors.append("docs/risks/risk-register.md missing operational risks: " + ", ".join(missing))
+        errors.append(
+            "docs/risks/risk-register.md missing operational risks: " + ", ".join(missing)
+        )
 
     return errors
 
@@ -340,10 +362,14 @@ def check_gap_review(root: Path) -> list[str]:
             errors.append(f"docs/project/workstream-gap-review.md missing gap term: {term}")
 
     if text.count("| Gap class | Inventory | Completion criteria | Gate |") < 9:
-        errors.append("docs/project/workstream-gap-review.md must include a gap table for each workstream")
+        errors.append(
+            "docs/project/workstream-gap-review.md must include a gap table for each workstream"
+        )
     execution_plan = (root / "docs/project/three-week-execution-plan.md").read_text()
     if "proof that subsystem gates passed" not in execution_plan:
-        errors.append("three-week execution plan must keep gap review separate from subsystem proof")
+        errors.append(
+            "three-week execution plan must keep gap review separate from subsystem proof"
+        )
 
     return errors
 

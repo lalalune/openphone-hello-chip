@@ -1,0 +1,60 @@
+schema: openphone.memory_uma_evidence_gate.v1
+status: scaffold_only_real_claims_blocked
+scope:
+  - SRAM-backed DRAM model
+  - DMA containment scaffold
+  - Linux-capable AXI-Lite contract wrapper
+non_goals:
+  - Real DRAM controller, LPDDR/DDR PHY, training, refresh, timing, capacity, or ECC evidence.
+  - UMA cache coherency, coherent DMA, snooping, or cache-maintenance ABI evidence.
+  - IOMMU/SMMU translation, page-fault reporting, or kernel-visible DMA isolation evidence.
+  - Memory QoS, bandwidth counters, latency guarantees, or display/NPU contention evidence.
+
+current_scaffold_evidence:
+  id: sram_backed_dma_containment
+  claim_level: local_scaffold_only
+  supports_claims:
+    - AXI-Lite address decode reaches the scaffold DRAM, interrupt-controller, and DMA-control windows.
+    - DMA master accesses to the modeled DRAM aperture can complete in local RTL simulation.
+    - DMA attempts to target non-DRAM MMIO addresses fault through the DRAM model and must not mutate MMIO state.
+  executable_checks:
+    - command: make memory-uma-claim-gate
+      evidence_class: local_static_contract
+    - command: make rtl-check
+      evidence_class: local_rtl_elaboration
+    - command: make cocotb-contract
+      evidence_class: local_simulation_when_cocotb_available
+      blocked_if_missing_tool: cocotb or Verilator/Icarus
+
+blocked_real_claims:
+  - id: real_dram_controller_phy
+    status: blocked
+    reason: Current RTL uses rtl/memory/hello_axi_lite_dram.sv, a small SRAM-backed AXI-Lite model.
+    unblock_requires:
+      - DRAM controller and PHY boundary RTL or integrated IP configuration.
+      - Timing, refresh, training, capacity, and error-policy evidence.
+      - Boot-time memory discovery evidence from the selected software stack.
+  - id: uma_cache_coherency
+    status: blocked
+    reason: No cache hierarchy, coherent interconnect, snoop path, or explicit cache-maintenance ABI is implemented.
+    unblock_requires:
+      - Coherency policy covering CPU, DMA, NPU, display, and GPU/2D clients.
+      - Positive and negative shared-buffer tests proving fresh data or required sync failure.
+  - id: iommu_smmu_dma_isolation
+    status: blocked
+    reason: DMA containment is address-response behavior in the scaffold, not page-table translation or kernel-visible faults.
+    unblock_requires:
+      - IOMMU/SMMU or explicit DMA allowlist implementation.
+      - Fault injection evidence proving unauthorized DMA is blocked and reported to software.
+  - id: memory_qos_bandwidth
+    status: blocked
+    reason: No production arbitration policy, QoS registers, latency budget, or bandwidth counters exist.
+    unblock_requires:
+      - Contended CPU, DMA, NPU, display, and GPU/2D bandwidth tests.
+      - Display underflow and CPU latency evidence under sustained memory pressure.
+
+claim_rules:
+  - The scaffold may be described only as SRAM-backed DMA containment evidence.
+  - Android, AI-throughput, display-smoothness, memory-bandwidth, and tapeout claims require all blocked_real_claims to be unblocked by executable evidence.
+  - Passing this gate must not be interpreted as real DRAM, UMA coherency, IOMMU/SMMU, or QoS evidence.
+  - Any future checker that promotes this file beyond scaffold_only_real_claims_blocked must require executable RTL, software, and measurement artifacts for every blocked_real_claims entry.

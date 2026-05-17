@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-repo_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
 if [ "$(uname -s)" = "Darwin" ] && [ -d "$repo_dir/external/oss-cad-suite/bin" ]; then
     PATH="$repo_dir/external/oss-cad-suite/bin:$PATH"
 fi

@@ -10,10 +10,10 @@ The current tree is a contract scaffold, not a release-ready board, package, tap
 ## Placeholder package and padframe artifacts
 
 - `package/hello-demo-pinout.yaml` declares `package: qfn64_placeholder` and notes that real foundry pad cells, ESD rules, package data, and bond diagrams must replace it before fabrication.
-- `package/hello-demo-package.md` is explicitly a placeholder QFN64-style planning document and states that it is not a foundry-approved package.
-- `package/hello-demo-pad-ring.md` states that RTL does not instantiate foundry pad cells; ESD and corner pads are delegated to a future shuttle/package flow.
+- `docs/package/hello-demo-package.md` is explicitly a placeholder QFN64-style planning document and states that it is not a foundry-approved package.
+- `docs/package/hello-demo-pad-ring.md` states that RTL does not instantiate foundry pad cells; ESD and corner pads are delegated to a future shuttle/package flow.
 - `pd/padframe/hello_demo_padframe.yaml` has `status: contract_scaffold`, with release gates blocked for padframe, package, and board fabrication.
-- `pd/padframe/hello_demo_padframe.md` is a planning contract, not foundry IO-ring release evidence.
+- `docs/pd/padframe/hello_demo_padframe.md` is a planning contract, not foundry IO-ring release evidence.
 
 Required closure:
 
@@ -40,7 +40,7 @@ Required closure:
 
 ## Missing KiCad and board fabrication artifacts
 
-Only `board/kicad/hello-demo/fab-notes.md` exists under the KiCad project directory. The following release artifacts are missing:
+Only `docs/board/kicad/hello-demo/fab-notes.md` exists under the KiCad project directory. The following release artifacts are missing:
 
 - `*.kicad_pro`
 - `*.kicad_sch`

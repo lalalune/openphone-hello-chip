@@ -11,6 +11,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build tool image
         run: docker build -t openphone-soc-tools .
+      - name: Run full lint and type checks
+        run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make lint typecheck
       - name: Run hello-chip regression
         run: docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make clean ci-fast
       - name: Check generated pipeline artifacts

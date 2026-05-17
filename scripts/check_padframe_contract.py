@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import re
 import sys
+from pathlib import Path
 
 import yaml
-
 
 VECTOR_PIN_RE = re.compile(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)(\d+)$")
 REQUIRED_PACKAGE_ARTIFACTS = {
@@ -12,11 +11,20 @@ REQUIRED_PACKAGE_ARTIFACTS = {
     "package_plan",
     "pad_ring_plan",
     "board_fab_notes",
+    "board_cross_probe",
 }
 REQUIRED_RELEASE_GATES = {
     "padframe_release",
     "package_release",
     "board_fabrication_release",
+}
+NON_RELEASE_EVIDENCE_CLASS = "non_release_placeholder"
+PROHIBITED_RELEASE_USE = "prohibited"
+REQUIRED_CROSS_PROBE_SCOPE = {
+    "package_pinout": "package/hello-demo-pinout.yaml",
+    "padframe_contract": "pd/padframe/hello_demo_padframe.yaml",
+    "rtl_top": "rtl/top/hello_chip_top.sv",
+    "board_fab_notes": "docs/board/kicad/hello-demo/fab-notes.md",
 }
 
 
@@ -49,6 +57,49 @@ def pin_order_patterns(path: Path) -> list[re.Pattern[str]]:
     return patterns
 
 
+def validate_cross_probe(root: Path, path: Path, expected_pins: int) -> list[str]:
+    failures: list[str] = []
+    data = yaml.safe_load(path.read_text())
+    if not isinstance(data, dict):
+        return [f"{path.relative_to(root)}: cross-probe manifest must be a mapping"]
+    if data.get("status") != NON_RELEASE_EVIDENCE_CLASS:
+        failures.append(f"{path.relative_to(root)}: status must be non_release_placeholder")
+    if data.get("release_use") != PROHIBITED_RELEASE_USE:
+        failures.append(f"{path.relative_to(root)}: release_use must be prohibited")
+
+    scope = data.get("scope")
+    if not isinstance(scope, dict):
+        failures.append(f"{path.relative_to(root)}: missing scope")
+    else:
+        for name, expected in REQUIRED_CROSS_PROBE_SCOPE.items():
+            if scope.get(name) != expected:
+                failures.append(f"{path.relative_to(root)}: scope.{name} must be {expected}")
+
+    coverage = data.get("coverage")
+    if not isinstance(coverage, dict):
+        failures.append(f"{path.relative_to(root)}: missing coverage")
+    else:
+        if coverage.get("package_pins") != expected_pins:
+            failures.append(
+                f"{path.relative_to(root)}: coverage.package_pins must be {expected_pins}"
+            )
+        for field in ("board_net_field_required", "rtl_port_match_required"):
+            if coverage.get(field) is not True:
+                failures.append(f"{path.relative_to(root)}: coverage.{field} must be true")
+        for field in ("kicad_symbol_pins_verified", "kicad_footprint_pads_verified"):
+            if coverage.get(field) is not False:
+                failures.append(
+                    f"{path.relative_to(root)}: coverage.{field} must stay false until real KiCad artifacts exist"
+                )
+
+    blockers = data.get("release_blockers")
+    if not isinstance(blockers, list) or len(blockers) < 3:
+        failures.append(
+            f"{path.relative_to(root)}: release_blockers must list missing vendor/KiCad evidence"
+        )
+    return failures
+
+
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     contract = yaml.safe_load((root / "pd/padframe/hello_demo_padframe.yaml").read_text())
@@ -56,6 +107,18 @@ def main() -> int:
     pins = pinout.get("pins", [])
     allowed = contract["allowed"]
     failures: list[str] = []
+
+    if contract.get("evidence_class") != NON_RELEASE_EVIDENCE_CLASS:
+        failures.append("padframe contract must declare evidence_class: non_release_placeholder")
+    if contract.get("release_use") != PROHIBITED_RELEASE_USE:
+        failures.append("padframe contract must declare release_use: prohibited")
+    if pinout.get("evidence_class") != NON_RELEASE_EVIDENCE_CLASS:
+        failures.append("package pinout must declare evidence_class: non_release_placeholder")
+    if pinout.get("release_use") != PROHIBITED_RELEASE_USE:
+        failures.append("package pinout must declare release_use: prohibited")
+    pinout_blockers = pinout.get("release_blockers")
+    if not isinstance(pinout_blockers, list) or not pinout_blockers:
+        failures.append("package pinout must list release_blockers")
 
     if len(pins) != contract["package_pins"]:
         failures.append(f"expected {contract['package_pins']} pins, found {len(pins)}")
@@ -87,7 +150,9 @@ def main() -> int:
             failures.append(f"{name}: power direction requires power pad_type")
         if pin["direction"] == "ground" and pin["pad_type"] != "ground":
             failures.append(f"{name}: ground direction requires ground pad_type")
-        if pin["direction"] == "nc" and (pin["pad_type"] != "no_connect" or pin["board_net"] != "NC"):
+        if pin["direction"] == "nc" and (
+            pin["pad_type"] != "no_connect" or pin["board_net"] != "NC"
+        ):
             failures.append(f"{name}: nc pins must use no_connect pad_type and NC board_net")
 
         for prefix in power_counts:
@@ -109,14 +174,20 @@ def main() -> int:
         failures.append("missing required padframe pins: " + ", ".join(required_missing))
 
     ports = parse_ports(root / contract["rtl_top"])
-    missing_from_rtl = sorted((set(contract["required_pins"]) - {"VDDIO", "VSSIO", "VDDCORE", "VSSCORE"}) - ports)
+    missing_from_rtl = sorted(
+        (set(contract["required_pins"]) - {"VDDIO", "VSSIO", "VDDCORE", "VSSCORE"}) - ports
+    )
     if missing_from_rtl:
         failures.append("padframe required pins missing from RTL: " + ", ".join(missing_from_rtl))
 
     patterns = pin_order_patterns(root / contract["pin_order"])
-    missing_from_pin_order = sorted(port for port in ports if not any(pattern.match(port) for pattern in patterns))
+    missing_from_pin_order = sorted(
+        port for port in ports if not any(pattern.match(port) for pattern in patterns)
+    )
     if missing_from_pin_order:
-        failures.append("RTL ports missing from pd/pin_order.cfg: " + ", ".join(missing_from_pin_order))
+        failures.append(
+            "RTL ports missing from pd/pin_order.cfg: " + ", ".join(missing_from_pin_order)
+        )
 
     package_artifacts = contract.get("package_artifacts")
     if not isinstance(package_artifacts, dict):
@@ -131,10 +202,18 @@ def main() -> int:
                 continue
             artifact_path = Path(artifact)
             if artifact_path.is_absolute() or ".." in artifact_path.parts:
-                failures.append(f"package_artifacts.{name}: path must be relative to repo: {artifact}")
+                failures.append(
+                    f"package_artifacts.{name}: path must be relative to repo: {artifact}"
+                )
                 continue
             if not (root / artifact_path).is_file():
                 failures.append(f"package_artifacts.{name}: missing artifact {artifact}")
+
+        cross_probe = package_artifacts.get("board_cross_probe")
+        if isinstance(cross_probe, str) and (root / cross_probe).is_file():
+            failures.extend(
+                validate_cross_probe(root, root / cross_probe, contract["package_pins"])
+            )
 
     release_gates = contract.get("release_gates")
     if not isinstance(release_gates, dict):
@@ -148,7 +227,9 @@ def main() -> int:
                 failures.append(f"release_gates.{name}: gate must be a mapping")
                 continue
             if gate.get("blocked") is not True:
-                failures.append(f"release_gates.{name}: must remain explicitly blocked until released")
+                failures.append(
+                    f"release_gates.{name}: must remain explicitly blocked until released"
+                )
             if not isinstance(gate.get("reason"), str) or not gate["reason"]:
                 failures.append(f"release_gates.{name}: missing reason")
 

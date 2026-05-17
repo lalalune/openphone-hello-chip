@@ -14,10 +14,15 @@ PRODUCT_COPY_FILES += \
     device/openphone/openphone_ai_soc/fstab.openphone:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.openphone \
     device/openphone/openphone_ai_soc/manifest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/openphone_hello.xml
 
-PRODUCT_PACKAGES += \
-    android.hardware.graphics.composer@2.4-service \
-    hwcomposer.openphone_ai_soc \
-    hello_npu.default
+# HAL packages are intentionally not enabled in the repo-local scaffold.
+# Enable these only in an external AOSP tree after source or reviewed prebuilts
+# exist and the vendorimage, VINTF, SELinux, and smoke evidence logs are
+# archived under docs/evidence/android/.
+#
+# Future integration points:
+#   android.hardware.graphics.composer@2.4-service
+#   hwcomposer.openphone_ai_soc
+#   hello_npu.default
 
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=OpenPhone \

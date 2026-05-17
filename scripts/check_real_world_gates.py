@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 GAP_MANIFEST = ROOT / "docs/manufacturing/real-world-verification-gaps.yaml"
@@ -83,7 +82,9 @@ def validate_gate_map(name: str, gates: object, failures: list[str]) -> None:
             failures.append(f"{name}.{gate_name}: gate must be a mapping")
             continue
         if gate.get("blocked") is not True:
-            failures.append(f"{name}.{gate_name}: gate must stay blocked until external evidence is archived")
+            failures.append(
+                f"{name}.{gate_name}: gate must stay blocked until external evidence is archived"
+            )
         if not isinstance(gate.get("reason"), str) or not gate["reason"]:
             failures.append(f"{name}.{gate_name}: missing reason")
         unblock_requires = gate.get("unblock_requires")
@@ -133,7 +134,9 @@ def validate_gap_manifest(manifest: dict, failures: list[str]) -> None:
 
         category = gap.get("category")
         if category not in REQUIRED_CATEGORIES:
-            failures.append(f"{gap_id}: category must be one of " + ", ".join(sorted(REQUIRED_CATEGORIES)))
+            failures.append(
+                f"{gap_id}: category must be one of " + ", ".join(sorted(REQUIRED_CATEGORIES))
+            )
         else:
             seen_categories.add(category)
 
@@ -160,30 +163,39 @@ def validate_gap_manifest(manifest: dict, failures: list[str]) -> None:
         failures.append("gap manifest missing required gap ids: " + ", ".join(missing_ids))
     missing_seen_categories = sorted(REQUIRED_CATEGORIES - seen_categories)
     if missing_seen_categories:
-        failures.append("gap manifest has no gap entries for: " + ", ".join(missing_seen_categories))
+        failures.append(
+            "gap manifest has no gap entries for: " + ", ".join(missing_seen_categories)
+        )
 
 
 def validate_work_order_link(gaps: dict, failures: list[str]) -> None:
     if not WORK_ORDER.is_file():
-        failures.append("missing physical closure work order: docs/manufacturing/physical-closure-work-order.yaml")
+        failures.append(
+            "missing physical closure work order: docs/manufacturing/physical-closure-work-order.yaml"
+        )
         return
     work_order = load_yaml(WORK_ORDER)
-    if work_order.get("source_gap_manifest") != "docs/manufacturing/real-world-verification-gaps.yaml":
+    if (
+        work_order.get("source_gap_manifest")
+        != "docs/manufacturing/real-world-verification-gaps.yaml"
+    ):
         failures.append("physical closure work order must link to real-world gap manifest")
-    gap_ids = {
-        gap.get("id")
-        for gap in gaps.get("gaps", [])
-        if isinstance(gap, dict) and isinstance(gap.get("id"), str)
-    }
+    gap_ids: set[str] = set()
+    for gap in gaps.get("gaps", []):
+        if isinstance(gap, dict):
+            gap_id = gap.get("id")
+            if isinstance(gap_id, str):
+                gap_ids.add(gap_id)
     items = work_order.get("items")
     if not isinstance(items, list):
         failures.append("physical closure work order must list items")
         return
-    item_ids = {
-        item.get("id")
-        for item in items
-        if isinstance(item, dict) and isinstance(item.get("id"), str)
-    }
+    item_ids: set[str] = set()
+    for item in items:
+        if isinstance(item, dict):
+            item_id = item.get("id")
+            if isinstance(item_id, str):
+                item_ids.add(item_id)
     missing = sorted(gap_ids - item_ids)
     extra = sorted(item_ids - gap_ids)
     if missing:
@@ -213,7 +225,9 @@ def validate_manifest_consistency(gaps: dict, release: dict, pd: dict, failures:
                 failures.append(f"manufacturing readiness {section} must remain blocked")
             manifest_path = spec.get("evidence_manifest")
             if not isinstance(manifest_path, str) or manifest_path != "pd/signoff/manifest.yaml":
-                failures.append(f"manufacturing readiness {section} must point at pd/signoff/manifest.yaml")
+                failures.append(
+                    f"manufacturing readiness {section} must point at pd/signoff/manifest.yaml"
+                )
 
     for section in pd_readiness:
         spec = pd.get(section)

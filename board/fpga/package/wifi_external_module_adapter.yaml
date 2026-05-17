@@ -10,6 +10,8 @@ release_limits:
   - No bitstream release is allowed from this stub.
   - Exact FPGA pins, bank voltage, trace lengths, antenna placement, and module
     power tree remain board-revision work.
+  - WiFi/Bluetooth release remains blocked until package/wifi/evidence-gates.yaml
+    has host-controller, board, firmware, Android, and regulatory evidence.
 io_bank_requirements:
   sdio_wifi:
     voltage: 1.8V

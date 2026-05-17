@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import re
 import sys
-
+from pathlib import Path
 
 VECTOR_PIN_RE = re.compile(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)(\d+)$")
 

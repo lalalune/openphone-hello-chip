@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import json
 import shutil
 import subprocess
 import sys
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIGS = [
@@ -52,7 +51,9 @@ def check_config(config_path: Path, failures: list[str]) -> None:
         return
     for entry in verilog_files:
         if not isinstance(entry, str):
-            failures.append(f"{config_path.relative_to(ROOT)}: VERILOG_FILES entries must be strings")
+            failures.append(
+                f"{config_path.relative_to(ROOT)}: VERILOG_FILES entries must be strings"
+            )
             continue
         path = resolve_dir_path(config_path, entry)
         if not path.is_file():
@@ -106,7 +107,9 @@ def main() -> int:
             print(f"PD tool status: Docker image installed: {OPENLANE_IMAGE}")
             print(f"PD image digest pin: {OPENLANE_IMAGE_DIGEST}")
         else:
-            print(f"PD tool status: Docker is available, but OpenLane image is missing: {OPENLANE_IMAGE}")
+            print(
+                f"PD tool status: Docker is available, but OpenLane image is missing: {OPENLANE_IMAGE}"
+            )
             print(
                 "PD next command: "
                 f"OPENLANE_IMAGE={OPENLANE_IMAGE} "
@@ -115,7 +118,9 @@ def main() -> int:
             )
     else:
         print("PD tool status: OpenLane command and docker are missing.")
-        print("PD next command: install OpenLane 2, or install Docker and rerun pd-preflight-check.")
+        print(
+            "PD next command: install OpenLane 2, or install Docker and rerun pd-preflight-check."
+        )
     return 0
 
 

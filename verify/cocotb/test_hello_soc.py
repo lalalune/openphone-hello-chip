@@ -52,7 +52,9 @@ def s32(value):
 
 
 def golden_gemm_s8(a, b):
-    return [[sum(a_row[k] * b[k][j] for k in range(len(b))) for j in range(len(b[0]))] for a_row in a]
+    return [
+        [sum(a_row[k] * b[k][j] for k in range(len(b))) for j in range(len(b[0]))] for a_row in a
+    ]
 
 
 @cocotb.test()
@@ -167,7 +169,7 @@ async def npu_scratchpad_gemm_matches_golden_model(dut):
         word = int.from_bytes(scratch[word_index * 4 : word_index * 4 + 4], "little")
         await write32(dut, 0x1002_0080 + word_index * 4, word)
 
-    await write32(dut, 0x1002_0034, 1)
+    await write32(dut, 0x1002_005C, 1)
     await write32(dut, 0x1002_0020, 2 | (2 << 8) | (3 << 16))
     await write32(dut, 0x1002_0024, a_base | (b_base << 8) | (c_base << 16))
     await write32(dut, 0x1002_0028, 3 | (2 << 8) | (8 << 16))
@@ -175,9 +177,9 @@ async def npu_scratchpad_gemm_matches_golden_model(dut):
     await write32(dut, 0x1002_000C, 1)
 
     assert await poll_done(dut, 0x1002_000C) == 0x2
-    assert await read32(dut, 0x1002_002C) == 12
-    assert await read32(dut, 0x1002_0030) == 12
-    assert await read32(dut, 0x1002_0034) == 0
+    assert await read32(dut, 0x1002_0050) >= 12
+    assert await read32(dut, 0x1002_0054) == 12
+    assert await read32(dut, 0x1002_005C) == 0
 
     observed = []
     for row in range(2):

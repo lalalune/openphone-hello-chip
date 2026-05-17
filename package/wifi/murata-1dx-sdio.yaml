@@ -4,6 +4,7 @@ linux_support:
   wifi_driver: brcmfmac
   bluetooth_driver: hci_uart_bcm
   firmware_family: brcmfmac43430_sdio
+  evidence_manifest: package/wifi/evidence-gates.yaml
 radio_claim: external_module_only
 selected_for:
   - Linux-supported SDIO WiFi path.

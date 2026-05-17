@@ -104,6 +104,14 @@ Record failure as useful data. Do not update status to "Android running" unless
 the transcript includes `adb shell`, `ro.product.cpu.abi=riscv64`, and either
 `sys.boot_completed=1` or a clear shell-only success statement.
 
+The checked-in capture wrapper records that bounded transcript shape without
+fabricating pass markers:
+
+```sh
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
+make software-bsp-evidence-check
+```
+
 ## OpenPhone AOSP Device Tree Runbook
 
 The repo-local device tree is a scaffold intended to be copied or overlaid into
@@ -123,6 +131,20 @@ m vendorimage
 The first expected result is a useful build failure if a required Android
 surface is not implemented. A successful `m vendorimage` only means the scaffold
 is syntactically integrated; it does not mean Android boots on hello_soc.
+
+Use the repo capture commands for archived evidence:
+
+```sh
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset
+```
+
+The required evidence files, command markers, and pass markers are listed in
+`docs/evidence/software-bsp-evidence-manifest.json`. The template under
+`docs/evidence/templates/` is intentionally rejected by the checker.
 
 Expected local artifacts after integration:
 
@@ -232,6 +254,8 @@ Pass criteria for the first report:
 - failed modules classified as expected exclusion, product bug, infra bug, or
   unknown
 - no SELinux denial is waived without a linked policy or device-contract issue
+- no CDD, full CTS, full VTS, or Android compatibility claim is made from these
+  subset logs
 
 ## Failure Triage
 
@@ -274,7 +298,13 @@ aosp: scaffold audit
   dependency blocker: external AOSP checkout with riscv64/Cuttlefish host dependencies and HAL binaries
   status: clear
 aosp BSP check failed:
-  - aosp BSP BLOCKED: missing evidence for external AOSP lunch/vendorimage/VINTF logs plus Cuttlefish or equivalent boot transcript: docs/evidence/android/openphone_ai_soc_lunch.log, docs/evidence/android/openphone_ai_soc_vendorimage.log, docs/evidence/android/openphone_ai_soc_checkvintf.log, docs/evidence/android/cuttlefish_riscv64_boot.log
+  - aosp BSP BLOCKED: evidence for external AOSP lunch/vendorimage/VINTF logs, Cuttlefish or equivalent boot transcript, and Android compatibility subset transcripts is incomplete or invalid
+  - missing docs/evidence/android/openphone_ai_soc_lunch.log
+  - missing docs/evidence/android/openphone_ai_soc_vendorimage.log
+  - missing docs/evidence/android/openphone_ai_soc_checkvintf.log
+  - missing docs/evidence/android/cuttlefish_riscv64_boot.log
+  - missing docs/evidence/android/cts_virtual_device_subset.log
+  - missing docs/evidence/android/vts_virtual_device_subset.log
 ```
 
 Sources:

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK_ORDER = ROOT / "docs/manufacturing/physical-closure-work-order.yaml"
@@ -60,19 +59,40 @@ def main() -> int:
     gap_manifest = load_yaml(GAP_MANIFEST)
 
     if work_order.get("status") != "release_blocked":
-        failures.append("work order status must stay release_blocked until physical evidence is archived")
-    if work_order.get("source_gap_manifest") != "docs/manufacturing/real-world-verification-gaps.yaml":
-        failures.append("work order must point at docs/manufacturing/real-world-verification-gaps.yaml")
+        failures.append(
+            "work order status must stay release_blocked until physical evidence is archived"
+        )
+    if (
+        work_order.get("source_gap_manifest")
+        != "docs/manufacturing/real-world-verification-gaps.yaml"
+    ):
+        failures.append(
+            "work order must point at docs/manufacturing/real-world-verification-gaps.yaml"
+        )
 
     claim_policy = work_order.get("claim_policy")
     if not isinstance(claim_policy, dict):
         failures.append("work order must define claim_policy")
     else:
-        allowed = validate_text_list("claim_policy.allowed_local_claims", claim_policy.get("allowed_local_claims"), 2, failures)
-        forbidden = set(validate_text_list("claim_policy.forbidden_claims_until_evidence_archived", claim_policy.get("forbidden_claims_until_evidence_archived"), 4, failures))
+        allowed = validate_text_list(
+            "claim_policy.allowed_local_claims",
+            claim_policy.get("allowed_local_claims"),
+            2,
+            failures,
+        )
+        forbidden = set(
+            validate_text_list(
+                "claim_policy.forbidden_claims_until_evidence_archived",
+                claim_policy.get("forbidden_claims_until_evidence_archived"),
+                4,
+                failures,
+            )
+        )
         missing_forbidden = sorted(FORBIDDEN_LOCAL_CLAIMS - forbidden)
         if missing_forbidden:
-            failures.append("claim_policy missing forbidden claims: " + ", ".join(missing_forbidden))
+            failures.append(
+                "claim_policy missing forbidden claims: " + ", ".join(missing_forbidden)
+            )
         if not any("Machine checks prove only" in item for item in allowed):
             failures.append("claim_policy must limit local machine-check claims")
 
@@ -82,11 +102,12 @@ def main() -> int:
     if not isinstance(gaps, list):
         failures.append("gap manifest must list gaps")
         gaps = []
-    gap_by_id = {
-        gap.get("id"): gap
-        for gap in gaps
-        if isinstance(gap, dict) and isinstance(gap.get("id"), str)
-    }
+    gap_by_id: dict[str, dict] = {}
+    for gap in gaps:
+        if isinstance(gap, dict):
+            gap_id = gap.get("id")
+            if isinstance(gap_id, str):
+                gap_by_id[gap_id] = gap
 
     items = work_order.get("items")
     if not isinstance(items, list) or not items:
@@ -115,24 +136,45 @@ def main() -> int:
         if gap is None:
             failures.append(f"{item_id}: no matching gap in real-world verification manifest")
         elif item.get("gate") != gap.get("release_gate"):
-            failures.append(f"{item_id}: gate must match gap release_gate {gap.get('release_gate')}")
+            failures.append(
+                f"{item_id}: gate must match gap release_gate {gap.get('release_gate')}"
+            )
 
         if item.get("gate") not in REQUIRED_GATES:
             failures.append(f"{item_id}: invalid gate")
 
-        artifact_names = validate_text_list(f"{item_id}.artifact_names", item.get("artifact_names"), 2, failures)
+        artifact_names = validate_text_list(
+            f"{item_id}.artifact_names", item.get("artifact_names"), 2, failures
+        )
         for artifact in artifact_names:
             if any(token in artifact.upper() for token in ("TBD", "TODO", "PLACEHOLDER")):
-                failures.append(f"{item_id}.artifact_names must not contain placeholder token: {artifact}")
+                failures.append(
+                    f"{item_id}.artifact_names must not contain placeholder token: {artifact}"
+                )
 
-        evidence_paths = validate_text_list(f"{item_id}.evidence_paths", item.get("evidence_paths"), 1, failures)
+        evidence_paths = validate_text_list(
+            f"{item_id}.evidence_paths", item.get("evidence_paths"), 1, failures
+        )
         for evidence_path in evidence_paths:
             if not is_relative_path_like(evidence_path):
-                failures.append(f"{item_id}.evidence_paths must be relative repo paths: {evidence_path}")
+                failures.append(
+                    f"{item_id}.evidence_paths must be relative repo paths: {evidence_path}"
+                )
 
-        criteria = validate_text_list(f"{item_id}.acceptance_criteria", item.get("acceptance_criteria"), 2, failures)
-        if not any(("clean" in criterion.lower() or "waiv" in criterion.lower() or "pass" in criterion.lower()) for criterion in criteria):
-            failures.append(f"{item_id}.acceptance_criteria must include pass, clean, or waiver language")
+        criteria = validate_text_list(
+            f"{item_id}.acceptance_criteria", item.get("acceptance_criteria"), 2, failures
+        )
+        if not any(
+            (
+                "clean" in criterion.lower()
+                or "waiv" in criterion.lower()
+                or "pass" in criterion.lower()
+            )
+            for criterion in criteria
+        ):
+            failures.append(
+                f"{item_id}.acceptance_criteria must include pass, clean, or waiver language"
+            )
 
     missing_items = sorted(set(gap_by_id) - seen_ids)
     extra_items = sorted(seen_ids - set(gap_by_id))

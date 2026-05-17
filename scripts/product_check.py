@@ -1,30 +1,34 @@
-from pathlib import Path
 import argparse
 import subprocess
 import sys
+from pathlib import Path
 
 import yaml
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--release", action="store_true", help="fail on fabrication/tapeout release blockers")
+parser.add_argument(
+    "--release", action="store_true", help="fail on fabrication/tapeout release blockers"
+)
 args = parser.parse_args()
 
 required = [
     "package/hello-demo-pinout.yaml",
-    "package/hello-demo-package.md",
-    "package/hello-demo-pad-ring.md",
+    "docs/package/hello-demo-package.md",
+    "docs/package/hello-demo-pad-ring.md",
     "package/wifi-external-interface.yaml",
-    "pd/padframe/hello_demo_padframe.md",
+    "docs/pd/padframe/hello_demo_padframe.md",
     "pd/padframe/hello_demo_padframe.yaml",
     "pd/pin_order.cfg",
     "pd/signoff/manifest.yaml",
-    "board/README.md",
-    "board/fpga/README.md",
+    "docs/board/README.md",
+    "docs/board/fpga/README.md",
     "board/fpga/hello_demo_fpga.yaml",
     "board/fpga/constraints/hello_demo_ulx3s.lpf",
-    "board/kicad/hello-demo/fab-notes.md",
-    "fw/board-smoke/tests/smoke_plan.md",
+    "docs/board/kicad/hello-demo/fab-notes.md",
+    "board/kicad/hello-demo/package-pinout-cross-probe.yaml",
+    "docs/fw/board-smoke/tests/smoke_plan.md",
     "docs/manufacturing/hello-demo-checklist.md",
+    "docs/manufacturing/board-package-evidence.yaml",
     "docs/manufacturing/release-manifest.yaml",
     "docs/manufacturing/real-world-verification-gaps.yaml",
     "docs/manufacturing/physical-closure-work-order.yaml",
@@ -44,27 +48,73 @@ subprocess.run([sys.executable, "scripts/check_padframe_contract.py"], check=Tru
 subprocess.run([sys.executable, "scripts/check_physical_closure_work_order.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"], check=True)
 subprocess.run([sys.executable, "scripts/check_real_world_gates.py"], check=True)
+subprocess.run([sys.executable, "scripts/check_board_package_evidence.py"], check=True)
 
 release_blockers: list[str] = []
+
+wifi_evidence = yaml.safe_load(Path("package/wifi/evidence-gates.yaml").read_text())
+for blocker in wifi_evidence.get("product_release_blockers", []):
+    if isinstance(blocker, dict) and blocker.get("status") == "blocked":
+        release_blockers.append(
+            f"package/wifi/evidence-gates.yaml:{blocker.get('id')} {blocker.get('report')}"
+        )
+
+board_package_release = subprocess.run(
+    [sys.executable, "scripts/check_board_package_evidence.py", "--release"],
+    check=False,
+    text=True,
+    capture_output=True,
+)
+if board_package_release.returncode != 0:
+    release_blockers.append(
+        "board/package/vendor/fab evidence is incomplete; run "
+        "scripts/check_board_package_evidence.py --release for details"
+    )
 
 pinout = yaml.safe_load(Path("package/hello-demo-pinout.yaml").read_text())
 package_name = str(pinout.get("package", ""))
 pinout_notes = "\n".join(str(note) for note in pinout.get("notes", []))
-if "placeholder" in package_name.lower() or "placeholder" in pinout_notes.lower():
-    release_blockers.append("package pinout still declares a placeholder package")
+if (
+    pinout.get("evidence_class") == "non_release_placeholder"
+    or pinout.get("release_use") == "prohibited"
+):
+    blockers = (
+        ", ".join(str(item) for item in pinout.get("release_blockers", []))
+        or "release blockers not enumerated"
+    )
+    release_blockers.append(
+        f"package/hello-demo-pinout.yaml is non-release placeholder evidence; blockers: {blockers}"
+    )
+elif "placeholder" in package_name.lower() or "placeholder" in pinout_notes.lower():
+    release_blockers.append("package/hello-demo-pinout.yaml still declares a placeholder package")
+
+padframe_contract = yaml.safe_load(Path("pd/padframe/hello_demo_padframe.yaml").read_text())
+for gate_name, gate in sorted(padframe_contract.get("release_gates", {}).items()):
+    if isinstance(gate, dict) and gate.get("blocked") is True:
+        release_blockers.append(
+            f"pd/padframe/hello_demo_padframe.yaml:{gate_name} blocked: {gate.get('reason')}"
+        )
+
+for blocker in padframe_contract.get("fabrication_blockers", []):
+    release_blockers.append(f"pd/padframe/hello_demo_padframe.yaml fabrication blocker: {blocker}")
 
 for path in [
-    "package/hello-demo-package.md",
-    "package/hello-demo-pad-ring.md",
-    "board/kicad/hello-demo/fab-notes.md",
+    "docs/package/hello-demo-package.md",
+    "docs/package/hello-demo-pad-ring.md",
+    "docs/board/kicad/hello-demo/fab-notes.md",
+    "board/kicad/hello-demo/package-pinout-cross-probe.yaml",
 ]:
     text = Path(path).read_text().lower()
     if (
-        "placeholder" in text
+        "non_release_placeholder" in text
+        or "release use: `prohibited`" in text
+        or "placeholder" in text
         or "not a foundry-approved" in text
         or "does not instantiate foundry pad cells" in text
     ):
-        release_blockers.append(f"{path} is still a placeholder/draft artifact")
+        release_blockers.append(
+            f"{path} is non-release placeholder evidence, not fabrication release evidence"
+        )
 
 kicad_dir = Path("board/kicad/hello-demo")
 kicad_required = {
@@ -100,7 +150,9 @@ pd_signoff = subprocess.run(
     capture_output=True,
 )
 if pd_signoff.returncode != 0:
-    release_blockers.append("PD signoff artifacts/gates are incomplete; run scripts/check_pd_signoff.py for details")
+    release_blockers.append(
+        "PD signoff artifacts/gates are incomplete; run scripts/check_pd_signoff.py for details"
+    )
 
 if release_blockers:
     print("product release check failed:")
@@ -111,6 +163,11 @@ if release_blockers:
         print(pd_signoff.stdout.rstrip())
     if pd_signoff.stderr:
         print(pd_signoff.stderr.rstrip(), file=sys.stderr)
+    if board_package_release.stdout:
+        print("\nBoard/package evidence detail:")
+        print(board_package_release.stdout.rstrip())
+    if board_package_release.stderr:
+        print(board_package_release.stderr.rstrip(), file=sys.stderr)
     if args.release:
         raise SystemExit(1)
     print("product artifact skeleton present; release blockers remain documented")

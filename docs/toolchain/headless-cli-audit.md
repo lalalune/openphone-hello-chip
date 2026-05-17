@@ -13,7 +13,7 @@ allowed only when their CLI/export path is the repo-controlled interface.
 | SymbiYosys | `make ci-strict` with `REQUIRE_SBY=1` | CLI-only | Not installed in fast Docker image. |
 | cocotb | `make cocotb`, `make cocotb-contract`, `make cocotb-cpu` | Works headless | Requires Python env plus Verilator/Icarus. |
 | QEMU | `make qemu-check`, `make qemu` | CLI-only; stage output is `STATUS: PASS`, `STATUS: BLOCKED`, or `STATUS: FAIL` | Executable smoke needs RISC-V ELF compiler and `qemu-system-riscv64`. |
-| Renode | `make renode`, `make renode-check` | CLI-only | Not installed in fast Docker image; `renode-check` is scaffold only. |
+| Renode | `make renode`, `make renode-check`, `scripts/run_renode.sh --check --transcript PATH` | CLI-only | Not installed in fast Docker image; `renode-check` is scaffold/preflight only until a real Renode transcript is ingested. |
 | Buildroot | `make buildroot-check` and `sw/buildroot/scripts/import-buildroot-external.sh` | CLI-only | Full image build needs external Buildroot checkout. |
 | Linux kernel | `make linux-bsp-check` | CLI-only | Full kernel build needs external kernel tree/toolchain. |
 | AOSP/Cuttlefish | `make aosp-bsp-check`, runbook in `docs/android` | CLI-only | Full build needs external AOSP checkout and Cuttlefish deps. |

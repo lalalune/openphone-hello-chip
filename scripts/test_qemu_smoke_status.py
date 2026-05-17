@@ -13,7 +13,6 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 RUN_QEMU = ROOT / "scripts/run_qemu.sh"
 QEMU_ELF = ROOT / "build/qemu/hello_qemu_firmware.elf"
@@ -46,7 +45,9 @@ def assert_contains(text: str, expected: str) -> None:
 def test_missing_toolchain_is_non_strict_blocked() -> None:
     result = run_check({"RISCV_CC": "definitely-missing-riscv-cc", "REQUIRE_QEMU": "0"})
     if result.returncode != 0:
-        raise AssertionError(f"expected non-strict blocked check to exit 0, got {result.returncode}\n{result.stdout}")
+        raise AssertionError(
+            f"expected non-strict blocked check to exit 0, got {result.returncode}\n{result.stdout}"
+        )
     assert_contains(result.stdout, "STATUS: PASS qemu.semantic")
     assert_contains(result.stdout, "STATUS: BLOCKED qemu.build")
     assert_contains(result.stdout, "STATUS: BLOCKED qemu.check")
@@ -55,7 +56,9 @@ def test_missing_toolchain_is_non_strict_blocked() -> None:
 def test_missing_toolchain_is_strict_blocked() -> None:
     result = run_check({"RISCV_CC": "definitely-missing-riscv-cc", "REQUIRE_QEMU": "1"})
     if result.returncode != 2:
-        raise AssertionError(f"expected strict blocked check to exit 2, got {result.returncode}\n{result.stdout}")
+        raise AssertionError(
+            f"expected strict blocked check to exit 2, got {result.returncode}\n{result.stdout}"
+        )
     assert_contains(result.stdout, "STATUS: BLOCKED qemu.check")
 
 
@@ -65,13 +68,13 @@ def test_build_failure_is_fail() -> None:
         cc = bindir / "fake-riscv-gcc"
         write_executable(
             cc,
-            "#!/bin/sh\n"
-            "echo fake compiler failure >&2\n"
-            "exit 1\n",
+            "#!/bin/sh\necho fake compiler failure >&2\nexit 1\n",
         )
         result = run_check({"RISCV_CC": str(cc)})
     if result.returncode != 1:
-        raise AssertionError(f"expected build failure to exit 1, got {result.returncode}\n{result.stdout}")
+        raise AssertionError(
+            f"expected build failure to exit 1, got {result.returncode}\n{result.stdout}"
+        )
     assert_contains(result.stdout, "STATUS: FAIL qemu.build")
 
 
@@ -84,18 +87,17 @@ def test_fake_toolchain_and_qemu_pass() -> None:
             cc,
             "#!/bin/sh\n"
             "out=\n"
-            "while [ \"$#\" -gt 0 ]; do\n"
-            "  if [ \"$1\" = \"-o\" ]; then shift; out=$1; fi\n"
+            'while [ "$#" -gt 0 ]; do\n'
+            '  if [ "$1" = "-o" ]; then shift; out=$1; fi\n'
             "  shift || true\n"
             "done\n"
-            "[ -n \"$out\" ] || exit 1\n"
-            "mkdir -p \"$(dirname \"$out\")\"\n"
+            '[ -n "$out" ] || exit 1\n'
+            'mkdir -p "$(dirname "$out")"\n'
             "printf 'fake elf\\n' > \"$out\"\n",
         )
         write_executable(
             qemu,
-            "#!/bin/sh\n"
-            "printf 'openphone hello qemu\\n'\n",
+            "#!/bin/sh\nprintf 'openphone hello qemu\\n'\n",
         )
         result = run_check(
             {
@@ -105,7 +107,9 @@ def test_fake_toolchain_and_qemu_pass() -> None:
             }
         )
     if result.returncode != 0:
-        raise AssertionError(f"expected fake executable smoke to pass, got {result.returncode}\n{result.stdout}")
+        raise AssertionError(
+            f"expected fake executable smoke to pass, got {result.returncode}\n{result.stdout}"
+        )
     assert_contains(result.stdout, "STATUS: PASS qemu.build")
     assert_contains(result.stdout, "STATUS: PASS qemu.run")
     assert_contains(result.stdout, "STATUS: PASS qemu.check")

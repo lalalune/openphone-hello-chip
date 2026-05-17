@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "claim_boundary": "external_transcripts_only",
+  "targets": {
+    "buildroot": {
+      "evidence": [
+        {
+          "artifact": "Buildroot defconfig transcript",
+          "path": "docs/evidence/buildroot/openphone_hello_defconfig.log",
+          "capture_command": "sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot defconfig",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=buildroot artifact=openphone_hello_defconfig",
+            "openphone-evidence: command=make BR2_EXTERNAL=",
+            "openphone_hello_defconfig",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "Buildroot image manifest",
+          "path": "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
+          "capture_command": "sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot image-manifest",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=buildroot artifact=openphone_hello_image_manifest",
+            "openphone-evidence: command=find output/images",
+            "output/images",
+            "sha256",
+            "openphone-evidence: status=PASS"
+          ],
+          "at_least_one": [
+            ["Image", "vmlinux", "rootfs"]
+          ]
+        },
+        {
+          "artifact": "Buildroot runtime MMIO smoke",
+          "path": "docs/evidence/buildroot/hello-mmio-smoke.log",
+          "capture_command": "HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=buildroot artifact=hello-mmio-smoke",
+            "openphone-evidence: command=",
+            "hello-mmio-smoke",
+            "/dev/hello-npu",
+            "openphone-evidence: status=PASS"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "evidence": [
+        {
+          "artifact": "Linux kernel build transcript",
+          "path": "docs/evidence/linux/openphone_hello_kernel_build.log",
+          "capture_command": "sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux kernel-build",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
+            "openphone-evidence: command=make ARCH=riscv",
+            "CONFIG_OPENPHONE_HELLO",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "Linux DTB validation transcript",
+          "path": "docs/evidence/linux/openphone_hello_dtb_check.log",
+          "capture_command": "sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux dtb-check",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=linux artifact=openphone_hello_dtb_check",
+            "openphone-evidence: command=make ARCH=riscv",
+            "openphone-hello",
+            "openphone,hello-npu",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "Linux runtime MMIO smoke",
+          "path": "docs/evidence/linux/hello-mmio-smoke.log",
+          "capture_command": "HELLO_SMOKE_CMD='ssh root@TARGET /tmp/hello-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=linux artifact=hello-mmio-smoke",
+            "openphone-evidence: command=",
+            "HELLO_NPU_BASE=0x10020000",
+            "/dev/hello-npu",
+            "openphone-evidence: status=PASS"
+          ]
+        }
+      ]
+    },
+    "opensbi": {
+      "evidence": [
+        {
+          "artifact": "OpenSBI OpenPhone build transcript",
+          "path": "docs/evidence/linux/opensbi_openphone_build.log",
+          "capture_command": "OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=opensbi artifact=opensbi_openphone_build",
+            "openphone-evidence: command=",
+            "OpenSBI",
+            "fw_dynamic",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "OpenSBI fw_dynamic handoff transcript",
+          "path": "docs/evidence/linux/opensbi_fw_dynamic_handoff.log",
+          "capture_command": "OPENPHONE_OPENSBI_HANDOFF_CMD='/path/to/qemu-or-renode boot command' sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=opensbi artifact=opensbi_fw_dynamic_handoff",
+            "openphone-evidence: command=",
+            "OpenSBI",
+            "fw_dynamic",
+            "Next Address",
+            "openphone-evidence: status=PASS"
+          ]
+        }
+      ]
+    },
+    "u-boot": {
+      "evidence": [
+        {
+          "artifact": "U-Boot OpenPhone build transcript",
+          "path": "docs/evidence/linux/u_boot_openphone_build.log",
+          "capture_command": "OPENPHONE_UBOOT_CMD='make openphone_defconfig && make' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot build",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=u-boot artifact=u_boot_openphone_build",
+            "openphone-evidence: command=",
+            "U-Boot",
+            "u-boot.bin",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "U-Boot OpenSBI boot-chain transcript",
+          "path": "docs/evidence/linux/u_boot_opensbi_boot_chain.log",
+          "capture_command": "OPENPHONE_UBOOT_BOOT_CMD='/path/to/qemu-or-renode boot command' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot boot-chain",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=u-boot artifact=u_boot_opensbi_boot_chain",
+            "openphone-evidence: command=",
+            "OpenSBI",
+            "U-Boot",
+            "openphone-evidence: status=PASS"
+          ]
+        }
+      ]
+    },
+    "aosp": {
+      "evidence": [
+        {
+          "artifact": "AOSP lunch transcript",
+          "path": "docs/evidence/android/openphone_ai_soc_lunch.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=openphone_ai_soc_lunch",
+            "openphone-evidence: command=lunch openphone_ai_soc-userdebug",
+            "openphone_ai_soc-userdebug",
+            "TARGET_PRODUCT=openphone_ai_soc",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "AOSP vendorimage transcript",
+          "path": "docs/evidence/android/openphone_ai_soc_vendorimage.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=openphone_ai_soc_vendorimage",
+            "openphone-evidence: command=m vendorimage",
+            "vendor.img",
+            "installed-files-vendor.txt",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "AOSP VINTF transcript",
+          "path": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=openphone_ai_soc_checkvintf",
+            "openphone-evidence: command=",
+            "checkvintf",
+            "openphone_ai_soc",
+            "openphone-evidence: status=PASS"
+          ]
+        },
+        {
+          "artifact": "AOSP Cuttlefish riscv64 boot transcript",
+          "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
+            "openphone-evidence: command=",
+            "launch_cvd",
+            "adb shell",
+            "ro.product.cpu.abi=riscv64",
+            "openphone-evidence: status=PASS"
+          ],
+          "at_least_one": [
+            ["sys.boot_completed=1", "shell-only success"]
+          ]
+        },
+        {
+          "artifact": "Android CTS virtual-device subset transcript",
+          "path": "docs/evidence/android/cts_virtual_device_subset.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=cts_virtual_device_subset",
+            "openphone-evidence: compatibility_scope=virtual_device_subset",
+            "openphone-evidence: command=",
+            "cts-tradefed",
+            "openphone-evidence: status=PASS"
+          ],
+          "forbidden_strings": [
+            "CDD compliant",
+            "full CTS pass",
+            "full VTS pass",
+            "Android compatible"
+          ]
+        },
+        {
+          "artifact": "Android VTS virtual-device subset transcript",
+          "path": "docs/evidence/android/vts_virtual_device_subset.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset",
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=vts_virtual_device_subset",
+            "openphone-evidence: compatibility_scope=virtual_device_subset",
+            "openphone-evidence: command=",
+            "vts-tradefed",
+            "openphone-evidence: status=PASS"
+          ],
+          "forbidden_strings": [
+            "CDD compliant",
+            "full CTS pass",
+            "full VTS pass",
+            "Android compatible"
+          ]
+        }
+      ]
+    }
+  }
+}

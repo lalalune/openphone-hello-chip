@@ -2,7 +2,7 @@
 set -eu
 
 mkdir -p build
-repo_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
 if [ -d "$repo_dir/tools/bin" ]; then
     PATH="$repo_dir/tools/bin:$PATH"
 fi

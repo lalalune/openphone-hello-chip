@@ -200,3 +200,39 @@ async def dma_rejects_unaligned_and_reports_memory_errors(dut):
     data, resp = await axil_read32(dut, 0x1001_0038)
     assert resp == 0
     assert data == 1
+
+
+@cocotb.test()
+async def dma_non_dram_targets_fault_without_mmio_side_effects(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert await axil_write32(dut, 0x0C00_0008, 0x0) == 0
+    assert await axil_write32(dut, 0x8000_0040, 0xCAFE_BABE) == 0
+
+    assert await axil_write32(dut, 0x1001_0000, 0x8000_0040) == 0
+    assert await axil_write32(dut, 0x1001_0004, 0x0C00_0008) == 0
+    assert await axil_write32(dut, 0x1001_0008, 4) == 0
+    assert await axil_write32(dut, 0x1001_000C, 1) == 0
+    _, status = await wait_dma_done(dut)
+    assert status & 0x6 == 0x6
+
+    data, resp = await axil_read32(dut, 0x0C00_0008)
+    assert resp == 0
+    assert data == 0
+
+    data, resp = await axil_read32(dut, 0x1001_0038)
+    assert resp == 0
+    assert data == 1
+
+    assert await axil_write32(dut, 0x1001_000C, 2) == 0
+    assert await axil_write32(dut, 0x1001_0000, 0x0C00_0000) == 0
+    assert await axil_write32(dut, 0x1001_0004, 0x8000_0080) == 0
+    assert await axil_write32(dut, 0x1001_0008, 4) == 0
+    assert await axil_write32(dut, 0x1001_000C, 1) == 0
+    _, status = await wait_dma_done(dut)
+    assert status & 0x6 == 0x6
+
+    data, resp = await axil_read32(dut, 0x8000_0080)
+    assert resp == 0
+    assert data != 0x1C00_0001

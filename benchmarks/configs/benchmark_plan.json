@@ -7,7 +7,7 @@
       "version": "upstream/local",
       "command": ["coremark"],
       "requires": ["coremark"],
-      "install": "Build EEMBC CoreMark for the target and place the coremark executable on PATH.",
+      "install": "Build EEMBC CoreMark for the target and place the real coremark executable on PATH, or run scripts/install_coremark_stream_tools.sh --coremark-src <upstream-coremark> --only coremark to install it into tools/bin.",
       "input_dataset": "default",
       "primary_metric": "CoreMark/MHz",
       "units": "score_per_mhz",
@@ -19,7 +19,7 @@
       "version": "upstream/local",
       "command": ["stream_c.exe"],
       "requires": ["stream_c.exe"],
-      "install": "Compile STREAM from source for the target compiler, keep the executable named stream_c.exe, and place it on PATH.",
+      "install": "Compile STREAM from source for the target compiler, keep the executable named stream_c.exe, and place it on PATH, or run scripts/install_coremark_stream_tools.sh --stream-src <upstream-stream> --only stream to install it into tools/bin.",
       "input_dataset": "default arrays",
       "primary_metric": "Triad bandwidth",
       "units": "MB/s",
@@ -31,7 +31,7 @@
       "version": "upstream/local",
       "command": ["bw_mem", "64M", "rd"],
       "requires": ["bw_mem"],
-      "install": "Build lmbench for the target and place bw_mem on PATH.",
+      "install": "Build lmbench for the target and place bw_mem on PATH. For local CLI wiring, scripts/install_benchmark_smoke_tools.sh --lmbench-bin-dir <lmbench-bin-dir> can link a real built executable into .venv/bin; repo-local smoke shims are rejected for strict release claims.",
       "input_dataset": "64M read",
       "primary_metric": "memory bandwidth",
       "units": "MB/s",
@@ -43,7 +43,7 @@
       "version": "upstream/local",
       "command": ["lat_mem_rd", "64M", "128"],
       "requires": ["lat_mem_rd"],
-      "install": "Build lmbench for the target and place lat_mem_rd on PATH.",
+      "install": "Build lmbench for the target and place lat_mem_rd on PATH. For local CLI wiring, scripts/install_benchmark_smoke_tools.sh --lmbench-bin-dir <lmbench-bin-dir> can link a real built executable into .venv/bin; repo-local smoke shims are rejected for strict release claims.",
       "input_dataset": "64M stride sweep",
       "primary_metric": "memory latency",
       "units": "ns",
@@ -53,7 +53,7 @@
       "name": "fio_seq_read",
       "suite": "fio",
       "version": "upstream/local",
-      "command": ["fio", "benchmarks/configs/fio-seq-read.fio"],
+      "command": ["fio", "--output-format=json", "benchmarks/configs/fio-seq-read.fio"],
       "requires": ["fio"],
       "install": "Install fio from the target OS package manager or build it for the target and place fio on PATH.",
       "input_dataset": "128MiB sequential read file",
@@ -65,7 +65,7 @@
       "name": "fio_rand_rw",
       "suite": "fio",
       "version": "upstream/local",
-      "command": ["fio", "benchmarks/configs/fio-rand-rw.fio"],
+      "command": ["fio", "--output-format=json", "benchmarks/configs/fio-rand-rw.fio"],
       "requires": ["fio"],
       "install": "Install fio from the target OS package manager or build it for the target and place fio on PATH.",
       "input_dataset": "128MiB 4KiB random read/write file",
@@ -122,6 +122,25 @@
         "--nnapi_accelerator_name=hello-npu"
       ],
       "requires": ["benchmark_model"],
+      "capability_artifacts": [
+        {
+          "path": "benchmarks/capabilities/hello_npu_nnapi.proof.json",
+          "blocker_id": "HELLO_NPU_NNAPI_ACCELERATOR_MISSING",
+          "blocked_reason": "missing_hello_npu_nnapi_accelerator",
+          "pipeline_visible": true,
+          "release_blocking": true,
+          "resolution": "Run this benchmark only on an Android/Linux target exposing a real hello-npu NNAPI accelerator or delegate; create the proof JSON and transcripts from the hardware validation job, not by hand.",
+          "proof": {
+            "schema": "openphone.hello_npu_nnapi_capability.v1",
+            "accelerator_name": "hello-npu",
+            "required_files": [
+              "adb_devices",
+              "nnapi_accelerator_query",
+              "benchmark_model_nnapi"
+            ]
+          }
+        }
+      ],
       "model_artifacts": [
         {
           "path": "benchmarks/models/mobile_smoke.tflite",

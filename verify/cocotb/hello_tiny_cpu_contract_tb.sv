@@ -4,6 +4,9 @@ module hello_tiny_cpu_contract_tb (
     input  logic        clk,
     input  logic        rst_n,
     input  logic        cpu_enable,
+    input  logic        stall_cpu_aw,
+    input  logic        stall_cpu_w,
+    input  logic        stall_cpu_ar,
 
     input  logic        loader_awvalid,
     output logic        loader_awready,
@@ -68,21 +71,21 @@ module hello_tiny_cpu_contract_tb (
     logic [31:0] reset_pc;
     logic [31:0] hart_id;
 
-    assign bus_awvalid = cpu_enable ? cpu_awvalid : loader_awvalid;
+    assign bus_awvalid = cpu_enable ? (cpu_awvalid & ~stall_cpu_aw) : loader_awvalid;
     assign bus_awaddr  = cpu_enable ? cpu_awaddr  : loader_awaddr;
-    assign bus_wvalid  = cpu_enable ? cpu_wvalid  : loader_wvalid;
+    assign bus_wvalid  = cpu_enable ? (cpu_wvalid & ~stall_cpu_w) : loader_wvalid;
     assign bus_wdata   = cpu_enable ? cpu_wdata   : loader_wdata;
     assign bus_wstrb   = cpu_enable ? cpu_wstrb   : loader_wstrb;
     assign bus_bready  = cpu_enable ? cpu_bready  : loader_bready;
-    assign bus_arvalid = cpu_enable ? cpu_arvalid : loader_arvalid;
+    assign bus_arvalid = cpu_enable ? (cpu_arvalid & ~stall_cpu_ar) : loader_arvalid;
     assign bus_araddr  = cpu_enable ? cpu_araddr  : loader_araddr;
     assign bus_rready  = cpu_enable ? cpu_rready  : loader_rready;
 
-    assign cpu_awready = cpu_enable ? bus_awready : 1'b0;
-    assign cpu_wready  = cpu_enable ? bus_wready  : 1'b0;
+    assign cpu_awready = cpu_enable ? (bus_awready & ~stall_cpu_aw) : 1'b0;
+    assign cpu_wready  = cpu_enable ? (bus_wready & ~stall_cpu_w) : 1'b0;
     assign cpu_bvalid  = cpu_enable ? bus_bvalid  : 1'b0;
     assign cpu_bresp   = bus_bresp;
-    assign cpu_arready = cpu_enable ? bus_arready : 1'b0;
+    assign cpu_arready = cpu_enable ? (bus_arready & ~stall_cpu_ar) : 1'b0;
     assign cpu_rvalid  = cpu_enable ? bus_rvalid  : 1'b0;
     assign cpu_rdata   = bus_rdata;
     assign cpu_rresp   = bus_rresp;

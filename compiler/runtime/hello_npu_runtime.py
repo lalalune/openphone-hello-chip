@@ -76,7 +76,9 @@ class HelloNpuRuntime:
             raise ValueError("scratch write exceeds 64-byte NPU scratchpad")
         padded = bytearray(self.SCRATCH_BYTES)
         for word in range(self.SCRATCH_BYTES // 4):
-            padded[word * 4 : word * 4 + 4] = self.read32(self.SCRATCH + word * 4).to_bytes(4, "little")
+            padded[word * 4 : word * 4 + 4] = self.read32(self.SCRATCH + word * 4).to_bytes(
+                4, "little"
+            )
         padded[offset : offset + len(data)] = data
         for word in range(self.SCRATCH_BYTES // 4):
             value = int.from_bytes(padded[word * 4 : word * 4 + 4], "little")
@@ -136,7 +138,12 @@ class HelloNpuRuntime:
             if status & 0x2:
                 raw = self.read_scratch(c_base, c_bytes)
                 return [
-                    [int.from_bytes(raw[(r * n + c) * 4 : (r * n + c + 1) * 4], "little", signed=True) for c in range(n)]
+                    [
+                        int.from_bytes(
+                            raw[(r * n + c) * 4 : (r * n + c + 1) * 4], "little", signed=True
+                        )
+                        for c in range(n)
+                    ]
                     for r in range(m)
                 ]
         raise TimeoutError("hello NPU GEMM command did not complete")

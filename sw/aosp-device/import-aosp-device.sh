@@ -7,7 +7,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 aosp=$1
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+repo_root=$(CDPATH=; cd -- "$(dirname -- "$0")/../.." && pwd)
 device_src="$repo_root/sw/aosp-device/device/openphone/openphone_ai_soc"
 device_dst="$aosp/device/openphone/openphone_ai_soc"
 

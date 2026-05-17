@@ -65,6 +65,13 @@ def pack_s8(values):
     return word
 
 
+def pack_s4(values):
+    word = 0
+    for index, value in enumerate(values):
+        word |= (value & 0xF) << (4 * index)
+    return word
+
+
 @cocotb.test()
 async def npu_scalar_opcodes_match_expected_results(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
@@ -102,6 +109,26 @@ async def npu_scalar_opcodes_match_expected_results(dut):
     result, _ = await run_scalar(dut, 6, 0x8000_0000, 0x7FFF_FFFF)
     assert result == 0x7FFF_FFFF
 
+    result, result_hi = await run_scalar(
+        dut,
+        7,
+        pack_s4([1, 2, 3, 4, 5, 6, 7, -8]),
+        pack_s4([1, 1, 1, 1, 1, 1, 1, -1]),
+        4,
+    )
+    assert result == 40
+    assert result_hi == 0
+
+    result, result_hi = await run_scalar(
+        dut,
+        7,
+        pack_s4([-8, -7, -6, -5, -4, -3, -2, -1]),
+        pack_s4([1, 1, 1, 1, 1, 1, 1, 1]),
+        0,
+    )
+    assert result == 0xFFFF_FFDC
+    assert result_hi == 0xFFFF_FFFF
+
 
 @cocotb.test()
 async def npu_rejects_invalid_opcode_and_clears_error_irq(dut):
@@ -113,7 +140,7 @@ async def npu_rejects_invalid_opcode_and_clears_error_irq(dut):
     await write_reg(dut, 3, 1)
     assert await poll_done(dut) == 0x6
     assert int(dut.irq.value) == 1
-    assert await read_reg(dut, 0x0D) == 1
+    assert await read_reg(dut, 0x17) == 1
 
     await write_reg(dut, 3, 2)
     assert await read_reg(dut, 3) == 0
@@ -160,5 +187,5 @@ async def npu_gemm_invalid_config_reports_error_without_touching_scratch(dut):
     await write_reg(dut, 0x03, 1)
 
     assert await poll_done(dut) == 0x6
-    assert await read_reg(dut, 0x0D) == 1
+    assert await read_reg(dut, 0x17) == 1
     assert await read_reg(dut, 0x20) == 0xA5A5_5A5A

@@ -261,18 +261,60 @@
           },
           {
             "offset": "0x2C",
-            "name": "PERF_CYCLES",
+            "name": "PERF_UNSUPPORTED_OPS",
             "access": "RO",
             "reset": "0x00000000"
           },
           {
             "offset": "0x30",
+            "name": "CMD_PARAM",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x40",
+            "name": "DESC_BASE",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x44",
+            "name": "DESC_HEAD",
+            "access": "RW",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x48",
+            "name": "DESC_TAIL",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x4C",
+            "name": "DESC_STATUS",
+            "access": "RO",
+            "reset": "0x00000001"
+          },
+          {
+            "offset": "0x50",
+            "name": "PERF_CYCLES",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x54",
             "name": "PERF_MACS",
             "access": "RO",
             "reset": "0x00000000"
           },
           {
-            "offset": "0x34",
+            "offset": "0x58",
+            "name": "PERF_OPS",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x5C",
             "name": "PERF_ERRORS",
             "access": "RW",
             "reset": "0x00000000"

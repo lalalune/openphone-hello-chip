@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "claim_boundary": "android_external_logs_only",
+  "compatibility_claim": "none_without_cts_vts_logs",
+  "android_boot_claim": "blocked_until_all_required_evidence_passes",
+  "required_for_android_boot_claim": [
+    "docs/evidence/android/openphone_ai_soc_lunch.log",
+    "docs/evidence/android/openphone_ai_soc_vendorimage.log",
+    "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+    "docs/evidence/android/cuttlefish_riscv64_boot.log",
+    "docs/evidence/android/cts_virtual_device_subset.log",
+    "docs/evidence/android/vts_virtual_device_subset.log"
+  ],
+  "forbidden_claims_without_required_evidence": [
+    "Android boot proven",
+    "Android booted on hello_soc",
+    "Android compatible",
+    "CDD compliant",
+    "CTS passed",
+    "VTS passed",
+    "GMS certified"
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/android/openphone_ai_soc_lunch.log",
+      "claim": "AOSP product lunch is visible in an external AOSP checkout",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch"
+    },
+    {
+      "path": "docs/evidence/android/openphone_ai_soc_vendorimage.log",
+      "claim": "OpenPhone vendor image builds in an external AOSP checkout",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage"
+    },
+    {
+      "path": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+      "claim": "OpenPhone VINTF packaging validates in an external AOSP checkout",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf"
+    },
+    {
+      "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
+      "claim": "AOSP riscv64 virtual-device boot reaches shell or boot-completed state",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot"
+    },
+    {
+      "path": "docs/evidence/android/cts_virtual_device_subset.log",
+      "claim": "A bounded CTS virtual-device subset was run; this is not a CDD or full CTS compatibility claim",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset"
+    },
+    {
+      "path": "docs/evidence/android/vts_virtual_device_subset.log",
+      "claim": "A bounded VTS virtual-device subset was run; this is not a CDD or full VTS compatibility claim",
+      "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset"
+    }
+  ],
+  "blocked_until": [
+    "External AOSP checkout is present and imported",
+    "vendor.img build transcript is archived",
+    "VINTF check transcript is archived",
+    "riscv64 Cuttlefish or equivalent boot transcript is archived",
+    "CTS and VTS subset command transcripts are archived before any Android compatibility claim"
+  ]
+}

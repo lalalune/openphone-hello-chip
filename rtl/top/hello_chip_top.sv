@@ -32,12 +32,14 @@ module hello_chip_top (
     logic [31:0] mmio_wdata;
     logic [31:0] mmio_rdata;
     logic mmio_ready;
+    logic msip_unused;
+    logic mtip_unused;
 
     /* verilator lint_off UNUSEDSIGNAL */
     logic unused_test_jtag;
     /* verilator lint_on UNUSEDSIGNAL */
 
-    assign unused_test_jtag = ^{TEST_MODE, JTAG_TCK, JTAG_TMS, JTAG_TDI};
+    assign unused_test_jtag = ^{TEST_MODE, JTAG_TCK, JTAG_TMS, JTAG_TDI, msip_unused, mtip_unused};
     assign JTAG_TDO = 1'b0;
 
     hello_reset_sync u_reset_sync (
@@ -77,6 +79,8 @@ module hello_chip_top (
         .irq_dma(IRQ_DMA),
         .irq_npu(IRQ_NPU),
         .irq_vsync(IRQ_VSYNC),
+        .msip_o(msip_unused),
+        .mtip_o(mtip_unused),
         .gpio_out(GPIO)
     );
 
