@@ -1,9 +1,9 @@
-# Base image pinned by digest for reproducibility.
-# TODO(toolchain-ci): refresh digest with
+# Base image pinned by digest for reproducibility. Refresh with:
 #   docker manifest inspect --verbose ubuntu:24.04 | jq -r '.Descriptor.digest // .manifests[0].digest'
-# and replace the placeholder below. Until then we tag-pin to ubuntu:24.04 and
-# record the expected digest in docs/toolchain/reproducibility.md.
-ARG UBUNTU_DIGEST=sha256:TODO_PIN_UBUNTU_24_04_DIGEST
+# or the registry HTTP API (Accept: application/vnd.docker.distribution.manifest.v2+json
+# against registry-1.docker.io/v2/library/ubuntu/manifests/24.04) and update
+# docs/toolchain/reproducibility.md in lockstep.
+ARG UBUNTU_DIGEST=sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b
 FROM ubuntu:24.04@${UBUNTU_DIGEST}
 
 ENV DEBIAN_FRONTEND=noninteractive
