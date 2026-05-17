@@ -349,5 +349,76 @@
     "load_address": "0x80000000",
     "uart_base": "0x10000000",
     "abi_note": "This is a QEMU/Renode software bring-up target. Its UART and CPU are not the hello-chip hardware ABI."
+  },
+  "hello_chip_cpu_variant": {
+    "target_kind": "linux_capable_soc_projection",
+    "has_cpu": true,
+    "abi_note": "Projected Linux-capable SoC variant of the hello chip. Single source of truth for the boot vector, DRAM map, PLIC/CLINT layout, UART, timer, DMA, NPU, display, and IRQ assignments consumed by RTL decode, kernel DTS, U-Boot, OpenSBI, and AOSP HAL configs. Hardware ABI for the existing hello chip (has_cpu=false) is unchanged.",
+    "isa": "rv64gc",
+    "cpu_count": 1,
+    "timebase_frequency_hz": 10000000,
+    "boot": {
+      "reset_vector": "0x00001000",
+      "rom_base": "0x00000000",
+      "rom_size": "0x00001000",
+      "sbi_entry": "0x80000000",
+      "kernel_entry": "0x80200000"
+    },
+    "dram": {
+      "base": "0x80000000",
+      "size": "0x10000000",
+      "description": "Main DRAM aperture for OpenSBI/U-Boot/Linux."
+    },
+    "plic": {
+      "base": "0x0C000000",
+      "size": "0x04000000",
+      "num_sources": 32,
+      "num_contexts": 2
+    },
+    "clint": {
+      "base": "0x02000000",
+      "size": "0x00010000"
+    },
+    "uart": {
+      "compatible": "ns16550a",
+      "base": "0x10001000",
+      "size": "0x00001000",
+      "irq": 1,
+      "reg_shift": 0,
+      "clock_frequency_hz": 50000000,
+      "baud": 115200
+    },
+    "timer": {
+      "source": "clint_mtimer",
+      "irq": 7,
+      "comment": "RISC-V machine timer via CLINT mtime/mtimecmp."
+    },
+    "devices": {
+      "dma": {
+        "base": "0x10010000",
+        "size": "0x00001000",
+        "irq": 2,
+        "compatible": "openphone,hello-dma"
+      },
+      "npu": {
+        "base": "0x10020000",
+        "size": "0x00001000",
+        "irq": 3,
+        "compatible": "openphone,hello-npu"
+      },
+      "display": {
+        "base": "0x10030000",
+        "size": "0x00001000",
+        "irq": 4,
+        "compatible": "openphone,hello-display"
+      }
+    },
+    "interrupts": {
+      "IRQ_UART": 1,
+      "IRQ_DMA": 2,
+      "IRQ_NPU": 3,
+      "IRQ_VSYNC": 4,
+      "IRQ_TIMER": 7
+    }
   }
 }
