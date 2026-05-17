@@ -13,9 +13,12 @@ peripheral-control block in software that targets real hardware.
 
 `scripts/run_renode.sh --check` is fail-closed. It checks that the platform and
 documentation match the qemu-virt contract, then reports executable smoke as
-`STATUS: BLOCKED` unless a real Renode serial transcript path exists. A future
-passing smoke must load `build/qemu/hello_qemu_firmware.elf` and capture the
-UART banner:
+`STATUS: BLOCKED` unless a real Renode serial transcript path exists. The
+expected UART transcript artifact is
+`build/renode/openphone_hello_uart.transcript`, the expected smoke manifest
+artifact is `build/renode/openphone_hello_smoke.json`, and the QEMU reference
+transcript artifact is `build/reports/qemu_smoke.log`. A future passing smoke
+must load `build/qemu/hello_qemu_firmware.elf` and capture the UART banner:
 
 ```text
 openphone hello qemu

@@ -1,0 +1,59 @@
+manifest: hello_demo_fpga_bitstream_evidence
+schema: docs/manufacturing/schemas/artifact-manifest.schema.yaml
+status: scaffold
+release_gate: board_fabrication_release
+policy:
+  preflight: Validate the FPGA release contract and expected evidence paths without requiring a bitstream.
+  release: Require board revision, concrete LPF assignments, bitstream outputs, timing, route, pack logs, and tool versions.
+artifact_groups:
+  target_contract:
+    owner: fpga_closure
+    status: draft
+    artifacts:
+      - name: fpga_target_contract
+        status: draft
+        globs:
+          - board/fpga/hello_demo_fpga.yaml
+      - name: pin_constraints
+        status: draft
+        globs:
+          - board/fpga/constraints/hello_demo_ulx3s.lpf
+  bitstream_release:
+    owner: fpga_closure
+    status: missing
+    cli_commands:
+      synth: yosys -p "read_verilog rtl/top/hello_chip_top.sv; synth_ecp5 -json board/fpga/build/hello_demo_fpga.json"
+      place_route: nextpnr-ecp5 --json board/fpga/build/hello_demo_fpga.json --lpf board/fpga/constraints/hello_demo_ulx3s.lpf --textcfg board/fpga/build/hello_demo_fpga.config
+      pack: ecppack board/fpga/build/hello_demo_fpga.config board/fpga/build/hello_demo_fpga.bit
+    artifacts:
+      - name: bitstream
+        status: missing
+        globs:
+          - board/fpga/build/**/*.bit
+          - board/fpga/build/**/*.svf
+      - name: nextpnr_timing_report
+        status: missing
+        clean_regex: "(?i)(timing\\s+(pass(?:ed)?|met)|max\\s+frequency|critical\\s+path)"
+        fail_regex: "(?i)(timing\\s+(fail(?:ed)?|not\\s+met)|negative\\s+slack|error)"
+        globs:
+          - board/fpga/reports/**/*timing*.rpt
+          - board/fpga/reports/**/*timing*.txt
+      - name: nextpnr_route_report
+        status: missing
+        clean_regex: "(?i)(routing\\s+(pass(?:ed)?|complete)|checksum|device\\s+utilization)"
+        fail_regex: "(?i)(routing\\s+failed|unrouted|error)"
+        globs:
+          - board/fpga/reports/**/*nextpnr*.log
+          - board/fpga/reports/**/*route*.rpt
+      - name: ecppack_transcript
+        status: missing
+        clean_regex: "(?i)(ecppack|bitstream|checksum)"
+        fail_regex: "(?i)(error|fail(?:ed)?)"
+        globs:
+          - board/fpga/reports/**/*ecppack*.log
+          - board/fpga/reports/**/*pack*.log
+      - name: fpga_tool_versions
+        status: missing
+        globs:
+          - board/fpga/reports/**/*tool*version*.txt
+          - board/fpga/reports/tool_versions.txt

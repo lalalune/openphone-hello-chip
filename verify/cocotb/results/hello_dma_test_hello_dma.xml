@@ -1,0 +1,8 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1779009446" />
+    <testcase name="dma_randomized_backpressure_copies_bytes" classname="test_hello_dma" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_dma.py" lineno="163" time="0.11311006546020508" sim_time_ns="5161.001" ratio_time="45628.13202345611" />
+    <testcase name="dma_zero_length_and_partial_tail_have_no_extra_writes" classname="test_hello_dma" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_dma.py" lineno="196" time="0.008300065994262695" sim_time_ns="361.0010000000002" ratio_time="43493.75056168675" />
+    <testcase name="dma_bus_response_errors_are_fail_closed" classname="test_hello_dma" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_dma.py" lineno="234" time="0.0014948844909667969" sim_time_ns="141.0009999999993" ratio_time="94322.33784752744" />
+  </testsuite>
+</testsuites>

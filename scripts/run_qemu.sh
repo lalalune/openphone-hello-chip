@@ -72,7 +72,7 @@ EOF
 semantic_check() {
     failed=0
 
-    for path in "$src" "$linker" "$repo_dir/sim/qemu/README.md"; do
+    for path in "$src" "$linker" "$repo_dir/docs/sim/qemu/README.md"; do
         if [ ! -f "$path" ]; then
             status_line "FAIL" "qemu.semantic" "missing required artifact ${path#$repo_dir/}"
             failed=1
@@ -99,12 +99,12 @@ semantic_check() {
         status_line "FAIL" "qemu.semantic" "sw/bootrom/linker.ld must keep _start as the ELF entry"
         failed=1
     }
-    grep -q "software reference only" "$repo_dir/sim/qemu/README.md" || {
-        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must mark qemu-virt as software reference only"
+    grep -q "software reference only" "$repo_dir/docs/sim/qemu/README.md" || {
+        status_line "FAIL" "qemu.semantic" "docs/sim/qemu/README.md must mark qemu-virt as software reference only"
         failed=1
     }
-    grep -q "scripts/run_qemu.sh --build-firmware" "$repo_dir/sim/qemu/README.md" || {
-        status_line "FAIL" "qemu.semantic" "sim/qemu/README.md must document the firmware ELF build path"
+    grep -q "scripts/run_qemu.sh --build-firmware" "$repo_dir/docs/sim/qemu/README.md" || {
+        status_line "FAIL" "qemu.semantic" "docs/sim/qemu/README.md must document the firmware ELF build path"
         failed=1
     }
 

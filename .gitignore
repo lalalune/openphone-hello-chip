@@ -1,5 +1,6 @@
 build/
 .venv/
+.claude/
 sim_build/
 results.xml
 verify/cocotb/results.xml

@@ -14,6 +14,31 @@ sources_policy:
     - thermal_state
     - power_measurement_method
 reference_socs:
+  snapdragon_8_elite:
+    vendor: Qualcomm
+    role: android_flagship_prior_generation_reference
+    process: TSMC 3 nm class
+    cpu:
+      topology: Qualcomm Oryon CPU
+      max_clock_ghz:
+        public_variant: 4.32
+    gpu:
+      name: Adreno
+      notes: Qualcomm discloses relative GPU and AI-engine improvements, not open RTL.
+    npu:
+      name: Hexagon NPU
+      public_tops: null
+      vendor_claims:
+        - 45% AI performance improvement
+        - 45% AI performance-per-watt improvement
+    memory:
+      type: LPDDR5X
+      public_bandwidth_gbps: 84.8
+    risk_notes:
+      - Closed CPU implementation, GPU, NPU, modem, camera ISP, firmware, PMIC coupling, and Android BSP.
+      - Useful as a reference for power/performance class, not as a drop-in or open design source.
+    primary_source: https://www.qualcomm.com/smartphones/products/8-series/snapdragon-8-elite-mobile-platform
+
   snapdragon_8_elite_gen_5:
     vendor: Qualcomm
     role: android_flagship_performance_reference
@@ -50,6 +75,43 @@ reference_socs:
       - Closed GPU, NPU, modem, firmware, PMIC, and Android BSP dependencies.
       - Sustained thermals can dominate peak benchmark claims.
     primary_source: https://www.qualcomm.com/smartphones/products/8-series/snapdragon-8-elite-gen-5
+
+  dimensity_9400:
+    vendor: MediaTek
+    role: android_flagship_user_requested_reference
+    process: TSMC second-generation 3 nm class
+    cpu:
+      topology: 1x Arm Cortex-X925 + 3x Arm Cortex-X4 + 4x Cortex-A720
+      max_clock_ghz:
+        cortex_x925: 3.62
+    gpu:
+      name: Arm Immortalis-G925 MC12
+      vendor_claims:
+        - 41% faster peak GPU performance
+        - 40% faster ray tracing
+        - 44% more power efficient
+    npu:
+      name: MediaTek NPU 890
+      public_tops: null
+      vendor_claims:
+        - 100% faster diffusion generation performance
+        - 80% faster LLM prompt performance
+        - up to 35% more power efficient
+    memory:
+      type: LPDDR5X-10667
+      public_bandwidth_gbps: null
+    connectivity:
+      wifi: Wi-Fi 7
+      wifi_peak_data_rate_gbps: 7.3
+      bluetooth: Bluetooth 6.0
+    camera_display_video:
+      max_camera_sensor_mp: 320
+      max_video_capture: 8K60
+      max_display_refresh: WQHD+ 180Hz
+    risk_notes:
+      - Strong comparison point for phone-class CPU/GPU/NPU/display/camera targets.
+      - Not open hardware; GPU, NPU, ISP, modem, RF, power-management, and BSP details remain closed.
+    primary_source: https://www.mediatek.com/products/smartphones/mediatek-dimensity-9400
 
   dimensity_9500:
     vendor: MediaTek
@@ -197,6 +259,40 @@ reference_socs:
       - Useful as an example of a new in-house Android flagship SoC effort.
       - Not open hardware and not a sourceable SoC baseline.
       - Secondary-source specs should be revalidated before use in numeric design budgets.
+
+open_source_chip_and_ip_references:
+  cva6:
+    organization: OpenHW Group
+    license_visibility: open_source_core
+    role: linux_capable_open_riscv_cpu_candidate
+    repo: https://github.com/openhwgroup/cva6
+    docs: https://docs.openhwgroup.org/projects/cva6-user-manual/
+    usable_now:
+      - Pull RTL as a candidate AP core workstream.
+      - Run upstream simulation/regression in a pinned external checkout.
+      - Build a wrapper contract against the repo memory map before replacing the tiny CPU scaffold.
+    blocker:
+      - Integration, MMU/cache/interrupt proof, timing closure, and Android/Linux boot evidence are still ours to produce.
+  ibex:
+    organization: lowRISC
+    license_visibility: Apache-2.0 open_source_core
+    role: management_security_subsystem_candidate
+    docs: https://lowrisc.org/ibex/
+    usable_now:
+      - Evaluate as a management/security/always-on controller, not as the Android application CPU.
+      - Reuse OpenTitan-style verification discipline for root-of-trust planning.
+    blocker:
+      - 32-bit embedded core class; not a Linux-capable phone AP replacement.
+  basilisk:
+    organization: PULP / academic open silicon ecosystem
+    license_visibility: open_source_research_soc
+    role: linux_capable_open_soc_flow_reference
+    docs: https://arxiv.org/abs/2505.10060
+    usable_now:
+      - Use as a reference for end-to-end open EDA Linux-capable SoC evidence and realistic open-flow clock expectations.
+      - Compare required artifacts against our release archive and PD gates.
+    blocker:
+      - 130 nm research-class performance is orders away from flagship mobile; useful for flow realism, not SOTA phone parity.
 
 openphone_v0_targets:
   architecture_budget:

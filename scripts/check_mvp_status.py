@@ -205,13 +205,24 @@ def toolchain_status() -> Status:
 
 
 def cocotb_status() -> Status:
-    result = ROOT / "verify/cocotb/results.xml"
-    if not result.is_file():
-        return Status("cocotb", BLOCK, "missing regenerated artifact: verify/cocotb/results.xml", "make cocotb", "regen_required")
-    text = result.read_text(errors="ignore")
-    if "<failure" in text or "<error" in text or "<testcase" not in text:
-        return Status("cocotb", FAIL, "results.xml contains failures/errors or no testcase", "make cocotb", "test_fail")
-    return Status("cocotb", PASS, "generated artifact verify/cocotb/results.xml has passing testcases", "none", "generated_artifact")
+    target_names = [
+        "hello_chip_top_test_hello_chip",
+        "hello_linux_soc_contract_test_cpu_mem_intc_contract",
+        "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
+    ]
+    results = []
+    for name in target_names:
+        canonical = ROOT / f"build/reports/cocotb/{name}.xml"
+        legacy = ROOT / f"verify/cocotb/results/{name}.xml"
+        results.append(canonical if canonical.is_file() else legacy)
+    missing = [rel(path) for path in results if not path.is_file()]
+    if missing:
+        return Status("cocotb", BLOCK, "missing per-target cocotb artifact(s): " + ", ".join(missing), "make cocotb cocotb-contract cocotb-cpu", "regen_required")
+    for result in results:
+        text = result.read_text(errors="ignore")
+        if "<failure" in text or "<error" in text or "<testcase" not in text:
+            return Status("cocotb", FAIL, f"{rel(result)} contains failures/errors or no testcase", "make cocotb cocotb-contract cocotb-cpu", "test_fail")
+    return Status("cocotb", PASS, "per-target cocotb XML artifacts have passing testcases under build/reports/cocotb", "none", "generated_artifact")
 
 
 def formal_status() -> Status:
@@ -282,12 +293,31 @@ def benchmark_status() -> Status:
         return Status("benchmarks", BLOCK, "missing regenerated pipeline dry-run report", "make benchmarks-dry-run", "regen_required")
     data = json.loads(report.read_text())
     statuses = {result.get("status") for result in data.get("results", [])}
+    validator = subprocess.run(
+        [sys.executable, "benchmarks/run_benchmarks.py", "validate-report", rel(report)],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if validator.returncode != 0:
+        evidence = " ".join(line.strip() for line in validator.stdout.splitlines() if line.strip())[:220]
+        return Status("benchmarks", FAIL, evidence or "benchmark report failed validation", "make benchmarks-dry-run", "schema_fail")
     if "failed" in statuses or "error" in statuses or "timeout" in statuses:
         return Status("benchmarks", FAIL, "report has failing benchmark status", "python3 benchmarks/run_benchmarks.py validate-report " + rel(report), "test_fail")
     if data.get("dry_run") is True:
-        return Status("benchmarks", BLOCK, "benchmark report is dry-run planning evidence only", "python3 benchmarks/run_benchmarks.py --strict-missing", "scaffold_only")
+        return Status(
+            "benchmarks",
+            BLOCK,
+            "benchmark report is dry-run planning evidence only",
+            "python3 benchmarks/run_benchmarks.py run --metadata benchmarks/metadata/strict-blocked-template.json --strict-missing",
+            "scaffold_only",
+        )
     if "blocked" in statuses or "planned_missing_deps" in statuses or "missing_dependencies" in statuses:
         return Status("benchmarks", BLOCK, "benchmark report records blocked/missing benchmark dependencies", "make benchmarks", "tool_blocker")
+    if not all(result.get("status") == "passed" and result.get("metrics") for result in data.get("results", [])):
+        return Status("benchmarks", BLOCK, "benchmark report lacks parsed metrics for every result", "make benchmarks", "evidence_gap")
     return Status("benchmarks", PASS, "benchmark report records executed results with no blocked entries", "none", "generated_artifact")
 
 
@@ -302,7 +332,7 @@ def product_status() -> Status:
     )
     lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     evidence = " ".join(lines)[:220] if lines else "command produced no output"
-    if "product release check failed:" in result.stdout:
+    if "product release check failed:" in result.stdout or "release blockers remain" in result.stdout:
         return Status(
             "product-package",
             BLOCK,

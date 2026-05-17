@@ -1,0 +1,13 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1779009487" />
+    <testcase name="display_register_defaults_and_disable_gate_scanout" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="78" time="0.003164052963256836" sim_time_ns="421.001" ratio_time="133057.50721904906" />
+    <testcase name="display_clamps_mode_and_rejects_unsupported_format" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="101" time="0.0007798671722412109" sim_time_ns="111.00099999999998" ratio_time="142333.2125661877" />
+    <testcase name="display_generates_active_pixels_and_hsync" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="116" time="0.00653076171875" sim_time_ns="1241.001" ratio_time="190023.9288224299" />
+    <testcase name="display_generates_vsync_pulse_and_wraps_frame" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="161" time="0.4794039726257324" sim_time_ns="78791.001" ratio_time="164351.99852111287" />
+    <testcase name="display_counts_fetched_pixels_and_underflows" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="189" time="0.002110004425048828" sim_time_ns="161.00100000000384" ratio_time="76303.63144678148" />
+    <testcase name="display_delayed_framebuffer_response_underflows_then_recovers" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="215" time="0.001837015151977539" sim_time_ns="181.0009999999893" ratio_time="98529.94397196043" />
+    <testcase name="display_reports_stride_and_frame_byte_count" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="244" time="0.0015759468078613281" sim_time_ns="161.00100000000384" ratio_time="102161.4430111976" />
+    <testcase name="display_disable_resets_scan_position_and_blocks_fetches" classname="test_hello_display" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_display.py" lineno="265" time="0.002675771713256836" sim_time_ns="141.00100000000384" ratio_time="52695.45204526563" />
+  </testsuite>
+</testsuites>

@@ -42,16 +42,23 @@ def generate_model() -> bytes:
 
     model = tf.keras.Sequential(
         [
-            tf.keras.layers.Input(shape=(8,), name="input"),
+            tf.keras.layers.Input(shape=(32,), name="input"),
             tf.keras.layers.Dense(
-                4,
+                64,
                 activation="relu",
                 kernel_initializer=tf.keras.initializers.GlorotUniform(seed=7),
                 bias_initializer=tf.keras.initializers.Zeros(),
-                name="dense",
+                name="dense0",
             ),
             tf.keras.layers.Dense(
-                2,
+                32,
+                activation="relu",
+                kernel_initializer=tf.keras.initializers.GlorotUniform(seed=9),
+                bias_initializer=tf.keras.initializers.Zeros(),
+                name="dense1",
+            ),
+            tf.keras.layers.Dense(
+                8,
                 activation="softmax",
                 kernel_initializer=tf.keras.initializers.GlorotUniform(seed=11),
                 bias_initializer=tf.keras.initializers.Zeros(),

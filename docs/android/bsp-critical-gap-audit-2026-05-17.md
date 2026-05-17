@@ -1,6 +1,6 @@
 # Android/Linux/BSP critical gap audit - 2026-05-17
 
-Scope: `sw/**`, `arch/android-contract.md`, `docs/android/riscv-bringup.md`,
+Scope: `sw/**`, `docs/arch/android-contract.md`, `docs/android/riscv-bringup.md`,
 `scripts/check_software_bsp.py`, `sw/check_bsp_scaffolds.py`, and the AOSP
 product files under `sw/aosp-device/device/openphone/openphone_ai_soc`.
 
@@ -20,8 +20,8 @@ must stay BLOCKED until evidence exists.
 | Area | Checked-in state | Gap |
 |---|---|---|
 | Platform contract | `sw/platform/hello_platform_contract.json` still has `hello_chip.has_cpu=false` and `boot_vector_placeholder`. | No CPU-capable hello-chip boot target exists. |
-| OpenSBI | `sw/opensbi/README.md` is documentation-only. | No platform code, `fw_dynamic` handoff, RAM map, UART, timer, or interrupt proof. |
-| U-Boot | `sw/u-boot/README.md` is documentation-only. | No board port, defconfig, SPL/U-Boot image, boot media, or device-tree handoff. |
+| OpenSBI | `docs/sw/opensbi/README.md` is documentation-only. | No platform code, `fw_dynamic` handoff, RAM map, UART, timer, or interrupt proof. |
+| U-Boot | `docs/sw/u-boot/README.md` is documentation-only. | No board port, defconfig, SPL/U-Boot image, boot media, or device-tree handoff. |
 | Buildroot | `sw/buildroot` is a `BR2_EXTERNAL` skeleton with defconfig, fragment, and rootfs smoke script. | No external Buildroot checkout, no `linux-external.tar.xz`, no kernel/rootfs image, no runtime log. |
 | Linux | `sw/linux` has importable NPU/DMA driver sources and DTS. | No external kernel checkout integration, no compiled modules, no DTB build, no boot log, no `/dev/hello-npu` smoke. |
 | AOSP | `sw/aosp-device` has product, BoardConfig, device makefile, init, VINTF, fstab, sepolicy, kernel fragment, and DTS scaffolds. | No external AOSP checkout build, no `vendor.img`, no VINTF result, no Android boot transcript. |

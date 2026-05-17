@@ -19,7 +19,7 @@ The demo chip cannot be called tapeout-ready until the selected PDK flow archive
 - PDN/current-budget evidence for post-route power, IR-drop/EM, decoupling, and board current limits.
 - Padframe/package evidence for foundry IO/ESD/corner cells, package drawing, bond diagram, and footprint release.
 
-The current `hello_soc_top` can be hardened as a padless macro. A standalone fabricated chip also requires the padframe plan in `pd/padframe/hello_demo_padframe.md`.
+The current `hello_soc_top` can be hardened as a padless macro. A standalone fabricated chip also requires the padframe plan in `docs/pd/padframe/hello_demo_padframe.md`.
 
 The machine-readable artifact gate is `pd/signoff/manifest.yaml`.
 

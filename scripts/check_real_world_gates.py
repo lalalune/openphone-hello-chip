@@ -23,8 +23,20 @@ REQUIRED_CATEGORIES = {
     "signal_integrity",
     "power_integrity",
     "pdn_current_budget",
+    "thermal",
     "board_fabrication",
     "manufacturing_test",
+    "modem_cellular",
+    "wireless_gnss_nfc",
+    "camera_isp",
+    "audio",
+    "sensors_input_haptics",
+    "usb_storage_update",
+    "battery_pmic_thermal",
+    "secure_boot_key_debug",
+    "privacy_data",
+    "regulatory_compliance",
+    "factory_test",
 }
 REQUIRED_GAP_IDS = {
     "routed_pd_signoff",
@@ -39,11 +51,36 @@ REQUIRED_GAP_IDS = {
     "post_route_power_budget",
     "ir_drop_em_report",
     "board_current_limit_plan",
+    "package_board_thermal_review",
     "board_footprint_release",
     "kicad_project_release",
     "footprint_source_checksum",
     "assembly_dfm_review",
     "first_article_smoke_limits",
+    "cellular_modem_stack",
+    "wifi_bluetooth_gnss_nfc_stack",
+    "camera_isp_stack",
+    "audio_codec_dsp_stack",
+    "sensors_input_haptics_stack",
+    "usb_storage_update_stack",
+    "battery_pmic_thermal_stack",
+    "secure_boot_key_debug_policy",
+    "privacy_data_protection_policy",
+    "regulatory_compliance_release",
+    "factory_test_provisioning_flow",
+}
+PRODUCT_FEATURE_GAP_IDS = {
+    "cellular_modem_stack",
+    "wifi_bluetooth_gnss_nfc_stack",
+    "camera_isp_stack",
+    "audio_codec_dsp_stack",
+    "sensors_input_haptics_stack",
+    "usb_storage_update_stack",
+    "battery_pmic_thermal_stack",
+    "secure_boot_key_debug_policy",
+    "privacy_data_protection_policy",
+    "regulatory_compliance_release",
+    "factory_test_provisioning_flow",
 }
 INCOMPLETE_STATUSES = {
     "missing_external_tool_run",
@@ -155,6 +192,16 @@ def validate_gap_manifest(manifest: dict, failures: list[str]) -> None:
         elif not all(isinstance(item, str) and item.endswith(".") for item in evidence):
             failures.append(f"{gap_id}: each required_evidence item must be a complete sentence")
 
+        if gap_id in PRODUCT_FEATURE_GAP_IDS:
+            commands = gap.get("future_cli_evidence_commands")
+            if not isinstance(commands, list) or len(commands) < 2:
+                failures.append(f"{gap_id}: product feature gaps must list future_cli_evidence_commands")
+            elif not all(isinstance(item, str) and item.strip() for item in commands):
+                failures.append(f"{gap_id}: future_cli_evidence_commands must be non-empty strings")
+            claim_boundary = gap.get("claim_boundary")
+            if not isinstance(claim_boundary, str) or "not implemented" not in claim_boundary:
+                failures.append(f"{gap_id}: claim_boundary must state the feature is not implemented")
+
     missing_ids = sorted(REQUIRED_GAP_IDS - seen_ids)
     if missing_ids:
         failures.append("gap manifest missing required gap ids: " + ", ".join(missing_ids))
@@ -238,6 +285,17 @@ def validate_manifest_consistency(gaps: dict, release: dict, pd: dict, failures:
         ("power_integrity_report", "board_fabrication_release"),
         ("ir_drop_em_report", "tapeout_release"),
         ("assembly_dfm_review", "board_fabrication_release"),
+        ("cellular_modem_stack", "board_fabrication_release"),
+        ("wifi_bluetooth_gnss_nfc_stack", "board_fabrication_release"),
+        ("camera_isp_stack", "board_fabrication_release"),
+        ("audio_codec_dsp_stack", "board_fabrication_release"),
+        ("sensors_input_haptics_stack", "board_fabrication_release"),
+        ("usb_storage_update_stack", "board_fabrication_release"),
+        ("battery_pmic_thermal_stack", "board_fabrication_release"),
+        ("secure_boot_key_debug_policy", "board_fabrication_release"),
+        ("privacy_data_protection_policy", "board_fabrication_release"),
+        ("regulatory_compliance_release", "board_fabrication_release"),
+        ("factory_test_provisioning_flow", "board_fabrication_release"),
     ):
         if required not in gap_gate_pairs:
             failures.append(f"gap {required[0]} must block {required[1]}")

@@ -1,0 +1,10 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1779009327" />
+    <testcase name="npu_scalar_opcodes_match_expected_results" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="157" time="0.011075019836425781" sim_time_ns="791.001" ratio_time="71422.08426556445" />
+    <testcase name="npu_rejects_invalid_opcode_and_clears_error_irq" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="195" time="0.0009698867797851562" sim_time_ns="121.00099999999998" ratio_time="124757.86094001964" />
+    <testcase name="npu_busy_launch_is_ignored_until_current_operation_completes" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="212" time="0.0016269683837890625" sim_time_ns="221.00099999999998" ratio_time="135836.0753669402" />
+    <testcase name="npu_gemm_invalid_config_reports_error_without_touching_scratch" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="239" time="0.0009441375732421875" sim_time_ns="141.00099999999998" ratio_time="149343.70159191918" />
+    <testcase name="npu_runtime_abi_sequence_matches_rtl_and_writes_coverage" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="256" time="0.019136905670166016" sim_time_ns="2071.001" ratio_time="108220.26484817981" />
+  </testsuite>
+</testsuites>

@@ -1,0 +1,11 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1779009270" />
+    <testcase name="axi_lite_split_write_channels_are_captured_independently" classname="test_cpu_mem_intc_contract" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_cpu_mem_intc_contract.py" lineno="143" time="0.0026149749755859375" sim_time_ns="250.001" ratio_time="95603.59174908826" />
+    <testcase name="dram_axil_boundary_round_trips" classname="test_cpu_mem_intc_contract" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_cpu_mem_intc_contract.py" lineno="161" time="0.002640962600708008" sim_time_ns="190.001" ratio_time="71943.84348686467" />
+    <testcase name="interrupt_controller_claim_complete_contract" classname="test_cpu_mem_intc_contract" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_cpu_mem_intc_contract.py" lineno="181" time="0.0037870407104492188" sim_time_ns="240.00100000000003" ratio_time="63374.28571543693" />
+    <testcase name="interrupt_controller_masks_disabled_sources_but_keeps_pending" classname="test_cpu_mem_intc_contract" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_cpu_mem_intc_contract.py" lineno="213" time="0.003323793411254883" sim_time_ns="280.001" ratio_time="84241.3969086866" />
+    <testcase name="dma_bus_master_copies_dram_and_reports_counters" classname="test_cpu_mem_intc_contract" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_cpu_mem_intc_contract.py" lineno="257" time="0.006558895111083984" sim_time_ns="490.0010000000001" ratio_time="74707.85729930935" />
+    <testcase name="dma_rejects_unaligned_and_reports_memory_errors" classname="test_cpu_mem_intc_contract" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_cpu_mem_intc_contract.py" lineno="296" time="0.004720926284790039" sim_time_ns="380.001" ratio_time="80492.88997040554" />
+  </testsuite>
+</testsuites>

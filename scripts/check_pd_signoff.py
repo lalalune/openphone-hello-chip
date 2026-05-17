@@ -5,9 +5,11 @@ import re
 import sys
 
 import yaml
+from yaml.nodes import MappingNode, ScalarNode
 
 
 REQUIRED_ARTIFACTS = {
+    "run_manifest": ".yaml",
     "gds": ".gds",
     "def": ".def",
     "gate_netlist": ".v",
@@ -35,6 +37,7 @@ REQUIRED_READINESS_SECTIONS = {
     "si_pi",
     "pdn_current_budget",
     "padframe_package",
+    "thermal_package_board",
 }
 
 ALLOWED_READINESS_STATUS = {
@@ -43,9 +46,64 @@ ALLOWED_READINESS_STATUS = {
     "required_for_release",
 }
 
+REQUIRED_RUN_MANIFEST_FIELDS = {
+    "run_id",
+    "design",
+    "flow",
+    "pdk",
+    "std_cell_library",
+    "openlane_image",
+    "openlane_image_digest",
+    "started_at",
+    "completed_at",
+    "status",
+    "corners",
+    "inputs",
+    "outputs",
+    "checks",
+}
+
+REQUIRED_RUN_CHECKS = {
+    "drc",
+    "lvs",
+    "antenna",
+    "sta",
+    "utilization",
+    "congestion",
+    "density_fill",
+}
+
 
 def as_list(value: object) -> list[str]:
     return value if isinstance(value, list) and all(isinstance(item, str) for item in value) else []
+
+
+def validate_no_duplicate_yaml_keys(text: str) -> list[str]:
+    failures: list[str] = []
+    root = yaml.compose(text)
+    if root is None:
+        return failures
+
+    def visit(node: object, path: str) -> None:
+        if isinstance(node, MappingNode):
+            seen: dict[str, int] = {}
+            for key_node, value_node in node.value:
+                if isinstance(key_node, ScalarNode):
+                    key = str(key_node.value)
+                    if key in seen:
+                        failures.append(
+                            f"duplicate YAML key at {path}: {key} "
+                            f"(first line {seen[key]}, duplicate line {key_node.start_mark.line + 1})"
+                        )
+                    else:
+                        seen[key] = key_node.start_mark.line + 1
+                    child_path = f"{path}.{key}" if path else key
+                else:
+                    child_path = path
+                visit(value_node, child_path)
+
+    visit(root, "")
+    return failures
 
 
 def matched_files(root: Path, globs: list[str]) -> list[Path]:
@@ -173,9 +231,21 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
     failures: list[str] = []
     run_roots = as_list(manifest.get("run_roots"))
     required = manifest.get("required_artifacts")
+    runner = manifest.get("runner")
 
     if not isinstance(manifest.get("signoff"), str) or not manifest["signoff"]:
         failures.append("manifest must name signoff")
+    if not isinstance(runner, dict):
+        failures.append("manifest must list runner metadata")
+    else:
+        image = runner.get("openlane_image")
+        digest = runner.get("openlane_image_digest")
+        if not isinstance(image, str) or not image:
+            failures.append("runner.openlane_image must be a non-empty string")
+        if not isinstance(digest, str) or not digest.startswith("sha256:"):
+            failures.append("runner.openlane_image_digest must be a sha256 digest")
+        if runner.get("require_pinned_runner_for_release") is not True:
+            failures.append("runner.require_pinned_runner_for_release must be true")
     if not run_roots:
         failures.append("manifest must list run_roots")
     if not isinstance(required, dict):
@@ -234,6 +304,80 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
     return failures
 
 
+def validate_run_manifest(root: Path, run_dir: Path, run_manifest: Path) -> list[str]:
+    failures: list[str] = []
+    rel_manifest = run_manifest.relative_to(root)
+    try:
+        payload = yaml.safe_load(run_manifest.read_text())
+    except yaml.YAMLError as exc:
+        return [f"run_manifest: invalid YAML in {rel_manifest}: {exc}"]
+
+    if not isinstance(payload, dict):
+        return [f"run_manifest: {rel_manifest} must be a YAML mapping"]
+
+    missing = sorted(REQUIRED_RUN_MANIFEST_FIELDS - set(payload))
+    if missing:
+        failures.append(f"run_manifest: {rel_manifest} missing fields: {', '.join(missing)}")
+
+    if payload.get("design") != "hello_chip_top":
+        failures.append(f"run_manifest: {rel_manifest} design must be hello_chip_top")
+    if payload.get("status") != "complete":
+        failures.append(f"run_manifest: {rel_manifest} status must be complete")
+    digest = payload.get("openlane_image_digest")
+    if not isinstance(digest, str) or not digest.startswith("sha256:"):
+        failures.append(f"run_manifest: {rel_manifest} openlane_image_digest must be a sha256 digest")
+    if not isinstance(payload.get("corners"), list) or not payload["corners"]:
+        failures.append(f"run_manifest: {rel_manifest} corners must be a non-empty list")
+
+    checks = payload.get("checks")
+    if not isinstance(checks, dict):
+        failures.append(f"run_manifest: {rel_manifest} checks must be a mapping")
+    else:
+        missing_checks = sorted(REQUIRED_RUN_CHECKS - set(checks))
+        if missing_checks:
+            failures.append(f"run_manifest: {rel_manifest} missing checks: {', '.join(missing_checks)}")
+        for check_name in sorted(REQUIRED_RUN_CHECKS & set(checks)):
+            check = checks[check_name]
+            if not isinstance(check, dict):
+                failures.append(f"run_manifest: {rel_manifest} checks.{check_name} must be a mapping")
+                continue
+            if check.get("status") not in {"clean", "waived"}:
+                failures.append(f"run_manifest: {rel_manifest} checks.{check_name}.status must be clean or waived")
+            report = check.get("report")
+            if not isinstance(report, str) or not report:
+                failures.append(f"run_manifest: {rel_manifest} checks.{check_name}.report is required")
+            else:
+                report_path = (run_dir / report).resolve()
+                try:
+                    report_path.relative_to(run_dir.resolve())
+                except ValueError:
+                    failures.append(f"run_manifest: {rel_manifest} checks.{check_name}.report must stay inside the run directory")
+                if not report_path.is_file():
+                    failures.append(f"run_manifest: {rel_manifest} checks.{check_name}.report missing: {report}")
+
+    for section_name in ("inputs", "outputs"):
+        section = payload.get(section_name)
+        if not isinstance(section, dict):
+            failures.append(f"run_manifest: {rel_manifest} {section_name} must be a mapping")
+            continue
+        for item_name, value in section.items():
+            if isinstance(value, str):
+                values = [value]
+            elif isinstance(value, list) and all(isinstance(item, str) for item in value):
+                values = value
+            else:
+                failures.append(f"run_manifest: {rel_manifest} {section_name}.{item_name} must be a path string or list of path strings")
+                continue
+            for entry in values:
+                entry_path = (run_dir / entry).resolve()
+                try:
+                    entry_path.relative_to(run_dir.resolve())
+                except ValueError:
+                    failures.append(f"run_manifest: {rel_manifest} {section_name}.{item_name} must stay inside the run directory: {entry}")
+
+    return failures
+
+
 def run_dirs(root: Path, run_roots: list[str]) -> list[Path]:
     dirs: list[Path] = []
     for run_root in run_roots:
@@ -286,7 +430,15 @@ def main() -> int:
 
     root = Path(__file__).resolve().parents[1]
     manifest_path = root / args.manifest
-    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest_text = manifest_path.read_text()
+    duplicate_key_failures = validate_no_duplicate_yaml_keys(manifest_text)
+    if duplicate_key_failures:
+        print("PD signoff artifact check failed:")
+        for failure in duplicate_key_failures:
+            print(f"  - {failure}")
+        return 1
+
+    manifest = yaml.safe_load(manifest_text)
     if not isinstance(manifest, dict):
         print("PD signoff artifact check failed:")
         print("  - manifest must be a YAML mapping")
@@ -328,6 +480,8 @@ def main() -> int:
                 dirty, missing_clean = check_reports(files, spec.get("fail_regex"), spec.get("pass_regex"))
                 dirty_reports.extend(dirty)
                 missing_clean_markers.extend(missing_clean)
+        for run_manifest in artifacts.get("run_manifest", []):
+            failures.extend(validate_run_manifest(root, complete_run, run_manifest))
 
     waiver_spec = manifest.get("waivers", {})
     waivers = matched_files(root, waiver_spec.get("globs", []))

@@ -1,0 +1,31 @@
+{
+  "schema": "openphone.cpu_ap_import_manifest.v1",
+  "status": "template",
+  "chipyard": {
+    "remote": "https://github.com/ucb-bar/chipyard.git",
+    "tag": "1.13.0",
+    "commit": "69eba86",
+    "recursive_submodules_recorded": false,
+    "submodules": []
+  },
+  "generation": {
+    "config": "OpenPhoneRocketConfig",
+    "package": "openphone",
+    "command": "",
+    "tool_versions": "",
+    "generated_at_utc": ""
+  },
+  "artifacts": {
+    "verilog": "",
+    "dts": "",
+    "simulator": "",
+    "opensbi_image": "",
+    "linux_image": "",
+    "initramfs": ""
+  },
+  "evidence": {
+    "opensbi_boot_log": "",
+    "linux_boot_log": "",
+    "trap_timer_irq_log": ""
+  }
+}

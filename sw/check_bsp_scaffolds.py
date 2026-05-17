@@ -22,7 +22,9 @@ CHECKS = {
         "expected": "linux BSP check passed.",
         "blocker": "external Linux kernel checkout plus integration of drivers/misc/openphone-hello",
         "files": [
-            "sw/linux/README.md",
+            "docs/android/bsp-artifact-manifest.json",
+            "docs/android/bsp-log-evidence-manifest.json",
+            "docs/sw/linux/README.md",
             "sw/linux/scripts/import-linux-bsp.sh",
             "sw/linux/dts/openphone-hello.dts",
             "sw/linux/drivers/hello/hello_platform_contract.h",
@@ -33,6 +35,8 @@ CHECKS = {
             "sw/linux/tests/hello-mmio-smoke.c",
         ],
         "terms": [
+            "host_checkable_manifest_only_not_boot_evidence",
+            "expected_future_log_markers_only_not_boot_evidence",
             "sw/platform/hello_platform_contract.json",
             "HELLO_NPU_BASE",
             "HELLO_DMA_BASE",
@@ -47,7 +51,9 @@ CHECKS = {
         "expected": "buildroot BSP check passed.",
         "blocker": "external Buildroot checkout and external Linux kernel tarball/tree",
         "files": [
-            "sw/buildroot/README.md",
+            "docs/android/bsp-artifact-manifest.json",
+            "docs/android/bsp-log-evidence-manifest.json",
+            "docs/sw/buildroot/README.md",
             "sw/buildroot/external.desc",
             "sw/buildroot/Config.in",
             "sw/buildroot/external.mk",
@@ -57,6 +63,8 @@ CHECKS = {
             "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke",
         ],
         "terms": [
+            "host_checkable_manifest_only_not_boot_evidence",
+            "expected_future_log_markers_only_not_boot_evidence",
             "sw/platform/hello_platform_contract.json",
             "BR2_EXTERNAL_OPENPHONE_HELLO_PATH",
             "HELLO_NPU_BASE",
@@ -69,7 +77,10 @@ CHECKS = {
         "expected": "aosp BSP check passed.",
         "blocker": "external AOSP checkout with riscv64/Cuttlefish host dependencies and HAL binaries",
         "files": [
-            "sw/aosp-device/README.md",
+            "docs/android/bsp-artifact-manifest.json",
+            "docs/android/bsp-log-evidence-manifest.json",
+            "docs/android/boot-transcript.schema.json",
+            "docs/sw/aosp-device/README.md",
             "sw/aosp-device/import-aosp-device.sh",
             "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
             "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
@@ -83,13 +94,19 @@ CHECKS = {
             "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts",
             "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
             "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te",
+            "docs/sw/aosp-device/device/openphone/openphone_ai_soc/hal/README.md",
         ],
         "terms": [
+            "host_checkable_manifest_only_not_boot_evidence",
+            "expected_future_log_markers_only_not_boot_evidence",
             "sw/platform/hello_platform_contract.json",
             "openphone_ai_soc",
             "hello_npu",
             "hwcomposer",
             "vendorimage",
+            "cuttlefish_riscv64",
+            "qemu_riscv64",
+            "renode_hello_soc",
         ],
     },
     "boot": {
@@ -97,8 +114,8 @@ CHECKS = {
         "expected": "buildroot BSP check passed.; linux BSP check passed.; aosp BSP check passed.",
         "blocker": "CPU-capable SoC integration with RAM, UART, timer, interrupt controller, OpenSBI handoff",
         "files": [
-            "sw/opensbi/README.md",
-            "sw/u-boot/README.md",
+            "docs/sw/opensbi/README.md",
+            "docs/sw/u-boot/README.md",
         ],
         "terms": [
             "sw/platform/hello_platform_contract.json",

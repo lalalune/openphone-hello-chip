@@ -206,7 +206,7 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
 
 def check_debug_contract(errors: list[str]) -> None:
     bridge = read_text(ROOT / "rtl/debug/hello_dbg_mmio_bridge.sv")
-    require("DBG_LAUNCH" in read_text(ROOT / "arch/debug.md"), "arch/debug.md no longer names DBG_LAUNCH", errors)
+    require("DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"), "docs/arch/debug.md no longer names DBG_LAUNCH", errors)
     require("addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors)
     require("wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors)
     require("rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors)
@@ -216,14 +216,14 @@ def check_qemu_virt_separation(contract: dict, errors: list[str]) -> None:
     qemu = contract["qemu_virt"]
     qemu_script = read_text(ROOT / "scripts/run_qemu.sh")
     renode_script = read_text(ROOT / "scripts/run_renode.sh")
-    qemu_readme = read_text(ROOT / "sim/qemu/README.md")
+    qemu_readme = read_text(ROOT / "docs/sim/qemu/README.md")
     renode_repl = read_text(ROOT / "sim/renode/openphone_hello.repl")
 
     require("-machine virt" in qemu_script, "scripts/run_qemu.sh must launch qemu-system-riscv64 -machine virt", errors)
     require("qemu-virt" in qemu_script, "scripts/run_qemu.sh must label the target as qemu-virt", errors)
     require("qemu-virt" in renode_script, "scripts/run_renode.sh must label the target as qemu-virt", errors)
-    require("software reference only" in qemu_readme, "sim/qemu/README.md must mark QEMU as software reference only", errors)
-    require("not the hello-chip hardware ABI" in qemu_readme, "sim/qemu/README.md must separate qemu-virt from hardware ABI", errors)
+    require("software reference only" in qemu_readme, "docs/sim/qemu/README.md must mark QEMU as software reference only", errors)
+    require("not the hello-chip hardware ABI" in qemu_readme, "docs/sim/qemu/README.md must separate qemu-virt from hardware ABI", errors)
     require(f"0x{h(qemu['load_address']):08x}" in renode_repl.lower(), "Renode RAM does not cover qemu-virt load address", errors)
     require(f"0x{h(qemu['uart_base']):08x}" in renode_repl.lower(), "Renode UART base does not match qemu-virt contract", errors)
 

@@ -1,0 +1,14 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1779009061" />
+    <testcase name="tiny_cpu_fetches_executes_and_updates_soc_state" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="170" time="0.006624698638916016" sim_time_ns="840.001" ratio_time="126798.37163693947" />
+    <testcase name="tiny_cpu_halts_on_unsupported_instruction_and_fetch_error" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="211" time="0.0032477378845214844" sim_time_ns="360.001" ratio_time="110846.69169754807" />
+    <testcase name="tiny_cpu_privileged_csr_and_trap_instructions_are_blocked_scaffold" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="238" time="0.004208087921142578" sim_time_ns="510.001" ratio_time="121195.42403988668" />
+    <testcase name="tiny_cpu_halts_on_unaligned_word_memory_before_bus_access" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="256" time="0.0035681724548339844" sim_time_ns="620.001" ratio_time="173758.69800240544" />
+    <testcase name="tiny_cpu_reset_identity_and_boot_boundary_are_explicit" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="295" time="0.002112150192260742" sim_time_ns="240.0010000000002" ratio_time="113628.75655310992" />
+    <testcase name="tiny_cpu_halts_on_load_and_store_bus_errors" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="317" time="0.0050618648529052734" sim_time_ns="610.0009999999997" ratio_time="120509.14390768211" />
+    <testcase name="tiny_cpu_irq_inputs_are_pending_only_placeholders" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="352" time="0.0010559558868408203" sim_time_ns="150.0010000000002" ratio_time="142052.33558455654" />
+    <testcase name="tiny_cpu_extended_opcode_subset_has_observable_state" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="383" time="0.01518106460571289" sim_time_ns="1680.0009999999997" ratio_time="110664.24151622325" />
+    <testcase name="tiny_cpu_waits_for_fetch_and_store_request_stalls" classname="test_tiny_cpu_execution" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_tiny_cpu_execution.py" lineno="426" time="0.004164218902587891" sim_time_ns="840.0010000000002" ratio_time="201718.74237398378" />
+  </testsuite>
+</testsuites>

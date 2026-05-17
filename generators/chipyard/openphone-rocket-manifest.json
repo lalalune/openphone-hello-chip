@@ -1,0 +1,45 @@
+{
+  "schema": "openphone.cpu_ap_generator_manifest.v1",
+  "status": "selected_not_generated",
+  "selected_path": {
+    "generator": "Chipyard",
+    "chipyard_tag": "1.13.0",
+    "chipyard_release_commit": "69eba86",
+    "core": "Rocket",
+    "isa": "RV64GC",
+    "harts": 1,
+    "config_name": "OpenPhoneRocketConfig",
+    "package_name": "openphone",
+    "top_wrapper": "openphone_rocket_ap"
+  },
+  "required_platform_blocks": {
+    "reset": "Boot ROM or firmware entry at the hello-chip reset vector",
+    "timer_software_interrupts": "CLINT or ACLINT-compatible mtime/mtimecmp/msip",
+    "external_interrupts": "PLIC-compatible external interrupt controller",
+    "console": "UART with Linux earlycon binding",
+    "dram": "DRAM model sized for OpenSBI plus Linux initramfs smoke",
+    "mmio": [
+      "hello DMA",
+      "hello NPU",
+      "hello display",
+      "hello peripherals"
+    ]
+  },
+  "expected_generated_artifacts": [
+    "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
+    "build/chipyard/openphone_rocket/generated-src",
+    "build/chipyard/openphone_rocket/openphone-hello.dts",
+    "build/chipyard/openphone_rocket/openphone_rocket_ap.v",
+    "build/chipyard/openphone_rocket/simulator"
+  ],
+  "required_evidence": [
+    "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
+    "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+    "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log"
+  ],
+  "claim_policy": {
+    "linux_capable_cpu_claim": false,
+    "platform_contract_has_cpu_may_flip_to_true": false,
+    "reason": "No generated Chipyard/Rocket RTL, simulator, DTS, firmware image, or boot evidence is present."
+  }
+}

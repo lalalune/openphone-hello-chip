@@ -13,10 +13,10 @@ blocked_gates:
   tapeout_release:
     blocked: true
     evidence_manifest: pd/signoff/manifest.yaml
-    reason: Package, padframe, SI/PI, and PDN/current-budget evidence is incomplete.
+    reason: Package, padframe, SI/PI, PDN/current-budget, and thermal evidence is incomplete.
     unblock_requires:
       - Replace placeholder package and padframe plans with vendor/foundry artifacts.
-      - Close SI/PI and PDN/current-budget readiness sections in pd/signoff/manifest.yaml.
+      - Close SI/PI, PDN/current-budget, and thermal readiness sections in pd/signoff/manifest.yaml.
   board_fabrication_release:
     blocked: true
     evidence_manifest: docs/manufacturing/release-manifest.yaml
@@ -29,6 +29,9 @@ readiness:
     status: blocked
     evidence_manifest: pd/signoff/manifest.yaml
   pdn_current_budget:
+    status: blocked
+    evidence_manifest: pd/signoff/manifest.yaml
+  thermal_package_board:
     status: blocked
     evidence_manifest: pd/signoff/manifest.yaml
   padframe_package:
@@ -57,29 +60,37 @@ required_artifacts:
     - verify/formal/hello_npu_formal.sv
   product:
     - package/hello-demo-pinout.yaml
-    - package/hello-demo-package.md
-    - package/hello-demo-pad-ring.md
+    - docs/package/hello-demo-package.md
+    - docs/package/hello-demo-pad-ring.md
     - package/wifi-external-interface.yaml
     - pd/pin_order.cfg
     - pd/constraints/hello_soc.sdc
     - pd/constraints/hello_soc_gf180.sdc
-    - pd/padframe/hello_demo_padframe.md
+    - docs/pd/padframe/hello_demo_padframe.md
     - pd/padframe/hello_demo_padframe.yaml
     - pd/signoff/manifest.yaml
+    - package/artifact-manifest.yaml
     - board/README.md
-    - board/fpga/README.md
+    - docs/board/fpga/README.md
+    - board/fpga/artifact-manifest.yaml
     - board/fpga/hello_demo_fpga.yaml
     - board/fpga/constraints/hello_demo_ulx3s.lpf
-    - board/kicad/hello-demo/fab-notes.md
-    - fw/board-smoke/tests/smoke_plan.md
+    - board/kicad/hello-demo/artifact-manifest.yaml
+    - docs/board/kicad/hello-demo/fab-notes.md
+    - docs/fw/board-smoke/tests/smoke_plan.md
     - docs/manufacturing/hello-demo-checklist.md
+    - docs/manufacturing/artifact-manifest.yaml
     - docs/manufacturing/real-world-verification-gaps.yaml
     - docs/manufacturing/physical-closure-work-order.yaml
+    - docs/manufacturing/product-feature-evidence-manifest.yaml
   generated:
     - build/netlist/hello_chip_synth.v
     - build/reports/hello_soc_yosys.log
     - build/reports/tool_versions.txt
-    - verify/cocotb/results.xml
+    - build/reports/cocotb/manifest.json
+    - build/reports/cocotb/hello_chip_top_test_hello_chip.xml
+    - build/reports/cocotb/hello_linux_soc_contract_test_cpu_mem_intc_contract.xml
+    - build/reports/cocotb/hello_tiny_cpu_contract_tb_test_tiny_cpu_execution.xml
 known_waivers:
   - The MVP is a padless digital macro/top wrapper, not a foundry padframe-inclusive standalone chip.
   - OpenLane/OpenROAD signoff artifacts are required before any tapeout claim.

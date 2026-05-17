@@ -1,6 +1,11 @@
+import json
+from pathlib import Path
+
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 async def reset(dut):
@@ -47,6 +52,19 @@ async def advance(dut, cycles):
     await Timer(1, units="ns")
 
 
+def write_coverage_artifact(extra):
+    coverage = {
+        "schema": "hello-chip.display_cocotb_coverage.v1",
+        "source": "verify/cocotb/test_hello_display.py",
+        "covered_contracts": sorted(extra),
+        "pixel_format": "XR24 only",
+        "boundary": "Directed hello_display MMIO, XR24 scanout, underflow, and timing checks only; no DRM/KMS, HDMI/MIPI, compositor, or display PHY coverage.",
+    }
+    out = REPO_ROOT / "build/reports/display_cocotb_coverage.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(coverage, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 @cocotb.test()
 async def display_register_defaults_and_disable_gate_scanout(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
@@ -66,6 +84,8 @@ async def display_register_defaults_and_disable_gate_scanout(dut):
     assert int(dut.scan_x.value) == 0
     assert int(dut.scan_y.value) == 0
     assert int(dut.scan_fb_addr.value) == 0
+    assert int(dut.fb_read_valid.value) == 0
+    assert int(dut.fb_read_addr.value) == 0
 
 
 @cocotb.test()
@@ -180,3 +200,81 @@ async def display_counts_fetched_pixels_and_underflows(dut):
     await write_reg(dut, 6, 1)
     assert await read_reg(dut, 5) == 0
     assert await read_reg(dut, 6) == 0
+
+
+@cocotb.test()
+async def display_delayed_framebuffer_response_underflows_then_recovers(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    await write_reg(dut, 0, 0x8000_0200)
+    await write_reg(dut, 1, (1 << 16) | 8)
+    await write_reg(dut, 3, 1)
+
+    dut.fb_read_ready.value = 0
+    dut.fb_read_data.value = 0x00FF_0000
+    await Timer(1, units="ns")
+    assert int(dut.scan_active.value) == 1
+    assert int(dut.scan_rgb.value) == 0
+    assert int(dut.fb_read_addr.value) == 0x8000_0200
+    await advance(dut, 2)
+
+    dut.fb_read_ready.value = 1
+    dut.fb_read_data.value = 0x0000_8040
+    await Timer(1, units="ns")
+    assert int(dut.scan_active.value) == 1
+    assert int(dut.scan_rgb.value) == 0x008040
+    assert int(dut.fb_read_addr.value) == 0x8000_0208
+    await advance(dut, 6)
+    assert int(dut.scan_active.value) == 0
+    assert await read_reg(dut, 5) == 2
+    assert await read_reg(dut, 6) == 6
+
+
+@cocotb.test()
+async def display_reports_stride_and_frame_byte_count(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    assert await read_reg(dut, 7) == 640 * 4
+    assert await read_reg(dut, 8) == 640 * 480 * 4
+    assert await read_reg(dut, 9) == 0
+
+    await write_reg(dut, 1, (3 << 16) | 4)
+    assert await read_reg(dut, 7) == 16
+    assert await read_reg(dut, 8) == 48
+    assert await read_reg(dut, 9) == 0
+
+    await write_reg(dut, 1, (0xFFFF << 16) | 0xFFFF)
+    expected = 0xFFFF * 0xFFFF * 4
+    assert await read_reg(dut, 7) == 0x3FFFC
+    assert await read_reg(dut, 8) == (expected & 0xFFFF_FFFF)
+    assert await read_reg(dut, 9) == (expected >> 32)
+
+
+@cocotb.test()
+async def display_disable_resets_scan_position_and_blocks_fetches(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    await write_reg(dut, 0, 0x8000_0400)
+    await write_reg(dut, 1, (2 << 16) | 4)
+    await write_reg(dut, 3, 1)
+    dut.fb_read_ready.value = 1
+    dut.fb_read_data.value = 0x00AA_5500
+    await advance(dut, 3)
+    assert int(dut.scan_x.value) == 3
+    assert int(dut.fb_read_valid.value) == 1
+
+    await write_reg(dut, 3, 0)
+    await Timer(1, units="ns")
+    assert int(dut.scan_active.value) == 0
+    assert int(dut.fb_read_valid.value) == 0
+    assert int(dut.fb_read_addr.value) == 0
+    assert int(dut.scan_fb_addr.value) == 0
+    await advance(dut, 2)
+    assert int(dut.scan_x.value) == 0
+    assert int(dut.scan_y.value) == 0
+    assert int(dut.irq_vsync.value) == 0
+
+    write_coverage_artifact({"disable_fetch_gate", "scan_position_reset", "xr24_scanout"})

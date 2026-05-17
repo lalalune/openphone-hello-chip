@@ -1,5 +1,8 @@
 # Initial Android fstab scaffold for openphone_ai_soc.
 # Cuttlefish integration may override block devices during simulator bring-up.
+# AVB/A-B/recovery/OTA flags are not evidence of AVB keys, rollback indexes,
+# recovery behavior, update success, or secure flashing.
+# not AVB, A/B, recovery, OTA, rollback evidence.
 
 /dev/block/by-name/vendor /vendor ext4 ro,barrier=1 wait,slotselect,avb
 /dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,inline_xattr wait,check,formattable,fileencryption=ice

@@ -67,7 +67,7 @@ ALLOWLIST = (
         "Testbench instantiates the executable tiny CPU model.",
     ),
     AllowedFinding(
-        "sim/qemu/README.md",
+        "docs/sim/qemu/README.md",
         "--build-stub",
         "QEMU README documents the compatibility alias while the preferred path is firmware.",
     ),
@@ -136,7 +136,7 @@ def require(condition: bool, message: str, errors: list[str]) -> None:
 
 def check_renode_scaffold() -> list[str]:
     errors: list[str] = []
-    readme = (ROOT / "sim/renode/README.md").read_text(encoding="utf-8").lower()
+    readme = (ROOT / "docs/sim/renode/README.md").read_text(encoding="utf-8").lower()
     repl = (ROOT / "sim/renode/openphone_hello.repl").read_text(encoding="utf-8").lower()
     resc = (ROOT / "sim/renode/openphone_hello.resc").read_text(encoding="utf-8").lower()
 

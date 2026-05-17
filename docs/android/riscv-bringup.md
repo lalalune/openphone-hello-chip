@@ -186,7 +186,10 @@ The three-week target is not a consumer phone. It is a verified demo:
 1. AOSP/riscv64 or Cuttlefish-based Android boots to shell or home screen.
 2. The OpenPhone device tree and BoardConfig compile far enough to expose
    missing HAL/kernel contracts.
-3. QEMU/Renode smoke checks pass against the platform contract.
+3. QEMU/Renode software-reference smoke checks pass against the platform
+   contract and are not hello-chip hardware boot proof.
+   Required evidence term: QEMU/Renode software-reference smoke checks are not
+   hello-chip hardware boot proof.
 4. The NPU runtime shim can run a deterministic fixed test vector or report
    unsupported operations without crashing Android.
 5. CTS/VTS subsets are identified and at least the host-side plumbing exists.

@@ -17,6 +17,19 @@ before RTL simulation, but qemu-virt or Cuttlefish success is not hardware ABI
 validation. Device and HAL code must tie back to
 `sw/platform/hello_platform_contract.json` or generated artifacts from it.
 
+## AVB/A-B/recovery/OTA local status
+
+Current status is fail-closed scaffold only. The local fstab and product files
+do not define AVB keys, rollback indexes, recovery behavior, OTA payload
+verification, or lock-state policy. Do not claim AVB, A/B OTA, recovery, secure
+fastboot, or verified boot from this tree. Required negative evidence includes
+bad signatures, rollback OTA, interrupted install, low-battery update,
+full-storage update, corrupt slot metadata, and unauthorized flashing.
+
+Exact gate terms: AVB/A-B/recovery/OTA local status; fail-closed scaffold only;
+does not define AVB keys; Do not claim AVB; bad signatures; unauthorized
+flashing.
+
 Current local status: this repository has not verified Android booting on
 hello_soc or on Cuttlefish. The files here are an executable scaffold for the
 first external AOSP integration attempt.
