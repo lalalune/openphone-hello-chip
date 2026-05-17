@@ -11,7 +11,7 @@ set -eu
 
 OPENLANE2_REPO="${OPENLANE2_REPO:-https://github.com/efabless/openlane2.git}"
 OPENLANE2_TAG="${OPENLANE2_TAG:-2.4.0.dev1}"
-OPENLANE2_SHA="${OPENLANE2_SHA:-OPENLANE2_SHA_PLACEHOLDER}"
+OPENLANE2_SHA="${OPENLANE2_SHA:-198d9cbf7dd4f38a947bd739588680297835bc44}"
 
 mkdir -p external
 if [ ! -d external/openlane2 ]; then
@@ -21,20 +21,13 @@ fi
 cd external/openlane2
 git fetch --tags origin
 
-if [ "$OPENLANE2_SHA" != "OPENLANE2_SHA_PLACEHOLDER" ]; then
-    git checkout --detach "$OPENLANE2_SHA"
-    resolved="$(git rev-parse HEAD)"
-    if [ "$resolved" != "$OPENLANE2_SHA" ]; then
-        echo "bootstrap_openlane2: resolved HEAD ($resolved) != pinned SHA ($OPENLANE2_SHA)" >&2
-        exit 1
-    fi
-    echo "OpenLane2 checked out at $OPENLANE2_SHA."
-else
-    # Fall back to the tag when a SHA has not yet been chosen. Still better
-    # than default-branch because the tag is a fixed reference point.
-    git checkout --detach "refs/tags/$OPENLANE2_TAG"
-    echo "OpenLane2 checked out at tag $OPENLANE2_TAG (TODO: pin OPENLANE2_SHA)."
+git checkout --detach "$OPENLANE2_SHA"
+resolved="$(git rev-parse HEAD)"
+if [ "$resolved" != "$OPENLANE2_SHA" ]; then
+    echo "bootstrap_openlane2: resolved HEAD ($resolved) != pinned SHA ($OPENLANE2_SHA)" >&2
+    exit 1
 fi
+echo "OpenLane2 checked out at $OPENLANE2_SHA (tag $OPENLANE2_TAG)."
 
 python3 -m venv .venv
 . .venv/bin/activate
