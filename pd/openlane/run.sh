@@ -96,7 +96,7 @@ if [ -d "$FINAL_DIR" ]; then
     mkdir -p "$REPO_ROOT/build/pd/signoff"
     find "$REPO_ROOT/pd/openlane/runs/RUN_$TIMESTAMP" \
         \( -name "*.drc" -o -name "*.lvs" -o -name "*.rpt" -o -name "*.log" \) \
-        -exec cp {} "$REPO_ROOT/build/pd/signoff/" 2>/dev/null \; || true
+        -exec sh -c 'cp "$1" "$2" 2>/dev/null || true' _ {} "$REPO_ROOT/build/pd/signoff/" \; || true
     echo "Signoff reports mirrored to build/pd/signoff/"
 else
     echo "WARNING: No final/ directory found."

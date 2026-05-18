@@ -231,16 +231,21 @@ def cocotb_status() -> Status:
         "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
     ]
     results = []
+    missing_names = []
     for name in target_names:
         canonical = ROOT / f"build/reports/cocotb/{name}.xml"
         legacy = ROOT / f"verify/cocotb/results/{name}.xml"
-        results.append(canonical if canonical.is_file() else legacy)
-    missing = [rel(path) for path in results if not path.is_file()]
-    if missing:
+        if canonical.is_file():
+            results.append(canonical)
+        elif legacy.is_file():
+            results.append(legacy)
+        else:
+            missing_names.append(name)
+    if missing_names:
         return Status(
             "cocotb",
             BLOCK,
-            "missing per-target cocotb artifact(s): " + ", ".join(missing),
+            "missing per-target cocotb artifact(s): " + ", ".join(missing_names),
             "make cocotb cocotb-contract cocotb-cpu",
             "regen_required",
         )

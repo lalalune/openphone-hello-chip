@@ -20,6 +20,13 @@ verilator -Wall --cc --exe --build \
     "$repo_dir/rtl/dma/hello_dma.sv" \
     "$repo_dir/rtl/npu/hello_npu.sv" \
     "$repo_dir/rtl/display/hello_display.sv" \
+    "$repo_dir/rtl/cpu/hello_cva6_wrapper.sv" \
+    "$repo_dir/rtl/cpu/hello_cpu_axi_bridge.sv" \
+    "$repo_dir/rtl/cpu/hello_cpu_subsystem_stub.sv" \
+    "$repo_dir/rtl/interconnect/hello_axi_lite_interconnect.sv" \
+    "$repo_dir/rtl/memory/hello_axi_lite_dram.sv" \
+    "$repo_dir/rtl/interrupts/hello_interrupt_controller.sv" \
+    "$repo_dir/rtl/interconnect/hello_linux_soc_contract.sv" \
     "$repo_dir/sim/verilator/sim_main.cpp" \
     -Mdir build/verilator
 
@@ -33,6 +40,13 @@ verilator -Wall --cc --exe --build \
     "$repo_dir/rtl/dma/hello_dma.sv" \
     "$repo_dir/rtl/npu/hello_npu.sv" \
     "$repo_dir/rtl/display/hello_display.sv" \
+    "$repo_dir/rtl/cpu/hello_cva6_wrapper.sv" \
+    "$repo_dir/rtl/cpu/hello_cpu_axi_bridge.sv" \
+    "$repo_dir/rtl/cpu/hello_cpu_subsystem_stub.sv" \
+    "$repo_dir/rtl/interconnect/hello_axi_lite_interconnect.sv" \
+    "$repo_dir/rtl/memory/hello_axi_lite_dram.sv" \
+    "$repo_dir/rtl/interrupts/hello_interrupt_controller.sv" \
+    "$repo_dir/rtl/interconnect/hello_linux_soc_contract.sv" \
     "$repo_dir/verify/verilator/test_npu_gemm.cpp" \
     -Mdir build/verilator_npu_gemm
 

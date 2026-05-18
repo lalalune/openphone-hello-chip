@@ -14,7 +14,6 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
-
 SRC_REG = 0x00
 DST_REG = 0x01
 LEN_REG = 0x02

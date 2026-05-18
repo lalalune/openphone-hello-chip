@@ -212,7 +212,9 @@ def main() -> int:
 
     pinout_names = {r["name"] for r in pinout_rows if "name" in r}
     bonding_pads = {r["die_pad"] for r in bonding_rows if r.get("die_pad")}
-    bonding_pins = {int(r["package_pin"]) for r in bonding_rows if r.get("package_pin", "").isdigit()}
+    bonding_pins = {
+        int(r["package_pin"]) for r in bonding_rows if r.get("package_pin", "").isdigit()
+    }
     bonding_nets = {r["board_net"] for r in bonding_rows if r.get("board_net")}
     pinout_pins = {int(r["pin"]) for r in pinout_rows if r.get("pin", "").isdigit()}
     pinout_nets = {r.get("board_net", "") for r in pinout_rows if r.get("board_net")}
@@ -224,8 +226,9 @@ def main() -> int:
     }
 
     expanded_rtl = expand_rtl_buses(rtl_ports, pinout_names)
-    signal_pinout = {r["name"] for r in pinout_rows
-                     if r.get("direction") not in {"power", "ground", "nc"}}
+    signal_pinout = {
+        r["name"] for r in pinout_rows if r.get("direction") not in {"power", "ground", "nc"}
+    }
     missing_in_pinout = sorted(expanded_rtl - pinout_names - {"NC"})
     if missing_in_pinout:
         err(f"RTL ports missing from pinout: {missing_in_pinout}")
@@ -241,8 +244,10 @@ def main() -> int:
         err(f"Pinout YAML has names absent from bonding CSV: {pin_only_pads}")
 
     if bonding_pins != pinout_pins:
-        err(f"package_pin set mismatch between bonding CSV ({sorted(bonding_pins)[:5]}...) "
-            f"and pinout YAML ({sorted(pinout_pins)[:5]}...)")
+        err(
+            f"package_pin set mismatch between bonding CSV ({sorted(bonding_pins)[:5]}...) "
+            f"and pinout YAML ({sorted(pinout_pins)[:5]}...)"
+        )
     expected_pins = set(range(1, 65))
     if bonding_pins != expected_pins:
         err(f"bonding CSV pins are not contiguous 1..64; got {len(bonding_pins)} pins")
@@ -254,8 +259,7 @@ def main() -> int:
         if pin_row is None:
             continue
         if pin_row.get("board_net") != bnet:
-            err(f"board_net mismatch for {pad}: pinout={pin_row.get('board_net')} "
-                f"bonding={bnet}")
+            err(f"board_net mismatch for {pad}: pinout={pin_row.get('board_net')} bonding={bnet}")
 
     type_map = {"PWR": "power", "GND": "ground", "RSV": "nc"}
     for row in bonding_rows:
@@ -266,8 +270,7 @@ def main() -> int:
             continue
         expected = type_map.get(t)
         if expected and pin_row.get("direction") != expected:
-            err(f"type {t} for {pad} does not match pinout direction "
-                f"{pin_row.get('direction')}")
+            err(f"type {t} for {pad} does not match pinout direction {pin_row.get('direction')}")
         if t == "IO" and pin_row.get("direction") in {"power", "ground", "nc"}:
             err(f"type IO for {pad} but pinout direction is {pin_row.get('direction')}")
 
@@ -281,8 +284,10 @@ def main() -> int:
         if missing_on_board:
             warn(f"board_nets not found in KiCad netlist: {missing_on_board}")
     else:
-        warn(f"no KiCad netlist found under {KICAD_NET_DIR.relative_to(REPO_ROOT)}; "
-             "skipping board cross-probe")
+        warn(
+            f"no KiCad netlist found under {KICAD_NET_DIR.relative_to(REPO_ROOT)}; "
+            "skipping board cross-probe"
+        )
 
     _write_report(report)
     return 0 if report["ok"] else 1

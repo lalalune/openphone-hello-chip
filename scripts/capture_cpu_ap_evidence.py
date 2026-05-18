@@ -35,6 +35,14 @@ MODE_TO_TRANSCRIPT = {
     "trap-timer-irq": ("trap_timer_irq_log", "openphone_hello_trap_timer_irq"),
 }
 
+MODE_ENV = {
+    "ap-benchmarks": "OPENPHONE_AP_BENCHMARKS_CMD",
+    "isa-cache-mmu": "OPENPHONE_ISA_CACHE_MMU_CMD",
+    "opensbi-boot": "OPENPHONE_OPENSBI_BOOT_CMD",
+    "linux-boot": "OPENPHONE_LINUX_BOOT_CMD",
+    "trap-timer-irq": "OPENPHONE_TRAP_TIMER_IRQ_CMD",
+}
+
 DTS_BOOT_REQUIREMENTS = {
     "cpu node": [r"\bcpus\s*\{", r"device_type\s*=\s*\"cpu\""],
     "memory node": [r"memory@[0-9a-fA-F]+", r"device_type\s*=\s*\"memory\""],
@@ -201,6 +209,25 @@ def hashes(_: argparse.Namespace) -> int:
     return 0
 
 
+def template(args: argparse.Namespace) -> int:
+    manifest = load_manifest_or_exit()
+    modes = [args.mode] if args.mode != "all" else sorted(MODE_TO_TRANSCRIPT)
+    for mode in modes:
+        transcript_key, artifact_name = MODE_TO_TRANSCRIPT[mode]
+        spec = transcript_specs(manifest)[transcript_key]
+        print(f"# {mode}: {spec['artifact']}")
+        print(f"# destination: {spec['path']}")
+        print(f"# command env: {MODE_ENV[mode]}")
+        print("# Raw transcript from the generated AP simulator must contain these markers:")
+        for marker in spec.get("raw_required_strings", []):
+            print(f"# - {marker}")
+        print("#")
+        print(f"openphone-evidence: template_for={artifact_name}")
+        print("openphone-evidence: replace_this_file_with_real_generated_ap_output=true")
+        print()
+    return 0
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -224,6 +251,13 @@ def main(argv: list[str]) -> int:
 
     hashes_parser = sub.add_parser("hashes", help="print hashes for existing CPU/AP artifacts")
     hashes_parser.set_defaults(func=hashes)
+
+    template_parser = sub.add_parser(
+        "template",
+        help="print required marker checklists for raw generated-AP transcripts",
+    )
+    template_parser.add_argument("mode", choices=["all", *sorted(MODE_TO_TRANSCRIPT)])
+    template_parser.set_defaults(func=template)
 
     dts_parser = sub.add_parser(
         "dts-audit",

@@ -54,7 +54,13 @@ set -x
   2>&1 | tee "${ARCHIVE}/cts-stdout.log"
 set +x
 
-RESULTS_DIR="$(ls -td "${AOSP_TREE}"/out/host/linux-x86/cts/android-cts/results/* 2>/dev/null | head -1 || true)"
+RESULTS_DIR=
+for candidate in "${AOSP_TREE}"/out/host/linux-x86/cts/android-cts/results/*; do
+  [ -d "${candidate}" ] || continue
+  if [ -z "${RESULTS_DIR}" ] || [ "${candidate}" -nt "${RESULTS_DIR}" ]; then
+    RESULTS_DIR="${candidate}"
+  fi
+done
 if [ -n "${RESULTS_DIR}" ]; then
   cp -r "${RESULTS_DIR}" "${ARCHIVE}/cts-results/"
   echo "archived results: ${ARCHIVE}/cts-results/"

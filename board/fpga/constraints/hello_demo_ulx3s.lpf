@@ -137,6 +137,12 @@ IOBUF   PORT "TEST_MODE" IO_TYPE=LVCMOS33 PULLMODE=DOWN;
 # Reserved: external WiFi/BT module integration stub (no pins assigned).
 # Final constraints must place these on a 1.8 V capable bank or use level
 # translation. Do not assign RF, antenna, or module analog pins here.
+# Reserved digital host signals, not assigned to package sites in this
+# hello-demo LPF: WIFI_SDIO_CLK, WIFI_SDIO_CMD, WIFI_SDIO_D0, WIFI_SDIO_D1,
+# WIFI_SDIO_D2, WIFI_SDIO_D3, WIFI_EN, WIFI_RST_N, WIFI_HOST_WAKE, WIFI_IRQ,
+# BT_UART_TX, BT_UART_RX, BT_UART_CTS_N, BT_UART_RTS_N. These are a 1.8 V
+# external-module contract only until the board revision, bank voltage,
+# level-shifting, and regulatory evidence are selected.
 #
 # ULX3S configuration defaults for open-source ECP5 flow.
 BLOCK RESETPATHS;

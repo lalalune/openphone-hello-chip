@@ -76,6 +76,29 @@ def test_capture_helper_knows_new_cpu_ap_transcripts() -> None:
         raise AssertionError("isa-cache-mmu capture mode drifted")
     if modes["ap-benchmarks"] != ("ap_benchmark_log", "openphone_hello_ap_benchmarks"):
         raise AssertionError("ap-benchmarks capture mode drifted")
+    if capture_cpu_ap_evidence.MODE_ENV["linux-boot"] != "OPENPHONE_LINUX_BOOT_CMD":
+        raise AssertionError("Linux boot command env drifted")
+
+
+def test_capture_template_lists_required_markers_and_no_pass_claim() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/capture_cpu_ap_evidence.py", "template", "linux-boot"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stdout + result.stderr)
+    assert_contains(
+        result.stdout, "destination: build/evidence/cpu_ap/openphone_hello_linux_boot.log"
+    )
+    assert_contains(result.stdout, "command env: OPENPHONE_LINUX_BOOT_CMD")
+    assert_contains(result.stdout, "Linux early console")
+    assert_contains(
+        result.stdout, "openphone-evidence: replace_this_file_with_real_generated_ap_output=true"
+    )
+    if "openphone-evidence: status=PASS" in result.stdout:
+        raise AssertionError("template must not claim PASS evidence")
 
 
 def test_new_transcripts_reject_placeholder_or_incomplete_text() -> None:
@@ -108,6 +131,7 @@ def main() -> int:
         test_evidence_manifest_blocks_phone_class_claims,
         test_selected_manifest_keeps_single_rocket_as_bringup_only,
         test_capture_helper_knows_new_cpu_ap_transcripts,
+        test_capture_template_lists_required_markers_and_no_pass_claim,
         test_new_transcripts_reject_placeholder_or_incomplete_text,
         test_scaffold_check_lists_new_missing_evidence_paths,
     ]

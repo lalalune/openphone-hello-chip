@@ -4,10 +4,27 @@ set -eu
 REPO_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$REPO_DIR"
 
-MANIFEST="${CHIPYARD_MANIFEST:-generators/chipyard/openphone-rocket-manifest.json}"
+MANIFEST="${CHIPYARD_MANIFEST:-docs/generators/chipyard/openphone-rocket-manifest.json}"
 CHECKOUT="${CHIPYARD_CHECKOUT:-external/chipyard}"
 SUBMODULE_JOBS="${CHIPYARD_SUBMODULE_JOBS:-1}"
 SUBMODULE_RETRIES="${CHIPYARD_SUBMODULE_RETRIES:-3}"
+RUN_SETUP="${CHIPYARD_RUN_SETUP:-0}"
+GENERATE_VERILOG="${CHIPYARD_GENERATE_VERILOG:-0}"
+
+case "$CHECKOUT" in
+    /*) CHECKOUT_ABS="$CHECKOUT" ;;
+    *) CHECKOUT_ABS="$REPO_DIR/$CHECKOUT" ;;
+esac
+
+if [ "$RUN_SETUP" = "1" ]; then
+    case "$(uname -s)" in
+        Linux) ;;
+        *)
+            echo "bootstrap_chipyard: CHIPYARD_RUN_SETUP=1 is supported only on Linux hosts; use the documented Chipyard container path on this host." >&2
+            exit 1
+            ;;
+    esac
+fi
 
 CHIPYARD_REPO="${CHIPYARD_REPO:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["chipyard"]["repo"])' "$MANIFEST")}"
 CHIPYARD_TAG="${CHIPYARD_TAG:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["chipyard"]["tag"])' "$MANIFEST")}"
@@ -105,5 +122,28 @@ PY
 
 python3 scripts/check_chipyard_import_preflight.py --checkout "$CHECKOUT" --require-checkout
 
+if [ "$RUN_SETUP" = "1" ]; then
+    if [ ! -x "$CHECKOUT/build-setup.sh" ]; then
+        echo "bootstrap_chipyard: missing executable $CHECKOUT/build-setup.sh after checkout." >&2
+        exit 1
+    fi
+    (
+        cd "$CHECKOUT"
+        ./build-setup.sh
+    )
+fi
+
+if [ "$GENERATE_VERILOG" = "1" ]; then
+    if [ "$RUN_SETUP" != "1" ] && [ ! -f "$CHECKOUT/env.sh" ]; then
+        echo "bootstrap_chipyard: CHIPYARD_GENERATE_VERILOG=1 requires $CHECKOUT/env.sh; rerun with CHIPYARD_RUN_SETUP=1 on Linux." >&2
+        exit 1
+    fi
+    CHIPYARD_CHECKOUT="$CHECKOUT_ABS" scripts/run_chipyard_openphone_verilator.sh verilog
+fi
+
 echo "Chipyard $CHIPYARD_TAG checked out under $CHECKOUT at $CHIPYARD_SHA."
-echo "Follow Chipyard's setup docs for the selected host/container before building generators."
+if [ "$RUN_SETUP" = "1" ] && [ "$GENERATE_VERILOG" = "1" ]; then
+    echo "Requested Chipyard setup and OpenPhoneRocketConfig Verilog generation completed."
+else
+    echo "Checkout/bootstrap complete. Set CHIPYARD_RUN_SETUP=1 CHIPYARD_GENERATE_VERILOG=1 on Linux to run setup and generation."
+fi

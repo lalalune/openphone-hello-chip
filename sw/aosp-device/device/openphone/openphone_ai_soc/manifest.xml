@@ -2,8 +2,7 @@
 <!--
   VINTF manifest for the OpenPhone hello AI SoC.
 
-  Each HAL entry has a matching service binary and init.rc fragment under
-  device/openphone/openphone_ai_soc/hal/.  The hardware register layout is
+  This manifest is intentionally scaffold-only. The hardware register layout is
   defined in sw/platform/hello_platform_contract.json.
 
   HALs deliberately absent (no implementation, no backing Linux node):
@@ -11,54 +10,15 @@
     fingerprint, thermal, power, health, USB, keymaster/gatekeeper/weaver,
     drm.
 
-  The previous vendor.openphone.hello_npu entry is removed; the standard
-  android.hardware.neuralnetworks@1.3 HAL replaces it so NNAPI can discover
-  the device without custom framework patches.
+  Reserved future HAL package/service markers:
+    hello_npu.default
+    hwcomposer.openphone_ai_soc
+
+  Do not add active <hal> entries until the matching source or reviewed
+  prebuilts are imported into the external AOSP tree and the VINTF/vendorimage
+  evidence logs are captured. The checked-in HAL stubs are fail-closed source
+  scaffolds only; this file must not claim they are active vendor services.
 -->
 <manifest version="1.0" type="device">
-
-    <!-- NPU NNAPI 1.3 — backed by /dev/hello-npu (npu base 0x10020000) -->
-    <hal format="hidl">
-        <name>android.hardware.neuralnetworks</name>
-        <transport>hwbinder</transport>
-        <version>1.3</version>
-        <interface>
-            <name>IDevice</name>
-            <instance>hello_npu</instance>
-        </interface>
-    </hal>
-
-    <!-- HWComposer 2.4 — backed by display region at 0x10030000 -->
-    <hal format="hidl">
-        <name>android.hardware.graphics.composer</name>
-        <transport>hwbinder</transport>
-        <version>2.4</version>
-        <interface>
-            <name>IComposer</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-
-    <!-- Gralloc 4.0 allocator — anonymous mmap, no hardware memory manager -->
-    <hal format="hidl">
-        <name>android.hardware.graphics.allocator</name>
-        <transport>hwbinder</transport>
-        <version>4.0</version>
-        <interface>
-            <name>IAllocator</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-
-    <!-- Gralloc 4.0 mapper — passthrough, in-process -->
-    <hal format="hidl">
-        <name>android.hardware.graphics.mapper</name>
-        <transport arch="32+64">passthrough</transport>
-        <version>4.0</version>
-        <interface>
-            <name>IMapper</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
 
 </manifest>

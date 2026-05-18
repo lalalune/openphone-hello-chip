@@ -43,7 +43,7 @@ next_commands:
 source_contracts:
   package_pinout: package/hello-demo-pinout.yaml
   padframe_contract: pd/padframe/hello_demo_padframe.yaml
-  board_cross_probe: board/kicad/hello-demo/package-pinout-cross-probe.yaml
+  board_cross_probe: docs/board/kicad/hello-demo/package-pinout-cross-probe.yaml
   board_fab_notes: docs/board/kicad/hello-demo/fab-notes.md
 placeholder_blockers:
   - id: placeholder_package_pinout

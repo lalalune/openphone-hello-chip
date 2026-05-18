@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from benchmarks.parsers import ParseError  # noqa: E402
 from benchmarks.parsers import (  # noqa: E402
+    ParseError,  # noqa: E402
     parse_coremark,
     parse_fio,
     parse_lmbench,

@@ -199,15 +199,15 @@ module hello_axi_lite_interconnect #(
     // -----------------------------------------------------------------------
     function automatic logic [2:0] decode_addr(input logic [31:0] addr);
         if (addr == DBG_DECODE_ERR_ADDR || addr == DBG_TIMEOUT_ADDR)
-            return SEL_DBG;
+            decode_addr = SEL_DBG;
         else if ((addr & ~DRAM_MASK) == DRAM_BASE)
-            return SEL_DRAM;
+            decode_addr = SEL_DRAM;
         else if ((addr & ~INTC_MASK) == INTC_BASE)
-            return SEL_INTC;
+            decode_addr = SEL_INTC;
         else if ((addr & ~DMA_MASK) == DMA_BASE)
-            return SEL_DMA;
+            decode_addr = SEL_DMA;
         else
-            return SEL_ERR;
+            decode_addr = SEL_ERR;
     endfunction
 
     // -----------------------------------------------------------------------

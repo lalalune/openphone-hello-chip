@@ -156,8 +156,7 @@ def check_generated_import_manifest(errors: list[str]) -> None:
             missing_evidence.append(path)
     if missing_evidence:
         print(
-            "STATUS: BLOCKED chipyard.generated_evidence - missing "
-            + ", ".join(missing_evidence)
+            "STATUS: BLOCKED chipyard.generated_evidence - missing " + ", ".join(missing_evidence)
         )
 
 

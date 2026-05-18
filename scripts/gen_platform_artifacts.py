@@ -22,6 +22,7 @@ Usage:
   scripts/gen_platform_artifacts.py --check    # exit non-zero if stale
   scripts/gen_platform_artifacts.py --stdout vh|dtsi|h|hal
 """
+
 from __future__ import annotations
 
 import argparse
@@ -93,12 +94,8 @@ def gen_verilog_header(contract: dict) -> str:
         "",
     ]
     for name, dev in v["devices"].items():
-        lines.append(
-            f"`define HELLO_{name.upper()}_BASE    32'h{_h(dev['base']):08X}"
-        )
-        lines.append(
-            f"`define HELLO_{name.upper()}_SIZE    32'h{_h(dev['size']):08X}"
-        )
+        lines.append(f"`define HELLO_{name.upper()}_BASE    32'h{_h(dev['base']):08X}")
+        lines.append(f"`define HELLO_{name.upper()}_SIZE    32'h{_h(dev['size']):08X}")
     lines.append("")
     for irq_name, irq_id in v["interrupts"].items():
         lines.append(f"`define HELLO_{irq_name} {int(irq_id)}")
@@ -121,7 +118,7 @@ def gen_dtsi(contract: dict) -> str:
         return f"<0x0 {_hex(base)} 0x0 {_hex(size)}>"
 
     lines = [
-        f"// SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause",
+        "// SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause",
         f"// {HEADER_COMMENT}",
         "/ {",
         "\t#address-cells = <2>;",
@@ -132,39 +129,39 @@ def gen_dtsi(contract: dict) -> str:
         "\t\t#size-cells = <0>;",
         f"\t\ttimebase-frequency = <{int(v['timebase_frequency_hz'])}>;",
         "\t\tcpu@0 {",
-        "\t\t\tdevice_type = \"cpu\";",
+        '\t\t\tdevice_type = "cpu";',
         "\t\t\treg = <0>;",
-        "\t\t\tstatus = \"okay\";",
-        "\t\t\tcompatible = \"riscv\";",
-        f"\t\t\triscv,isa = \"{v['isa']}\";",
-        "\t\t\tmmu-type = \"riscv,sv39\";",
+        '\t\t\tstatus = "okay";',
+        '\t\t\tcompatible = "riscv";',
+        f'\t\t\triscv,isa = "{v["isa"]}";',
+        '\t\t\tmmu-type = "riscv,sv39";',
         "\t\t\tcpu0_intc: interrupt-controller {",
         "\t\t\t\t#interrupt-cells = <1>;",
         "\t\t\t\tinterrupt-controller;",
-        "\t\t\t\tcompatible = \"riscv,cpu-intc\";",
+        '\t\t\t\tcompatible = "riscv,cpu-intc";',
         "\t\t\t};",
         "\t\t};",
         "\t};",
         "",
         "\tmemory@" + f"{_h(v['dram']['base']):x}" + " {",
-        "\t\tdevice_type = \"memory\";",
+        '\t\tdevice_type = "memory";',
         f"\t\treg = {reg(v['dram']['base'], v['dram']['size'])};",
         "\t};",
         "",
         "\tsoc {",
-        "\t\tcompatible = \"simple-bus\";",
+        '\t\tcompatible = "simple-bus";',
         "\t\t#address-cells = <2>;",
         "\t\t#size-cells = <2>;",
         "\t\tranges;",
         "",
         f"\t\tclint@{_h(clint['base']):x} {{",
-        "\t\t\tcompatible = \"sifive,clint0\", \"riscv,clint0\";",
+        '\t\t\tcompatible = "sifive,clint0", "riscv,clint0";',
         f"\t\t\treg = {reg(clint['base'], clint['size'])};",
         f"\t\t\tinterrupts-extended = <&cpu0_intc 3>, <&cpu0_intc {int(irqs['IRQ_TIMER'])}>;",
         "\t\t};",
         "",
         f"\t\tplic: plic@{_h(plic['base']):x} {{",
-        "\t\t\tcompatible = \"sifive,plic-1.0.0\", \"riscv,plic0\";",
+        '\t\t\tcompatible = "sifive,plic-1.0.0", "riscv,plic0";',
         f"\t\t\treg = {reg(plic['base'], plic['size'])};",
         "\t\t\t#interrupt-cells = <1>;",
         "\t\t\tinterrupt-controller;",
@@ -173,7 +170,7 @@ def gen_dtsi(contract: dict) -> str:
         "\t\t};",
         "",
         f"\t\tuart0: serial@{_h(uart['base']):x} {{",
-        f"\t\t\tcompatible = \"{uart['compatible']}\";",
+        f'\t\t\tcompatible = "{uart["compatible"]}";',
         f"\t\t\treg = {reg(uart['base'], uart['size'])};",
         f"\t\t\tclock-frequency = <{int(uart['clock_frequency_hz'])}>;",
         f"\t\t\tcurrent-speed = <{int(uart['baud'])}>;",
@@ -187,7 +184,7 @@ def gen_dtsi(contract: dict) -> str:
         node = f"hello_{name}"
         lines += [
             f"\t\t{node}: {name}@{_h(dev['base']):x} {{",
-            f"\t\t\tcompatible = \"{dev['compatible']}\";",
+            f'\t\t\tcompatible = "{dev["compatible"]}";',
             f"\t\t\treg = {reg(dev['base'], dev['size'])};",
             "\t\t\tinterrupt-parent = <&plic>;",
             f"\t\t\tinterrupts = <{int(dev['irq'])}>;",
@@ -308,18 +305,19 @@ def check_all(contents: dict[str, str]) -> list[str]:
         actual = path.read_text()
         if actual != contents[kind]:
             errors.append(
-                f"{path.relative_to(ROOT)} is stale; "
-                f"regenerate with `make platform-artifacts`"
+                f"{path.relative_to(ROOT)} is stale; regenerate with `make platform-artifacts`"
             )
     return errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true",
-                        help="exit non-zero if any generated artifact is stale")
-    parser.add_argument("--stdout", choices=sorted(ARTIFACTS),
-                        help="emit one artifact to stdout instead of writing")
+    parser.add_argument(
+        "--check", action="store_true", help="exit non-zero if any generated artifact is stale"
+    )
+    parser.add_argument(
+        "--stdout", choices=sorted(ARTIFACTS), help="emit one artifact to stdout instead of writing"
+    )
     args = parser.parse_args()
 
     contract = load_contract()

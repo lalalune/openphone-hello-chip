@@ -53,6 +53,7 @@ package_artifacts:
   package_plan: docs/package/hello-demo-package.md
   pad_ring_plan: docs/package/hello-demo-pad-ring.md
   board_fab_notes: docs/board/kicad/hello-demo/fab-notes.md
+  board_cross_probe: docs/board/kicad/hello-demo/package-pinout-cross-probe.yaml
 release_gates:
   padframe_release:
     blocked: true

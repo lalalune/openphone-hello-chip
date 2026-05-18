@@ -29,7 +29,6 @@ import random
 import sys
 from pathlib import Path
 
-
 BLOCKER = {
     "blocker_id": "TFLITE_SMOKE_MODEL_GENERATOR_UNAVAILABLE",
     "blocked_reason": "missing_tensorflow_python_package",

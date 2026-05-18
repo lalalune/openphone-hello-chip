@@ -10,7 +10,7 @@ echo "=== CVA6 Integration Setup ==="
 
 if [ -d "$CVA6_DIR/.git" ]; then
     echo "CVA6 already cloned at $CVA6_DIR"
-    echo "Commit: $(git -C $CVA6_DIR rev-parse HEAD)"
+    echo "Commit: $(git -C "$CVA6_DIR" rev-parse HEAD)"
 else
     echo "Cloning CVA6 $CVA6_COMMIT (this may take several minutes)..."
     git clone --depth=1 --branch "$CVA6_COMMIT" \

@@ -225,10 +225,20 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
 
 def check_debug_contract(errors: list[str]) -> None:
     bridge = read_text(ROOT / "rtl/debug/hello_dbg_mmio_bridge.sv")
-    require("DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"), "docs/arch/debug.md no longer names DBG_LAUNCH", errors)
-    require("addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors)
-    require("wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors)
-    require("rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors)
+    require(
+        "DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"),
+        "docs/arch/debug.md no longer names DBG_LAUNCH",
+        errors,
+    )
+    require(
+        "addr_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug address nibble load changed", errors
+    )
+    require(
+        "wdata_q[{dbg_addr[2:0], 2'b00} +: 4]" in bridge, "debug data nibble load changed", errors
+    )
+    require(
+        "rdata_q[{rsel_q, 2'b00} +: 4]" in bridge, "debug readback nibble select changed", errors
+    )
 
 
 def check_qemu_virt_separation(contract: dict, errors: list[str]) -> None:
@@ -313,9 +323,13 @@ def check_cpu_variant_artifacts(contract: dict, errors: list[str]) -> None:
         return
     try:
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "gen_platform_artifacts", ROOT / "scripts/gen_platform_artifacts.py"
         )
+        if spec is None or spec.loader is None:
+            errors.append("failed to import gen_platform_artifacts.py: no import loader")
+            return
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
     except Exception as exc:
@@ -353,7 +367,7 @@ def check_cpu_variant_consumers(contract: dict, errors: list[str]) -> None:
         if not path.is_file():
             continue
         text = read_text(path)
-        for name, dev in devices.items():
+        for _name, dev in devices.items():
             compatible = dev["compatible"]
             if compatible not in text:
                 # consumer doesn't reference this device at all; that is fine.

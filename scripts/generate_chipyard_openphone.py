@@ -166,7 +166,9 @@ def require_simulator_executable() -> None:
 
 
 def write_manifest(env: dict[str, str]) -> None:
-    selected = json.loads((ROOT / "generators/chipyard/openphone-rocket-manifest.json").read_text())
+    selected = json.loads(
+        (ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json").read_text()
+    )
     evidence_manifest = json.loads(
         (ROOT / "docs/evidence/cpu-ap-evidence-manifest.json").read_text()
     )

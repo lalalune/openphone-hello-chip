@@ -9,7 +9,6 @@ from typing import Any
 
 from . import ParseError
 
-
 _ITER_SEC_RE = re.compile(r"Iterations/Sec\s*:\s*([0-9]+\.?[0-9]*)")
 _COREMARK_MHZ_RE = re.compile(r"CoreMark\s*/\s*MHz\s*:\s*([0-9]+\.?[0-9]*)")
 _ITER_RE = re.compile(r"\bIterations\s*:\s*([0-9]+)")
@@ -38,7 +37,11 @@ def parse(text: str) -> dict[str, Any]:
 
 
 def main(argv: list[str]) -> int:
-    data = sys.stdin.read() if not argv or argv[0] == "-" else open(argv[0], encoding="utf-8").read()
+    if not argv or argv[0] == "-":
+        data = sys.stdin.read()
+    else:
+        with open(argv[0], encoding="utf-8") as handle:
+            data = handle.read()
     try:
         out = parse(data)
     except ParseError as exc:

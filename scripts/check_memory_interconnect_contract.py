@@ -129,11 +129,14 @@ def check_rtl_decode(errors: list[str]) -> None:
     dram_rtl = read(DRAM_RTL)
 
     required_patterns = {
-        "DRAM high-nibble decode": r"wr_addr_q\[31:28\]\s*==\s*4'h8",
-        "DRAM read high-nibble decode": r"m_axil_araddr\[31:28\]\s*==\s*4'h8",
-        "INTC decode": r"20'h0C00_0",
-        "DMA decode": r"20'h1001_0",
-        "DECERR response": r"m_axil_[br]resp\s*=\s*2'b11",
+        "DRAM base constant": r"DRAM_BASE\s*=\s*32'h8000_0000",
+        "DRAM 256 MiB mask": r"DRAM_MASK\s*=\s*32'h0FFF_FFFF",
+        "DRAM decode": r"\(addr\s*&\s*~DRAM_MASK\)\s*==\s*DRAM_BASE",
+        "INTC base constant": r"INTC_BASE\s*=\s*32'h0C00_0000",
+        "INTC decode": r"\(addr\s*&\s*~INTC_MASK\)\s*==\s*INTC_BASE",
+        "DMA base constant": r"DMA_BASE\s*=\s*32'h1001_0000",
+        "DMA decode": r"\(addr\s*&\s*~DMA_MASK\)\s*==\s*DMA_BASE",
+        "DECERR/SLVERR response": r"RESP_SLVERR\s*=\s*2'b10",
         "unmapped read value": r"32'hDEAD_BEEF",
     }
     for name, pattern in required_patterns.items():

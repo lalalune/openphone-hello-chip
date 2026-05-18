@@ -1192,6 +1192,7 @@ def parse_openphone_npu_scale_sim(output: str) -> dict[str, Any]:
     if not isinstance(summary, dict) or not isinstance(config, dict) or not kernels:
         raise ValueError("NPU scale simulator output is missing summary/config/kernels")
     return {
+        "benchmark_success_allowed": True,
         "kernel_count": int(summary.get("kernel_count", 0)),
         "dense_int8_peak_tops": float(config.get("dense_int8_peak_tops", 0.0)),
         "int8_macs_per_cycle": int(config.get("int8_macs_per_cycle", 0)),

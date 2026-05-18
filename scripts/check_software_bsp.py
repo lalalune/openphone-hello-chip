@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -284,10 +285,8 @@ def check_aosp_product_glue(errors: list[str]) -> None:
                 errors.append(f"AOSP VINTF manifest missing XML marker {term}")
         if "</manifest>" not in manifest_text and "/>" not in manifest_text:
             errors.append("AOSP VINTF manifest is missing closing </manifest> marker")
-        active_text = "\n".join(
-            line for line in manifest_text.splitlines() if not line.strip().startswith("<!--")
-        )
-        if "<hal" in active_text:
+        active_text = re.sub(r"<!--.*?-->", "", manifest_text, flags=re.DOTALL)
+        if re.search(r"<hal(?:\s|>)", active_text):
             errors.append(
                 "AOSP VINTF manifest must not declare active HAL entries until source or prebuilts exist"
             )

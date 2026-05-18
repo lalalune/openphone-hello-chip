@@ -189,7 +189,7 @@ async def dram_axil_boundary_round_trips(dut):
     assert data == 0xAA22_3344
 
     data, resp = await axil_read32(dut, 0x4000_0000)
-    assert resp == 3
+    assert resp == 2
     assert data == 0xDEAD_BEEF
 
 

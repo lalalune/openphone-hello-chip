@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "build/reports/mvp_simulator.json"
+REPORT = Path(os.environ.get("MVP_SIMULATOR_REPORT", ROOT / "build/reports/mvp_simulator.json"))
 REQUIRED_STEPS = {
     "local_rtl_sim_ladder",
     "chipyard_generated_ap",
@@ -21,9 +22,16 @@ REQUIRED_STEPS = {
 }
 
 
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def main() -> int:
     if not REPORT.is_file():
-        print(f"MVP simulator check blocked: missing {REPORT.relative_to(ROOT)}")
+        print(f"MVP simulator check blocked: missing {display_path(REPORT)}")
         print("Next step: python3 scripts/run_mvp_simulator.py")
         return 2
     try:
@@ -35,6 +43,8 @@ def main() -> int:
     errors: list[str] = []
     if data.get("schema") != "openphone.mvp_simulator.v1":
         errors.append("schema mismatch")
+    if data.get("status") not in {"pass", "blocked", "fail"}:
+        errors.append("status must be pass, blocked, or fail")
     boundary = data.get("claim_boundary", "")
     if "not a fabrication or phone-class performance claim" not in boundary:
         errors.append(
@@ -79,8 +89,8 @@ def main() -> int:
         results = []
     seen = {item.get("name") for item in results if isinstance(item, dict)}
     missing = sorted(REQUIRED_STEPS - seen)
-    if missing and data.get("status") == "pass":
-        errors.append("pass report missing required steps: " + ", ".join(missing))
+    if missing:
+        errors.append("report missing required steps: " + ", ".join(missing))
     for index, item in enumerate(results):
         if not isinstance(item, dict):
             errors.append(f"results[{index}] must be an object")

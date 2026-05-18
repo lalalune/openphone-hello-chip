@@ -45,15 +45,19 @@ def parse(text: str) -> dict[str, Any]:
             read_clat.append(float(r["clat_ns"]["mean"]))
         if w.get("clat_ns", {}).get("mean") is not None:
             write_clat.append(float(w["clat_ns"]["mean"]))
-        job_summaries.append({
-            "jobname": job.get("jobname"),
-            "read_iops": float(r.get("iops") or 0.0),
-            "write_iops": float(w.get("iops") or 0.0),
-            "read_bw_kib_s": float(r.get("bw") or 0.0),
-            "write_bw_kib_s": float(w.get("bw") or 0.0),
-        })
+        job_summaries.append(
+            {
+                "jobname": job.get("jobname"),
+                "read_iops": float(r.get("iops") or 0.0),
+                "write_iops": float(w.get("iops") or 0.0),
+                "read_bw_kib_s": float(r.get("bw") or 0.0),
+                "write_bw_kib_s": float(w.get("bw") or 0.0),
+            }
+        )
 
-    if not any(total[k] > 0 for k in ("read_iops", "write_iops", "read_bw_kib_s", "write_bw_kib_s")):
+    if not any(
+        total[k] > 0 for k in ("read_iops", "write_iops", "read_bw_kib_s", "write_bw_kib_s")
+    ):
         raise ParseError("fio: every job reported zero IOPS and zero bandwidth")
 
     if read_clat:
@@ -65,7 +69,11 @@ def parse(text: str) -> dict[str, Any]:
 
 
 def main(argv: list[str]) -> int:
-    data = sys.stdin.read() if not argv or argv[0] == "-" else open(argv[0], encoding="utf-8").read()
+    if not argv or argv[0] == "-":
+        data = sys.stdin.read()
+    else:
+        with open(argv[0], encoding="utf-8") as handle:
+            data = handle.read()
     try:
         out = parse(data)
     except ParseError as exc:

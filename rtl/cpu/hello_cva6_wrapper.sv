@@ -7,8 +7,8 @@
 // time.
 //
 // Build with the real core:
-//   Verilator:
-//     verilator +define+HELLO_HAVE_CVA6 \
+//   RTL simulator:
+//     <simulator> +define+HELLO_HAVE_CVA6 \
 //       -I external/cva6/include -I external/cva6/core \
 //       rtl/**/*.sv external/cva6/core/cva6.sv ...
 //   Yosys (FPGA):
@@ -28,6 +28,8 @@
 
 `timescale 1ns/1ps
 
+/* verilator lint_off DECLFILENAME */
+/* verilator lint_off UNUSEDSIGNAL */
 module hello_cpu_subsystem #(
     // Boot address forwarded to CVA6 as the reset PC / boot ROM entry.
     // Matches hello_chip_cpu_variant.boot.reset_vector in
@@ -253,6 +255,29 @@ module hello_cpu_subsystem #(
 
     // synthesis warning: HELLO_HAVE_CVA6 not defined; CPU outputs are tied off.
     // This is intentional for simulation without the CVA6 source tree.
+    logic unused_stub_inputs;
+    assign unused_stub_inputs = ^{
+        clk_i,
+        rst_ni,
+        irq_i,
+        ipi_i,
+        time_irq_i,
+        debug_req_i,
+        axi_ar_ready,
+        axi_r_id,
+        axi_r_data,
+        axi_r_resp,
+        axi_r_last,
+        axi_r_user,
+        axi_r_valid,
+        axi_aw_ready,
+        axi_w_ready,
+        axi_b_id,
+        axi_b_resp,
+        axi_b_user,
+        axi_b_valid,
+        BOOT_ADDR
+    };
 
     assign axi_ar_id     = 4'h0;
     assign axi_ar_addr   = 64'h0;
@@ -292,3 +317,5 @@ module hello_cpu_subsystem #(
 `endif  // HELLO_HAVE_CVA6
 
 endmodule
+/* verilator lint_on UNUSEDSIGNAL */
+/* verilator lint_on DECLFILENAME */

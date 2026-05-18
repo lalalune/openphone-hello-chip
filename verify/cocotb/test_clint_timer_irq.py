@@ -33,9 +33,7 @@ async def clint_timer_irq_fires_when_mtime_ge_mtimecmp(dut):
 @cocotb.test(skip=True)
 async def clint_msip_software_interrupt(dut):
     """Write 1 to msip[0], assert cpu_software_irq rises within one cycle."""
-    raise NotImplementedError(
-        "Wire after CLINT msip port appears on hello_linux_soc_contract."
-    )
+    raise NotImplementedError("Wire after CLINT msip port appears on hello_linux_soc_contract.")
 
 
 @cocotb.test(skip=True)

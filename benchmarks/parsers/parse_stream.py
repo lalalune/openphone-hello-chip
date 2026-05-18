@@ -9,7 +9,6 @@ from typing import Any
 
 from . import ParseError
 
-
 _LINE_RE = re.compile(
     r"^\s*(Copy|Scale|Add|Triad):\s*"
     r"([0-9]+\.?[0-9]*)\s+"
@@ -33,7 +32,11 @@ def parse(text: str) -> dict[str, Any]:
 
 
 def main(argv: list[str]) -> int:
-    data = sys.stdin.read() if not argv or argv[0] == "-" else open(argv[0], encoding="utf-8").read()
+    if not argv or argv[0] == "-":
+        data = sys.stdin.read()
+    else:
+        with open(argv[0], encoding="utf-8") as handle:
+            data = handle.read()
     try:
         out = parse(data)
     except ParseError as exc:

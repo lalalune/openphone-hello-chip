@@ -34,6 +34,18 @@ qemu-system-riscv64 --version              # expect >= 8.1 (>= 9.0 preferred)
 A full AOSP build needs 250 GB free disk and 32 GB RAM. The Cuttlefish guest
 needs 8 GB RAM and 4 vCPUs minimum.
 
+From this repository, run the host-only preflight before attempting capture:
+
+```sh
+AOSP_DIR=/path/to/aosp make aosp-linux-preflight
+```
+
+The preflight checks `AOSP_DIR`, `build/envsetup.sh`, `/dev/kvm`, `repo`,
+`adb`, and `launch_cvd`/`cvd` visibility. It may write
+`build/reports/aosp_linux_preflight.json`, but it does not create
+`docs/evidence/android/*.log` and is not AOSP build, boot, CTS, VTS, or
+hello-chip hardware evidence.
+
 ## Repo Init and Sync
 
 Use the `android-latest-release` branch. riscv64 Cuttlefish targets are present

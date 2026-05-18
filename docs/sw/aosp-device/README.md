@@ -117,16 +117,26 @@ It does not run `repo sync`, download AOSP, or build Android.
 The single-command driver for this flow is:
 
 ```sh
+AOSP_DIR=/path/to/aosp make aosp-linux-preflight
 AOSP_DIR=/path/to/aosp make android-sim-boot-check
 ```
 
-That target imports the device tree, captures `lunch`, `vendorimage`, and
-`checkvintf` evidence, then validates the AOSP evidence manifest. The stricter
-AOSP BSP gate still remains BLOCKED until SELinux policy build, neverallow,
-CTS/VTS scope-intake, and Cuttlefish/QEMU/Renode smoke logs are also installed.
+`make aosp-linux-preflight` checks only Linux host readiness: `AOSP_DIR`,
+`build/envsetup.sh`, `/dev/kvm`, `repo`, `adb`, and Cuttlefish launcher
+visibility from `PATH` or `AOSP_DIR/out/host/linux-x86/bin`. It writes
+`build/reports/aosp_linux_preflight.json` when requested by the Make target.
+That report is host-preflight status only and does not create
+`docs/evidence/android/*.log`.
+
+`make android-sim-boot-check` imports the device tree, captures `lunch`,
+`vendorimage`, and `checkvintf` evidence, then validates the AOSP evidence
+manifest. The stricter AOSP BSP gate still remains BLOCKED until SELinux policy
+build, neverallow, CTS/VTS scope-intake, and Cuttlefish/QEMU/Renode smoke logs
+are also installed.
 To attempt a Cuttlefish run as well:
 
 ```sh
+AOSP_DIR=/path/to/aosp make aosp-linux-preflight
 AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish
 ```
 
@@ -166,6 +176,19 @@ The Cuttlefish boot capture defaults to `AOSP_PRODUCT=openphone_ai_soc-userdebug
 and `AOSP_CUTTLEFISH_ARGS="--cpus=4 --memory_mb=8192 --gpu_mode=none"`.
 Override those environment variables when running a different riscv64
 Cuttlefish product or a home-screen launch.
+
+For a commit-ready local validation pass that does not fabricate logs, run:
+
+```sh
+make aosp-scaffold-check
+make aosp-linux-preflight
+make android-sim-status-test
+make software-bsp-test
+```
+
+On non-Linux hosts, or Linux hosts without `AOSP_DIR`/KVM/Cuttlefish tooling,
+`make aosp-linux-preflight` is expected to return BLOCKED and record the exact
+blockers. Do not convert that blocked report into Android evidence.
 
 Required AOSP evidence inputs are intentionally explicit and do not, by
 themselves, claim Android boot or compatibility:

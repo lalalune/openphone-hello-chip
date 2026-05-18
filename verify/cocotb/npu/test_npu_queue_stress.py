@@ -12,7 +12,6 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
-
 CTRL = 0x008
 STATUS = 0x00C
 IRQ_STATUS = 0x010
@@ -56,8 +55,7 @@ async def mmio_read(dut, addr):
     return value
 
 
-def make_descriptor(op, m=1, n=1, k=1, a=0x10000, b=0x20000, c=0x30000,
-                    flags=0, tag=0):
+def make_descriptor(op, m=1, n=1, k=1, a=0x10000, b=0x20000, c=0x30000, flags=0, tag=0):
     """Pack a 64-byte descriptor as 16 little-endian 32-bit words."""
     words = [0] * 16
     words[0] = (op & 0xFFFF) | ((flags & 0xFFFF) << 16)
@@ -79,8 +77,13 @@ def make_descriptor(op, m=1, n=1, k=1, a=0x10000, b=0x20000, c=0x30000,
 
 async def reset(dut):
     dut.rst_n.value = 0
-    for sig in ("s_axil_awvalid", "s_axil_wvalid", "s_axil_arvalid",
-                "s_axil_bready", "s_axil_rready"):
+    for sig in (
+        "s_axil_awvalid",
+        "s_axil_wvalid",
+        "s_axil_arvalid",
+        "s_axil_bready",
+        "s_axil_rready",
+    ):
         if hasattr(dut, sig):
             getattr(dut, sig).value = 0
     for _ in range(4):

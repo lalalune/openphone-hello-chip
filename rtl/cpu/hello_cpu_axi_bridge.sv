@@ -22,6 +22,7 @@
 
 `timescale 1ns/1ps
 
+/* verilator lint_off UNUSEDSIGNAL */
 module hello_cpu_axi_bridge (
     input  logic        clk_i,
     input  logic        rst_ni,
@@ -140,9 +141,31 @@ module hello_cpu_axi_bridge (
     // Current beat address (advances by 8 per burst beat for INCR)
     logic [31:0] rd_cur_addr;
     logic [31:0] wr_cur_addr;
+    logic        unused_axi4_sidebands;
 
-    assign rd_cur_addr = rd_base_addr_q + {24'h0, rd_beat_cnt_q, 3'b000};
-    assign wr_cur_addr = wr_base_addr_q + {24'h0, wr_beat_cnt_q, 3'b000};
+    assign rd_cur_addr = rd_base_addr_q + {21'h0, rd_beat_cnt_q, 3'b000};
+    assign wr_cur_addr = wr_base_addr_q + {21'h0, wr_beat_cnt_q, 3'b000};
+    assign unused_axi4_sidebands = ^{
+        s_axi_ar_addr[63:32],
+        s_axi_ar_size,
+        s_axi_ar_burst,
+        s_axi_ar_lock,
+        s_axi_ar_cache,
+        s_axi_ar_prot,
+        s_axi_ar_qos,
+        s_axi_ar_region,
+        s_axi_ar_user,
+        s_axi_aw_addr[63:32],
+        s_axi_aw_size,
+        s_axi_aw_burst,
+        s_axi_aw_lock,
+        s_axi_aw_cache,
+        s_axi_aw_user,
+        s_axi_w_last,
+        s_axi_w_user,
+        rd_cur_addr[2:0],
+        wr_cur_addr[2:0]
+    };
 
     // ─────────────────────────────────────────────────────────────────────────
     // Read path
@@ -399,3 +422,4 @@ module hello_cpu_axi_bridge (
     end
 
 endmodule
+/* verilator lint_on UNUSEDSIGNAL */

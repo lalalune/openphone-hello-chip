@@ -108,9 +108,7 @@ async def unmapped_reads_return_decerr(dut):
     await _reset(dut)
     for addr in UNMAPPED_ADDRESSES:
         resp = await _rd(dut, addr)
-        assert resp == 0b11, (
-            f"expected DECERR (0b11) for unmapped read at {addr:#x}, got {resp:#b}"
-        )
+        assert resp == 0b11, f"expected DECERR (0b11) for unmapped read at {addr:#x}, got {resp:#b}"
 
 
 @cocotb.test()

@@ -18,7 +18,7 @@
     "top_wrapper": "openphone_rocket_ap",
     "config_sources": [
       {
-        "source": "generators/chipyard/openphone/src/main/scala/openphone/OpenPhoneRocketConfig.scala",
+        "source": "docs/generators/chipyard/openphone/src/main/scala/openphone/OpenPhoneRocketConfig.scala",
         "checkout_destination": "generators/chipyard/src/main/scala/openphone/OpenPhoneRocketConfig.scala"
       }
     ],

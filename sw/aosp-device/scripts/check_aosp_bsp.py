@@ -68,9 +68,7 @@ def main() -> int:
 
     # 2. Evidence presence (always BLOCKED in v0).
     missing_evidence = [
-        (reason, path)
-        for reason, path in EVIDENCE_FILES.items()
-        if not (ROOT / path).is_file()
+        (reason, path) for reason, path in EVIDENCE_FILES.items() if not (ROOT / path).is_file()
     ]
     if missing_evidence:
         failed = True

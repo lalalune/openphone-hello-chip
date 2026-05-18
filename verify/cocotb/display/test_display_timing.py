@@ -12,7 +12,6 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
-
 FB_BASE = 0x00
 MODE = 0x04
 FORMAT = 0x08
