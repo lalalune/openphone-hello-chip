@@ -1,0 +1,67 @@
+Hello demo FPGA build report
+Generated: 2026-05-18T03:48:12Z
+Top:       hello_fpga_smoke_top
+Device:    ECP5 85k CABGA381 speed 6
+Bitstream: /Users/shawwalters/Desktop/npu_experiment/build/fpga/hello_demo/hello_fpga_smoke_top.bit
+
+--- nextpnr utilization (tail) ---
+Info:    routing  1.50  1.50 Net DBG_ADDR[1]$TRELLIS_IO_IN (60,0) -> (58,2)
+Info:                          Sink DBG_WRITE_LUT4_B_D_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.24  1.73 Source DBG_WRITE_LUT4_B_D_LUT4_Z.F
+Info:    routing  0.42  2.15 Net DBG_WRITE_LUT4_B_D[2] (58,2) -> (58,2)
+Info:                          Sink DBG_WRITE_LUT4_B.D
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.24  2.39 Source DBG_WRITE_LUT4_B.F
+Info:    routing  2.63  5.02 Net DBG_WRITE_LUT4_B_Z (58,2) -> (15,2)
+Info:                          Sink GPIO_LUT4_Z_C_TRELLIS_FF_Q.CE
+Info:      setup  0.00  5.02 Source GPIO_LUT4_Z_C_TRELLIS_FF_Q.CE
+Info: 0.47 ns logic, 4.54 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$CLK_IN$TRELLIS_IO_IN' -> '<async>':
+Info:       type curr  total name
+Info:   clk-to-q  0.52  0.52 Source DBG_WDATA_TRELLIS_FF_DI.Q
+Info:    routing  1.72  2.24 Net DBG_WDATA_TRELLIS_FF_DI_Q[1] (15,2) -> (5,4)
+Info:                          Sink GPIO_LUT4_Z_3.D
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.24  2.48 Source GPIO_LUT4_Z_3.F
+Info:    routing  3.35  5.82 Net GPIO[3]$TRELLIS_IO_OUT (5,4) -> (0,38)
+Info:                          Sink GPIO[3]$tr_io.I
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:22.24-22.28
+Info: 0.76 ns logic, 5.06 ns routing
+
+Info: Max frequency for clock '$glbnet$CLK_IN$TRELLIS_IO_IN': 295.42 MHz (PASS at 25.00 MHz)
+
+Info: Max delay <async>                              -> <async>                             : 7.41 ns
+Info: Max delay <async>                              -> posedge $glbnet$CLK_IN$TRELLIS_IO_IN: 5.02 ns
+Info: Max delay posedge $glbnet$CLK_IN$TRELLIS_IO_IN -> <async>                             : 5.82 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 1 endpoint(s)
+Info:          + represents [1,1) endpoint(s)
+Info: [ 36615,  36737) |**** 
+Info: [ 36737,  36859) |*** 
+Info: [ 36859,  36981) |**** 
+Info: [ 36981,  37103) |** 
+Info: [ 37103,  37225) |***** 
+Info: [ 37225,  37347) |** 
+Info: [ 37347,  37469) |*** 
+Info: [ 37469,  37591) | 
+Info: [ 37591,  37713) | 
+Info: [ 37713,  37835) | 
+Info: [ 37835,  37957) | 
+Info: [ 37957,  38079) | 
+Info: [ 38079,  38201) | 
+Info: [ 38201,  38323) | 
+Info: [ 38323,  38445) | 
+Info: [ 38445,  38567) | 
+Info: [ 38567,  38689) | 
+Info: [ 38689,  38811) |*** 
+Info: [ 38811,  38933) |* 
+Info: [ 38933,  39055) |* 
+
+Info: Program finished normally.

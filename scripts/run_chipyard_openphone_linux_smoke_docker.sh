@@ -11,6 +11,7 @@ config="${CHIPYARD_CONFIG:-OpenPhoneRocketConfig}"
 config_package="${CHIPYARD_CONFIG_PACKAGE:-openphone}"
 payload="${CHIPYARD_LINUX_BINARY:-$repo_dir/external/chipyard/software/firemarshal/images/firechip/linux-poweroff/linux-poweroff-bin-nodisk}"
 payload_container="/work/${payload#"$repo_dir"/}"
+binary_arg="${CHIPYARD_LINUX_SMOKE_BINARY_ARG:-$payload_container}"
 jobs="${CHIPYARD_LINUX_SMOKE_JOBS:-1}"
 timeout_seconds="${CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS:-1200}"
 timeout_cycles="${CHIPYARD_LINUX_SMOKE_TIMEOUT_CYCLES:-50000000}"
@@ -37,6 +38,7 @@ fi
 	printf 'openphone-evidence: config=%s\n' "$config"
 	printf 'openphone-evidence: config_package=%s\n' "$config_package"
 	printf 'openphone-evidence: payload=%s\n' "$payload_container"
+	printf 'openphone-evidence: binary_arg=%s\n' "$binary_arg"
 	printf 'openphone-evidence: timeout_seconds=%s\n' "$timeout_seconds"
 	printf 'openphone-evidence: timeout_cycles=%s\n' "$timeout_cycles"
 	printf 'openphone-evidence: run_target=%s\n' "$run_target"
@@ -51,6 +53,7 @@ docker run --rm --platform "$platform" \
 	-e "CHIPYARD_CONFIG=$config" \
 	-e "CHIPYARD_CONFIG_PACKAGE=$config_package" \
 	-e "CHIPYARD_LINUX_BINARY=$payload_container" \
+	-e "CHIPYARD_LINUX_SMOKE_BINARY_ARG=$binary_arg" \
 	-e "CHIPYARD_LINUX_SMOKE_CLEAN=$clean" \
 	-e "CHIPYARD_LINUX_SMOKE_LOADMEM=$loadmem" \
 	-e "CHIPYARD_LINUX_SMOKE_JOBS=$jobs" \
@@ -127,11 +130,11 @@ docker run --rm --platform "$platform" \
 		esac
 		run_binary_cmd="make -j \"$CHIPYARD_LINUX_SMOKE_JOBS\" CONFIG=\"$CHIPYARD_CONFIG\" CONFIG_PACKAGE=\"$CHIPYARD_CONFIG_PACKAGE\" RISCV=/work/external/riscv-tools-linux-x64 AR=x86_64-conda-linux-gnu-ar LRISCV= DISABLE_DRAMSIM=1 TIMEOUT_CYCLES=\"$CHIPYARD_LINUX_SMOKE_TIMEOUT_CYCLES\" EXTRA_SIM_CXXFLAGS=\"-O0 -g0 -I/work/external/riscv-tools-linux-x64/include\" EXTRA_SIM_LDFLAGS=\"-L/work/external/riscv-tools-linux-x64/lib -Wl,-rpath,/work/external/riscv-tools-linux-x64/lib\" EXTRA_SIM_FLAGS=\"$CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS\""
 		if [ "$CHIPYARD_LINUX_SMOKE_LOADMEM" = "1" ]; then
-			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_BINARY\" LOADMEM=1"
+			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_SMOKE_BINARY_ARG\" LOADMEM=1"
 		elif [ -n "$CHIPYARD_LINUX_SMOKE_LOADMEM" ]; then
-			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_BINARY\" LOADMEM=\"$CHIPYARD_LINUX_SMOKE_LOADMEM\""
+			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_SMOKE_BINARY_ARG\" LOADMEM=\"$CHIPYARD_LINUX_SMOKE_LOADMEM\""
 		else
-			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_BINARY\""
+			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_SMOKE_BINARY_ARG\""
 		fi
 		run_binary_cmd="$run_binary_cmd \"$CHIPYARD_LINUX_SMOKE_RUN_TARGET\""
 		echo "openphone-evidence: command=$run_binary_cmd"
@@ -162,6 +165,7 @@ cp "$log" "$runner_log"
 tail -n 120 "$log"
 
 if [ "$status_code" -ne 0 ]; then
+	CHIPYARD_LINUX_BINARY="$payload" CHIPYARD_ALLOW_CONTAINER_GENERATED_PATHS=1 python3 "$repo_dir/scripts/check_chipyard_verilator_linux_smoke.py" >/dev/null 2>&1 || true
 	printf 'STATUS: BLOCKED chipyard.verilator_linux_smoke_docker\n'
 	printf '  log: %s\n' "${log#"$repo_dir"/}"
 	exit 2

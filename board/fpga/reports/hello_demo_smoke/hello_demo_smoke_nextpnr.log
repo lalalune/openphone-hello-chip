@@ -1,0 +1,368 @@
+Info: constraining clock net 'CLK_IN' to 25.00 MHz
+Info: constraining clock net 'CLK_IN' to 25.00 MHz
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:        69/83640     0%
+Info:         logic LUTs:     45/83640     0%
+Info:         carry LUTs:     24/83640     0%
+Info:           RAM LUTs:      0/10455     0%
+Info:          RAMW LUTs:      0/20910     0%
+
+Info:      Total DFFs:        33/83640     0%
+
+Info: Packing IOs..
+Info: pin 'TEST_MODE$tr_io' constrained to Bel 'X13/Y0/PIOA'.
+Info: pin 'RST_N$tr_io' constrained to Bel 'X6/Y0/PIOB'.
+Info: pin 'JTAG_TMS$tr_io' constrained to Bel 'X0/Y14/PIOB'.
+Info: pin 'JTAG_TDO$tr_io' constrained to Bel 'X0/Y20/PIOB'.
+Info: pin 'JTAG_TDI$tr_io' constrained to Bel 'X0/Y20/PIOA'.
+Info: pin 'JTAG_TCK$tr_io' constrained to Bel 'X0/Y14/PIOA'.
+Info: pin 'IRQ_VSYNC$tr_io' constrained to Bel 'X0/Y35/PIOB'.
+Info: pin 'IRQ_TIMER$tr_io' constrained to Bel 'X0/Y11/PIOA'.
+Info: pin 'IRQ_NPU$tr_io' constrained to Bel 'X0/Y35/PIOA'.
+Info: pin 'IRQ_DMA$tr_io' constrained to Bel 'X0/Y11/PIOB'.
+Info: pin 'GPIO[7]$tr_io' constrained to Bel 'X0/Y41/PIOD'.
+Info: pin 'GPIO[6]$tr_io' constrained to Bel 'X0/Y38/PIOD'.
+Info: pin 'GPIO[5]$tr_io' constrained to Bel 'X0/Y44/PIOD'.
+Info: pin 'GPIO[4]$tr_io' constrained to Bel 'X0/Y38/PIOB'.
+Info: pin 'GPIO[3]$tr_io' constrained to Bel 'X0/Y38/PIOC'.
+Info: pin 'GPIO[2]$tr_io' constrained to Bel 'X0/Y38/PIOA'.
+Info: pin 'GPIO[1]$tr_io' constrained to Bel 'X0/Y35/PIOD'.
+Info: pin 'GPIO[0]$tr_io' constrained to Bel 'X0/Y35/PIOC'.
+Info: pin 'DBG_WRITE$tr_io' constrained to Bel 'X63/Y0/PIOA'.
+Info: pin 'DBG_WDATA[3]$tr_io' constrained to Bel 'X15/Y0/PIOA'.
+Info: pin 'DBG_WDATA[2]$tr_io' constrained to Bel 'X18/Y0/PIOB'.
+Info: pin 'DBG_WDATA[1]$tr_io' constrained to Bel 'X18/Y0/PIOA'.
+Info: pin 'DBG_WDATA[0]$tr_io' constrained to Bel 'X58/Y0/PIOB'.
+Info: pin 'DBG_VALID$tr_io' constrained to Bel 'X65/Y0/PIOA'.
+Info: pin 'DBG_READY$tr_io' constrained to Bel 'X4/Y0/PIOB'.
+Info: pin 'DBG_RDATA[3]$tr_io' constrained to Bel 'X4/Y0/PIOA'.
+Info: pin 'DBG_RDATA[2]$tr_io' constrained to Bel 'X11/Y0/PIOB'.
+Info: pin 'DBG_RDATA[1]$tr_io' constrained to Bel 'X11/Y0/PIOA'.
+Info: pin 'DBG_RDATA[0]$tr_io' constrained to Bel 'X15/Y0/PIOB'.
+Info: pin 'DBG_LAUNCH$tr_io' constrained to Bel 'X65/Y0/PIOB'.
+Info: pin 'DBG_ADDR[3]$tr_io' constrained to Bel 'X58/Y0/PIOA'.
+Info: pin 'DBG_ADDR[2]$tr_io' constrained to Bel 'X60/Y0/PIOB'.
+Info: pin 'DBG_ADDR[1]$tr_io' constrained to Bel 'X60/Y0/PIOA'.
+Info: pin 'DBG_ADDR[0]$tr_io' constrained to Bel 'X63/Y0/PIOB'.
+Info: pin 'CLK_IN$tr_io' constrained to Bel 'X0/Y47/PIOA'.
+Info: Packing constants..
+Info: Packing carries...
+Info: Packing LUTs...
+Info: Packing LUT5-7s...
+Info: Packing FFs...
+Info:     25 FFs paired with LUTs.
+Info: Generating derived timing constraints...
+Info: Promoting globals...
+Info:     promoting clock net CLK_IN$TRELLIS_IO_IN to global network
+Info: Checksum: 0x35dbc471
+
+Info: Device utilisation:
+Info: 	          TRELLIS_IO:      35/    365     9%
+Info: 	                DCCA:       1/     56     1%
+Info: 	              DP16KD:       0/    208     0%
+Info: 	          MULT18X18D:       0/    156     0%
+Info: 	              ALU54B:       0/     78     0%
+Info: 	             EHXPLLL:       0/      4     0%
+Info: 	             EXTREFB:       0/      2     0%
+Info: 	                DCUA:       0/      2     0%
+Info: 	           PCSCLKDIV:       0/      2     0%
+Info: 	             IOLOGIC:       0/    224     0%
+Info: 	            SIOLOGIC:       0/    141     0%
+Info: 	                 GSR:       0/      1     0%
+Info: 	               JTAGG:       0/      1     0%
+Info: 	                OSCG:       0/      1     0%
+Info: 	               SEDGA:       0/      1     0%
+Info: 	                 DTR:       0/      1     0%
+Info: 	             USRMCLK:       0/      1     0%
+Info: 	             CLKDIVF:       0/      4     0%
+Info: 	           ECLKSYNCB:       0/     10     0%
+Info: 	             DLLDELD:       0/      8     0%
+Info: 	              DDRDLL:       0/      4     0%
+Info: 	             DQSBUFM:       0/     14     0%
+Info: 	     TRELLIS_ECLKBUF:       0/      8     0%
+Info: 	        ECLKBRIDGECS:       0/      2     0%
+Info: 	                DCSC:       0/      2     0%
+Info: 	          TRELLIS_FF:      33/  83640     0%
+Info: 	        TRELLIS_COMB:      75/  83640     0%
+Info: 	        TRELLIS_RAMW:       0/  10455     0%
+
+Info: Placed 35 cells based on constraints.
+Info: Creating initial analytic placement for 29 cells, random placement wirelen = 5479.
+Info:     at initial placer iter 0, wirelen = 1101
+Info:     at initial placer iter 1, wirelen = 978
+Info:     at initial placer iter 2, wirelen = 963
+Info:     at initial placer iter 3, wirelen = 964
+Info: Running main analytical placer, max placement attempts per cell = 10000.
+Info:     at iteration #1, type ALL: wirelen solved = 954, spread = 985, legal = 989; time = 0.01s
+Info: HeAP Placer Time: 0.03s
+Info:   of which solving equations: 0.00s
+Info:   of which spreading cells: 0.00s
+Info:   of which strict legalisation: 0.00s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 1, wirelen = 989
+Info:   at iteration #5: temp = 0.000000, timing cost = 1, wirelen = 960
+Info:   at iteration #10: temp = 0.000000, timing cost = 1, wirelen = 948
+Info:   at iteration #12: temp = 0.000000, timing cost = 1, wirelen = 946 
+Info: SA placement time 0.01s
+
+Info: Max frequency for clock '$glbnet$CLK_IN$TRELLIS_IO_IN': 357.65 MHz (PASS at 25.00 MHz)
+
+Info: Max delay <async>                              -> <async>                             : 10.02 ns
+Info: Max delay <async>                              -> posedge $glbnet$CLK_IN$TRELLIS_IO_IN: 6.87 ns
+Info: Max delay posedge $glbnet$CLK_IN$TRELLIS_IO_IN -> <async>                             : 7.56 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 1 endpoint(s)
+Info:          + represents [1,1) endpoint(s)
+Info: [ 37204,  37306) |*** 
+Info: [ 37306,  37408) |*** 
+Info: [ 37408,  37510) |*** 
+Info: [ 37510,  37612) |*** 
+Info: [ 37612,  37714) |*** 
+Info: [ 37714,  37816) |*** 
+Info: [ 37816,  37918) |*** 
+Info: [ 37918,  38020) |** 
+Info: [ 38020,  38122) | 
+Info: [ 38122,  38224) | 
+Info: [ 38224,  38326) | 
+Info: [ 38326,  38428) | 
+Info: [ 38428,  38530) |* 
+Info: [ 38530,  38632) | 
+Info: [ 38632,  38734) |** 
+Info: [ 38734,  38836) | 
+Info: [ 38836,  38938) | 
+Info: [ 38938,  39040) |* 
+Info: [ 39040,  39142) | 
+Info: [ 39142,  39244) |* 
+Info: Checksum: 0x8f1e4845
+Info: Routing globals...
+Info:     routing clock net $glbnet$CLK_IN$TRELLIS_IO_IN using global 0
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 247 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:        247 |        0        217 |    0   217 |         0|       0.04       0.04|
+Info: Routing complete.
+Info: Router1 time 0.04s
+Info: Checksum: 0x29d2ff37
+
+Info: Critical path report for clock '$glbnet$CLK_IN$TRELLIS_IO_IN' (posedge -> posedge):
+Info:       type curr  total name
+Info:   clk-to-q  0.52  0.52 Source counter_q_CCU2C_B1_S1_LUT4_Z_D_TRELLIS_FF_Q.Q
+Info:    routing  1.10  1.62 Net counter_q_CCU2C_B1_S1_LUT4_Z_D (6,2) -> (6,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_6$CCU2_COMB0.B
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.45  2.07 Source counter_q_CCU2C_B1_S1_CCU2C_S1_6$CCU2_COMB0.FCO
+Info:    routing  0.00  2.07 Net counter_q_CCU2C_B1_S1_CCU2C_S1_6$CCU2_FCI_INT (6,3) -> (6,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_6$CCU2_COMB1.FCI
+Info:      logic  0.00  2.07 Source counter_q_CCU2C_B1_S1_CCU2C_S1_6$CCU2_COMB1.FCO
+Info:    routing  0.00  2.07 Net counter_q_CCU2C_B1_S1_CCU2C_S1_6_COUT (6,3) -> (6,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.14 Source counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_COMB0.FCO
+Info:    routing  0.00  2.14 Net counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_FCI_INT (6,3) -> (6,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_COMB1.FCI
+Info:      logic  0.00  2.14 Source counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_COMB1.FCO
+Info:    routing  0.00  2.14 Net counter_q_CCU2C_B1_S1_CCU2C_S1_8_COUT (6,3) -> (6,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.21 Source counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_COMB0.FCO
+Info:    routing  0.00  2.21 Net counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_FCI_INT (6,3) -> (6,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_COMB1.FCI
+Info:      logic  0.00  2.21 Source counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_COMB1.FCO
+Info:    routing  0.00  2.21 Net counter_q_CCU2C_B1_S1_CCU2C_S1_4_COUT (6,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.28 Source counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_COMB0.FCO
+Info:    routing  0.00  2.28 Net counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_FCI_INT (7,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_COMB1.FCI
+Info:      logic  0.00  2.28 Source counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_COMB1.FCO
+Info:    routing  0.00  2.28 Net counter_q_CCU2C_B1_S1_CCU2C_S1_3_COUT (7,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.36 Source counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_COMB0.FCO
+Info:    routing  0.00  2.36 Net counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_FCI_INT (7,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_COMB1.FCI
+Info:      logic  0.00  2.36 Source counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_COMB1.FCO
+Info:    routing  0.00  2.36 Net counter_q_CCU2C_B1_S1_CCU2C_S1_2_COUT (7,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.43 Source counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_COMB0.FCO
+Info:    routing  0.00  2.43 Net counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_FCI_INT (7,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_COMB1.FCI
+Info:      logic  0.00  2.43 Source counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_COMB1.FCO
+Info:    routing  0.00  2.43 Net counter_q_CCU2C_B1_S1_CCU2C_S1_1_COUT (7,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.50 Source counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  2.50 Net counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_FCI_INT (7,3) -> (7,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  2.50 Source counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  2.50 Net counter_q_CCU2C_B1_S1_CCU2C_S1_COUT (7,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.57 Source counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_COMB0.FCO
+Info:    routing  0.00  2.57 Net counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_FCI_INT (8,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_COMB1.FCI
+Info:      logic  0.00  2.57 Source counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_COMB1.FCO
+Info:    routing  0.00  2.57 Net counter_q_CCU2C_B1_S1_CCU2C_S1_9_COUT (8,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.64 Source counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_COMB0.FCO
+Info:    routing  0.00  2.64 Net counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_FCI_INT (8,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_COMB1.FCI
+Info:      logic  0.00  2.64 Source counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_COMB1.FCO
+Info:    routing  0.00  2.64 Net counter_q_CCU2C_B1_S1_CCU2C_S1_7_COUT (8,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.71 Source counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_COMB0.FCO
+Info:    routing  0.00  2.71 Net counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_FCI_INT (8,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_COMB1.FCI
+Info:      logic  0.00  2.71 Source counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_COMB1.FCO
+Info:    routing  0.00  2.71 Net counter_q_CCU2C_B1_S1_CCU2C_S1_5_COUT (8,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.78 Source counter_q_CCU2C_B1_1$CCU2_COMB0.FCO
+Info:    routing  0.00  2.78 Net counter_q_CCU2C_B1_1$CCU2_FCI_INT (8,3) -> (8,3)
+Info:                          Sink counter_q_CCU2C_B1_1$CCU2_COMB1.FCI
+Info:      logic  0.00  2.78 Source counter_q_CCU2C_B1_1$CCU2_COMB1.FCO
+Info:    routing  0.00  2.78 Net counter_q_CCU2C_B1_1_COUT (8,3) -> (9,3)
+Info:                          Sink counter_q_CCU2C_B1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.07  2.85 Source counter_q_CCU2C_B1$CCU2_COMB0.FCO
+Info:    routing  0.00  2.85 Net counter_q_CCU2C_B1$CCU2_FCI_INT (9,3) -> (9,3)
+Info:                          Sink counter_q_CCU2C_B1$CCU2_COMB1.FCI
+Info:      logic  0.40  3.26 Source counter_q_CCU2C_B1$CCU2_COMB1.F
+Info:    routing  0.13  3.38 Net counter_q_CCU2C_B1_S1[23] (9,3) -> (9,3)
+Info:                          Sink counter_q_TRELLIS_FF_Q.DI
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:34.26-34.27
+Info:      setup  0.00  3.38 Source counter_q_TRELLIS_FF_Q.DI
+Info: 2.16 ns logic, 1.23 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> '<async>':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source DBG_ADDR[0]$tr_io.O
+Info:    routing  4.62  4.62 Net DBG_ADDR[0]$TRELLIS_IO_IN (63,0) -> (7,4)
+Info:                          Sink JTAG_TDI_LUT4_B_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.24  4.86 Source JTAG_TDI_LUT4_B_Z_LUT4_Z.F
+Info:    routing  0.62  5.48 Net JTAG_TDI_LUT4_B_Z[3] (7,4) -> (7,4)
+Info:                          Sink IRQ_VSYNC_LUT4_A.D
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.40  5.88 Source IRQ_VSYNC_LUT4_A.OFX
+Info:    routing  0.00  5.88 Net DBG_RDATA_L6MUX21_Z_D1 (7,4) -> (7,4)
+Info:                          Sink DBG_RDATA_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.FXB
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:141.38-141.40
+Info:      logic  0.24  6.12 Source DBG_RDATA_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  1.28  7.41 Net DBG_RDATA[0]$TRELLIS_IO_OUT (7,4) -> (15,0)
+Info:                          Sink DBG_RDATA[0]$tr_io.I
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:15.24-15.33
+Info: 0.88 ns logic, 6.53 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$CLK_IN$TRELLIS_IO_IN':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source DBG_ADDR[1]$tr_io.O
+Info:    routing  1.50  1.50 Net DBG_ADDR[1]$TRELLIS_IO_IN (60,0) -> (58,2)
+Info:                          Sink DBG_WRITE_LUT4_B_D_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.24  1.73 Source DBG_WRITE_LUT4_B_D_LUT4_Z.F
+Info:    routing  0.42  2.15 Net DBG_WRITE_LUT4_B_D[2] (58,2) -> (58,2)
+Info:                          Sink DBG_WRITE_LUT4_B.D
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.24  2.39 Source DBG_WRITE_LUT4_B.F
+Info:    routing  2.63  5.02 Net DBG_WRITE_LUT4_B_Z (58,2) -> (15,2)
+Info:                          Sink GPIO_LUT4_Z_C_TRELLIS_FF_Q.CE
+Info:      setup  0.00  5.02 Source GPIO_LUT4_Z_C_TRELLIS_FF_Q.CE
+Info: 0.47 ns logic, 4.54 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$CLK_IN$TRELLIS_IO_IN' -> '<async>':
+Info:       type curr  total name
+Info:   clk-to-q  0.52  0.52 Source DBG_WDATA_TRELLIS_FF_DI.Q
+Info:    routing  1.72  2.24 Net DBG_WDATA_TRELLIS_FF_DI_Q[1] (15,2) -> (5,4)
+Info:                          Sink GPIO_LUT4_Z_3.D
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.24  2.48 Source GPIO_LUT4_Z_3.F
+Info:    routing  3.35  5.82 Net GPIO[3]$TRELLIS_IO_OUT (5,4) -> (0,38)
+Info:                          Sink GPIO[3]$tr_io.I
+Info:                          Defined in:
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:22.24-22.28
+Info: 0.76 ns logic, 5.06 ns routing
+
+Info: Max frequency for clock '$glbnet$CLK_IN$TRELLIS_IO_IN': 295.42 MHz (PASS at 25.00 MHz)
+
+Info: Max delay <async>                              -> <async>                             : 7.41 ns
+Info: Max delay <async>                              -> posedge $glbnet$CLK_IN$TRELLIS_IO_IN: 5.02 ns
+Info: Max delay posedge $glbnet$CLK_IN$TRELLIS_IO_IN -> <async>                             : 5.82 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 1 endpoint(s)
+Info:          + represents [1,1) endpoint(s)
+Info: [ 36615,  36737) |**** 
+Info: [ 36737,  36859) |*** 
+Info: [ 36859,  36981) |**** 
+Info: [ 36981,  37103) |** 
+Info: [ 37103,  37225) |***** 
+Info: [ 37225,  37347) |** 
+Info: [ 37347,  37469) |*** 
+Info: [ 37469,  37591) | 
+Info: [ 37591,  37713) | 
+Info: [ 37713,  37835) | 
+Info: [ 37835,  37957) | 
+Info: [ 37957,  38079) | 
+Info: [ 38079,  38201) | 
+Info: [ 38201,  38323) | 
+Info: [ 38323,  38445) | 
+Info: [ 38445,  38567) | 
+Info: [ 38567,  38689) | 
+Info: [ 38689,  38811) |*** 
+Info: [ 38811,  38933) |* 
+Info: [ 38933,  39055) |* 
+
+Info: Program finished normally.

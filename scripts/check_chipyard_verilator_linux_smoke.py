@@ -25,6 +25,13 @@ REQUIRED_GENERATED_ARTIFACTS = (
     OUT_DIR / "OpenPhoneRocketConfig.manifest.json",
 )
 REQUIRED_LOG_MARKERS = ("OpenSBI", "Linux version")
+PROGRESS_MARKERS = (
+    "SimDRAM loaded ELF entry=",
+    "SimDRAM loading ELF ",
+    "openphone-evidence: command=",
+    "openphone-evidence: timeout_after_seconds=",
+    "openphone-evidence: exit_code=",
+)
 CONTAINER_PATH_ENV = "CHIPYARD_ALLOW_CONTAINER_GENERATED_PATHS"
 GENERATED_DRIVER_MAKEFILE = (
     SIM_DIR
@@ -50,8 +57,41 @@ def next_command(payload: str = f"${PAYLOAD_ENV}") -> str:
     )
 
 
+def parse_log_metadata() -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "exists": LOG.is_file(),
+        "exit_code": None,
+        "timeout_after_seconds": None,
+        "simdram_entry": None,
+        "simdram_load_range": None,
+        "last_progress_marker": "",
+    }
+    if not LOG.is_file():
+        return metadata
+
+    last_progress = ""
+    for line in LOG.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("openphone-evidence: exit_code="):
+            metadata["exit_code"] = line.split("=", 1)[1].strip()
+        elif line.startswith("openphone-evidence: timeout_after_seconds="):
+            metadata["timeout_after_seconds"] = line.split("=", 1)[1].strip()
+        elif line.startswith("SimDRAM loading ELF "):
+            marker = " into mem="
+            if marker in line:
+                metadata["simdram_load_range"] = line.rsplit(marker, 1)[1].strip()
+            last_progress = line
+        elif line.startswith("SimDRAM loaded ELF entry="):
+            metadata["simdram_entry"] = line.split("=", 1)[1].strip()
+            last_progress = line
+        elif any(marker in line for marker in PROGRESS_MARKERS):
+            last_progress = line
+    metadata["last_progress_marker"] = last_progress
+    return metadata
+
+
 def write_report(status: str, blockers: list[str], payload: str | None) -> None:
     allow_container_paths = os.environ.get(CONTAINER_PATH_ENV) == "1"
+    log_metadata = parse_log_metadata()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     report = {
         "schema": "openphone.chipyard_verilator_linux_smoke.v1",
@@ -62,6 +102,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
         "payload_env": PAYLOAD_ENV,
         "payload": payload or "",
         "log": rel(LOG),
+        "log_metadata": log_metadata,
         "host": {
             "system": platform.system(),
             "machine": platform.machine(),
@@ -121,10 +162,24 @@ def main() -> int:
     elif not Path(payload).is_file():
         blockers.append(f"{PAYLOAD_ENV} does not point to a file: {payload}")
 
+    log_metadata = parse_log_metadata()
     if not LOG.is_file():
         blockers.append(f"missing Verilator OpenSBI/Linux smoke log: {rel(LOG)}")
     else:
         text = LOG.read_text(encoding="utf-8", errors="replace")
+        exit_code = log_metadata.get("exit_code")
+        if exit_code and exit_code != "0":
+            reason = f"{rel(LOG)} records simulator wrapper exit_code={exit_code}"
+            timeout_after = log_metadata.get("timeout_after_seconds")
+            if timeout_after:
+                reason += f" after timeout_after_seconds={timeout_after}"
+            blockers.append(reason)
+        last_progress = log_metadata.get("last_progress_marker")
+        if last_progress and not any(marker in text for marker in REQUIRED_LOG_MARKERS):
+            blockers.append(
+                "last simulator progress before missing boot markers: "
+                f"{last_progress}"
+            )
         for marker in REQUIRED_LOG_MARKERS:
             if marker not in text:
                 blockers.append(f"{rel(LOG)} lacks required marker: {marker}")

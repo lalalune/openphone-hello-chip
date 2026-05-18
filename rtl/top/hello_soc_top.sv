@@ -41,6 +41,12 @@ module hello_soc_top (
     output logic        mtip_o,
     output logic [7:0]  gpio_out
 );
+`ifdef HELLO_PD_SMALL_DRAM
+    localparam int unsigned DRAM_WORDS = 64;
+`else
+    localparam int unsigned DRAM_WORDS = 1024;
+`endif
+    localparam int unsigned DRAM_INDEX_BITS = $clog2(DRAM_WORDS);
 
     logic [31:0] bootrom_rdata;
     logic [31:0] dma_rdata;
@@ -86,15 +92,15 @@ module hello_soc_top (
     logic clint_sel;
     logic word_aligned;
     logic implemented_window;
-    logic [31:0] dram_mem [0:1023];
+    logic [31:0] dram_mem [0:DRAM_WORDS-1];
     logic        clint_msip;
     logic [63:0] clint_mtime;
     logic [63:0] clint_mtimecmp;
 
-    wire [9:0]  mmio_dram_word = mmio_addr[11:2];
-    wire [9:0]  dma_wr_word = dma_m_awaddr[11:2];
-    wire [9:0]  dma_rd_word = dma_m_araddr[11:2];
-    wire [9:0]  display_rd_word = display_fb_read_addr[11:2];
+    wire [DRAM_INDEX_BITS-1:0] mmio_dram_word = mmio_addr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] dma_wr_word = dma_m_awaddr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] dma_rd_word = dma_m_araddr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] display_rd_word = display_fb_read_addr[2 +: DRAM_INDEX_BITS];
     wire        dma_wr_fire = dma_m_awvalid && dma_m_awready && dma_m_wvalid && dma_m_wready;
     wire        dma_rd_fire = dma_m_arvalid && dma_m_arready;
     wire        dma_wr_ok = (dma_m_awaddr[31:12] == 20'h8000_0) && (dma_m_awaddr[1:0] == 2'b00);

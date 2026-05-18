@@ -34,6 +34,7 @@ REPORT         := $(BUILD_DIR)/report.txt
 
 # RTL file list. Keep narrow: only modules in the hello_chip_top cone.
 RTL_SOURCES := \
+  $(RTL_DIR)/top/hello_fpga_smoke_top.sv \
   $(RTL_DIR)/top/hello_chip_top.sv \
   $(RTL_DIR)/top/hello_soc_top.sv \
   $(RTL_DIR)/clock/hello_reset_sync.sv \
