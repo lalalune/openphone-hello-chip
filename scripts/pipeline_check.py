@@ -18,6 +18,7 @@ REQUIRED = [
 COCOTB_TARGETS = {
     "hello_chip_top_test_hello_chip",
     "hello_linux_soc_contract_test_cpu_mem_intc_contract",
+    "hello_npu_test_hello_npu",
     "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
 }
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import re
 import shutil
 import subprocess
@@ -50,6 +51,9 @@ DTS_BOOT_REQUIREMENTS = {
     "interrupt controller": [r"interrupt-controller", r"riscv,plic0"],
     "uart console": [r"serial@[0-9a-fA-F]+", r"ns16550", r"sifive,uart"],
     "chosen stdout": [r"stdout-path", r"bootargs\s*=.*console="],
+}
+
+HELLO_PERIPHERAL_REQUIREMENTS = {
     "hello npu mmio": [r"openphone,hello-npu"],
     "hello dma mmio": [r"openphone,hello-dma"],
     "hello display mmio": [r"openphone,hello-display"],
@@ -89,6 +93,12 @@ def dts_audit(args: argparse.Namespace) -> int:
     for label, patterns in DTS_BOOT_REQUIREMENTS.items():
         if not any(re.search(pattern, uncommented, flags=re.I | re.S) for pattern in patterns):
             missing.append(label)
+    missing_hello: list[str] = []
+    for label, patterns in HELLO_PERIPHERAL_REQUIREMENTS.items():
+        if not any(re.search(pattern, uncommented, flags=re.I | re.S) for pattern in patterns):
+            missing_hello.append(label)
+    if args.require_hello_peripherals:
+        missing.extend(missing_hello)
     serial_blocks = re.findall(
         r"serial@[0-9a-fA-F]+\s*\{.*?\n\s*\};", uncommented, flags=re.I | re.S
     )
@@ -125,6 +135,15 @@ def dts_audit(args: argparse.Namespace) -> int:
         return 1 if args.require_bootable else 0
 
     print(f"STATUS: PASS cpu_ap.dts_boot_audit - {rel(path)} has AP boot DTB markers")
+    if missing_hello:
+        print(
+            "  note: generated DTS lacks hello peripheral smoke markers: "
+            + ", ".join(missing_hello)
+        )
+        print(
+            "  note: linux-boot evidence still needs a real hello MMIO smoke result "
+            "from the selected AP/software integration"
+        )
     if args.run_dtc:
         print(f"  dtc: {dtc_msg}")
     return 0
@@ -228,6 +247,68 @@ def template(args: argparse.Namespace) -> int:
     return 0
 
 
+def capture_plan(args: argparse.Namespace) -> int:
+    manifest = load_manifest_or_exit()
+    modes = [args.mode] if args.mode != "all" else sorted(MODE_TO_TRANSCRIPT)
+    entries: list[dict[str, object]] = []
+    for mode in modes:
+        transcript_key, artifact_name = MODE_TO_TRANSCRIPT[mode]
+        spec = transcript_specs(manifest)[transcript_key]
+        entries.append(
+            {
+                "mode": mode,
+                "artifact": artifact_name,
+                "artifact_label": spec.get("artifact"),
+                "destination": spec.get("path"),
+                "command_env": MODE_ENV[mode],
+                "raw_required_strings": spec.get("raw_required_strings", []),
+                "intake_command": (
+                    "python3 scripts/capture_cpu_ap_evidence.py intake "
+                    f'{mode} --source /path/to/{mode}.log --command "$'
+                    f'{MODE_ENV[mode]}"'
+                ),
+            }
+        )
+
+    if args.format == "json":
+        print(
+            json.dumps(
+                {
+                    "schema": "openphone.cpu_ap_capture_plan.v1",
+                    "generated_manifest": str(GENERATED_MANIFEST.relative_to(ROOT)),
+                    "wrapper": "scripts/capture_chipyard_linux_evidence.sh",
+                    "claim_boundary": "plan_only_no_boot_claim",
+                    "entries": entries,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
+
+    if args.format == "shell":
+        print("# Fill these with commands that run the generated AP simulator/tests.")
+        print("# The capture wrapper archives only transcripts that pass marker validation.")
+        for entry in entries:
+            print(f"# {entry['mode']} -> {entry['destination']}")
+            print(f"export {entry['command_env']}=''")
+        print("scripts/capture_chipyard_linux_evidence.sh all")
+        return 0
+
+    print("CPU/AP generated-AP capture plan")
+    print(f"Generated manifest: {GENERATED_MANIFEST.relative_to(ROOT)}")
+    print("Wrapper: scripts/capture_chipyard_linux_evidence.sh all")
+    for entry in entries:
+        print(f"- {entry['mode']}: {entry['destination']}")
+        print(f"  command env: {entry['command_env']}")
+        print("  required raw markers:")
+        raw_required_strings = entry["raw_required_strings"]
+        markers = raw_required_strings if isinstance(raw_required_strings, list) else []
+        for marker in markers:
+            print(f"    - {marker}")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -259,6 +340,14 @@ def main(argv: list[str]) -> int:
     template_parser.add_argument("mode", choices=["all", *sorted(MODE_TO_TRANSCRIPT)])
     template_parser.set_defaults(func=template)
 
+    plan_parser = sub.add_parser(
+        "plan",
+        help="print the generated-AP capture plan and command environment variables",
+    )
+    plan_parser.add_argument("mode", choices=["all", *sorted(MODE_TO_TRANSCRIPT)])
+    plan_parser.add_argument("--format", choices=["text", "json", "shell"], default="text")
+    plan_parser.set_defaults(func=capture_plan)
+
     dts_parser = sub.add_parser(
         "dts-audit",
         help="check whether a DTS has the CPU/memory/timer/IRQ/UART markers needed for AP boot",
@@ -279,6 +368,11 @@ def main(argv: list[str]) -> int:
         "--require-bootable",
         action="store_true",
         help="Return nonzero when AP boot markers are missing",
+    )
+    dts_parser.add_argument(
+        "--require-hello-peripherals",
+        action="store_true",
+        help="Also require hello NPU/DMA/display MMIO markers used by the Linux smoke claim",
     )
     dts_parser.set_defaults(func=dts_audit)
 

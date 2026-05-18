@@ -6,6 +6,16 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+RESP_OKAY = 0
+RESP_SLVERR = 2
+DRAM_BASE = 0x8000_0000
+DRAM_LAST_WORD = 0x8000_0FFC
+DRAM_FIRST_OUT_OF_MODEL = 0x8000_1000
+INTC_BASE = 0x0C00_0000
+DMA_BASE = 0x1001_0000
+DBG_DECODE_ERR_ADDR = 0x1FFF_FFF0
+UNMAPPED_READ_VALUE = 0xDEAD_BEEF
+_COVERED_CONTRACTS: set[str] = set()
 
 
 async def reset(dut):
@@ -146,10 +156,11 @@ async def axil_read32(dut, addr):
 
 
 def write_coverage_artifact(extra):
+    _COVERED_CONTRACTS.update(extra)
     coverage = {
         "schema": "hello-chip.cpu_mem_intc_cocotb_coverage.v1",
         "source": "verify/cocotb/test_cpu_mem_intc_contract.py",
-        "covered_contracts": sorted(extra),
+        "covered_contracts": sorted(_COVERED_CONTRACTS),
         "boundary": "Directed AXI-Lite memory and interrupt-controller contract checks around the tiny CPU harness only; no application-class CPU, MMU, cache, Linux, or Android boot coverage.",
     }
     out = REPO_ROOT / "build/reports/cpu_mem_intc_cocotb_coverage.json"
@@ -162,15 +173,18 @@ async def axi_lite_split_write_channels_are_captured_independently(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     await reset(dut)
 
-    assert await axil_split_write32(dut, 0x8000_0020, 0xCAFE_BABE) == 0
-    data, resp = await axil_read32(dut, 0x8000_0020)
-    assert resp == 0
+    assert await axil_split_write32(dut, DRAM_BASE + 0x20, 0xCAFE_BABE) == RESP_OKAY
+    data, resp = await axil_read32(dut, DRAM_BASE + 0x20)
+    assert resp == RESP_OKAY
     assert data == 0xCAFE_BABE
 
-    assert await axil_split_write32(dut, 0x8000_0024, 0x1122_3344, data_first=True) == 0
-    data, resp = await axil_read32(dut, 0x8000_0024)
-    assert resp == 0
+    assert (
+        await axil_split_write32(dut, DRAM_BASE + 0x24, 0x1122_3344, data_first=True) == RESP_OKAY
+    )
+    data, resp = await axil_read32(dut, DRAM_BASE + 0x24)
+    assert resp == RESP_OKAY
     assert data == 0x1122_3344
+    write_coverage_artifact({"split_axil_write"})
 
 
 @cocotb.test()
@@ -178,19 +192,20 @@ async def dram_axil_boundary_round_trips(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     await reset(dut)
 
-    assert await axil_write32(dut, 0x8000_0010, 0x1122_3344) == 0
-    data, resp = await axil_read32(dut, 0x8000_0010)
-    assert resp == 0
+    assert await axil_write32(dut, DRAM_BASE + 0x10, 0x1122_3344) == RESP_OKAY
+    data, resp = await axil_read32(dut, DRAM_BASE + 0x10)
+    assert resp == RESP_OKAY
     assert data == 0x1122_3344
 
-    assert await axil_write32(dut, 0x8000_0010, 0xAA00_0000, strobe=0x8) == 0
-    data, resp = await axil_read32(dut, 0x8000_0010)
-    assert resp == 0
+    assert await axil_write32(dut, DRAM_BASE + 0x10, 0xAA00_0000, strobe=0x8) == RESP_OKAY
+    data, resp = await axil_read32(dut, DRAM_BASE + 0x10)
+    assert resp == RESP_OKAY
     assert data == 0xAA22_3344
 
     data, resp = await axil_read32(dut, 0x4000_0000)
-    assert resp == 2
-    assert data == 0xDEAD_BEEF
+    assert resp == RESP_SLVERR
+    assert data == UNMAPPED_READ_VALUE
+    write_coverage_artifact({"dram_strobes", "unmapped_read_slverr"})
 
 
 @cocotb.test()
@@ -198,15 +213,54 @@ async def dram_aperture_outside_sram_model_returns_slverr(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     await reset(dut)
 
-    assert await axil_write32(dut, 0x8000_0FFC, 0x55AA_1234) == 0
-    data, resp = await axil_read32(dut, 0x8000_0FFC)
-    assert resp == 0
+    assert await axil_write32(dut, DRAM_LAST_WORD, 0x55AA_1234) == RESP_OKAY
+    data, resp = await axil_read32(dut, DRAM_LAST_WORD)
+    assert resp == RESP_OKAY
     assert data == 0x55AA_1234
 
-    assert await axil_write32(dut, 0x8000_1000, 0xCAFE_BABE) == 2
-    data, resp = await axil_read32(dut, 0x8000_1000)
-    assert resp == 2
-    assert data == 0xDEAD_BEEF
+    assert await axil_write32(dut, DRAM_FIRST_OUT_OF_MODEL, 0xCAFE_BABE) == RESP_SLVERR
+    data, resp = await axil_read32(dut, DRAM_FIRST_OUT_OF_MODEL)
+    assert resp == RESP_SLVERR
+    assert data == UNMAPPED_READ_VALUE
+    write_coverage_artifact({"dram_sram_capacity_boundary"})
+
+
+@cocotb.test()
+async def dram_unaligned_accesses_return_slverr_without_mutating_storage(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    word_addr = DRAM_BASE + 0x30
+    assert await axil_write32(dut, word_addr, 0x1234_5678) == RESP_OKAY
+
+    assert await axil_write32(dut, word_addr + 1, 0xFFFF_0000) == RESP_SLVERR
+    data, resp = await axil_read32(dut, word_addr)
+    assert resp == RESP_OKAY
+    assert data == 0x1234_5678
+
+    data, resp = await axil_read32(dut, word_addr + 2)
+    assert resp == RESP_SLVERR
+    assert data == UNMAPPED_READ_VALUE
+    write_coverage_artifact({"dram_unaligned_slverr_no_mutation"})
+
+
+@cocotb.test()
+async def decode_error_register_captures_last_unmapped_access(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    data, resp = await axil_read32(dut, 0x4000_0040)
+    assert resp == RESP_SLVERR
+    assert data == UNMAPPED_READ_VALUE
+    data, resp = await axil_read32(dut, DBG_DECODE_ERR_ADDR)
+    assert resp == RESP_OKAY
+    assert data == 0x4000_0040
+
+    assert await axil_write32(dut, 0x4000_0100, 0xA5A5_5A5A) == RESP_SLVERR
+    data, resp = await axil_read32(dut, DBG_DECODE_ERR_ADDR)
+    assert resp == RESP_OKAY
+    assert data == 0x4000_0100
+    write_coverage_artifact({"decode_error_debug_register"})
 
 
 @cocotb.test()

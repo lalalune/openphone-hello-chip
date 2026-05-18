@@ -80,9 +80,23 @@ values must be recorded in
 4. Run a generated AP OpenSBI/Linux smoke:
 
 ```sh
-export CHIPYARD_LINUX_BINARY=/path/to/real/opensbi-or-linux-payload.elf
+python3 scripts/locate_chipyard_linux_payload.py --json
+eval "$(python3 scripts/locate_chipyard_linux_payload.py --export-env)"
 scripts/run_chipyard_openphone_linux_smoke.sh
 python3 scripts/check_chipyard_verilator_linux_smoke.py
+```
+
+The preferred first payload is the FireMarshal no-disk boot ELF at
+`external/chipyard/software/firemarshal/images/firechip/linux-poweroff/linux-poweroff-bin-nodisk`.
+It is a RISC-V ELF boot binary with OpenSBI content and a Linux initramfs
+workload, which is the format Chipyard `run-binary` expects for this smoke.
+If it is missing on the Linux host, build it with:
+
+```sh
+cd external/chipyard/software/firemarshal
+./marshal -v -d build example-workloads/linux-poweroff.json
+cd -
+python3 scripts/locate_chipyard_linux_payload.py --require
 ```
 
 This is the first gate that can start closing an OpenPhone generated-AP Linux
@@ -92,8 +106,41 @@ If `check_chipyard_verilator_linux_smoke.py` reports stale `/work/` or other
 container paths in `VTestDriver.mk`, regenerate the simulator on the Linux host
 or run inside the same container mount path that produced the generated
 artifacts. Do not patch the generated makefile by hand and call it evidence.
+The native wrappers now run this cleanup before invoking Chipyard:
+
+```sh
+python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated
+```
+
+That command removes only the generated Verilator config directory and simulator
+binary when the generated driver makefile or filelists contain stale
+container/workspace absolute paths. It does not alter checked-in source or
+create boot evidence. The next
+`scripts/run_chipyard_openphone_verilator.sh ...` or native
+`scripts/run_chipyard_openphone_linux_smoke.sh` invocation must then regenerate
+the driver makefile on the current host. On macOS/arm64, prefer the container
+smoke path so the generated `/work/...` paths match the container mount:
+
+```sh
+CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh
+```
 
 5. Archive CPU/AP evidence:
+
+```sh
+python3 scripts/capture_cpu_ap_evidence.py plan all --format shell
+scripts/capture_chipyard_linux_evidence.sh preflight
+```
+
+After the preflight reports all command lanes ready, either use the wrapper to
+run each generated-target capture command and intake the accepted transcript:
+
+```sh
+scripts/capture_chipyard_linux_evidence.sh all
+python3 scripts/check_cpu_ap_evidence.py --require-evidence
+```
+
+or archive already-captured serial/test logs one by one:
 
 ```sh
 python3 scripts/capture_cpu_ap_evidence.py intake opensbi-boot \
@@ -117,14 +164,27 @@ python3 scripts/check_cpu_ap_evidence.py --require-evidence
 6. Attempt AOSP evidence on Linux:
 
 ```sh
-AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh \
-  --run-cuttlefish --run-cts --run-vts
+AOSP_DIR=/path/to/aosp make aosp-linux-preflight
+AOSP_DIR=/path/to/aosp make aosp-linux-handoff-build-only
+AOSP_DIR=/path/to/aosp make aosp-linux-handoff
 python3 scripts/check_android_sim_boot.py
 python3 scripts/check_software_bsp.py aosp --require-evidence
 ```
 
-Cuttlefish remains Android reference evidence unless it is tied to the generated
-OpenPhone AP simulator by a separate manifest-bound transcript.
+`aosp-linux-preflight` writes
+`build/reports/aosp_linux_preflight.json` with separate import, build,
+Cuttlefish, CTS/VTS intake, QEMU, and Renode tracks. On a host that only has
+the modern Cuttlefish command, set `AOSP_CUTTLEFISH_LAUNCHER=cvd`; otherwise
+the scripts prefer `launch_cvd` and fall back to `cvd start`.
+
+`aosp-linux-handoff-build-only` is the bounded first pass: it imports the
+device tree and captures lunch/vendorimage/VINTF/SELinux evidence, then stops
+before simulator and CTS/VTS work. `aosp-linux-handoff` attempts the full
+virtual-device sequence and keeps failing until real transcripts satisfy
+`docs/android/bsp-log-evidence-manifest.json`.
+
+Cuttlefish remains Android reference evidence unless it is tied to the
+generated OpenPhone AP simulator by a separate manifest-bound transcript.
 
 7. Re-run the top-level handoff/MVP checks:
 

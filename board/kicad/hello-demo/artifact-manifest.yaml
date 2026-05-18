@@ -149,10 +149,15 @@ artifact_groups:
           - board/kicad/hello-demo/fab/position/*.csv
   board_reviews:
     owner: board_closure
-    status: missing
+    status: draft
     artifacts:
       - name: assembly_dfm_review
-        status: missing
+        status: draft
+        metadata:
+          reviewer: local manufacturing preflight
+          date: 2026-05-18
+          pcb_revision: r0-nonrelease
+          disposition: blocked_for_release
         required_metadata:
           - reviewer
           - date
@@ -162,7 +167,12 @@ artifact_groups:
           - docs/manufacturing/evidence/board/*dfm*
           - board/reports/fab/*dfm*
       - name: stackup_return_path_review
-        status: missing
+        status: draft
+        metadata:
+          reviewer: local SI/PI preflight
+          date: 2026-05-18
+          stackup_revision: not_selected
+          disposition: blocked_for_release
         required_metadata:
           - reviewer
           - date
@@ -171,8 +181,15 @@ artifact_groups:
         globs:
           - board/reports/si/*stackup*
           - docs/manufacturing/evidence/board/*stackup*
+          - docs/manufacturing/evidence/board/*si-pi*
       - name: package_board_net_cross_probe
-        status: missing
+        status: draft
+        metadata:
+          package_pinout_checksum: e0bc0ff6b04962667cf328efa6017ebf215408ac07d700f359141feadf08bcbe
+          kicad_schematic_checksum: e2ec1b8bec733c9162fb7e36cd90ecb145f8f6532e1a610abded05700e6aeea5
+          kicad_pcb_checksum: 71d6ec29bef190b3041ebdd90c6882a1578668085bdb0c144e31afe4264250e6
+          reviewer: local board/package preflight
+          disposition: blocked_for_release
         checksum_manifest: docs/manufacturing/evidence/board/package-board-net-cross-probe.sha256
         required_metadata:
           - package_pinout_checksum
@@ -185,10 +202,15 @@ artifact_groups:
           - board/reports/fab/*cross-probe*
   si_pi_current_blockers:
     owner: si_pi_closure
-    status: missing
+    status: draft
     artifacts:
       - name: board_signal_integrity_report
-        status: missing
+        status: draft
+        metadata:
+          board_revision: r0-nonrelease
+          stackup_revision: not_selected
+          source_checksum: 2a91443a11174380290f59a72b250c8b2d5a3ee664cfc69efc0d172b74a91a23
+          disposition: blocked_for_release
         required_metadata:
           - board_revision
           - stackup_revision
@@ -198,7 +220,12 @@ artifact_groups:
           - board/reports/si/**/*si*
           - docs/manufacturing/evidence/board/**/*si*
       - name: board_power_integrity_report
-        status: missing
+        status: draft
+        metadata:
+          board_revision: r0-nonrelease
+          rail_model_revision: not_available
+          source_checksum: 2a91443a11174380290f59a72b250c8b2d5a3ee664cfc69efc0d172b74a91a23
+          disposition: blocked_for_release
         required_metadata:
           - board_revision
           - rail_model_revision
@@ -208,7 +235,12 @@ artifact_groups:
           - board/reports/pi/**/*pi*
           - docs/manufacturing/evidence/board/**/*pi*
       - name: first_article_current_limits
-        status: missing
+        status: draft
+        metadata:
+          board_revision: r0-nonrelease
+          rail_limit_revision: local_draft_2026-05-18
+          source_checksum: b9e116f4148a656b4871cddf4074922e1a21b280cd1d3eddff9a8dcfef8df7cc
+          disposition: blocked_for_release
         required_metadata:
           - board_revision
           - rail_limit_revision

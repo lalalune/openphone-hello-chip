@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Run a command with a wall-clock timeout and clear failure metadata."""
+
 from __future__ import annotations
 
 import argparse
+import os
+import signal
 import subprocess
 import sys
-from datetime import datetime, timezone
+from contextlib import suppress
+from datetime import UTC, datetime
 
 
 def main() -> int:
@@ -23,31 +27,39 @@ def main() -> int:
     if args.timeout_seconds <= 0:
         parser.error("--timeout-seconds must be positive")
 
-    started_at = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(UTC).isoformat()
     print(
         f"[timeout-wrapper] label={args.label} timeout_seconds={args.timeout_seconds} "
         f"started_at={started_at}",
         flush=True,
     )
+    proc = subprocess.Popen(command, start_new_session=True)
     try:
-        result = subprocess.run(command, timeout=args.timeout_seconds, check=False)
+        proc.wait(timeout=args.timeout_seconds)
     except subprocess.TimeoutExpired as exc:
-        ended_at = datetime.now(timezone.utc).isoformat()
+        ended_at = datetime.now(UTC).isoformat()
+        with suppress(ProcessLookupError):
+            os.killpg(proc.pid, signal.SIGTERM)
         print(
             f"[timeout-wrapper] label={args.label} status=timeout "
             f"timeout_seconds={args.timeout_seconds} ended_at={ended_at}",
             file=sys.stderr,
             flush=True,
         )
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            with suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGKILL)
         return 124 if exc.timeout else 1
 
-    ended_at = datetime.now(timezone.utc).isoformat()
+    ended_at = datetime.now(UTC).isoformat()
     print(
         f"[timeout-wrapper] label={args.label} status=exit "
-        f"exit_code={result.returncode} ended_at={ended_at}",
+        f"exit_code={proc.returncode} ended_at={ended_at}",
         flush=True,
     )
-    return int(result.returncode)
+    return int(proc.returncode)
 
 
 if __name__ == "__main__":

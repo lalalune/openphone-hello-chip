@@ -12,6 +12,15 @@ CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
 ARTIFACT_MANIFEST = ROOT / "docs/android/bsp-artifact-manifest.json"
 LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
 BOOT_TRANSCRIPT_SCHEMA = ROOT / "docs/android/boot-transcript.schema.json"
+EVIDENCE_MANIFEST = ROOT / "docs/evidence/software-bsp-evidence-manifest.json"
+AOSP_EVIDENCE_MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
+AOSP_REFERENCE_ONLY_BOUNDARY = "reference_only_not_hello_chip_ap_evidence"
+AOSP_VIRTUAL_DEVICE_BOUNDARY = "virtual_device_smoke_only_not_boot_or_compatibility_evidence"
+AOSP_REFERENCE_ONLY_PATHS = [
+    "docs/evidence/android/cuttlefish_riscv64_smoke.log",
+    "docs/evidence/android/qemu_riscv64_smoke.log",
+    "docs/evidence/android/renode_hello_soc_smoke.log",
+]
 DEFAULT_EVIDENCE_METADATA = ["EXTERNAL_TREE=", "COMMAND=", "START_UTC=", "END_UTC=", "RESULT="]
 ANDROID_COMPAT_METADATA = [
     "EXTERNAL_TREE=",
@@ -111,16 +120,108 @@ TARGETS: dict[str, dict[str, Any]] = {
     },
 }
 
+FORBIDDEN_TRANSCRIPT_MARKERS = [
+    "placeholder",
+    "substitute",
+    "blocked",
+    "not run",
+    "status=FAIL",
+    "status: FAIL",
+    "openphone-evidence: status=FAIL",
+]
+
+
+def rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
 
 def load_json(path: Path, errors: list[str]) -> dict:
     if not path.is_file():
         errors.append(f"{path.relative_to(ROOT)} is missing")
         return {}
     try:
-        return json.loads(path.read_text())
+        payload = json.loads(path.read_text())
     except json.JSONDecodeError as exc:
         errors.append(f"{path.relative_to(ROOT)} is invalid JSON: {exc}")
         return {}
+    if not isinstance(payload, dict):
+        errors.append(f"{path.relative_to(ROOT)} must be a JSON object")
+        return {}
+    return payload
+
+
+def load_evidence_manifest(errors: list[str] | None = None) -> dict:
+    return load_json(EVIDENCE_MANIFEST, errors if errors is not None else [])
+
+
+def evidence_items_for_target(name: str) -> list[dict[str, Any]]:
+    manifest = load_evidence_manifest([])
+    return list(manifest.get("targets", {}).get(name, {}).get("evidence", []))
+
+
+def validate_evidence_file(item: dict[str, Any]) -> list[str]:
+    path = ROOT / item["path"]
+    problems: list[str] = []
+    if not path.is_file():
+        return [f"missing {item['path']}"]
+
+    text = path.read_text(errors="ignore")
+    if len(text.encode("utf-8")) < int(item.get("min_bytes", 0)):
+        problems.append(
+            f"{item['path']} is too small for external evidence "
+            f"({len(text.encode('utf-8'))} bytes < {item.get('min_bytes', 0)})"
+        )
+
+    missing_required = [term for term in item.get("required_strings", []) if term not in text]
+    if missing_required:
+        problems.append(
+            f"{item['path']} missing required transcript markers: " + ", ".join(missing_required)
+        )
+
+    for group in item.get("at_least_one", []):
+        if not any(term in text for term in group):
+            problems.append(
+                f"{item['path']} missing at least one transcript marker from: " + ", ".join(group)
+            )
+
+    configured_forbidden = item.get("forbidden_strings", [])
+    lowered = text.lower()
+    forbidden = [
+        term
+        for term in [*FORBIDDEN_TRANSCRIPT_MARKERS, *configured_forbidden]
+        if term.lower() in lowered
+    ]
+    if forbidden:
+        problems.append(
+            f"{item['path']} contains forbidden placeholder/failure markers: "
+            + ", ".join(dict.fromkeys(forbidden))
+        )
+
+    status_match = re.search(r"openphone-evidence:\s*status=([A-Z]+)", text)
+    if not status_match:
+        problems.append(f"{item['path']} missing openphone-evidence PASS status marker")
+    elif status_match.group(1) != "PASS":
+        problems.append(f"{item['path']} reports non-PASS evidence status: {status_match.group(1)}")
+
+    claim_boundary = item.get("claim_boundary", "")
+    if claim_boundary in {AOSP_REFERENCE_ONLY_BOUNDARY, AOSP_VIRTUAL_DEVICE_BOUNDARY}:
+        marker = f"openphone-evidence: claim_boundary={claim_boundary}"
+        if marker not in text:
+            problems.append(f"{item['path']} missing reference-only claim boundary marker")
+
+    return problems
+
+
+def validate_manifest_evidence(name: str, *, include_missing: bool = True) -> list[str]:
+    problems: list[str] = []
+    for item in evidence_items_for_target(name):
+        if not include_missing and not (ROOT / item["path"]).is_file():
+            continue
+        problems.extend(validate_evidence_file(item))
+    return problems
 
 
 def existing_repo_path(path: str) -> Path | None:
@@ -366,6 +467,7 @@ def check_target(name: str) -> tuple[list[str], list[str]]:
     missing_evidence = [path for path in spec.get("evidence", []) if not (ROOT / path).is_file()]
     for path in spec.get("evidence", []):
         blockers.extend(check_log_evidence(path, errors, strict=False))
+    blockers.extend(validate_manifest_evidence(name, include_missing=False))
     if missing_evidence:
         manifest = load_json(LOG_EVIDENCE_MANIFEST, [])
         missing_with_codes = []
@@ -386,29 +488,160 @@ def check_target(name: str) -> tuple[list[str], list[str]]:
 
 def target_report(name: str) -> dict:
     errors, blockers = check_target(name)
-    missing_evidence = [
-        path for path in TARGETS[name].get("evidence", []) if not (ROOT / path).is_file()
+    manifest_items = evidence_items_for_target(name)
+    missing_evidence = [item for item in manifest_items if not (ROOT / item["path"]).is_file()]
+    invalid_evidence = [
+        {"path": item["path"], "problems": validate_evidence_file(item)}
+        for item in manifest_items
+        if (ROOT / item["path"]).is_file() and validate_evidence_file(item)
     ]
-    manifest = load_json(LOG_EVIDENCE_MANIFEST, [])
+    log_manifest = load_json(LOG_EVIDENCE_MANIFEST, [])
     missing = []
-    for path in missing_evidence:
-        spec = manifest.get("logs", {}).get(path, {})
+    for item in missing_evidence:
+        path = item["path"]
+        spec = log_manifest.get("logs", {}).get(path, {})
         missing.append(
             {
                 "path": path,
                 "blocker_code": spec.get("blocker_code", "missing_external_evidence"),
-                "producer_command": spec.get("producer_command", ""),
-                "claim_boundary": spec.get("claim_boundary", ""),
+                "artifact": item.get("artifact", ""),
+                "capture_command": item.get("capture_command", spec.get("producer_command", "")),
+                "validation_command": item.get(
+                    "validation_command",
+                    f"python3 scripts/check_software_bsp.py {name} --require-evidence",
+                ),
+                "claim_boundary": item.get("claim_boundary", spec.get("claim_boundary", "")),
             }
         )
     return {
         "target": name,
         "scaffold_status": "FAIL" if errors else "PASS",
-        "evidence_status": "BLOCKED" if missing_evidence else ("FAIL" if errors else "PASS"),
+        "evidence_status": (
+            "BLOCKED" if missing_evidence else ("FAIL" if invalid_evidence or errors else "PASS")
+        ),
         "errors": errors,
         "blockers": blockers,
         "missing_evidence": missing,
+        "invalid_evidence": invalid_evidence,
     }
+
+
+def print_status(name: str) -> int:
+    report = target_report(name)
+    print(f"{name}: software BSP evidence status")
+    print(f"  scaffold: {report['scaffold_status']}")
+    print(f"  evidence: {report['evidence_status']}")
+    for error in report["errors"]:
+        print(f"  [SCAFFOLD-ERROR] {error}")
+    for item in evidence_items_for_target(name):
+        path = ROOT / item["path"]
+        state = "PRESENT" if path.is_file() else "MISSING"
+        print(f"  [{state}] {item.get('artifact', item['path'])}")
+        print(f"    path: {item['path']}")
+        print(f"    capture: {item.get('capture_command', '')}")
+        print(
+            "    validate: "
+            + item.get(
+                "validation_command",
+                f"python3 scripts/check_software_bsp.py {name} --require-evidence",
+            )
+        )
+        if not path.is_file():
+            print(f"    blocker: missing {item['path']}")
+        else:
+            for problem in validate_evidence_file(item):
+                print(f"    problem: {problem}")
+    if report["evidence_status"] != "PASS":
+        return 2
+    return 0 if report["scaffold_status"] == "PASS" else 1
+
+
+def capture_plan_commands(
+    name: str,
+    *,
+    buildroot: str | None,
+    linux: str | None,
+    aosp: str | None,
+    target_host: str | None,
+    qemu_smoke_cmd: str | None,
+    renode_smoke_cmd: str | None,
+) -> list[str]:
+    target = target_host or "TARGET"
+    if name == "buildroot":
+        tree = buildroot or "/path/to/buildroot"
+        return [
+            f"sw/buildroot/scripts/import-buildroot-external.sh --check {tree}",
+            f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} defconfig",
+            f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} image-manifest",
+            "HELLO_SMOKE_CMD='ssh "
+            + target
+            + " /usr/bin/hello-mmio-smoke' "
+            + f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} smoke",
+            "python3 scripts/check_software_bsp.py buildroot --require-evidence",
+        ]
+    if name == "linux":
+        tree = linux or "/path/to/linux"
+        return [
+            f"sw/linux/scripts/import-linux-bsp.sh --check {tree}",
+            f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} kernel-build",
+            f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} dtb-check",
+            "HELLO_SMOKE_CMD='ssh "
+            + target
+            + " /tmp/hello-mmio-smoke' "
+            + f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} smoke",
+            "python3 scripts/check_software_bsp.py linux --require-evidence",
+        ]
+    if name == "aosp":
+        tree = aosp or "/path/to/aosp"
+        commands = [
+            f"sw/aosp-device/import-aosp-device.sh --check {tree}",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} lunch",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} vendorimage",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} checkvintf",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} sepolicy-build",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} selinux-neverallow",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} cts-vts-plan",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} cuttlefish-smoke",
+        ]
+        if qemu_smoke_cmd:
+            commands.append(
+                f"AOSP_QEMU_SMOKE_COMMAND={qemu_smoke_cmd!r} "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} qemu-smoke"
+            )
+        else:
+            commands.append(
+                "AOSP_QEMU_SMOKE_COMMAND='/exact/qemu-system-riscv64 smoke command' "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} qemu-smoke"
+            )
+        if renode_smoke_cmd:
+            commands.append(
+                f"AOSP_RENODE_SMOKE_COMMAND={renode_smoke_cmd!r} "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} renode-smoke"
+            )
+        else:
+            commands.append(
+                "AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} renode-smoke"
+            )
+        commands.append("python3 scripts/check_software_bsp.py aosp --require-evidence")
+        return commands
+    raise ValueError(name)
+
+
+def print_capture_plan(args: argparse.Namespace) -> None:
+    names = TARGETS.keys() if args.target == "all" else [args.target]
+    for name in names:
+        print(f"{name}: capture/import plan")
+        for command in capture_plan_commands(
+            name,
+            buildroot=args.buildroot,
+            linux=args.linux,
+            aosp=args.aosp,
+            target_host=args.target_host,
+            qemu_smoke_cmd=args.qemu_smoke_cmd,
+            renode_smoke_cmd=args.renode_smoke_cmd,
+        ):
+            print(f"  {command}")
 
 
 def print_evidence_plan(name: str) -> None:
@@ -438,6 +671,40 @@ def print_evidence_plan(name: str) -> None:
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "status":
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", choices=["status"])
+        parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
+        parser.add_argument("--json", action="store_true")
+        args = parser.parse_args()
+        names = TARGETS.keys() if args.target == "all" else [args.target]
+        if args.json:
+            reports = [target_report(name) for name in names]
+            print(
+                json.dumps(
+                    {"schema": "openphone.software_bsp_status.v1", "targets": reports},
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 2 if any(report["evidence_status"] != "PASS" for report in reports) else 0
+        statuses = [print_status(name) for name in names]
+        return max(statuses) if statuses else 0
+
+    if len(sys.argv) > 1 and sys.argv[1] == "capture-plan":
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", choices=["capture-plan"])
+        parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
+        parser.add_argument("--buildroot")
+        parser.add_argument("--linux")
+        parser.add_argument("--aosp")
+        parser.add_argument("--target-host")
+        parser.add_argument("--qemu-smoke-cmd")
+        parser.add_argument("--renode-smoke-cmd")
+        args = parser.parse_args()
+        print_capture_plan(args)
+        return 0
+
     parser = argparse.ArgumentParser()
     parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
     parser.add_argument(
@@ -520,6 +787,17 @@ def main() -> int:
             print(f"{name} BSP external evidence blocked:")
             for blocker in blockers:
                 print(f"  - {blocker}")
+            for item in evidence_items_for_target(name):
+                if not (ROOT / item["path"]).is_file():
+                    print(f"  - missing {item['path']}")
+                    print(f"    capture: {item.get('capture_command', '')}")
+                    print(
+                        "    validate: "
+                        + item.get(
+                            "validation_command",
+                            f"python3 scripts/check_software_bsp.py {name} --require-evidence",
+                        )
+                    )
 
     return 1 if failed else 0
 

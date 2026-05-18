@@ -65,6 +65,51 @@
     "accumulator_dtype": "int32",
     "storage": "64-byte MMIO scratchpad"
   },
+  "descriptor_queue_submission": {
+    "runtime_api": "submit_descriptors",
+    "state": "reserved_blocked",
+    "registers": [
+      "DESC_BASE",
+      "DESC_HEAD",
+      "DESC_TAIL",
+      "DESC_STATUS",
+      "CMD_PARAM"
+    ],
+    "required_error_reporting": [
+      "timeout_polls",
+      "ctrl_status",
+      "desc_status",
+      "perf_counters"
+    ],
+    "not_claimed": "DMA-backed tensor execution is not implemented until RTL/BSP evidence completes descriptors"
+  },
+  "precision_matrix": [
+    {
+      "precision": "INT8",
+      "state": "supported_prototype",
+      "path": "DOT4_S8 and bounded GEMM_S8 through 64-byte MMIO scratchpad"
+    },
+    {
+      "precision": "INT4",
+      "state": "supported_prototype",
+      "path": "DOT8_S4 packed dot only; no tensor GEMM/compiler path"
+    },
+    {
+      "precision": "FP16",
+      "state": "blocked",
+      "path": "no opcode, datapath, compiler lowering, or measured benchmark path"
+    },
+    {
+      "precision": "BF16",
+      "state": "blocked",
+      "path": "no opcode, datapath, compiler lowering, or measured benchmark path"
+    },
+    {
+      "precision": "FP8",
+      "state": "blocked",
+      "path": "no opcode, datapath, compiler lowering, or measured benchmark path"
+    }
+  ],
   "runtime_evidence_requirements": [
     "Runtime register constants match this manifest",
     "BSP contract header exposes the same NPU perf offsets",

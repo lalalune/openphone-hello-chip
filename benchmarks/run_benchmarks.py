@@ -661,6 +661,12 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
             max_tops_from_counters = (macs * 2.0) / (cycles / float(hz)) / 1e12
             if tops > max_tops_from_counters * 1.05:
                 errors.append("measurements.observed_tops exceeds MAC/cycle/hz-derived upper bound")
+            if max_tops_from_counters > 0 and abs(tops - max_tops_from_counters) > (
+                max_tops_from_counters * 0.05
+            ):
+                errors.append(
+                    "measurements.observed_tops must match MAC/cycle/hz-derived value within 5%"
+                )
         formula = dotted_get(data, "measurements.tops_formula")
         if (
             not isinstance(formula, str)

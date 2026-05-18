@@ -27,6 +27,12 @@ FORBIDDEN_LOCAL_CLAIMS = {
     "IR-drop or EM closed.",
     "Thermal closed.",
 }
+REQUIRED_CAPTURE_WORK_ORDERS = {
+    "fpga_bitstream_evidence_capture",
+    "kicad_fab_package_capture",
+    "package_vendor_review_capture",
+    "si_pi_current_thermal_capture",
+}
 
 
 def load_yaml(path: Path) -> dict:
@@ -52,6 +58,94 @@ def validate_text_list(label: str, value: object, min_len: int, failures: list[s
         else:
             strings.append(item)
     return strings
+
+
+def manifest_command_ids(manifest_path: str, failures: list[str]) -> set[str]:
+    path = ROOT / manifest_path
+    if not path.is_file():
+        return set()
+    data = yaml.safe_load(path.read_text())
+    if not isinstance(data, dict):
+        failures.append(f"{manifest_path} must be a YAML mapping")
+        return set()
+    manifest_name = str(data.get("manifest") or manifest_path)
+    groups = data.get("artifact_groups", {})
+    if not isinstance(groups, dict):
+        return set()
+    command_ids: set[str] = set()
+    for group_name, group in groups.items():
+        if not isinstance(group, dict):
+            continue
+        commands = group.get("cli_commands", {})
+        if not isinstance(commands, dict):
+            continue
+        for command_name in commands:
+            command_ids.add(f"{manifest_name}.{group_name}.{command_name}")
+    return command_ids
+
+
+def validate_capture_work_orders(work_order: dict, failures: list[str]) -> None:
+    orders = work_order.get("evidence_capture_work_orders")
+    if not isinstance(orders, list) or not orders:
+        failures.append("work order must list evidence_capture_work_orders")
+        return
+
+    seen_ids: set[str] = set()
+    for index, order in enumerate(orders):
+        label = f"evidence_capture_work_orders[{index}]"
+        if not isinstance(order, dict):
+            failures.append(f"{label} must be a mapping")
+            continue
+        order_id = order.get("id")
+        if not isinstance(order_id, str) or not order_id:
+            failures.append(f"{label}.id must be a non-empty string")
+            order_id = label
+        if order_id in seen_ids:
+            failures.append(f"{label} duplicate id: {order_id}")
+        seen_ids.add(order_id)
+
+        if order.get("gate") not in REQUIRED_GATES:
+            failures.append(f"{order_id}: invalid gate")
+        if not isinstance(order.get("owner"), str) or not order["owner"]:
+            failures.append(f"{order_id}: missing owner")
+
+        manifest = order.get("manifest")
+        if not isinstance(manifest, str) or not manifest:
+            failures.append(f"{order_id}: missing manifest")
+        elif not is_relative_path_like(manifest) or not (ROOT / manifest).is_file():
+            failures.append(f"{order_id}.manifest must point at an existing repo file: {manifest}")
+
+        command_ids = order.get("local_command_ids")
+        if not isinstance(command_ids, list) or not all(
+            isinstance(item, str) for item in command_ids
+        ):
+            failures.append(f"{order_id}.local_command_ids must be a list of strings")
+            command_ids = []
+        elif isinstance(manifest, str) and (ROOT / manifest).is_file():
+            available_command_ids = manifest_command_ids(manifest, failures)
+            missing_command_ids = sorted(set(command_ids) - available_command_ids)
+            if missing_command_ids:
+                failures.append(
+                    f"{order_id}.local_command_ids missing from {manifest}: "
+                    + ", ".join(missing_command_ids)
+                )
+
+        output_roots = validate_text_list(
+            f"{order_id}.output_roots", order.get("output_roots"), 1, failures
+        )
+        for output_root in output_roots:
+            if not is_relative_path_like(output_root):
+                failures.append(f"{order_id}.output_roots must be relative: {output_root}")
+
+        blockers = validate_text_list(
+            f"{order_id}.blocked_until", order.get("blocked_until"), 1, failures
+        )
+        if not any("archived" in blocker.lower() for blocker in blockers):
+            failures.append(f"{order_id}.blocked_until must require archived evidence")
+
+    missing = sorted(REQUIRED_CAPTURE_WORK_ORDERS - seen_ids)
+    if missing:
+        failures.append("missing evidence_capture_work_orders: " + ", ".join(missing))
 
 
 def main() -> int:
@@ -98,6 +192,7 @@ def main() -> int:
             failures.append("claim_policy must limit local machine-check claims")
 
     validate_text_list("global_acceptance", work_order.get("global_acceptance"), 4, failures)
+    validate_capture_work_orders(work_order, failures)
 
     gaps = gap_manifest.get("gaps")
     if not isinstance(gaps, list):

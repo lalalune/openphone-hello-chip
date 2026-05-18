@@ -140,6 +140,36 @@ REQUIRED_ROADMAP_PHASES = {
     "phase5_lpddr_phone_target": "blocked",
 }
 
+REQUIRED_BANDWIDTH_LATENCY_FIELDS = {
+    "schema",
+    "target_id",
+    "capture_utc",
+    "memory_type",
+    "capacity_gib",
+    "clock_state",
+    "thermal_state",
+    "benchmark_commands",
+    "raw_log_paths",
+    "parsed_metrics",
+    "pass_fail_against_phone_2028_target_profile",
+}
+
+REQUIRED_BANDWIDTH_LATENCY_METRICS = {
+    "peak_bandwidth_gbps",
+    "sustained_bandwidth_gbps",
+    "p95_random_read_latency_ns",
+    "contended_cpu_latency_ns",
+    "display_underflow_count",
+    "dma_copy_bandwidth_gbps",
+}
+
+REQUIRED_BANDWIDTH_LATENCY_ARTIFACTS = {
+    "docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json",
+    "docs/evidence/memory/contended_bandwidth_latency_report.json",
+    "docs/evidence/memory/contended_android_memory_trace.json",
+    "docs/evidence/memory/phone_2028_memory_scorecard.json",
+}
+
 REQUIRED_PHASE_TRANSITIONS = [
     ("phase0_sram_dma_containment", "phase1_capacity_and_counters"),
     ("phase1_capacity_and_counters", "phase2_burst_fabric_model"),
@@ -770,6 +800,9 @@ def check_gate(errors: list[str]) -> None:
             "rtl_elaboration": "make rtl-check",
             "local_contract_sim": "make cocotb-contract",
             "benchmark_parser_dry_run": "make benchmarks-dry-run",
+            "inspect_generated_ap_memory_map": "make chipyard-generated-linux-contract-check",
+            "capture_payload_preflight": "make chipyard-linux-payload-check",
+            "future_lpddr_evidence_placeholder": "make memory-uma-claim-gate",
         }.items():
             require(
                 next_commands.get(key) == command,
@@ -777,7 +810,70 @@ def check_gate(errors: list[str]) -> None:
                 errors,
             )
 
+    check_bandwidth_latency_evidence_contract(data, errors)
     check_generated_ap_memory_audit(data, errors)
+
+
+def check_bandwidth_latency_evidence_contract(data: dict, errors: list[str]) -> None:
+    contract = data.get("bandwidth_latency_evidence_contract")
+    require(
+        isinstance(contract, dict),
+        "memory/UMA gate missing bandwidth_latency_evidence_contract",
+        errors,
+    )
+    if not isinstance(contract, dict):
+        return
+
+    require(
+        contract.get("status") == "blocked_until_real_target_measurements",
+        "bandwidth/latency evidence contract must stay blocked until real target measurements",
+        errors,
+    )
+
+    applies_to = set(contract.get("applies_to") or [])
+    missing_artifacts = sorted(REQUIRED_BANDWIDTH_LATENCY_ARTIFACTS - applies_to)
+    require(
+        not missing_artifacts,
+        "bandwidth/latency evidence contract missing artifacts: " + ", ".join(missing_artifacts),
+        errors,
+    )
+    for artifact in applies_to:
+        require(
+            valid_relative_path(artifact),
+            f"bandwidth/latency artifact path must be relative: {artifact}",
+            errors,
+        )
+        if valid_relative_path(artifact):
+            require(
+                not (ROOT / artifact).exists(),
+                f"bandwidth/latency evidence is blocked but artifact exists: {artifact}",
+                errors,
+            )
+
+    fields = set(contract.get("minimum_report_fields") or [])
+    missing_fields = sorted(REQUIRED_BANDWIDTH_LATENCY_FIELDS - fields)
+    require(
+        not missing_fields,
+        "bandwidth/latency evidence contract missing report fields: " + ", ".join(missing_fields),
+        errors,
+    )
+
+    metrics = set(contract.get("required_metrics") or [])
+    missing_metrics = sorted(REQUIRED_BANDWIDTH_LATENCY_METRICS - metrics)
+    require(
+        not missing_metrics,
+        "bandwidth/latency evidence contract missing metrics: " + ", ".join(missing_metrics),
+        errors,
+    )
+
+    invalid = "\n".join(contract.get("invalid_evidence") or [])
+    for token in (
+        "Host benchmark",
+        "Simulator wall-clock",
+        "AXI-Lite SRAM model",
+        "Generated memmap",
+    ):
+        require(token in invalid, f"bandwidth/latency invalid_evidence missing {token}", errors)
 
 
 def parse_int_value(value: object) -> int | None:

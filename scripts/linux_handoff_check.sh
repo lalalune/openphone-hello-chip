@@ -62,6 +62,8 @@ run_required "python compile" python3 -m py_compile \
 	scripts/check_chipyard_verilator_preflight.py \
 	scripts/check_chipyard_verilator_linux_smoke.py \
 	scripts/check_chipyard_generated_linux_contract.py \
+	scripts/locate_chipyard_linux_payload.py \
+	scripts/test_chipyard_linux_payload_locator.py \
 	scripts/check_android_sim_boot.py \
 	scripts/check_qemu_linux_payload_status.py \
 	scripts/fetch_qemu_linux_payload.py
@@ -70,6 +72,7 @@ run_required "qemu status tests" python3 scripts/test_qemu_smoke_status.py
 run_required "mvp simulator status tests" python3 scripts/test_mvp_simulator_status.py
 run_required "android simulator status tests" python3 scripts/test_android_sim_boot_status.py
 run_required "software BSP parser tests" python3 scripts/test_software_bsp_checks.py
+run_required "Chipyard Linux payload locator tests" python3 scripts/test_chipyard_linux_payload_locator.py
 run_required "qemu linux payload fetch" python3 scripts/fetch_qemu_linux_payload.py
 run_required "qemu linux OS boot smoke" env QEMU_OS_BOOT_SECONDS="${QEMU_OS_BOOT_SECONDS:-30}" scripts/run_qemu.sh --check-os
 run_required "qemu linux payload status" python3 scripts/check_qemu_linux_payload_status.py
@@ -77,6 +80,7 @@ run_required "qemu linux payload status" python3 scripts/check_qemu_linux_payloa
 run_optional_blocking "Chipyard Verilator preflight" python3 scripts/check_chipyard_verilator_preflight.py
 run_optional_blocking "Chipyard generated AP gate" python3 scripts/check_chipyard_generator_manifest.py --require-generated
 run_optional_blocking "Chipyard generated Linux contract gate" python3 scripts/check_chipyard_generated_linux_contract.py
+run_optional_blocking "Chipyard Linux payload locator" python3 scripts/locate_chipyard_linux_payload.py --require
 run_optional_blocking "Chipyard payload path gate" python3 scripts/check_chipyard_payload_path.py
 run_optional_blocking "Chipyard Verilator Linux smoke gate" python3 scripts/check_chipyard_verilator_linux_smoke.py
 run_optional_blocking "CPU/AP Linux evidence gate" python3 scripts/check_cpu_ap_evidence.py --require-evidence

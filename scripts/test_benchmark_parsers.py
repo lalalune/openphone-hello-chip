@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNNER_PATH = ROOT / "benchmarks/run_benchmarks.py"
 PLAN_PATH = ROOT / "benchmarks/configs/benchmark_plan.json"
 BLOCKED_METADATA = ROOT / "benchmarks/metadata/strict-blocked-template.json"
+NNAPI_PROOF_CHECK = ROOT / "scripts/check_hello_npu_nnapi_proof.py"
 
 spec = importlib.util.spec_from_file_location("run_benchmarks", RUNNER_PATH)
 if spec is None or spec.loader is None:
@@ -187,6 +188,47 @@ def test_blocked_metadata_template_covers_config_assets() -> None:
                 raise AssertionError(f"{asset_name}.{field} must be a blocked marker")
 
 
+def test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        temp_root = Path(td)
+        temp_plan = temp_root / "benchmark_plan_missing_nnapi_proof.json"
+        plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
+        for bench in plan["benchmarks"]:
+            if bench["name"] == "tflite_hello_npu":
+                bench["capability_artifacts"][0]["path"] = (
+                    "benchmarks/capabilities/definitely_missing_hello_npu_nnapi.proof.json"
+                )
+        temp_plan.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
+        status_path = Path(td) / "status.json"
+        result = subprocess.run(
+            [
+                "python3",
+                str(NNAPI_PROOF_CHECK),
+                "--config",
+                str(temp_plan),
+                "--status-json",
+                str(status_path),
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+
+    if result.returncode != 2:
+        raise AssertionError(result.stdout)
+    assert_equal(status["status"], "blocked", "proof readiness status")
+    assert_equal(status["can_generate_locally"], False, "local proof generation")
+    blockers = status.get("local_blockers", [])
+    if not any(
+        blocker.get("blocked_reason") == "missing_hello_npu_nnapi_accelerator"
+        for blocker in blockers
+    ):
+        raise AssertionError(json.dumps(status, indent=2))
+
+
 def main() -> int:
     for test in (
         test_suite_parsers_accept_real_formats,
@@ -194,6 +236,7 @@ def main() -> int:
         test_simulator_parser_accepts_calibrated_counter_export_shape,
         test_strict_missing_exits_two_and_preserves_blockers,
         test_blocked_metadata_template_covers_config_assets,
+        test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker,
     ):
         test()
         print(f"PASS {test.__name__}")

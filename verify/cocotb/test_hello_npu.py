@@ -221,7 +221,7 @@ async def npu_rejects_invalid_opcode_and_clears_error_irq(dut):
     await write_reg(dut, 3, 1)
     assert await poll_done(dut) == 0x6
     assert int(dut.irq.value) == 1
-    assert await read_reg(dut, 0x0D) == 1
+    assert await read_reg(dut, 0x17) == 1
 
     await write_reg(dut, 3, 2)
     assert await read_reg(dut, 3) == 0
@@ -268,8 +268,56 @@ async def npu_gemm_invalid_config_reports_error_without_touching_scratch(dut):
     await write_reg(dut, 0x03, 1)
 
     assert await poll_done(dut) == 0x6
-    assert await read_reg(dut, 0x0D) == 1
+    assert await read_reg(dut, 0x17) == 1
     assert await read_reg(dut, 0x20) == 0xA5A5_5A5A
+
+
+@cocotb.test()
+async def npu_descriptor_submission_fails_closed_with_status_and_counters(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    await write_reg(dut, 0x10, 0x2000)
+    await write_reg(dut, 0x11, 0)
+    await write_reg(dut, 0x12, 1)
+    await write_reg(dut, 0x0C, 1)
+    await write_reg(dut, 0x03, 2)
+    await write_reg(dut, 0x03, 1)
+
+    assert await poll_done(dut) == 0x6
+    assert await read_reg(dut, 0x10) == 0x2000
+    assert await read_reg(dut, 0x11) == 0
+    assert await read_reg(dut, 0x12) == 1
+    assert await read_reg(dut, 0x13) == (1 << 9) | 0x6
+    assert await read_reg(dut, 0x0B) == 1
+    assert await read_reg(dut, 0x17) == 1
+    assert int(dut.irq.value) == 1
+
+    await write_reg(dut, 0x03, 2)
+    assert await read_reg(dut, 0x03) == 0
+    assert await read_reg(dut, 0x13) == 0
+
+
+@cocotb.test()
+async def npu_descriptor_empty_and_unaligned_base_report_specific_status(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    await write_reg(dut, 0x10, 0x2000)
+    await write_reg(dut, 0x11, 2)
+    await write_reg(dut, 0x12, 2)
+    await write_reg(dut, 0x0C, 1)
+    await write_reg(dut, 0x03, 1)
+    assert await poll_done(dut) == 0x6
+    assert await read_reg(dut, 0x13) == (2 << 9) | 0x1
+
+    await write_reg(dut, 0x03, 2)
+    await write_reg(dut, 0x10, 0x2002)
+    await write_reg(dut, 0x11, 2)
+    await write_reg(dut, 0x12, 3)
+    await write_reg(dut, 0x03, 1)
+    assert await poll_done(dut) == 0x6
+    assert await read_reg(dut, 0x13) == (3 << 9) | 0x4
 
 
 @cocotb.test()
@@ -329,6 +377,19 @@ async def npu_runtime_abi_sequence_matches_rtl_and_writes_coverage(dut):
         "covered_opcode_names": [case[0] for case in scalar_cases] + ["gemm_s8"],
         "gemm_shapes": [{"m": 2, "n": 2, "k": 3}],
         "status_bits": ["busy", "done", "error"],
+        "descriptor_queue": {
+            "registers": ["DESC_BASE", "DESC_HEAD", "DESC_TAIL", "DESC_STATUS", "CMD_PARAM"],
+            "reserved_submission_rejects": True,
+            "empty_queue_rejects": True,
+            "unaligned_base_rejects": True,
+            "dma_backed_tensor_execution": False,
+        },
+        "perf_counters": ["unsupported_ops", "cycles", "macs", "ops", "errors"],
+        "proof_boundary": {
+            "nnapi_acceleration": False,
+            "phone_class_tops": False,
+            "dma_backed_tensor_execution": False,
+        },
         "blocking_note": "Directed runtime ABI coverage only; no model, NNAPI, tensor descriptor, DMA-fed NPU, or performance claim coverage.",
     }
     out = REPO_ROOT / "build/reports/npu_cocotb_coverage.json"

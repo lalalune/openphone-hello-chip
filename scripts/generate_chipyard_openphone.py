@@ -23,6 +23,7 @@ FIRTOOL_OUT = OUT / "firtool-out/openphone_rocket_ap.sv"
 VERILOG = OUT / "openphone_rocket_ap.v"
 DTS = OUT / "openphone-hello.dts"
 SIMULATOR_DIR = OUT / "simulator"
+CHIPYARD_SIMULATOR = CHECKOUT / "sims/verilator/simulator-chipyard.harness-OpenPhoneRocketConfig"
 MANIFEST = OUT / "OpenPhoneRocketConfig.manifest.json"
 
 
@@ -147,9 +148,12 @@ def import_artifacts(env: dict[str, str]) -> None:
     )
     VERILOG.write_text(FIRTOOL_OUT.read_text(encoding="utf-8") + wrapper, encoding="utf-8")
     SIMULATOR_DIR.mkdir(parents=True, exist_ok=True)
+    if CHIPYARD_SIMULATOR.is_file():
+        shutil.copy2(CHIPYARD_SIMULATOR, SIMULATOR_DIR / CHIPYARD_SIMULATOR.name)
     (SIMULATOR_DIR / "README.md").write_text(
-        "Generated AP collateral is present. Full Chipyard Verilator simulation remains "
-        "gated by the host Chipyard makeflow and Linux boot transcripts.\n",
+        "Generated AP collateral import directory. The simulator executable is copied "
+        "from external/chipyard/sims/verilator only when that host build artifact exists; "
+        "Linux boot remains gated by external transcripts.\n",
         encoding="utf-8",
     )
 

@@ -26,6 +26,7 @@ REQUIRED_KERNEL_KEYS = {
     "throughput_ops_s",
     "observed_tops",
 }
+REQUIRED_PRECISIONS = {"INT4", "INT8", "FP16", "BF16", "FP8"}
 
 
 def main() -> int:
@@ -60,6 +61,44 @@ def main() -> int:
             errors.append("first open target must model descriptor queue depth >=1024")
         if int(config.get("scratchpad_kib", 0)) < 1024:
             errors.append("first open target must model at least 1 MiB aggregate scratchpad")
+        precision_matrix = config.get("precision_matrix")
+        if not isinstance(precision_matrix, list):
+            errors.append("scale simulator config must report precision_matrix")
+        else:
+            states = {
+                entry.get("precision"): entry.get("state")
+                for entry in precision_matrix
+                if isinstance(entry, dict)
+            }
+            missing = sorted(REQUIRED_PRECISIONS - set(states))
+            if missing:
+                errors.append(f"precision_matrix missing: {', '.join(missing)}")
+            if states.get("FP8") != "blocked":
+                errors.append("precision_matrix must keep FP8 blocked")
+            for projected in ("FP16", "BF16"):
+                if states.get(projected) != "projected":
+                    errors.append(f"precision_matrix must report {projected} as projected only")
+        descriptor_queue = config.get("descriptor_queue")
+        if not isinstance(descriptor_queue, dict):
+            errors.append("scale simulator config must report descriptor_queue")
+        elif (
+            descriptor_queue.get("runtime_mmio_support")
+            != "reserved_blocked_without_dma_engine_evidence"
+        ):
+            errors.append("descriptor_queue must not claim implemented runtime MMIO support")
+
+    artifacts = data.get("artifacts", {})
+    model = artifacts.get("model") if isinstance(artifacts, dict) else None
+    if not isinstance(model, dict):
+        errors.append("scale simulator must capture benchmark model hash")
+    else:
+        if model.get("path") != "benchmarks/models/mobile_smoke.tflite":
+            errors.append("model hash path must identify mobile_smoke.tflite")
+        sha = model.get("sha256")
+        if not isinstance(sha, str) or len(sha) != 64:
+            errors.append("model hash must be sha256 hex")
+        if not isinstance(model.get("bytes"), int) or model.get("bytes", 0) <= 0:
+            errors.append("model hash must include positive byte size")
 
     kernels = data.get("kernels")
     if not isinstance(kernels, list) or len(kernels) < 3:

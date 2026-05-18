@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -24,6 +25,19 @@ CONFIGS = {
     OPEN_2028_FIRST.name: OPEN_2028_FIRST,
     OPEN_2028_STRETCH.name: OPEN_2028_STRETCH,
 }
+MODEL = ROOT / "benchmarks/models/mobile_smoke.tflite"
+
+
+def file_hash(path: Path) -> dict[str, str | int]:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return {
+        "path": str(path.relative_to(ROOT)),
+        "sha256": digest.hexdigest(),
+        "bytes": path.stat().st_size,
+    }
 
 
 def build_workload(config: NpuScaleConfig):
@@ -82,6 +96,17 @@ def main() -> int:
             "supports_int4": config.supports_int4,
             "supports_bf16": config.supports_bf16,
             "supports_fp16": config.supports_fp16,
+            "supports_fp8": config.supports_fp8,
+            "precision_matrix": config.precision_matrix(),
+            "descriptor_queue": {
+                "depth": config.dma_queue_depth,
+                "submission_api": "modeled_only",
+                "runtime_mmio_support": "reserved_blocked_without_dma_engine_evidence",
+            },
+        },
+        "artifacts": {
+            "model": file_hash(MODEL),
+            "benchmark_model_hash_capture": "sha256",
         },
         "kernels": kernels,
         "summary": {

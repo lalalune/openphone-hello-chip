@@ -106,6 +106,15 @@ until a target report supplies all of the following:
 | Runtime counters | Cycles, MACs, ops, errors, unsupported ops, DMA read bytes, and DMA written bytes from the measured path |
 | Android HAL / NNAPI | AIDL HAL service proof, fail-closed SELinux policy, VTS/CTS results, `hello-npu` accelerator query, total/delegated node counts, zero CPU fallback, and zero unsupported ops |
 | Model binding | Exact model SHA-256 and transcript hashes |
+| Power/thermal | Calibrated power trace, thermal trace, frequency trace, calibration record, throttle state, and perf/W calculation with exact SHA-256 values |
+
+The Android gate starts from
+`docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json`.
+It stays blocked until an external AOSP validation job fills real HAL, VINTF,
+SELinux, VTS, CTS, NNAPI query, and absent-device fail-closed artifacts with
+matching hashes. The sustained efficiency gate starts from
+`docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json`
+and stays blocked until calibrated trace artifacts exist.
 
 For review, TOPS is bounded by the counter evidence:
 

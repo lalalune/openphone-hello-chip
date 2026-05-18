@@ -81,6 +81,35 @@ checkout, submodules, overlay, generated `env.sh`, `RISCV`, Java, Verilator,
 `firtool`, or RISC-V toolchain checks are not ready. A completed Verilog
 generation is generated-collateral evidence only; it is not a Linux boot claim.
 
+The explicit external generation sequence is:
+
+```sh
+cd /path/to/OpenPhone-AI-SoC
+python3 scripts/check_chipyard_import_preflight.py --require-checkout
+python3 scripts/check_chipyard_verilator_preflight.py
+scripts/run_chipyard_openphone_verilator.sh
+python3 scripts/generate_chipyard_openphone.py
+python3 scripts/check_chipyard_generator_manifest.py --require-generated
+python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc
+python3 scripts/check_chipyard_generated_linux_contract.py
+```
+
+`scripts/run_chipyard_openphone_verilator.sh` runs the host Chipyard simulator
+make target after sourcing `external/chipyard/env.sh`:
+
+```sh
+cd external/chipyard/sims/verilator
+source ../../env.sh
+make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone
+```
+
+`python3 scripts/generate_chipyard_openphone.py` imports the generated source
+tree, DTS, Verilog wrapper, simulator executable when present, tool versions,
+submodule status, and SHA-256 values into
+`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`. That
+manifest is required before CPU/AP transcript intake, but it still does not
+claim OpenSBI or Linux boot.
+
 The Linux/amd64 container path uses the pinned local base image and writes the
 full attempt transcript to `build/chipyard/openphone_rocket/docker-verilog-attempt.log`:
 
@@ -131,6 +160,11 @@ export OPENPHONE_TRAP_TIMER_IRQ_CMD='/abs/path/to/generated-ap-trap-timer-irq-te
 export OPENPHONE_ISA_CACHE_MMU_CMD='/abs/path/to/generated-ap-isa-cache-mmu-test'
 export OPENPHONE_AP_BENCHMARKS_CMD='/abs/path/to/generated-ap-benchmark-runner'
 
+python3 scripts/locate_chipyard_linux_payload.py --require
+export CHIPYARD_LINUX_BINARY=/abs/path/to/linux-poweroff-bin-nodisk
+make chipyard-generated-ap-boot
+python3 scripts/check_chipyard_verilator_linux_smoke.py
+
 scripts/capture_chipyard_linux_evidence.sh all
 python3 scripts/capture_cpu_ap_evidence.py hashes
 python3 scripts/check_cpu_ap_evidence.py --require-evidence
@@ -179,6 +213,16 @@ regressions remain reproducible.
   `build/reports/qemu_os_boot_attempt.log` with `BLOCKED`, `FAIL`, or `PASS`.
   That log is software-reference evidence only; it cannot close any
   Chipyard/Rocket AP Linux-capable gate.
+- `scripts/run_renode.sh --check` is separate Renode reference-model evidence.
+  It is not QEMU evidence, and it is not generated OpenPhoneRocketConfig
+  Linux/OpenSBI proof unless a real generated hello-chip Renode model and
+  transcript gate are added.
+- `make chipyard-generated-ap-boot` runs
+  `scripts/run_chipyard_openphone_linux_smoke.sh`, which appends wrapper
+  metadata and a bounded timeout result to
+  `build/chipyard/openphone_rocket/verilator-linux-smoke.log`. That log still
+  passes only when `scripts/check_chipyard_verilator_linux_smoke.py` finds
+  OpenSBI and Linux markers from the generated AP simulator.
 - `scripts/check_chipyard_generated_linux_contract.py` audits any generated
   DTS, memmap, and regmaps that are present. It may pass the structural Linux
   node check while still reporting boot evidence as `BLOCKED`.

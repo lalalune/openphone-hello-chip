@@ -228,6 +228,7 @@ def cocotb_status() -> Status:
     target_names = [
         "hello_chip_top_test_hello_chip",
         "hello_linux_soc_contract_test_cpu_mem_intc_contract",
+        "hello_npu_test_hello_npu",
         "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
     ]
     results = []
@@ -246,7 +247,7 @@ def cocotb_status() -> Status:
             "cocotb",
             BLOCK,
             "missing per-target cocotb artifact(s): " + ", ".join(missing_names),
-            "make cocotb cocotb-contract cocotb-cpu",
+            "make cocotb cocotb-npu cocotb-contract cocotb-cpu",
             "regen_required",
         )
     for result in results:
@@ -256,7 +257,7 @@ def cocotb_status() -> Status:
                 "cocotb",
                 FAIL,
                 f"{rel(result)} contains failures/errors or no testcase",
-                "make cocotb cocotb-contract cocotb-cpu",
+                "make cocotb cocotb-npu cocotb-contract cocotb-cpu",
                 "test_fail",
             )
     return Status(

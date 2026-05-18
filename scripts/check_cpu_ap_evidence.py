@@ -268,7 +268,10 @@ def main() -> int:
             for command in capture_commands:
                 print(f"    {command}")
         print(
-            "  next: capture the real generated-AP transcripts above, then rerun python3 scripts/check_cpu_ap_evidence.py --require-evidence"
+            "  next: run python3 scripts/capture_cpu_ap_evidence.py plan all --format shell, "
+            "wire the generated AP simulator/test commands, run "
+            "scripts/capture_chipyard_linux_evidence.sh preflight, then capture real generated-AP "
+            "transcripts and rerun python3 scripts/check_cpu_ap_evidence.py --require-evidence"
         )
         return 1 if args.require_evidence else 0
 

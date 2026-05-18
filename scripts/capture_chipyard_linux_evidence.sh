@@ -7,7 +7,7 @@ generated_manifest="${OPENPHONE_GENERATED_MANIFEST:-build/chipyard/openphone_roc
 mode="${1:-all}"
 
 usage() {
-	printf 'usage: %s [all|opensbi-boot|linux-boot|trap-timer-irq|isa-cache-mmu|ap-benchmarks]\n' "$0"
+	printf 'usage: %s [preflight|plan|all|opensbi-boot|linux-boot|trap-timer-irq|isa-cache-mmu|ap-benchmarks]\n' "$0"
 	printf '\n'
 	printf 'Set one command env var per capture. Each command must run the generated AP simulator/test and print the real transcript to stdout/stderr:\n'
 	printf '  OPENPHONE_OPENSBI_BOOT_CMD\n'
@@ -19,8 +19,15 @@ usage() {
 	printf 'Optional:\n'
 	printf '  OPENPHONE_GENERATED_MANIFEST=%s\n' "$generated_manifest"
 	printf '\n'
+	printf 'Run all capture lanes after setting the command env vars:\n'
+	printf '  %s all\n' "$0"
+	printf '\n'
+	printf 'Check command wiring without running the simulator:\n'
+	printf '  %s preflight\n' "$0"
+	printf '\n'
 	printf 'Marker checklist:\n'
 	printf '  python3 scripts/capture_cpu_ap_evidence.py template all\n'
+	printf '  python3 scripts/capture_cpu_ap_evidence.py plan all --format shell\n'
 }
 
 env_name_for_mode() {
@@ -32,6 +39,46 @@ env_name_for_mode() {
 		ap-benchmarks) printf 'OPENPHONE_AP_BENCHMARKS_CMD' ;;
 		*) return 1 ;;
 	esac
+}
+
+preflight_mode() {
+	capture_mode="$1"
+	env_name="$(env_name_for_mode "$capture_mode")"
+	command_text="$(eval "printf '%s' \"\${$env_name:-}\"")"
+	if [ -z "$command_text" ]; then
+		printf '  - BLOCKED %s: %s is unset\n' "$capture_mode" "$env_name"
+		return 2
+	fi
+	printf '  - READY %s: %s is set\n' "$capture_mode" "$env_name"
+	return 0
+}
+
+preflight_all() {
+	rc=0
+	printf 'STATUS: RUN cpu_ap.capture_preflight\n'
+	printf '  generated_manifest: %s\n' "$generated_manifest"
+	if [ ! -f "$repo_dir/$generated_manifest" ] && [ ! -f "$generated_manifest" ]; then
+		printf '  - BLOCKED generated manifest is missing\n'
+		printf '    next: generate/import OpenPhoneRocketConfig before archiving boot evidence\n'
+		rc=2
+	fi
+	for capture_mode in opensbi-boot linux-boot trap-timer-irq isa-cache-mmu ap-benchmarks; do
+		if preflight_mode "$capture_mode"; then
+			:
+		else
+			status=$?
+			if [ "$status" -gt "$rc" ]; then
+				rc="$status"
+			fi
+		fi
+	done
+	if [ "$rc" -eq 0 ]; then
+		printf 'STATUS: PASS cpu_ap.capture_preflight - all command lanes are wired\n'
+	else
+		printf 'STATUS: BLOCKED cpu_ap.capture_preflight - capture wiring incomplete\n'
+		printf '  next: python3 scripts/capture_cpu_ap_evidence.py plan all --format shell\n'
+	fi
+	return "$rc"
 }
 
 run_mode() {
@@ -76,12 +123,25 @@ case "$mode" in
 		usage
 		exit 0
 		;;
-	all)
-		run_mode opensbi-boot
-		run_mode linux-boot
-		run_mode trap-timer-irq
-		run_mode isa-cache-mmu
-		run_mode ap-benchmarks
+plan)
+	python3 "$repo_dir/scripts/capture_cpu_ap_evidence.py" plan all --format shell
+	;;
+preflight)
+	preflight_all
+	;;
+all)
+		rc=0
+		for capture_mode in opensbi-boot linux-boot trap-timer-irq isa-cache-mmu ap-benchmarks; do
+			if run_mode "$capture_mode"; then
+				:
+			else
+				status=$?
+				if [ "$status" -gt "$rc" ]; then
+					rc="$status"
+				fi
+			fi
+		done
+		exit "$rc"
 		;;
 	opensbi-boot|linux-boot|trap-timer-irq|isa-cache-mmu|ap-benchmarks)
 		run_mode "$mode"

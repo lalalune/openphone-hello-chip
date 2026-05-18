@@ -36,6 +36,8 @@ required = [
     "docs/manufacturing/physical-closure-work-order.yaml",
     "docs/manufacturing/product-feature-evidence-manifest.yaml",
     "docs/project/product-architecture-security-radio-sensors-optimization-2026-05-17.yaml",
+    "docs/pd/hello_chip_top_antenna_metadata_2026-05-18.md",
+    "scripts/run_product_evidence_command.py",
 ]
 
 missing = [p for p in required if not Path(p).exists()]
@@ -54,11 +56,13 @@ subprocess.run([sys.executable, "scripts/check_package_cross_probe.py"], check=T
 subprocess.run([sys.executable, "scripts/check_kicad_artifacts.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_fpga_release.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_openlane_run_preflight.py"], check=True)
+subprocess.run([sys.executable, "scripts/check_antenna_metadata.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_pd_signoff.py", "--manifest-only"], check=True)
 subprocess.run([sys.executable, "scripts/check_manufacturing_artifacts.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_real_world_gates.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_product_feature_gates.py"], check=True)
 subprocess.run([sys.executable, "scripts/check_product_architecture_optimization.py"], check=True)
+subprocess.run([sys.executable, "scripts/run_product_evidence_command.py", "--list"], check=True)
 
 release_blockers: list[str] = []
 
@@ -137,6 +141,7 @@ for release_check in [
     "scripts/check_kicad_artifacts.py",
     "scripts/check_fpga_release.py",
     "scripts/check_openlane_run_preflight.py",
+    "scripts/check_antenna_metadata.py",
 ]:
     result = subprocess.run(
         [sys.executable, release_check, "--release"],

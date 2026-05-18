@@ -97,20 +97,24 @@ artifact_groups:
   si_pi_current_thermal:
     release_gate: tapeout_release
     owner: si_pi_closure
-    status: missing
+    status: draft
     artifacts:
       - name: board_signal_integrity_report
-        status: missing
+        status: draft
         globs:
           - board/reports/si/**/*
+          - docs/manufacturing/evidence/board/**/*si*
+          - docs/manufacturing/evidence/board/*si-pi*
           - pd/signoff/si-pi/board-si/**/*
       - name: board_power_integrity_report
-        status: missing
+        status: draft
         globs:
           - board/reports/pi/**/*
+          - docs/manufacturing/evidence/board/**/*pi*
+          - docs/manufacturing/evidence/board/*si-pi*
           - pd/signoff/si-pi/power-integrity/**/*
       - name: rail_current_budget
-        status: missing
+        status: draft
         globs:
           - docs/manufacturing/evidence/current/**/*
           - pd/reports/power/**/*

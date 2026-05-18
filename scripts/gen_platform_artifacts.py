@@ -70,6 +70,10 @@ def cpu_variant(contract: dict) -> dict:
     return contract["hello_chip_cpu_variant"]
 
 
+def hello_chip_regions(contract: dict) -> dict[str, dict]:
+    return {region["name"]: region for region in contract["hello_chip"]["regions"]}
+
+
 # ---------------------------------------------------------------------------
 # (a) Verilog header
 # ---------------------------------------------------------------------------
@@ -200,6 +204,7 @@ def gen_dtsi(contract: dict) -> str:
 # ---------------------------------------------------------------------------
 def gen_c_header(contract: dict) -> str:
     v = cpu_variant(contract)
+    regions = hello_chip_regions(contract)
     lines = [
         f"/* {HEADER_COMMENT} */",
         "#ifndef HELLO_PLATFORM_H",
@@ -232,6 +237,10 @@ def gen_c_header(contract: dict) -> str:
         u = name.upper()
         lines.append(f"#define HELLO_{u}_BASE     {_hex(dev['base'])}UL")
         lines.append(f"#define HELLO_{u}_SIZE     {_hex(dev['size'])}UL")
+        region = regions.get(name)
+        if region and "registers" in region:
+            for reg in region["registers"]:
+                lines.append(f"#define HELLO_{u}_{reg['name']}_OFFSET {_hex(reg['offset'], 2)}UL")
     lines.append("")
     for irq_name, irq_id in v["interrupts"].items():
         lines.append(f"#define HELLO_{irq_name} {int(irq_id)}")
@@ -244,6 +253,7 @@ def gen_c_header(contract: dict) -> str:
 # ---------------------------------------------------------------------------
 def gen_hal_json(contract: dict) -> str:
     v = cpu_variant(contract)
+    regions = hello_chip_regions(contract)
     data = {
         "_generated_from": "sw/platform/hello_platform_contract.json",
         "_generator": "scripts/gen_platform_artifacts.py",
@@ -266,6 +276,10 @@ def gen_hal_json(contract: dict) -> str:
                 "size": _hex(dev["size"]),
                 "irq": int(dev["irq"]),
                 "compatible": dev["compatible"],
+                "registers": {
+                    reg["name"]: _hex(reg["offset"], 2)
+                    for reg in regions.get(name, {}).get("registers", [])
+                },
             }
             for name, dev in v["devices"].items()
         },

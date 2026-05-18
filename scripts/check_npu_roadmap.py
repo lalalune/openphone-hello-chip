@@ -57,6 +57,7 @@ REQUIRED_LATER_GATES = {
         "queue_fairness_and_qos_trace",
     },
     "L4_ANDROID_HAL_DELEGATE": {
+        "android_proof_manifest_template",
         "vts_result",
         "cts_result",
         "aidl_hal_service_declared",
@@ -73,6 +74,7 @@ REQUIRED_LATER_GATES = {
         "external_memory_bandwidth_gbps_min",
         "benchmark_model_hashes_present",
         "benchmark_transcript_hashes_present",
+        "power_thermal_manifest_template",
         "power_thermal_trace_present",
     },
 }

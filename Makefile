@@ -8,9 +8,10 @@ RTL_TOP := hello_chip_top
 RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
 BUILD := build
 
-.PHONY: ci-release-evidence evidence-regression-test formal-fast formal-strict physical-gates-test pipeline-check-strict strict-release-gate-test
+.PHONY: ci-release-evidence evidence-regression-test formal-fast formal-strict openlane-orchestration-test physical-gates-test pipeline-check-strict strict-release-gate-test
+.PHONY: chipyard-external-generation-plan chipyard-import-preflight chipyard-linux-payload-check chipyard-payload-path-check chipyard-generated-ap-boot chipyard-verilator-linux-smoke-test chipyard-verilator-preflight chipyard-verilator-stale-path-repair cpu-ap-capture-plan-shell cpu-ap-dts-audit
 
-.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks benchmark-tools benchmark-sim-metrics benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test mvp-status mvp-status-strict mvp-status-json mvp-simulator mvp-simulator-check mvp-simulator-status-test linux-handoff-check chipyard-generator-check chipyard-generated-check chipyard-generated-linux-contract-check chipyard-verilator-linux-smoke-check cpu-ap-scaffold-check cpu-ap-evidence-check cpu-ap-evidence-test cpu-ap-completion-gate no-hardware-action-check memory-uma-claim-gate memory-interconnect-contract-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check project-plan-check prototype-status-dashboard-check phone-soc-claim-check product-feature-gates-check product-check product-release-check pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check manufacturing-artifacts-check manufacturing-artifacts-release-check kicad-artifacts-check package-artifacts-check fpga-artifacts-check real-world-gates-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-contract cocotb-cpu verilator formal synth openlane openlane-smoke openroad qemu renode qemu-check qemu-check-strict qemu-os-check qemu-status-test renode-check renode-check-strict renode-status-test android-sim-boot-check android-sim-status-test aosp-linux-preflight platform-contract-check software-contract-check buildroot-check buildroot-scaffold-check buildroot-import-check linux-bsp-check linux-scaffold-check linux-import-check aosp-bsp-check aosp-scaffold-check aosp-import-check bsp-scaffold-check software-bsp-check software-bsp-scaffold-check software-bsp-evidence-check software-bsp-test docs-check tool-versions record-tool-versions pipeline-check archive-check archive-release clean
+.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks benchmark-tools benchmark-sim-metrics benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test hello-npu-nnapi-proof-check mvp-status mvp-status-strict mvp-status-json mvp-simulator mvp-simulator-check mvp-simulator-status-test linux-handoff-check chipyard-generator-check chipyard-generated-check chipyard-generated-linux-contract-check chipyard-verilator-linux-smoke-check cpu-ap-scaffold-check cpu-ap-capture-plan cpu-ap-capture-preflight cpu-ap-evidence-check cpu-ap-evidence-test cpu-ap-completion-gate no-hardware-action-check memory-uma-claim-gate memory-interconnect-contract-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check project-plan-check prototype-status-dashboard-check phone-soc-claim-check product-feature-gates-check product-check product-release-check product-evidence-commands product-resolved-manifest pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check manufacturing-artifacts-check manufacturing-artifacts-release-check kicad-artifacts-check package-artifacts-check fpga-artifacts-check real-world-gates-check antenna-metadata-check antenna-metadata-release-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal synth openlane openlane-smoke openroad qemu renode qemu-check qemu-check-strict qemu-os-check qemu-status-test renode-check renode-check-strict renode-status-test android-sim-boot-check android-sim-status-test aosp-linux-preflight aosp-linux-handoff aosp-linux-handoff-build-only platform-contract-check software-contract-check buildroot-check buildroot-scaffold-check buildroot-import-check linux-bsp-check linux-scaffold-check linux-import-check aosp-bsp-check aosp-scaffold-check aosp-import-check bsp-scaffold-check software-bsp-check software-bsp-scaffold-check software-bsp-evidence-check software-bsp-test docs-check tool-versions record-tool-versions pipeline-check archive-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
@@ -32,16 +33,16 @@ typecheck:
 analysis:
 	@$(PYTHON) scripts/run_analysis.py
 
-verify-all: lint typecheck smoke analysis cocotb cocotb-contract cocotb-cpu qemu-status-test renode-status-test
+verify-all: lint typecheck smoke analysis cocotb cocotb-npu cocotb-contract cocotb-cpu qemu-status-test renode-status-test
 	@echo "verify-all complete"
 
 smoke: lint typecheck docs-check project-plan-check prototype-status-dashboard-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check memory-interconnect-contract-check chipyard-generator-check cpu-ap-scaffold-check cpu-ap-evidence-test cpu-ap-completion-gate stub-audit bsp-scaffold-check software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
 	@echo "smoke complete"
 
-ci-fast: lint typecheck docs-check project-plan-check prototype-status-dashboard-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal product-check
+ci-fast: lint typecheck docs-check project-plan-check prototype-status-dashboard-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal product-check
 	@echo "ci-fast complete"
 
-ci-local: lint typecheck docs-check prototype-status-dashboard-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal tool-versions
+ci-local: lint typecheck docs-check prototype-status-dashboard-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal tool-versions
 	@echo "ci-local complete"
 
 ci-strict: REQUIRE_SBY=1
@@ -51,7 +52,7 @@ ci-strict: ci-local
 
 ci-release-evidence: REQUIRE_SBY=1
 ci-release-evidence: REQUIRE_DEEP_FORMAL=1
-ci-release-evidence: docs-check project-plan-check prototype-status-dashboard-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-contract cocotb-cpu verilator formal-strict product-release-check tool-versions pipeline-check-strict
+ci-release-evidence: docs-check project-plan-check prototype-status-dashboard-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal-strict product-release-check tool-versions pipeline-check-strict
 	@echo "ci-release-evidence complete"
 
 ci-pd: openlane pd-signoff-check
@@ -75,6 +76,9 @@ benchmark-calibration-test:
 
 benchmark-parser-test:
 	@$(PYTHON) scripts/test_benchmark_parsers.py
+
+hello-npu-nnapi-proof-check:
+	@$(PYTHON) scripts/check_hello_npu_nnapi_proof.py --probe-adb
 
 benchmarks:
 	@PATH="$(CURDIR)/$(VENV)/bin:$$PATH" $(BENCH_PYTHON) benchmarks/run_benchmarks.py
@@ -104,17 +108,59 @@ linux-handoff-check:
 chipyard-generator-check:
 	@$(PYTHON) scripts/check_chipyard_generator_manifest.py
 
+chipyard-import-preflight:
+	@$(PYTHON) scripts/check_chipyard_import_preflight.py --require-checkout
+
+chipyard-verilator-preflight:
+	@$(PYTHON) scripts/check_chipyard_verilator_preflight.py
+
 chipyard-generated-check:
 	@$(PYTHON) scripts/check_chipyard_generator_manifest.py --require-generated
 
 chipyard-generated-linux-contract-check:
 	@$(PYTHON) scripts/check_chipyard_generated_linux_contract.py
 
+chipyard-payload-path-check:
+	@$(PYTHON) scripts/check_chipyard_payload_path.py
+
+chipyard-linux-payload-check:
+	@$(PYTHON) scripts/locate_chipyard_linux_payload.py --require
+
+chipyard-generated-ap-boot:
+	@scripts/run_chipyard_openphone_linux_smoke.sh
+
+chipyard-external-generation-plan:
+	@printf '%s\n' 'python3 scripts/check_chipyard_import_preflight.py --require-checkout'
+	@printf '%s\n' 'python3 scripts/check_chipyard_verilator_preflight.py'
+	@printf '%s\n' 'scripts/run_chipyard_openphone_verilator.sh'
+	@printf '%s\n' 'python3 scripts/generate_chipyard_openphone.py'
+	@printf '%s\n' 'python3 scripts/check_chipyard_generator_manifest.py --require-generated'
+	@printf '%s\n' 'python3 scripts/capture_cpu_ap_evidence.py plan all --format shell'
+	@printf '%s\n' 'scripts/capture_chipyard_linux_evidence.sh preflight'
+
 chipyard-verilator-linux-smoke-check:
 	@$(PYTHON) scripts/check_chipyard_verilator_linux_smoke.py
 
+chipyard-verilator-linux-smoke-test:
+	@$(PYTHON) scripts/test_chipyard_verilator_linux_smoke.py
+
+chipyard-verilator-stale-path-repair:
+	@$(PYTHON) scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated
+
 cpu-ap-scaffold-check:
 	@$(PYTHON) scripts/check_cpu_ap_evidence.py
+
+cpu-ap-capture-plan:
+	@$(PYTHON) scripts/capture_cpu_ap_evidence.py plan all --format text
+
+cpu-ap-capture-plan-shell:
+	@$(PYTHON) scripts/capture_cpu_ap_evidence.py plan all --format shell
+
+cpu-ap-capture-preflight:
+	@scripts/capture_chipyard_linux_evidence.sh preflight
+
+cpu-ap-dts-audit:
+	@$(PYTHON) scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc
 
 cpu-ap-evidence-check:
 	@$(PYTHON) scripts/check_cpu_ap_evidence.py --require-evidence
@@ -160,6 +206,12 @@ product-check: pinout-check fpga-check wifi-interface-check padframe-check board
 
 product-release-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check pd-signoff-manifest-check manufacturing-artifacts-check real-world-gates-check memory-uma-claim-gate memory-interconnect-contract-check product-feature-gates-check
 	@$(PYTHON) scripts/product_check.py --release
+
+product-evidence-commands:
+	@$(PYTHON) scripts/run_product_evidence_command.py --list
+
+product-resolved-manifest:
+	@$(PYTHON) scripts/check_manufacturing_artifacts.py --resolved-manifest build/reports/manufacturing-resolved-artifacts.json
 
 project-plan-check:
 	@$(PYTHON) scripts/check_project_plan.py
@@ -224,10 +276,16 @@ physical-gates-test:
 real-world-gates-check:
 	@$(PYTHON) scripts/check_real_world_gates.py
 
+antenna-metadata-check:
+	@$(PYTHON) scripts/check_antenna_metadata.py
+
+antenna-metadata-release-check:
+	@$(PYTHON) scripts/check_antenna_metadata.py --release
+
 pd-preflight-check:
 	@$(PYTHON) scripts/check_pd_preflight.py
 
-pd-contract-check: padframe-check physical-closure-work-order-check pd-preflight-check pd-signoff-manifest-check manufacturing-artifacts-check real-world-gates-check
+pd-contract-check: padframe-check physical-closure-work-order-check pd-preflight-check antenna-metadata-check pd-signoff-manifest-check manufacturing-artifacts-check real-world-gates-check
 	@echo "pd contract checks complete"
 
 pd-signoff-manifest-check:
@@ -235,6 +293,9 @@ pd-signoff-manifest-check:
 
 pd-signoff-check:
 	@$(PYTHON) scripts/check_pd_signoff.py
+
+openlane-orchestration-test:
+	@$(PYTHON) scripts/test_openlane_orchestration.py
 
 bootrom-check:
 	@$(PYTHON) fw/boot-rom/check_boot_rom.py
@@ -247,6 +308,9 @@ stub-audit:
 
 cocotb:
 	@PYTHON=$(VENV_PYTHON) scripts/run_cocotb.sh
+
+cocotb-npu:
+	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_hello_npu COCOTB_TOPLEVEL=hello_npu scripts/run_cocotb.sh
 
 cocotb-contract:
 	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_cpu_mem_intc_contract COCOTB_TOPLEVEL=hello_linux_soc_contract scripts/run_cocotb.sh
@@ -314,6 +378,12 @@ android-sim-status-test:
 aosp-linux-preflight:
 	@$(PYTHON) scripts/check_aosp_linux_preflight.py --write-report
 
+aosp-linux-handoff:
+	@scripts/run_aosp_linux_handoff.sh
+
+aosp-linux-handoff-build-only:
+	@scripts/run_aosp_linux_handoff.sh --build-only
+
 platform-contract-check:
 	@$(PYTHON) scripts/check_platform_contract.py
 
@@ -378,8 +448,9 @@ software-bsp-evidence-check:
 
 software-bsp-test:
 	@$(PYTHON) scripts/test_software_bsp_checks.py
+	@$(PYTHON) scripts/test_software_bsp_evidence.py
 
-evidence-regression-test: no-hardware-action-check software-bsp-test physical-gates-test product-feature-gates-check benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test renode-status-test strict-release-gate-test
+evidence-regression-test: no-hardware-action-check software-bsp-test physical-gates-test product-feature-gates-check benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test renode-status-test cocotb cocotb-npu cocotb-contract cocotb-cpu strict-release-gate-test
 	@echo "evidence regression tests complete"
 
 docs-check:

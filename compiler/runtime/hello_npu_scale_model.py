@@ -20,6 +20,7 @@ class NpuScaleConfig:
     supports_int4: bool = True
     supports_bf16: bool = False
     supports_fp16: bool = False
+    supports_fp8: bool = False
     structured_sparsity_factor: int = 1
 
     @property
@@ -36,6 +37,35 @@ class NpuScaleConfig:
             return 0.0
         packed_factor = INT4_VALUES_PER_BYTE
         return self.dense_int8_peak_tops * packed_factor * self.structured_sparsity_factor
+
+    def precision_matrix(self) -> list[dict[str, str]]:
+        return [
+            {
+                "precision": "INT8",
+                "state": "modeled",
+                "claim": "dense throughput model only",
+            },
+            {
+                "precision": "INT4",
+                "state": "projected" if self.supports_int4 else "blocked",
+                "claim": "sparse/packed projection only; requires measured RTL/compiler evidence",
+            },
+            {
+                "precision": "FP16",
+                "state": "projected" if self.supports_fp16 else "blocked",
+                "claim": "support flag only; no measured runtime path in this repository",
+            },
+            {
+                "precision": "BF16",
+                "state": "projected" if self.supports_bf16 else "blocked",
+                "claim": "support flag only; no measured runtime path in this repository",
+            },
+            {
+                "precision": "FP8",
+                "state": "projected" if self.supports_fp8 else "blocked",
+                "claim": "blocked until opcode/datapath/compiler and benchmark evidence exist",
+            },
+        ]
 
 
 @dataclass(frozen=True)

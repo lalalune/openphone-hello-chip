@@ -68,11 +68,11 @@ Additional registers:
 | `0x24` | `GEMM_BASE` | byte bases: `A[5:0]`, `B[13:8]`, `C[21:16]` |
 | `0x28` | `GEMM_STRIDE` | byte strides: `A[3:0]`, `B[11:8]`, `C[19:16]` |
 | `0x2c` | `PERF_UNSUPPORTED_OPS` | unsupported opcode/configuration counter |
-| `0x30` | `CMD_PARAM` | reserved command parameter word for future queue/runtime work |
-| `0x40` | `DESC_BASE` | reserved descriptor base for future queue/runtime work |
-| `0x44` | `DESC_HEAD` | reserved descriptor head for future queue/runtime work |
-| `0x48` | `DESC_TAIL` | reserved descriptor tail for future queue/runtime work |
-| `0x4c` | `DESC_STATUS` | reserved descriptor status for future queue/runtime work |
+| `0x30` | `CMD_PARAM` | bit 0 selects descriptor-submission mode |
+| `0x40` | `DESC_BASE` | descriptor ring base; must be 32-bit aligned |
+| `0x44` | `DESC_HEAD` | software producer index, 3 bits |
+| `0x48` | `DESC_TAIL` | hardware/software consumer index, 3 bits |
+| `0x4c` | `DESC_STATUS` | descriptor status bits plus error index in bits `[11:9]` |
 | `0x50` | `PERF_CYCLES` | cycles spent in active state |
 | `0x54` | `PERF_MACS` | signed INT8 MAC operations issued |
 | `0x58` | `PERF_OPS` | accepted operation counter |
@@ -100,12 +100,16 @@ performance counters
 ```
 
 Current integration is still an MMIO-visible datapath model. The descriptor
-registers are reserved ABI placeholders only; there is no implemented valid /
-ready descriptor ring, queue-depth enforcement, timeout path, or host runtime
-submission contract. The DMA block tracks aligned 32-bit beat issue, byte
-completion, last source/destination addresses, and final write strobe, but it
-does not yet drive a real memory master or feed an NPU scratchpad/command
-queue.
+registers now have an explicit fail-closed v0 contract: when `CMD_PARAM[0]` is
+set and software writes `CTRL_STATUS.start`, the RTL validates base alignment
+and empty/non-empty queue state, then completes with `CTRL_STATUS.done|error`
+because descriptor fetch and DMA-fed tensor execution are not implemented.
+`DESC_STATUS[0]` reports empty, `[1]` reports unsupported descriptor execution,
+`[2]` reports unaligned base, and `[11:9]` reports the descriptor index that
+faulted. This is not a valid/ready descriptor ring, queue-depth enforcement, or
+timeout-capable tensor DMA path. The DMA block tracks aligned 32-bit beat issue,
+byte completion, last source/destination addresses, and final write strobe, but
+it does not yet feed an NPU scratchpad/command queue.
 
 ## Evidence gates
 

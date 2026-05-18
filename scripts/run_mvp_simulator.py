@@ -109,8 +109,8 @@ STEPS = [
     {
         "name": "renode_firmware_smoke",
         "tier": "firmware_smoke",
-        "scope": "qemu_virt_reference",
-        "claim": "Renode qemu-virt firmware serial smoke",
+        "scope": "renode_reference",
+        "claim": "Renode firmware serial smoke on the current Renode reference model; not generated AP/Linux evidence",
         "command": ["scripts/run_renode.sh", "--check"],
         "pass_markers": ["STATUS: PASS renode.check"],
         "block_markers": ["STATUS: BLOCKED renode.check"],
@@ -178,7 +178,24 @@ def run_step(step: dict[str, Any]) -> dict[str, Any]:
 
 
 def best_executable_evidence(results: list[dict[str, object]]) -> dict[str, object] | None:
-    passing = [item for item in results if item.get("status") == "pass"]
+    passing = [
+        item
+        for item in results
+        if item.get("status") == "pass"
+        and item.get("scope") in {"our_chip_prereq", "our_chip_os_boot", "our_chip_rtl_sim"}
+    ]
+    if not passing:
+        return None
+    return max(passing, key=lambda item: TIER_RANK.get(str(item.get("tier")), 0))
+
+
+def best_reference_evidence(results: list[dict[str, object]]) -> dict[str, object] | None:
+    passing = [
+        item
+        for item in results
+        if item.get("status") == "pass"
+        and item.get("scope") in {"qemu_virt_reference", "renode_reference", "android_reference"}
+    ]
     if not passing:
         return None
     return max(passing, key=lambda item: TIER_RANK.get(str(item.get("tier")), 0))
@@ -259,6 +276,7 @@ def main() -> int:
         code = 0
 
     best = best_executable_evidence(results)
+    best_reference = best_reference_evidence(results)
     qemu_reference_os_boot_passed = any(
         item.get("name") == "qemu_os_boot" and item.get("status") == "pass" for item in results
     )
@@ -285,14 +303,18 @@ def main() -> int:
         "strongest_attempted": "os_boot",
         "best_executable_evidence": best["name"] if best else "none",
         "best_executable_tier": best["tier"] if best else "none",
+        "best_reference_evidence": best_reference["name"] if best_reference else "none",
+        "best_reference_tier": best_reference["tier"] if best_reference else "none",
         "os_boot_claim": bool(on_chip_os_boot_passed),
         "on_chip_os_boot_claim": bool(on_chip_os_boot_passed),
         "reference_qemu_virt_os_boot_claim": bool(qemu_reference_os_boot_passed),
         "reference_android_os_boot_claim": bool(android_reference_os_boot_passed),
+        "qemu_virt_reference_only": True,
+        "renode_reference_only": True,
         "blockers_to_on_chip_os_boot": on_chip_blockers,
         "remaining_blockers": blocked_items(results),
         "failures": failed_items(results),
-        "claim_boundary": "Simulator MVP separates qemu-virt/reference OS boot from OS running on generated OpenPhone AP/hello-chip RTL. qemu_os_boot may be claimed only as reference_qemu_virt_os_boot_claim. OS on our chip may be claimed only when on_chip_os_boot_claim is true from generated AP/Linux evidence; qemu-virt and Android simulator evidence do not satisfy that claim. It is not a fabrication or phone-class performance claim.",
+        "claim_boundary": "Simulator MVP separates qemu-virt/Renode/Android reference evidence from OS running on generated OpenPhone AP/hello-chip RTL. qemu_os_boot may be claimed only as reference_qemu_virt_os_boot_claim. Renode smoke is renode_reference_only unless a generated hello-chip hardware model and transcript are archived. OS on our chip may be claimed only when on_chip_os_boot_claim is true from generated AP/Linux evidence; qemu-virt, Renode, and Android simulator evidence do not satisfy that claim. It is not a fabrication or phone-class performance claim.",
         "results": results,
     }
     tmp = REPORT.with_suffix(".json.tmp")
@@ -304,6 +326,10 @@ def main() -> int:
     print(
         f"  best_executable_evidence: {report['best_executable_evidence']} "
         f"({report['best_executable_tier']})"
+    )
+    print(
+        f"  best_reference_evidence: {report['best_reference_evidence']} "
+        f"({report['best_reference_tier']})"
     )
     print(
         f"  reference_qemu_virt_os_boot_claim: {str(report['reference_qemu_virt_os_boot_claim']).lower()}"

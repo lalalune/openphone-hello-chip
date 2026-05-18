@@ -31,20 +31,31 @@ record_command() {
 	{
 		echo "openphone-evidence: target=linux artifact=$artifact"
 		echo "openphone-evidence: command=$command"
-		echo "openphone-evidence: started_utc=$(timestamp_utc)"
+		started=$(timestamp_utc)
+		echo "openphone-evidence: started_utc=$started"
 		echo "openphone-evidence: linux=$linux"
 		echo "openphone-evidence: cross_compile=$cross_compile"
+		echo "EXTERNAL_TREE=$linux"
+		echo "COMMAND=$command"
+		echo "START_UTC=$started"
 	} > "$log"
 	set +e
 	(cd "$linux" && sh -c "$command") >> "$log" 2>&1
 	rc=$?
 	set -e
 	if [ "$rc" -eq 0 ]; then
+		if [ "$artifact" = "hello-mmio-smoke" ]; then
+			echo "HELLO_MMIO_SMOKE_PASS" >> "$log"
+		fi
 		echo "openphone-evidence: status=PASS" >> "$log"
+		echo "RESULT=PASS" >> "$log"
 	else
 		echo "openphone-evidence: status=FAIL rc=$rc" >> "$log"
+		echo "RESULT=FAIL rc=$rc" >> "$log"
 	fi
-	echo "openphone-evidence: ended_utc=$(timestamp_utc)" >> "$log"
+	ended=$(timestamp_utc)
+	echo "openphone-evidence: ended_utc=$ended" >> "$log"
+	echo "END_UTC=$ended" >> "$log"
 	exit "$rc"
 }
 

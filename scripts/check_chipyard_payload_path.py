@@ -144,6 +144,8 @@ def main() -> int:
         "status": status,
         "claim_boundary": "generated_chipyard_artifacts_only_not_rtl_boot_claim",
         "summary": "Generated Chipyard artifacts may feed the next external OpenSBI/U-Boot/Linux payload path, but do not prove RTL boot.",
+        "capture_wrapper": "scripts/capture_chipyard_linux_evidence.sh",
+        "capture_preflight": "scripts/capture_chipyard_linux_evidence.sh preflight",
         "artifacts": artifacts,
         "dts_checks": dts_checks,
         "evidence": evidence_status,
@@ -160,6 +162,7 @@ def main() -> int:
             print(f"  - {error}")
     elif status == "blocked":
         print("STATUS: BLOCKED chipyard.payload_path - boot payload evidence is incomplete")
+        print("  capture preflight: scripts/capture_chipyard_linux_evidence.sh preflight")
         for blocker in blockers:
             print(f"  - {blocker['detail']}")
             print(f"    next: {blocker['next']}")

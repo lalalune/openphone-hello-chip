@@ -138,13 +138,26 @@ docker run --rm --platform "$platform" \
 		fi
 		run_binary_cmd="$run_binary_cmd \"$CHIPYARD_LINUX_SMOKE_RUN_TARGET\""
 		echo "openphone-evidence: command=$run_binary_cmd"
-		python3 -c '"'"'import subprocess, sys
+		python3 -c '"'"'import os, signal, subprocess, sys
 timeout = int(sys.argv[1])
 command = sys.argv[2]
+proc = subprocess.Popen(["bash", "-lc", command], start_new_session=True)
 try:
-    raise SystemExit(subprocess.run(["bash", "-lc", command], timeout=timeout).returncode)
+    raise SystemExit(proc.wait(timeout=timeout))
 except subprocess.TimeoutExpired:
-    print(f"openphone-evidence: timeout_after_seconds={timeout}")
+    print(f"openphone-evidence: timeout_after_seconds={timeout}", flush=True)
+    try:
+        os.killpg(proc.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        proc.wait()
     raise SystemExit(124)
 '"'"' "$CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS" "$run_binary_cmd"
 	' >>"$log" 2>&1

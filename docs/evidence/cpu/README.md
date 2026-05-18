@@ -20,7 +20,9 @@ and check the result:
 
 ```sh
 python3 scripts/capture_cpu_ap_evidence.py template all
+python3 scripts/capture_cpu_ap_evidence.py plan all --format shell
 scripts/capture_chipyard_linux_evidence.sh --help
+scripts/capture_chipyard_linux_evidence.sh preflight
 python3 scripts/check_cpu_ap_evidence.py --require-evidence
 python3 scripts/check_chipyard_generated_linux_contract.py --require-boot-evidence
 ```
@@ -59,6 +61,18 @@ contains all OpenSBI and Linux markers. Trap/cache/benchmark captures should
 point at generated-target tests or scripts that emit those specific results.
 Do not edit raw transcripts to make the intake pass; fix the simulator payload
 or test command and rerun the capture.
+
+Before starting a long simulator run, use the capture plan and preflight to
+confirm that all five command lanes are wired:
+
+```sh
+python3 scripts/capture_cpu_ap_evidence.py plan all --format shell
+scripts/capture_chipyard_linux_evidence.sh preflight
+```
+
+`preflight` does not run the simulator or create evidence. It checks that
+`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json` exists
+and that every `OPENPHONE_*_CMD` variable is set.
 
 After all captures pass, copy the printed `artifact_sha256.*` and
 `evidence_sha256.*` values from `python3 scripts/capture_cpu_ap_evidence.py

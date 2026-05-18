@@ -23,6 +23,7 @@ class MemoryUmaClaimGateTest(unittest.TestCase):
         data = yaml.safe_load(gate.GATE.read_text())
         target = data["phone_2028_target_profile"]
         actual = data["current_actual_capability"]
+        bandwidth_latency = data["bandwidth_latency_evidence_contract"]
 
         self.assertEqual(target["claim_level_required"], "L6_COMPLETE_PHONE")
         self.assertGreaterEqual(target["external_memory"]["peak_bandwidth_gbps_min"], 180)
@@ -36,6 +37,15 @@ class MemoryUmaClaimGateTest(unittest.TestCase):
         self.assertEqual(actual["memory_qos"], "none")
         self.assertEqual(actual["clint_plic_access_map"], "incomplete")
         self.assertEqual(actual["phone_class_status"], "blocked")
+        self.assertEqual(
+            bandwidth_latency["status"],
+            "blocked_until_real_target_measurements",
+        )
+        self.assertIn(
+            "p95_random_read_latency_ns",
+            bandwidth_latency["required_metrics"],
+        )
+        self.assertIn("Host benchmark results.", bandwidth_latency["invalid_evidence"])
 
     def test_every_blocked_artifact_has_required_schema(self) -> None:
         data = yaml.safe_load(gate.GATE.read_text())

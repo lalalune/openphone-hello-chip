@@ -62,6 +62,8 @@ module hello_npu (
     logic [31:0] desc_base;
     logic [2:0]  desc_head;
     logic [2:0]  desc_tail;
+    logic [2:0]  desc_err_index;
+    logic [31:0] desc_status;
     logic        desc_busy;
     logic gemm_busy;
 
@@ -196,6 +198,8 @@ module hello_npu (
             desc_base <= 32'h0;
             desc_head <= 3'h0;
             desc_tail <= 3'h0;
+            desc_err_index <= 3'h0;
+            desc_status <= 32'h0000_0001;
             desc_busy <= 1'b0;
             gemm_busy <= 1'b0;
             for (int idx = 0; idx < SCRATCH_WORDS; idx++) begin
@@ -265,6 +269,7 @@ module hello_npu (
                     6'h0c: cmd_param <= wdata;
                     6'h10: desc_base <= wdata;
                     6'h11: desc_head <= wdata[2:0];
+                    6'h12: desc_tail <= wdata[2:0];
                     6'h17: begin
                         if (wdata[0]) begin
                             perf_cycles <= 32'h0;
@@ -276,7 +281,21 @@ module hello_npu (
                     end
                     6'h03: begin
                         if (wdata[0] && busy_count == 3'h0 && !gemm_busy) begin
-                            if (opcode == OP_GEMM_S8) begin
+                            if (cmd_param[0]) begin
+                                desc_busy <= 1'b1;
+                                desc_err_index <= desc_tail;
+                                if (desc_base[1:0] != 2'b00) begin
+                                    desc_status <= {20'h0, desc_tail, 6'h0, 3'b100};
+                                end else if (desc_head == desc_tail) begin
+                                    desc_status <= {20'h0, desc_tail, 6'h0, 3'b001};
+                                end else begin
+                                    desc_status <= {20'h0, desc_tail, 6'h0, 3'b110};
+                                end
+                                status <= 32'h0000_0006;
+                                desc_busy <= 1'b0;
+                                perf_errors <= perf_errors + 32'd1;
+                                perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                            end else if (opcode == OP_GEMM_S8) begin
                                 if (gemm_cfg_ok) begin
                                     status <= 32'h0000_0001;
                                     gemm_busy <= 1'b1;
@@ -307,6 +326,8 @@ module hello_npu (
                         if (wdata[1]) begin
                             status[1] <= 1'b0;
                             status[2] <= 1'b0;
+                            desc_status <= 32'h0;
+                            desc_err_index <= 3'h0;
                         end
                     end
                     default: begin
@@ -337,7 +358,7 @@ module hello_npu (
             6'h10: rdata = desc_base;
             6'h11: rdata = {29'h0, desc_head};
             6'h12: rdata = {29'h0, desc_tail};
-            6'h13: rdata = {29'h0, desc_busy, desc_head == 3'h7, desc_head == desc_tail};
+            6'h13: rdata = desc_status | {20'h0, desc_err_index, 6'h0, desc_busy, 2'b00};
                     6'h14: rdata = perf_cycles;
                     6'h15: rdata = perf_macs;
                     6'h16: rdata = perf_ops;

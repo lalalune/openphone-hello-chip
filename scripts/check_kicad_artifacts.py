@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BOARD_DIR = ROOT / "board/kicad/hello-demo"
 BOARD_DOC_DIR = ROOT / "docs/board/kicad/hello-demo"
+COMMAND_DOC = ROOT / "docs/board/kicad/hello-demo-commands.md"
 REPORT_DIR = ROOT / "board/reports/fab"
 MANIFEST = "board/kicad/hello-demo/artifact-manifest.yaml"
 PRINTABLE_SOURCE_LABELS = {"project", "schematic", "pcb"}
@@ -60,6 +61,37 @@ def append_process_output(
         lines.extend(f"{prefix} stderr: {line}" for line in proc.stderr.rstrip().splitlines())
 
 
+def check_command_doc_staleness(failures: list[str], blockers: list[str]) -> None:
+    if not COMMAND_DOC.is_file():
+        failures.append("missing docs/board/kicad/hello-demo-commands.md")
+        return
+    text = COMMAND_DOC.read_text(errors="ignore")
+    has_project = bool(matches(BOARD_DIR, REQUIRED_PROJECT_GLOBS["project"]))
+    has_schematic = bool(matches(BOARD_DIR, REQUIRED_PROJECT_GLOBS["schematic"]))
+    has_pcb = bool(matches(BOARD_DIR, REQUIRED_PROJECT_GLOBS["pcb"]))
+    if has_project and has_schematic and has_pcb:
+        stale_phrases = [
+            "No KiCad project is currently checked in",
+            "once a real `board/kicad/hello-demo/*.kicad_pro`",
+        ]
+        for phrase in stale_phrases:
+            if phrase in text:
+                failures.append(
+                    "docs/board/kicad/hello-demo-commands.md is stale relative to checked-in "
+                    f"KiCad sources: {phrase}"
+                )
+    for required in (
+        "kicad-cli sch erc",
+        "kicad-cli pcb drc",
+        "kicad-cli pcb export gerbers",
+        "kicad-cli pcb export drill",
+        "kicad-cli sch export bom",
+        "kicad-cli pcb export pos",
+    ):
+        if required not in text:
+            blockers.append(f"KiCad command capture doc missing command family: {required}")
+
+
 def main() -> int:
     parser = ArgumentParser(description="Check KiCad board fabrication artifacts.")
     parser.add_argument(
@@ -86,6 +118,8 @@ def main() -> int:
             return 1
         print("KiCad artifact manifest check passed.")
         return 0
+
+    check_command_doc_staleness(failures, blockers)
 
     release_manifest_check = run_manifest_check(release=True) if args.release else None
     if release_manifest_check is not None and release_manifest_check.returncode != 0:

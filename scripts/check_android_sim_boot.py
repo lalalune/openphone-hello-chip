@@ -31,6 +31,8 @@ REQUIRED_REPORT_FIELDS = {
     "required_evidence": list,
     "attempted_evidence": list,
     "host_requirements": dict,
+    "linux_requirements": list,
+    "handoff_commands": list,
     "claim_boundary": str,
 }
 
@@ -127,6 +129,20 @@ def main() -> int:
         missing = host_requirements.get("missing")
         if not isinstance(missing, list) or not all(isinstance(item, str) for item in missing):
             errors.append("android sim report host_requirements.missing must be a string list")
+    linux_requirements = data.get("linux_requirements", [])
+    if isinstance(linux_requirements, list):
+        for required in ("AOSP_DIR", "/dev/kvm", "launch_cvd"):
+            if not any(required in item for item in linux_requirements):
+                errors.append(f"android sim report linux_requirements missing {required}")
+    handoff_commands = data.get("handoff_commands", [])
+    if isinstance(handoff_commands, list):
+        for required in (
+            "scripts/check_aosp_linux_preflight.py --write-report",
+            "scripts/boot_android_simulator.sh --run-cuttlefish",
+            "scripts/check_software_bsp.py aosp --require-evidence",
+        ):
+            if not any(required in item for item in handoff_commands):
+                errors.append(f"android sim report handoff_commands missing {required}")
 
     if status == "pass":
         bsp_report = check_software_bsp.target_report("aosp")

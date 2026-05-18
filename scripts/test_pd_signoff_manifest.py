@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import tempfile
 from pathlib import Path
 
@@ -182,6 +183,35 @@ def test_duplicate_key_detection() -> None:
     assert failures and "duplicate YAML key" in failures[0], failures
 
 
+def test_manifest_rejects_fail_open_release_config() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        release_config = root / "pd/openlane/config.sky130.json"
+        write(root / "pd/signoff/run-manifest.schema.json", "{}\n")
+        write(
+            release_config,
+            json.dumps(
+                {
+                    "QUIT_ON_TIMING_VIOLATIONS": False,
+                    "QUIT_ON_MAGIC_DRC": True,
+                    "QUIT_ON_LVS_ERROR": True,
+                    "QUIT_ON_SLEW_VIOLATIONS": True,
+                }
+            ),
+        )
+
+        failures = check_pd_signoff.validate_openlane_configs(
+            root,
+            {
+                "openlane_configs": {
+                    "release": ["pd/openlane/config.sky130.json"],
+                    "exploratory": [],
+                }
+            },
+        )
+        assert any("must set fail-closed keys true" in failure for failure in failures), failures
+
+
 def main() -> int:
     test_valid_run_manifest()
     test_invalid_run_manifest_reports_missing_report()
@@ -191,6 +221,7 @@ def main() -> int:
     test_invalid_run_manifest_rejects_placeholder_and_unwaived_fake_claims()
     test_missing_artifact_report_uses_human_labels()
     test_duplicate_key_detection()
+    test_manifest_rejects_fail_open_release_config()
     print("PD signoff manifest parser tests passed.")
     return 0
 

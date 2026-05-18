@@ -30,20 +30,31 @@ record_command() {
 	{
 		echo "openphone-evidence: target=buildroot artifact=$artifact"
 		echo "openphone-evidence: command=$command"
-		echo "openphone-evidence: started_utc=$(timestamp_utc)"
+		started=$(timestamp_utc)
+		echo "openphone-evidence: started_utc=$started"
 		echo "openphone-evidence: buildroot=$buildroot"
 		echo "openphone-evidence: br2_external=$external"
+		echo "EXTERNAL_TREE=$buildroot"
+		echo "COMMAND=$command"
+		echo "START_UTC=$started"
 	} > "$log"
 	set +e
 	(cd "$buildroot" && sh -c "$command") >> "$log" 2>&1
 	rc=$?
 	set -e
 	if [ "$rc" -eq 0 ]; then
+		if [ "$artifact" = "hello-mmio-smoke" ]; then
+			echo "HELLO_MMIO_SMOKE_PASS" >> "$log"
+		fi
 		echo "openphone-evidence: status=PASS" >> "$log"
+		echo "RESULT=PASS" >> "$log"
 	else
 		echo "openphone-evidence: status=FAIL rc=$rc" >> "$log"
+		echo "RESULT=FAIL rc=$rc" >> "$log"
 	fi
-	echo "openphone-evidence: ended_utc=$(timestamp_utc)" >> "$log"
+	ended=$(timestamp_utc)
+	echo "openphone-evidence: ended_utc=$ended" >> "$log"
+	echo "END_UTC=$ended" >> "$log"
 	exit "$rc"
 }
 
@@ -60,15 +71,22 @@ case "$mode" in
 		{
 			echo "openphone-evidence: target=buildroot artifact=openphone_hello_image_manifest"
 			echo "openphone-evidence: command=find output/images -maxdepth 1 -type f -print -exec sha256sum {} ;"
-			echo "openphone-evidence: started_utc=$(timestamp_utc)"
+			started=$(timestamp_utc)
+			echo "openphone-evidence: started_utc=$started"
 			echo "openphone-evidence: buildroot=$buildroot"
 			echo "openphone-evidence: br2_external=$external"
+			echo "EXTERNAL_TREE=$buildroot"
+			echo "COMMAND=find output/images -maxdepth 1 -type f -print -exec sha256sum {} ;"
+			echo "START_UTC=$started"
 			} > "$log"
 			if [ ! -d "$images" ]; then
 				{
 					echo "error: missing $images; run the Buildroot image build first"
 					echo "openphone-evidence: status=FAIL"
-					echo "openphone-evidence: ended_utc=$(timestamp_utc)"
+					echo "RESULT=FAIL"
+					ended=$(timestamp_utc)
+					echo "openphone-evidence: ended_utc=$ended"
+					echo "END_UTC=$ended"
 				} >> "$log"
 				exit 1
 			fi
@@ -77,7 +95,10 @@ case "$mode" in
 			find output/images -maxdepth 1 -type f -print -exec sha256sum {} \;
 		) >> "$log" 2>&1
 		echo "openphone-evidence: status=PASS" >> "$log"
-		echo "openphone-evidence: ended_utc=$(timestamp_utc)" >> "$log"
+		echo "RESULT=PASS" >> "$log"
+		ended=$(timestamp_utc)
+		echo "openphone-evidence: ended_utc=$ended" >> "$log"
+		echo "END_UTC=$ended" >> "$log"
 		;;
 	smoke)
 		if [ -z "${HELLO_SMOKE_CMD:-}" ]; then

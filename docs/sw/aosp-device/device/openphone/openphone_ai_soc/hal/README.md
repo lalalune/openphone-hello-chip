@@ -50,6 +50,11 @@ Evidence required before enabling packages:
 - SELinux policy and neverallow build logs.
 - Bounded Cuttlefish, QEMU, or Renode smoke transcript that keeps Android boot
   claims separate from virtual-device smoke evidence.
+- Filled Android proof manifest derived from
+  `docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json`
+  with blocked statuses replaced only by real external AOSP results and
+  SHA-256 values for VTS, CTS, VINTF, SELinux, NNAPI query, and absent-device
+  probe artifacts.
 # HAL Evidence Boundary
 
 HAL source or prebuilts are not checked in. `hello_npu.default` and

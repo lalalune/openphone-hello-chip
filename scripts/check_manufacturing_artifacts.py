@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import hashlib
+import json
 import re
 import sys
 from argparse import ArgumentParser
@@ -27,6 +29,7 @@ REQUIRED_FPGA_COMMANDS = {"synth", "place_route", "pack"}
 ALLOWED_RELEASE_GATES = {"pd_release", "tapeout_release", "board_fabrication_release"}
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 CHECKSUM_METADATA_RE = re.compile(r"(^|_)checksum$")
+DIRTY_SOURCE_RE = re.compile(r"(\+working-tree|dirty|uncommitted)", re.I)
 REQUIRED_GROUP_ARTIFACT_ALIASES = {
     "manufacturing_physical_evidence": {
         "kicad_project": [
@@ -160,6 +163,16 @@ def validate_metadata(
                 failures.append(
                     f"{field}.metadata.{key}: checksum must be a lowercase sha256 hex digest"
                 )
+        source_revision = metadata.get("source_revision")
+        if (
+            (release or status == "complete")
+            and isinstance(source_revision, str)
+            and DIRTY_SOURCE_RE.search(source_revision)
+        ):
+            failures.append(
+                f"{field}.metadata.source_revision: release/status complete cannot "
+                "reference a dirty working tree revision"
+            )
 
     checksum_manifest = artifact.get("checksum_manifest")
     if checksum_manifest is not None:
@@ -182,6 +195,18 @@ def matching_files(globs: list[str]) -> list[Path]:
     for pattern in globs:
         files.extend(sorted(path for path in ROOT.glob(pattern) if path.is_file()))
     return files
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def relative(path: Path) -> str:
+    return path.relative_to(ROOT).as_posix()
 
 
 def check_report_markers(
@@ -263,6 +288,82 @@ def validate_artifact(
         if not files:
             failures.append(f"{field}.{name}: release artifact files are missing")
         check_report_markers(name, artifact, files, failures)
+
+
+def resolved_manifest(manifest_paths: list[str]) -> dict:
+    manifests: list[dict] = []
+    for manifest in manifest_paths:
+        path = repo_path(manifest)
+        if not path.is_file():
+            manifests.append({"path": manifest, "exists": False, "artifact_groups": []})
+            continue
+        data = yaml.safe_load(path.read_text())
+        if not isinstance(data, dict):
+            manifests.append(
+                {
+                    "path": manifest,
+                    "exists": True,
+                    "parseable": False,
+                    "artifact_groups": [],
+                }
+            )
+            continue
+
+        groups_out: list[dict] = []
+        groups = data.get("artifact_groups", {})
+        if isinstance(groups, dict):
+            for group_name in sorted(str(name) for name in groups):
+                group = groups[group_name]
+                if not isinstance(group, dict):
+                    continue
+                artifacts_out: list[dict] = []
+                artifacts = group.get("artifacts", [])
+                if isinstance(artifacts, list):
+                    for artifact in artifacts:
+                        if not isinstance(artifact, dict):
+                            continue
+                        globs = as_list(artifact.get("globs"))
+                        files = [
+                            {
+                                "path": relative(file_path),
+                                "sha256": file_sha256(file_path),
+                                "size_bytes": file_path.stat().st_size,
+                            }
+                            for file_path in matching_files(globs)
+                        ]
+                        artifacts_out.append(
+                            {
+                                "name": artifact.get("name"),
+                                "status": artifact.get("status"),
+                                "globs": sorted(globs),
+                                "files": files,
+                            }
+                        )
+                groups_out.append(
+                    {
+                        "name": group_name,
+                        "status": group.get("status"),
+                        "artifacts": sorted(
+                            artifacts_out, key=lambda item: str(item.get("name") or "")
+                        ),
+                    }
+                )
+        manifests.append(
+            {
+                "path": manifest,
+                "exists": True,
+                "parseable": True,
+                "manifest": data.get("manifest"),
+                "status": data.get("status"),
+                "artifact_groups": groups_out,
+            }
+        )
+
+    return {
+        "schema": "openphone.manufacturing.resolved_artifact_manifest.v1",
+        "claim": "deterministic local file inventory only; not release readiness",
+        "manifests": manifests,
+    }
 
 
 def validate_manifest(path: Path, release: bool) -> list[str]:
@@ -394,6 +495,11 @@ def main() -> int:
         help="manifest path to check; may be repeated",
     )
     parser.add_argument("--release", action="store_true", help="require complete release evidence")
+    parser.add_argument(
+        "--resolved-manifest",
+        metavar="PATH",
+        help="write a deterministic JSON inventory of matched artifact files and sha256 hashes",
+    )
     args = parser.parse_args()
 
     failures: list[str] = []
@@ -404,6 +510,13 @@ def main() -> int:
             failures.append(f"missing manifest: {manifest}")
             continue
         failures.extend(validate_manifest(path, args.release))
+
+    if args.resolved_manifest:
+        out_path = repo_path(args.resolved_manifest)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(
+            json.dumps(resolved_manifest(manifests), indent=2, sort_keys=True) + "\n"
+        )
 
     if failures:
         mode = "release" if args.release else "preflight"

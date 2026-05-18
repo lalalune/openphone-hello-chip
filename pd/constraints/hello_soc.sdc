@@ -19,7 +19,7 @@ set_clock_transition  0.15 [get_clocks clk]
 set data_inputs [get_ports {DBG_VALID DBG_LAUNCH DBG_WRITE DBG_ADDR* DBG_WDATA* TEST_MODE JTAG_TCK JTAG_TMS JTAG_TDI}]
 set_input_delay -clock clk -max 2.0 \
     $data_inputs
-set_input_delay -clock clk -min 0.5 \
+set_input_delay -clock clk -min 2.0 \
     $data_inputs
 
 # Driving-cell model for external input transitions (sky130_fd_sc_hd buf_4)

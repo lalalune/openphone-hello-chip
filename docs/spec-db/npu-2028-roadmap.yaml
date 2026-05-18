@@ -176,18 +176,21 @@ phases:
       - CPU_fallback_report
       - CTS_and_VTS_artifacts
     measurable_gates:
+      - metric: android_proof_manifest_template
+        required: blocked_template_with_status_and_sha256_fields
+        evidence: docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json
       - metric: vts_result
         required: pass
-        evidence: docs/android/evidence/vts/hello_npu/result.json
+        evidence: docs/evidence/android/hello-npu/vts-result.json
       - metric: cts_result
         required: pass
-        evidence: docs/android/evidence/cts/hello_npu/result.json
+        evidence: docs/evidence/android/hello-npu/cts-result.json
       - metric: aidl_hal_service_declared
         required: pass
-        evidence: docs/android/evidence/vts/hello_npu/result.json
+        evidence: docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json
       - metric: selinux_fail_closed_policy
         required: pass
-        evidence: docs/android/evidence/vts/hello_npu/result.json
+        evidence: docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json
       - metric: nnapi_accelerator_query_hello_npu
         required: pass
         evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
@@ -235,8 +238,11 @@ phases:
       - metric: benchmark_transcript_hashes_present
         required: pass
         evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+      - metric: power_thermal_manifest_template
+        required: blocked_template_with_status_and_sha256_fields
+        evidence: docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json
       - metric: power_thermal_trace_present
         required: pass
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json
     blocked_claims:
       - none_without_all_phase_gates_and_artifacts

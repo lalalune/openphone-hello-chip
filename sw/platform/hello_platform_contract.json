@@ -286,7 +286,7 @@
           {
             "offset": "0x48",
             "name": "DESC_TAIL",
-            "access": "RO",
+            "access": "RW",
             "reset": "0x00000000"
           },
           {

@@ -64,10 +64,26 @@ def main() -> int:
         errors.append("reference_qemu_virt_os_boot_claim must be bool")
     if not isinstance(data.get("reference_android_os_boot_claim"), bool):
         errors.append("reference_android_os_boot_claim must be bool")
+    if data.get("qemu_virt_reference_only") is not True:
+        errors.append("qemu_virt_reference_only must be true")
+    if data.get("renode_reference_only") is not True:
+        errors.append("renode_reference_only must be true")
     if data.get("os_boot_claim") != data.get("on_chip_os_boot_claim"):
         errors.append("os_boot_claim must remain an alias for on_chip_os_boot_claim")
     if not isinstance(data.get("best_executable_evidence"), str):
         errors.append("best_executable_evidence must be string")
+    if data.get("best_executable_evidence") in {
+        "qemu_os_boot",
+        "qemu_firmware_smoke",
+        "renode_firmware_smoke",
+        "android_sim_boot",
+        "android_sim_report_check",
+    }:
+        errors.append(
+            "best_executable_evidence must not name reference-only QEMU/Renode/Android results"
+        )
+    if not isinstance(data.get("best_reference_evidence"), str):
+        errors.append("best_reference_evidence must be string")
     if data.get("best_executable_tier") not in {
         "os_boot",
         "os_prereq",
@@ -76,6 +92,12 @@ def main() -> int:
         "none",
     }:
         errors.append("best_executable_tier is invalid")
+    if data.get("best_reference_tier") not in {
+        "os_boot",
+        "firmware_smoke",
+        "none",
+    }:
+        errors.append("best_reference_tier is invalid")
     if not isinstance(data.get("remaining_blockers"), list):
         errors.append("remaining_blockers must be list")
     if not isinstance(data.get("blockers_to_on_chip_os_boot"), list):
@@ -101,6 +123,7 @@ def main() -> int:
             errors.append(f"results[{index}] tier is invalid")
         if item.get("scope") not in {
             "qemu_virt_reference",
+            "renode_reference",
             "android_reference",
             "our_chip_prereq",
             "our_chip_os_boot",

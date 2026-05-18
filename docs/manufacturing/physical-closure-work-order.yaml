@@ -36,6 +36,62 @@ repo_local_release_checks:
     purpose: Require concrete FPGA pins, IO constraints, bitstream, and timing/pack reports.
   - command: scripts/check_openlane_run_preflight.py --release
     purpose: Require pinned OpenLane/OpenROAD runner availability and at least one configured run directory before signoff review.
+  - command: python3 scripts/run_product_evidence_command.py --list
+    purpose: Enumerate opt-in local FPGA and KiCad evidence commands declared by artifact manifests.
+  - command: python3 scripts/check_manufacturing_artifacts.py --resolved-manifest build/reports/manufacturing-resolved-artifacts.json
+    purpose: Emit deterministic local artifact inventory with sha256 hashes for review handoff.
+evidence_capture_work_orders:
+  - id: fpga_bitstream_evidence_capture
+    gate: board_fabrication_release
+    owner: fpga_closure
+    local_command_ids:
+      - hello_demo_fpga_bitstream_evidence.bitstream_release.synth
+      - hello_demo_fpga_bitstream_evidence.bitstream_release.place_route
+      - hello_demo_fpga_bitstream_evidence.bitstream_release.pack
+    manifest: board/fpga/artifact-manifest.yaml
+    output_roots:
+      - board/fpga/build/
+      - board/fpga/reports/
+    blocked_until:
+      - FPGA board revision, pin assignments, timing, route, pack logs, and tool versions are archived.
+  - id: kicad_fab_package_capture
+    gate: board_fabrication_release
+    owner: board_closure
+    local_command_ids:
+      - hello_demo_kicad_board_evidence.kicad_cli_outputs.erc
+      - hello_demo_kicad_board_evidence.kicad_cli_outputs.drc
+      - hello_demo_kicad_board_evidence.kicad_cli_outputs.gerbers
+      - hello_demo_kicad_board_evidence.kicad_cli_outputs.drill
+      - hello_demo_kicad_board_evidence.kicad_cli_outputs.bom
+      - hello_demo_kicad_board_evidence.kicad_cli_outputs.position
+    manifest: board/kicad/hello-demo/artifact-manifest.yaml
+    output_roots:
+      - board/reports/fab/
+    blocked_until:
+      - Vendor-derived footprint, board stackup, DFM, SI/PI, current-limit, and first-article evidence are archived.
+  - id: package_vendor_review_capture
+    gate: tapeout_release
+    owner: package_closure
+    local_command_ids: []
+    manifest: package/artifact-manifest.yaml
+    output_roots:
+      - docs/manufacturing/evidence/package/
+      - package/vendor/
+    blocked_until:
+      - Package vendor drawing, land-pattern data, bond diagram, material constraints, and source checksums are archived.
+  - id: si_pi_current_thermal_capture
+    gate: board_fabrication_release
+    owner: si_pi_closure
+    local_command_ids: []
+    manifest: docs/manufacturing/artifact-manifest.yaml
+    output_roots:
+      - board/reports/si/
+      - board/reports/pi/
+      - board/reports/thermal/
+      - docs/manufacturing/evidence/current/
+      - docs/manufacturing/evidence/thermal/
+    blocked_until:
+      - Board SI, PI, rail current, and thermal reviews are archived with source revisions, checksums, and dispositions.
 items:
   - id: routed_pd_signoff
     gate: pd_release

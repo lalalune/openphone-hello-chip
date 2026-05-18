@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+import json
 import re
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
+import check_pd_closure
 import yaml
 from yaml.nodes import MappingNode, ScalarNode
 
@@ -24,6 +26,36 @@ REQUIRED_ARTIFACTS = {
     "congestion_report": ".rpt",
     "density_fill_report": ".rpt",
     "tool_versions": ".txt",
+}
+
+ARTIFACT_LABELS = {
+    "run_manifest": "run manifest",
+    "gds": "GDS layout",
+    "def": "DEF layout",
+    "gate_netlist": "gate-level netlist",
+    "corner_manifest": "corner manifest",
+    "sdc": "SDC constraints",
+    "spef": "SPEF parasitics",
+    "sdf": "SDF backannotation",
+    "drc_report": "DRC report",
+    "lvs_report": "LVS report",
+    "antenna_report": "antenna report",
+    "sta_report": "STA report",
+    "utilization_report": "utilization report",
+    "congestion_report": "congestion report",
+    "density_fill_report": "density/fill report",
+    "tool_versions": "tool-version report",
+}
+
+RUN_OUTPUT_SPECS = {
+    "gds": (".gds", "GDS layout"),
+    "def": (".def", "DEF layout"),
+    "gate_netlist": (".v", "gate-level netlist"),
+    "corner_manifest": (".yaml", "corner manifest"),
+    "sdc": (".sdc", "SDC constraints"),
+    "spef": (".spef", "SPEF parasitics"),
+    "sdf": (".sdf", "SDF backannotation"),
+    "tool_versions": (".txt", "tool-version report"),
 }
 
 REQUIRED_BLOCKED_GATES = {
@@ -72,9 +104,30 @@ REQUIRED_RUN_CHECKS = {
     "density_fill",
 }
 
+PLACEHOLDERS = {"", "tbd", "todo", "placeholder", "none", "n/a", "unknown"}
+RELEASE_FAIL_CLOSED_KEYS = {
+    "QUIT_ON_TIMING_VIOLATIONS",
+    "QUIT_ON_MAGIC_DRC",
+    "QUIT_ON_LVS_ERROR",
+    "QUIT_ON_SLEW_VIOLATIONS",
+}
+
 
 def as_list(value: object) -> list[str]:
     return value if isinstance(value, list) and all(isinstance(item, str) for item in value) else []
+
+
+def artifact_label(name: str) -> str:
+    label = ARTIFACT_LABELS.get(name, name)
+    return f"{label} ({name})"
+
+
+def artifact_list(names: list[str]) -> str:
+    return ", ".join(artifact_label(name) for name in names)
+
+
+def is_placeholder(value: object) -> bool:
+    return not isinstance(value, str) or value.strip().lower() in PLACEHOLDERS
 
 
 def validate_no_duplicate_yaml_keys(text: str) -> list[str]:
@@ -213,6 +266,66 @@ def validate_readiness_sections(manifest: dict) -> list[str]:
     return failures
 
 
+def validate_openlane_configs(root: Path, manifest: dict) -> list[str]:
+    failures: list[str] = []
+    configs = manifest.get("openlane_configs")
+    if not isinstance(configs, dict):
+        return ["manifest must list openlane_configs.release and openlane_configs.exploratory"]
+
+    release_configs = as_list(configs.get("release"))
+    exploratory_configs = as_list(configs.get("exploratory"))
+    if not release_configs:
+        failures.append("openlane_configs.release must list fail-closed release configs")
+    if not exploratory_configs:
+        failures.append(
+            "openlane_configs.exploratory must list non-release local iteration configs"
+        )
+
+    def load_config(mode: str, entry: str) -> dict | None:
+        path = Path(entry)
+        if path.is_absolute() or ".." in path.parts:
+            failures.append(f"openlane_configs.{mode}: config path must be relative: {entry}")
+            return None
+        full_path = root / path
+        if not full_path.is_file():
+            failures.append(f"openlane_configs.{mode}: missing config: {entry}")
+            return None
+        try:
+            payload = json.loads(full_path.read_text())
+        except json.JSONDecodeError as exc:
+            failures.append(f"openlane_configs.{mode}: invalid JSON in {entry}: {exc}")
+            return None
+        if not isinstance(payload, dict):
+            failures.append(f"openlane_configs.{mode}: config must be a JSON object: {entry}")
+            return None
+        return payload
+
+    for entry in release_configs:
+        payload = load_config("release", entry)
+        if payload is None:
+            continue
+        fail_open = sorted(key for key in RELEASE_FAIL_CLOSED_KEYS if payload.get(key) is not True)
+        if fail_open:
+            failures.append(
+                f"openlane_configs.release: {entry} must set fail-closed keys true: "
+                + ", ".join(fail_open)
+            )
+
+    for entry in exploratory_configs:
+        payload = load_config("exploratory", entry)
+        if payload is None:
+            continue
+        if entry.endswith(".exploratory.json"):
+            explicit_fail_open = [
+                key for key in RELEASE_FAIL_CLOSED_KEYS if payload.get(key) is False
+            ]
+            if not explicit_fail_open:
+                failures.append(
+                    f"openlane_configs.exploratory: {entry} should explicitly differ from release fail-closed configs"
+                )
+    return failures
+
+
 def check_reports(
     paths: list[Path], fail_regex: str | None, pass_regex: str | None
 ) -> tuple[list[str], list[str]]:
@@ -231,12 +344,24 @@ def check_reports(
 
 def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
     failures: list[str] = []
+    root = manifest_path.parents[2]
     run_roots = as_list(manifest.get("run_roots"))
     required = manifest.get("required_artifacts")
     runner = manifest.get("runner")
 
     if not isinstance(manifest.get("signoff"), str) or not manifest["signoff"]:
         failures.append("manifest must name signoff")
+    run_manifest_schema = manifest.get("run_manifest_schema")
+    if not isinstance(run_manifest_schema, str) or not run_manifest_schema:
+        failures.append("manifest must list run_manifest_schema")
+    else:
+        schema_path = Path(run_manifest_schema)
+        if schema_path.is_absolute() or ".." in schema_path.parts:
+            failures.append(
+                f"run_manifest_schema must be a relative repo path: {run_manifest_schema}"
+            )
+        elif not (root / schema_path).is_file():
+            failures.append(f"run_manifest_schema points at missing file: {run_manifest_schema}")
     if not isinstance(runner, dict):
         failures.append("manifest must list runner metadata")
     else:
@@ -305,8 +430,9 @@ def validate_manifest(manifest_path: Path, manifest: dict) -> list[str]:
 
     if manifest_path.name != "manifest.yaml":
         failures.append("signoff manifest file must be named manifest.yaml")
-    failures.extend(validate_blocked_gates(manifest_path.parents[2], manifest))
+    failures.extend(validate_blocked_gates(root, manifest))
     failures.extend(validate_readiness_sections(manifest))
+    failures.extend(validate_openlane_configs(root, manifest))
     return failures
 
 
@@ -327,6 +453,11 @@ def validate_run_manifest(root: Path, run_dir: Path, run_manifest: Path) -> list
 
     if payload.get("design") != "hello_chip_top":
         failures.append(f"run_manifest: {rel_manifest} design must be hello_chip_top")
+    for field in ("flow", "pdk", "std_cell_library", "openlane_image"):
+        if is_placeholder(payload.get(field)):
+            failures.append(
+                f"run_manifest: {rel_manifest} {field} must not be empty or placeholder"
+            )
     if payload.get("status") != "complete":
         failures.append(f"run_manifest: {rel_manifest} status must be complete")
     digest = payload.get("openlane_image_digest")
@@ -357,6 +488,12 @@ def validate_run_manifest(root: Path, run_dir: Path, run_manifest: Path) -> list
                 failures.append(
                     f"run_manifest: {rel_manifest} checks.{check_name}.status must be clean or waived"
                 )
+            if check.get("status") == "waived":
+                waiver = check.get("waiver")
+                if not isinstance(waiver, str) or not waiver:
+                    failures.append(
+                        f"run_manifest: {rel_manifest} checks.{check_name}.waiver is required for waived checks"
+                    )
             report = check.get("report")
             if not isinstance(report, str) or not report:
                 failures.append(
@@ -397,6 +534,35 @@ def validate_run_manifest(root: Path, run_dir: Path, run_manifest: Path) -> list
                 except ValueError:
                     failures.append(
                         f"run_manifest: {rel_manifest} {section_name}.{item_name} must stay inside the run directory: {entry}"
+                    )
+                if section_name == "outputs" and not entry_path.is_file():
+                    label = ARTIFACT_LABELS.get(item_name, item_name)
+                    failures.append(
+                        f"run_manifest: {rel_manifest} outputs.{item_name} missing {label}: {entry}"
+                    )
+
+    outputs = payload.get("outputs")
+    if isinstance(outputs, dict):
+        missing_outputs = sorted(set(RUN_OUTPUT_SPECS) - set(outputs))
+        if missing_outputs:
+            failures.append(
+                f"run_manifest: {rel_manifest} outputs missing required artifacts: "
+                + artifact_list(missing_outputs)
+            )
+        for item_name, (extension, label) in RUN_OUTPUT_SPECS.items():
+            value = outputs.get(item_name)
+            if isinstance(value, str):
+                values = [value]
+            elif isinstance(value, list):
+                values = value
+            else:
+                values = []
+            if not isinstance(values, list) or not all(isinstance(item, str) for item in values):
+                continue
+            for entry in values:
+                if not entry.endswith(extension):
+                    failures.append(
+                        f"run_manifest: {rel_manifest} outputs.{item_name} must point to {extension} {label}: {entry}"
                     )
 
     return failures
@@ -448,6 +614,15 @@ def choose_complete_run(
         if not missing:
             return run_dir, artifacts, missing_by_run
     return None, best_artifacts, missing_by_run
+
+
+def validate_release_closure_metrics(run_dir: Path) -> list[str]:
+    metrics, failures = check_pd_closure.load_metrics(run_dir)
+    if metrics:
+        failures.extend(check_pd_closure.check_metrics(metrics))
+    failures.extend(check_pd_closure.check_run_manifest(run_dir))
+    failures.extend(check_pd_closure.check_waivers(run_dir))
+    return failures
 
 
 def main() -> int:
@@ -519,6 +694,7 @@ def main() -> int:
                 missing_clean_markers.extend(missing_clean)
         for run_manifest in artifacts.get("run_manifest", []):
             failures.extend(validate_run_manifest(root, complete_run, run_manifest))
+        failures.extend(validate_release_closure_metrics(complete_run))
 
     waiver_spec = manifest.get("waivers", {})
     waivers = matched_files(root, waiver_spec.get("globs", []))

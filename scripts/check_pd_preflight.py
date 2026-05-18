@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIGS = [
     ROOT / "pd/openlane/config.json",
     ROOT / "pd/openlane/config.sky130.json",
+    ROOT / "pd/openlane/config.sky130.exploratory.json",
     ROOT / "pd/openlane/config.gf180.json",
+    ROOT / "pd/openlane/config.gf180.exploratory.json",
     ROOT / "pd/openlane/config.pd-smoke.sky130.json",
 ]
 OPENLANE_IMAGE = "ghcr.io/efabless/openlane2:2.4.0.dev1"
@@ -149,9 +151,13 @@ def openlane_command(config_path: Path) -> tuple[str, list[str]]:
         "run",
         "--rm",
         "-v",
-        "$PWD:/work",
+        f"{ROOT}:/work",
         "-w",
         "/work",
+        "--label",
+        "openphone.openlane=1",
+        "--label",
+        f"openphone.repo={ROOT}",
         OPENLANE_IMAGE,
         "openlane",
         rel_config,

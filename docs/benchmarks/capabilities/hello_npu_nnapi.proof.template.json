@@ -33,6 +33,14 @@
     "observed_tops": 0.000000000002,
     "tops_formula": "observed_tops = macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12"
   },
+  "capture": {
+    "commands": {
+      "adb_devices": "adb devices",
+      "nnapi_accelerator_query": "adb shell cmd neuralnetworks list",
+      "benchmark_model_nnapi": "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite --use_nnapi=true --nnapi_accelerator_name=hello-npu --enable_op_profiling=true --verbose=true",
+      "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace"
+    }
+  },
   "model_artifacts": {
     "benchmarks/models/mobile_smoke.tflite": {
       "sha256": "64-character lowercase sha256 of the exact model used"

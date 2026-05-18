@@ -4,10 +4,18 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-from cpu_ap_evidence_lib import load_evidence_manifest, transcript_specs
+from cpu_ap_evidence_lib import (
+    artifact_specs,
+    load_evidence_manifest,
+    load_json,
+    reject_duplicate_json_keys,
+    text_problems,
+    transcript_specs,
+    validate_path_kind,
+    validate_sha256,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SELECTED = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
@@ -15,18 +23,41 @@ TEMPLATE = ROOT / "docs/generators/chipyard/import-manifest.template.json"
 BUILD_MANIFEST = ROOT / "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json"
 
 
-def load_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
 def require(condition: bool, message: str, errors: list[str]) -> None:
     if not condition:
         errors.append(message)
 
 
+def check_import_template(errors: list[str]) -> None:
+    reject_duplicate_json_keys(TEMPLATE, errors)
+    if not TEMPLATE.is_file() or errors:
+        return
+    manifest = load_json(TEMPLATE)
+    chipyard = manifest.get("chipyard", {})
+    require(
+        manifest.get("schema") == "openphone.cpu_ap_import_manifest.v1",
+        "unexpected import manifest template schema",
+        errors,
+    )
+    require(manifest.get("status") == "template", "import manifest template status drifted", errors)
+    if not isinstance(chipyard, dict):
+        errors.append("import manifest template chipyard section must be an object")
+        return
+    require(
+        chipyard.get("commit") == "69eba860a352343e4ac6b6df0f3638a79a86ec78",
+        "import manifest template must keep the full pinned Chipyard commit",
+        errors,
+    )
+
+
 def check_selected_manifest(errors: list[str]) -> None:
     require(SELECTED.is_file(), f"missing selected generator manifest: {SELECTED}", errors)
     require(TEMPLATE.is_file(), f"missing import manifest template: {TEMPLATE}", errors)
+    if errors:
+        return
+
+    reject_duplicate_json_keys(SELECTED, errors)
+    check_import_template(errors)
     if errors:
         return
 
@@ -108,11 +139,17 @@ def check_generated_import_manifest(errors: list[str]) -> None:
     if errors:
         return
 
+    reject_duplicate_json_keys(BUILD_MANIFEST, errors)
+    if errors:
+        return
+
     manifest = load_json(BUILD_MANIFEST)
     chipyard = manifest.get("chipyard", {})
     generation = manifest.get("generation", {})
     artifacts = manifest.get("artifacts", {})
     evidence = manifest.get("evidence", {})
+    artifact_hashes = manifest.get("artifact_sha256", {})
+    evidence_hashes = manifest.get("evidence_sha256", {})
 
     require(
         manifest.get("schema") == "openphone.cpu_ap_import_manifest.v1",
@@ -143,25 +180,85 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         "generated manifest must use OpenPhoneRocketConfig",
         errors,
     )
-
-    for name in ("verilog", "dts", "simulator"):
-        path = artifacts.get(name, "")
-        require(bool(path), f"generated manifest lacks artifact path: {name}", errors)
-        require(
-            bool(path) and (ROOT / path).exists(),
-            f"generated artifact does not exist: {path}",
-            errors,
-        )
+    require(isinstance(artifacts, dict), "generated manifest artifacts must be an object", errors)
+    require(isinstance(evidence, dict), "generated manifest evidence must be an object", errors)
+    require(
+        isinstance(artifact_hashes, dict),
+        "generated manifest artifact_sha256 must be an object",
+        errors,
+    )
+    require(
+        isinstance(evidence_hashes, dict),
+        "generated manifest evidence_sha256 must be an object",
+        errors,
+    )
+    if not isinstance(artifacts, dict):
+        artifacts = {}
+    if not isinstance(evidence, dict):
+        evidence = {}
+    if not isinstance(artifact_hashes, dict):
+        artifact_hashes = {}
+    if not isinstance(evidence_hashes, dict):
+        evidence_hashes = {}
 
     evidence_errors: list[str] = []
     evidence_manifest = load_evidence_manifest(evidence_errors)
     errors.extend(evidence_errors)
+    if errors:
+        return
+
+    artifact_specs_by_name = artifact_specs(evidence_manifest)
+    for name, spec in artifact_specs_by_name.items():
+        manifest_key = spec.get("manifest_key")
+        path = artifacts.get(manifest_key, "") if isinstance(manifest_key, str) else ""
+        expected_path = spec.get("path")
+        require(
+            path == expected_path,
+            f"generated manifest artifact {name} path drifted: {path!r}",
+            errors,
+        )
+        if not isinstance(path, str) or not path:
+            continue
+        artifact_path = ROOT / path
+        validate_path_kind(artifact_path, spec, errors, name)
+        min_bytes = spec.get("min_bytes")
+        require(
+            not isinstance(min_bytes, int)
+            or not artifact_path.is_file()
+            or artifact_path.stat().st_size >= min_bytes,
+            f"generated {name} is smaller than manifest min_bytes: {path}",
+            errors,
+        )
+        if artifact_path.is_file():
+            text = artifact_path.read_text(encoding="utf-8", errors="ignore")
+            for token in spec.get("required_strings", []):
+                if isinstance(token, str):
+                    require(token in text, f"generated {name} missing token: {token}", errors)
+        sha_key = spec.get("sha256_key")
+        if isinstance(sha_key, str):
+            validate_sha256(artifact_path, artifact_hashes, name, sha_key, errors)
+
     missing_evidence = []
-    for name in transcript_specs(evidence_manifest):
-        path = evidence.get(name, "")
-        require(bool(path), f"generated manifest lacks evidence path: {name}", errors)
-        if bool(path) and not (ROOT / path).is_file():
+    for name, spec in transcript_specs(evidence_manifest).items():
+        manifest_key = spec.get("manifest_key")
+        path = evidence.get(manifest_key, "") if isinstance(manifest_key, str) else ""
+        expected_path = spec.get("path")
+        require(
+            path == expected_path,
+            f"generated manifest evidence {name} path drifted: {path!r}",
+            errors,
+        )
+        if not isinstance(path, str) or not path:
+            continue
+        transcript = ROOT / path
+        if not transcript.is_file():
             missing_evidence.append(path)
+            continue
+        text = transcript.read_text(encoding="utf-8", errors="ignore")
+        errors.extend(text_problems(text, spec, path, raw=False))
+        sha_key = spec.get("sha256_key")
+        if isinstance(sha_key, str):
+            validate_sha256(transcript, evidence_hashes, name, sha_key, errors)
     if missing_evidence:
         print(
             "STATUS: BLOCKED chipyard.generated_evidence - missing " + ", ".join(missing_evidence)
