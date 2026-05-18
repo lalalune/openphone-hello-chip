@@ -1,3 +1,5 @@
 reason: dtbs_check has not been run against sw/linux/dts/openphone-hello-soc.dtsi
-required: external Linux tree with sw/linux/Documentation/devicetree/bindings/openphone/*.yaml copied into Documentation/devicetree/bindings/openphone/, then `make ARCH=riscv dtbs_check DT_SCHEMA_FILES=Documentation/devicetree/bindings/openphone/ | tee docs/evidence/linux/openphone_hello_dtb_check.log`
+required: external Linux tree with sw/linux/Documentation/devicetree/bindings/openphone/*.yaml copied into Documentation/devicetree/bindings/openphone/, then `make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- dtbs_check DT_SCHEMA_FILES=Documentation/devicetree/bindings/openphone/ | tee docs/evidence/linux/openphone_hello_dtb_check.log`
+host: Linux build host with gcc-riscv64-linux-gnu, python3-yaml, dtschema (`pip install dtschema`), and device-tree-compiler.
+attempt: see docs/evidence/linux/build-attempt-2026-05-18.md
 audit: docs/android/bsp-critical-gap-audit-2026-05-17.md

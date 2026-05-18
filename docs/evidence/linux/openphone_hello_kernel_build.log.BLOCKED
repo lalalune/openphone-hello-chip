@@ -1,3 +1,5 @@
 reason: no external Linux kernel checkout has imported sw/linux/drivers/openphone/ and produced a build log
-required: external Linux tree at $LINUX_SRC with drivers/misc/openphone/ populated from sw/linux/drivers/openphone/, then `make ARCH=riscv -j$(nproc) | tee docs/evidence/linux/openphone_hello_kernel_build.log`
+required: external Linux tree at $LINUX_SRC with drivers/misc/openphone/ populated from sw/linux/drivers/openphone/, then `make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc) | tee docs/evidence/linux/openphone_hello_kernel_build.log`
+host: Linux build host with gcc-riscv64-linux-gnu (Debian/Ubuntu pkg). macOS/Homebrew ships only riscv64-elf-gcc (bare-metal), which cannot link a Linux kernel.
+attempt: see docs/evidence/linux/build-attempt-2026-05-18.md (toolchain probe + full repro)
 audit: docs/android/bsp-critical-gap-audit-2026-05-17.md (Machine-readable BLOCK gates)
