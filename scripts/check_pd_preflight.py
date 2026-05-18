@@ -203,13 +203,13 @@ def main() -> int:
             loaded_configs[config_path] = config
             check_pdk_environment(config_path, config, failures, blockers)
 
-    seen_pdks: dict[str, set[Path]] = {}
-    for config_path, config in loaded_configs.items():
-        pdk = config.get("PDK")
-        if isinstance(pdk, str):
-            seen_pdks.setdefault(pdk, set()).add(config_path)
+    seen_pdks = {
+        config.get("PDK"): config_path
+        for config_path, config in loaded_configs.items()
+        if isinstance(config.get("PDK"), str)
+    }
     for pdk, expected_config in CONFIG_BY_PDK.items():
-        if expected_config not in seen_pdks.get(pdk, set()):
+        if seen_pdks.get(pdk) != expected_config:
             failures.append(f"PDK {pdk} must be covered by {expected_config.relative_to(ROOT)}")
 
     dry_run_config = (ROOT / args.config).resolve()
