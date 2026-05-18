@@ -33,8 +33,8 @@ marker validation.
 
 | HAL/surface | File evidence | Gap to close |
 |---|---|---|
-| NPU HAL | `device.mk` declares `hello_npu.default`; `manifest.xml` declares `vendor.openphone.hello_npu@1.0`; init starts it only when `vendor.hello_npu.ready=1`. | No HAL source or binary exists in this repo or an external tree; no HIDL/AIDL interface source, VTS result, or fail-closed runtime test is checked in. |
-| Graphics composer | `device.mk` declares `android.hardware.graphics.composer@2.4-service` and `hwcomposer.openphone_ai_soc`; `manifest.xml` declares composer 2.4. | No `hwcomposer.openphone_ai_soc` binary/source, no framebuffer or DRM node proof, no SurfaceFlinger log, no home-screen evidence. |
+| NPU HAL | `device.mk` declares `hello_npu.default`; `manifest.xml` declares `vendor.openphone.hello_npu@1.0`; init starts it only when `vendor.hello_npu.ready=1`; repo-local HAL source exists under `sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu`. | No external AOSP build has produced the HAL binary; no HIDL/AIDL interface build, VTS result, runtime probe, or fail-closed device smoke transcript is checked in. |
+| Graphics composer | `device.mk` declares `android.hardware.graphics.composer@2.4-service` and `hwcomposer.openphone_ai_soc`; `manifest.xml` declares composer 2.4; repo-local framebuffer-only HWC source exists under `sw/aosp-device/device/openphone/openphone_ai_soc/hal/hwcomposer`. | No external AOSP build has produced `hwcomposer.openphone_ai_soc`; no framebuffer or DRM node proof, SurfaceFlinger log, HWC2 validation, or home-screen evidence is checked in. |
 | Input | Runbook allows Cuttlefish/evdev only. | No hello_soc touch/input DTS, driver, HAL policy, or CTS input evidence. |
 | Audio/camera/radio/GNSS/NFC | Explicitly excluded in docs. | No manifest entries or implementation; must remain excluded from claims. |
 | SELinux | `file_contexts` and `hello_npu.te` label the NPU path and HAL domain. | Policy has not been compiled in AOSP, no `checkpolicy`/Soong output, no `avc` log review. |
@@ -48,8 +48,10 @@ Required but absent:
 - External Buildroot checkout using `sw/buildroot` as `BR2_EXTERNAL`.
 - External AOSP checkout with `device/openphone/openphone_ai_soc` imported.
 - Cuttlefish host setup with KVM, `launch_cvd`, `adb`, and riscv64 product.
-- HAL implementation tree for `hello_npu.default`.
-- HAL implementation tree for `hwcomposer.openphone_ai_soc`.
+- External AOSP build output proving `hello_npu.default` compiles, installs, and
+  passes the repo contract/runtime smoke.
+- External AOSP build output proving `hwcomposer.openphone_ai_soc` compiles,
+  installs, and reaches SurfaceFlinger with the framebuffer contract.
 - Built Linux `Image`, DTB, modules, and boot log.
 - Built Buildroot rootfs/kernel image and `hello-mmio-smoke` transcript.
 - Built AOSP `vendor.img`, installed-files manifest, VINTF output, SELinux

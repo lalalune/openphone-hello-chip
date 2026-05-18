@@ -16,6 +16,7 @@ __pycache__/
 *.vcd
 *.fst
 *.log
+*.kicad_prl
 external/
 tools/bin/
 pd/reports/*

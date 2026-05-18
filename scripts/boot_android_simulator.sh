@@ -102,8 +102,10 @@ json_bool() {
 }
 
 host_requirements_json() {
-	python3 - "$host_os" "$host_arch" "$run_cuttlefish" "$run_qemu" "$run_renode" <<'PY'
+	python3 - "$host_os" "$host_arch" "$run_cuttlefish" "$run_qemu" "$run_renode" "${aosp_dir:-}" <<'PY'
 import json
+import os
+from pathlib import Path
 import shutil
 import sys
 
@@ -111,12 +113,36 @@ host_os, host_arch = sys.argv[1], sys.argv[2]
 run_cuttlefish = sys.argv[3] == "1"
 run_qemu = sys.argv[4] == "1"
 run_renode = sys.argv[5] == "1"
+aosp_dir_text = sys.argv[6]
+aosp_dir = Path(aosp_dir_text).expanduser().resolve() if aosp_dir_text else None
 missing = []
 if host_os != "Linux":
     missing.append("Linux host required for local Android virtual-device launches")
-if run_cuttlefish and host_os == "Linux" and not any(shutil.which(tool) for tool in ("launch_cvd", "cvd")):
-    missing.append("Cuttlefish launcher not found on PATH")
-if run_cuttlefish and host_os == "Linux" and shutil.which("adb") is None:
+if aosp_dir is None:
+    missing.append("AOSP_DIR is not set")
+else:
+    if not (aosp_dir / "build/envsetup.sh").is_file():
+        missing.append(f"{aosp_dir}/build/envsetup.sh is missing")
+    if not (aosp_dir / "device").is_dir():
+        missing.append(f"{aosp_dir}/device is missing")
+kvm = Path("/dev/kvm")
+if not kvm.exists():
+    missing.append("/dev/kvm is missing")
+elif not os.access(kvm, os.R_OK | os.W_OK):
+    missing.append("/dev/kvm is not readable and writable by this user")
+cuttlefish_candidates = ["launch_cvd", "cvd"]
+cuttlefish_found = any(shutil.which(tool) for tool in cuttlefish_candidates)
+if not cuttlefish_found and aosp_dir is not None:
+    cuttlefish_found = any(
+        (aosp_dir / "out/host/linux-x86/bin" / tool).exists()
+        for tool in cuttlefish_candidates
+    )
+if run_cuttlefish and not cuttlefish_found:
+    missing.append(
+        "Cuttlefish launcher not found; expected launch_cvd or cvd on PATH "
+        "or under AOSP_DIR/out/host/linux-x86/bin"
+    )
+if run_cuttlefish and shutil.which("adb") is None:
     missing.append("adb not found on PATH")
 if run_qemu and shutil.which("qemu-system-riscv64") is None:
     missing.append("qemu-system-riscv64 not found on PATH")

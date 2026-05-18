@@ -7,6 +7,8 @@ import argparse
 import json
 from pathlib import Path
 
+from cpu_ap_evidence_lib import load_evidence_manifest, transcript_specs
+
 ROOT = Path(__file__).resolve().parents[1]
 SELECTED = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
 TEMPLATE = ROOT / "docs/generators/chipyard/import-manifest.template.json"
@@ -84,11 +86,14 @@ def check_selected_manifest(errors: list[str]) -> None:
             errors,
         )
 
-    for path in (
-        "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-    ):
+    evidence_errors: list[str] = []
+    evidence_manifest = load_evidence_manifest(evidence_errors)
+    errors.extend(evidence_errors)
+    for spec in transcript_specs(evidence_manifest).values():
+        path = spec.get("path")
+        if not isinstance(path, str):
+            errors.append(f"CPU/AP evidence manifest contains invalid evidence path: {path!r}")
+            continue
         require(
             path in manifest.get("required_evidence", []),
             f"selected manifest lacks evidence artifact: {path}",
@@ -148,8 +153,11 @@ def check_generated_import_manifest(errors: list[str]) -> None:
             errors,
         )
 
+    evidence_errors: list[str] = []
+    evidence_manifest = load_evidence_manifest(evidence_errors)
+    errors.extend(evidence_errors)
     missing_evidence = []
-    for name in ("opensbi_boot_log", "linux_boot_log", "trap_timer_irq_log"):
+    for name in transcript_specs(evidence_manifest):
         path = evidence.get(name, "")
         require(bool(path), f"generated manifest lacks evidence path: {name}", errors)
         if bool(path) and not (ROOT / path).is_file():

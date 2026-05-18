@@ -16,17 +16,18 @@ set_clock_transition  0.15 [get_clocks clk]
 # Input delays — assume external data arrives 2 ns after rising clock edge
 # Exclude the clock port itself and the asynchronous reset
 # ---------------------------------------------------------------------------
+set data_inputs [get_ports {DBG_VALID DBG_LAUNCH DBG_WRITE DBG_ADDR* DBG_WDATA* TEST_MODE JTAG_TCK JTAG_TMS JTAG_TDI}]
 set_input_delay -clock clk -max 2.0 \
-    [remove_from_collection [all_inputs] [get_ports {CLK_IN RST_N}]]
+    $data_inputs
 set_input_delay -clock clk -min 0.5 \
-    [remove_from_collection [all_inputs] [get_ports {CLK_IN RST_N}]]
+    $data_inputs
 
 # Driving-cell model for external input transitions (sky130_fd_sc_hd buf_4)
 set_driving_cell -lib_cell sky130_fd_sc_hd__buf_4 -pin X \
-    [remove_from_collection [all_inputs] [get_ports {CLK_IN RST_N}]]
+    $data_inputs
 
 # Input transition on the debug nibble bus
-set_input_transition 0.25 [get_ports {DBG_VALID DBG_LAUNCH DBG_WRITE DBG_ADDR DBG_WDATA}]
+set_input_transition 0.25 [get_ports {DBG_VALID DBG_LAUNCH DBG_WRITE DBG_ADDR* DBG_WDATA*}]
 
 # ---------------------------------------------------------------------------
 # Output delays — outputs must be stable 2 ns before next rising clock edge

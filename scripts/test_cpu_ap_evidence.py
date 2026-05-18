@@ -124,6 +124,23 @@ def test_scaffold_check_lists_new_missing_evidence_paths() -> None:
     assert_contains(result.stdout, "STATUS: PASS cpu_ap.scaffold")
     assert_contains(result.stdout, "openphone_hello_isa_cache_mmu.log")
     assert_contains(result.stdout, "openphone_hello_ap_benchmarks.log")
+    assert_contains(result.stdout, "capture commands:")
+    assert_contains(result.stdout, "intake ap-benchmarks")
+
+
+def test_payload_path_uses_cpu_ap_manifest_transcripts_only() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/check_chipyard_payload_path.py"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode not in (0, 2):
+        raise AssertionError(result.stdout + result.stderr)
+    assert_contains(result.stdout, "STATUS: BLOCKED chipyard.payload_path")
+    assert_contains(result.stdout, "openphone_hello_ap_benchmarks.log")
+    if "u_boot_openphone_build.log" in result.stdout:
+        raise AssertionError("Chipyard payload path gate should not own U-Boot BSP evidence")
 
 
 def main() -> int:
@@ -134,6 +151,7 @@ def main() -> int:
         test_capture_template_lists_required_markers_and_no_pass_claim,
         test_new_transcripts_reject_placeholder_or_incomplete_text,
         test_scaffold_check_lists_new_missing_evidence_paths,
+        test_payload_path_uses_cpu_ap_manifest_transcripts_only,
     ]
     for test in tests:
         test()

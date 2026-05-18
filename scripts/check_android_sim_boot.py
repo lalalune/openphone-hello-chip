@@ -160,6 +160,11 @@ def main() -> int:
         return 0
 
     print(f"Android simulator boot blocked: {data.get('reason')}")
+    missing = host_requirements.get("missing") if isinstance(host_requirements, dict) else None
+    if missing:
+        print("Missing host requirements:")
+        for item in missing:
+            print(f"  - {item}")
     print(f"Next step: {data.get('next_step')}")
     return 2
 

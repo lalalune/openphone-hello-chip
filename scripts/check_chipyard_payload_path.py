@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from cpu_ap_evidence_lib import load_evidence_manifest, transcript_specs
+
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "build/chipyard/openphone_rocket"
 GENERATED_SRC = OUT / "generated-src"
@@ -30,33 +32,6 @@ REQUIRED_DTS_TOKENS = {
     "plic": "interrupt-controller@c000000",
     "serial": "serial@10020000",
     "chosen_stdout": "stdout-path",
-}
-
-EVIDENCE: dict[str, dict[str, Path | str]] = {
-    "opensbi_boot_log": {
-        "path": ROOT / "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-        "next": "python3 scripts/capture_cpu_ap_evidence.py intake opensbi-boot --source /path/to/opensbi-serial.log --command '/exact/external/boot command'",
-    },
-    "u_boot_build_log": {
-        "path": ROOT / "docs/evidence/linux/u_boot_openphone_build.log",
-        "next": "OPENPHONE_UBOOT_CMD='/exact/external/u-boot build command' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot build",
-    },
-    "u_boot_boot_chain_log": {
-        "path": ROOT / "docs/evidence/linux/u_boot_opensbi_boot_chain.log",
-        "next": "OPENPHONE_UBOOT_BOOT_CMD='/exact/external boot-chain command' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot boot-chain",
-    },
-    "linux_boot_log": {
-        "path": ROOT / "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-        "next": "python3 scripts/capture_cpu_ap_evidence.py intake linux-boot --source /path/to/linux-serial.log --command '/exact/external Linux boot command'",
-    },
-    "linux_trap_irq_log": {
-        "path": ROOT / "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-        "next": "python3 scripts/capture_cpu_ap_evidence.py intake trap-timer-irq --source /path/to/trap-irq.log --command '/exact/external validation command'",
-    },
-    "linux_isa_mmu_log": {
-        "path": ROOT / "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
-        "next": "python3 scripts/capture_cpu_ap_evidence.py intake isa-cache-mmu --source /path/to/isa-mmu.log --command '/exact/external validation command'",
-    },
 }
 
 
@@ -127,14 +102,18 @@ def main() -> int:
         for name in REQUIRED_DTS_TOKENS:
             dts_checks[name] = False
 
+    evidence_manifest = load_evidence_manifest(errors)
     evidence_status: dict[str, dict[str, Any]] = {}
-    for name, spec in EVIDENCE.items():
-        path_value = spec["path"]
-        next_value = spec["next"]
-        if not isinstance(path_value, Path) or not isinstance(next_value, str):
-            errors.append(f"evidence spec {name} is invalid")
+    for name, spec in transcript_specs(evidence_manifest).items():
+        rel_path = spec.get("path")
+        next_value = spec.get("capture_command")
+        if not isinstance(rel_path, str) or not rel_path.startswith("build/evidence/cpu_ap/"):
+            errors.append(f"CPU/AP evidence spec {name} has invalid path: {rel_path!r}")
             continue
-        path = path_value
+        if not isinstance(next_value, str) or not next_value:
+            errors.append(f"CPU/AP evidence spec {name} lacks capture_command")
+            continue
+        path = ROOT / rel_path
         exists = path.is_file()
         evidence_status[name] = {
             "path": rel(path),

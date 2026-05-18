@@ -41,14 +41,13 @@ RTL_SOURCES := \
   $(RTL_DIR)/interrupts/hello_interrupt_controller.sv \
   $(RTL_DIR)/peripherals/hello_peripherals.sv \
   $(RTL_DIR)/memory/hello_axi_lite_dram.sv \
-  $(RTL_DIR)/cpu/hello_cpu_subsystem_stub.sv \
+  $(RTL_DIR)/cpu/hello_cva6_wrapper.sv \
+  $(RTL_DIR)/cpu/hello_cpu_axi_bridge.sv \
   $(RTL_DIR)/npu/hello_npu.sv \
   $(RTL_DIR)/dma/hello_dma.sv \
   $(RTL_DIR)/display/hello_display.sv \
   $(RTL_DIR)/bootrom/hello_bootrom.sv \
-  $(RTL_DIR)/debug/hello_dbg_mmio_bridge.sv \
-  $(RTL_DIR)/security/hello_lifecycle.sv \
-  $(RTL_DIR)/security/hello_otp_shadow.sv
+  $(RTL_DIR)/debug/hello_dbg_mmio_bridge.sv
 
 YOSYS          ?= yosys
 NEXTPNR        ?= nextpnr-ecp5

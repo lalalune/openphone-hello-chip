@@ -54,3 +54,7 @@ $ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli sch erc --output board
 Found 38 violations
 Saved ERC Report to board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt
 exit_status=0
+
+$ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli sch erc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
+ERC rerun after documentation-only root cleanup
+exit_status=0

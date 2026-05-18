@@ -7,8 +7,8 @@ Release use: `prohibited`
 and planning footprint so the package pinout can be cross-probed and the board
 can be opened or printed for review. These sources are planning artifacts only.
 They are not board fabrication evidence and are not a substitute for a vendor
-land pattern, clean ERC/DRC, Gerbers, drill output, BOM, placement files,
-assembly package, or DFM review.
+land pattern, release-reviewed ERC/DRC, Gerbers, drill output, BOM, placement
+files, assembly package, or DFM review.
 
 See `docs/manufacturing/physical-closure-work-order.yaml` for all acceptance criteria.
 
@@ -17,7 +17,12 @@ See `docs/manufacturing/physical-closure-work-order.yaml` for all acceptance cri
 - Planning PCB source: `board/kicad/hello-demo/hello-demo.kicad_pcb`.
 - Planning footprint source:
   `board/kicad/hello-demo/hello_demo_planning.pretty/hello_demo_qfn64_planning.kicad_mod`.
-- No Gerber, drill, BOM, position, fab drawing, ERC, DRC, or command transcript outputs are checked in.
+- Dated KiCad CLI outputs under `board/reports/fab/hello-demo-2026-05-17/`
+  are planning-review evidence only. They do not release the board for
+  fabrication.
+- Release still requires reviewed Gerber, drill, BOM, position, fab drawing,
+  ERC, DRC, command transcript, and tool-version outputs with vendor/package
+  provenance.
 - `package/hello-demo-pinout.yaml` is a placeholder planning pinout and is not sufficient to generate fabrication-ready KiCad artifacts.
 - Required command capture and artifact manifests are documented in
   `board/kicad/hello-demo/artifact-manifest.yaml`.
@@ -31,7 +36,8 @@ See `docs/manufacturing/physical-closure-work-order.yaml` for all acceptance cri
 - Power sequencing and decoupling values are preliminary.
 - No SI/PI analysis has been performed.
 - No assembly house DFM review has been performed.
-- No checked schematic, PCB, Gerbers, drill files, BOM, or placement files exist in this directory.
+- No release-checked schematic, PCB, Gerbers, drill files, BOM, or placement
+  files exist in this directory.
 - Power sequencing and decoupling values are preliminary.
 - No SI/PI analysis has been performed.
 - No assembly house DFM review has been performed.

@@ -127,7 +127,7 @@ docker run --rm --platform "$platform" \
 		esac
 		run_binary_cmd="make -j \"$CHIPYARD_LINUX_SMOKE_JOBS\" CONFIG=\"$CHIPYARD_CONFIG\" CONFIG_PACKAGE=\"$CHIPYARD_CONFIG_PACKAGE\" RISCV=/work/external/riscv-tools-linux-x64 AR=x86_64-conda-linux-gnu-ar LRISCV= DISABLE_DRAMSIM=1 TIMEOUT_CYCLES=\"$CHIPYARD_LINUX_SMOKE_TIMEOUT_CYCLES\" EXTRA_SIM_CXXFLAGS=\"-O0 -g0 -I/work/external/riscv-tools-linux-x64/include\" EXTRA_SIM_LDFLAGS=\"-L/work/external/riscv-tools-linux-x64/lib -Wl,-rpath,/work/external/riscv-tools-linux-x64/lib\" EXTRA_SIM_FLAGS=\"$CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS\""
 		if [ "$CHIPYARD_LINUX_SMOKE_LOADMEM" = "1" ]; then
-			run_binary_cmd="$run_binary_cmd BINARY=\"none\" LOADMEM=\"$CHIPYARD_LINUX_BINARY\""
+			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_BINARY\" LOADMEM=1"
 		elif [ -n "$CHIPYARD_LINUX_SMOKE_LOADMEM" ]; then
 			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_BINARY\" LOADMEM=\"$CHIPYARD_LINUX_SMOKE_LOADMEM\""
 		else
@@ -145,13 +145,13 @@ except subprocess.TimeoutExpired:
     raise SystemExit(124)
 '"'"' "$CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS" "$run_binary_cmd"
 	' >>"$log" 2>&1
-rc=$?
+status_code=$?
 set -e
 
 {
 	printf 'openphone-evidence: raw_transcript_end\n'
-	printf 'openphone-evidence: exit_code=%s\n' "$rc"
-	if [ "$rc" -eq 0 ]; then
+	printf 'openphone-evidence: exit_code=%s\n' "$status_code"
+	if [ "$status_code" -eq 0 ]; then
 		printf 'openphone-evidence: status=PASS\n'
 	else
 		printf 'openphone-evidence: status=BLOCKED\n'
@@ -161,7 +161,7 @@ set -e
 cp "$log" "$runner_log"
 tail -n 120 "$log"
 
-if [ "$rc" -ne 0 ]; then
+if [ "$status_code" -ne 0 ]; then
 	printf 'STATUS: BLOCKED chipyard.verilator_linux_smoke_docker\n'
 	printf '  log: %s\n' "${log#"$repo_dir"/}"
 	exit 2

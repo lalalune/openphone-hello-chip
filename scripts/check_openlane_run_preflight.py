@@ -44,15 +44,15 @@ def docker_manifest_contains_digest(image: str, digest: str) -> bool | None:
     return digest in result.stdout
 
 
-def validate_openlane_config(config_path: Path, failures: list[str]) -> None:
+def validate_openlane_config(config_path: Path, failures: list[str]) -> dict:
     if not config_path.is_file():
         failures.append(f"missing OpenLane config: {config_path.relative_to(ROOT)}")
-        return
+        return {}
     try:
         config = json.loads(config_path.read_text())
     except json.JSONDecodeError as exc:
         failures.append(f"{config_path.relative_to(ROOT)}: invalid JSON: {exc}")
-        return
+        return {}
     for key in ("DESIGN_NAME", "VERILOG_FILES", "CLOCK_PORT", "CLOCK_PERIOD"):
         if key not in config:
             failures.append(f"{config_path.relative_to(ROOT)}: missing {key}")
@@ -60,6 +60,49 @@ def validate_openlane_config(config_path: Path, failures: list[str]) -> None:
         failures.append(f"{config_path.relative_to(ROOT)}: DESIGN_NAME must be hello_chip_top")
     if not isinstance(config.get("VERILOG_FILES"), list) or not config["VERILOG_FILES"]:
         failures.append(f"{config_path.relative_to(ROOT)}: VERILOG_FILES must be a non-empty list")
+    return config
+
+
+def release_config_blockers(configs: dict[str, dict]) -> list[str]:
+    required_true = (
+        "QUIT_ON_TIMING_VIOLATIONS",
+        "QUIT_ON_MAGIC_DRC",
+        "QUIT_ON_LVS_ERROR",
+        "QUIT_ON_SLEW_VIOLATIONS",
+    )
+    blockers: list[str] = []
+    for config_name, config in configs.items():
+        if not isinstance(config, dict) or not config:
+            continue
+        fail_open = [key for key in required_true if config.get(key) is not True]
+        if fail_open:
+            blockers.append(
+                f"{config_name} is exploratory for release; require true " + ", ".join(fail_open)
+            )
+    return blockers
+
+
+def release_artifact_blockers(manifest: dict) -> list[str]:
+    required = manifest.get("required_artifacts", {})
+    if not isinstance(required, dict):
+        return ["pd/signoff/manifest.yaml must list required_artifacts for release"]
+
+    missing: list[str] = []
+    for name, spec in required.items():
+        if not isinstance(spec, dict):
+            missing.append(str(name))
+            continue
+        min_bytes = int(spec.get("min_bytes", 1))
+        globs = spec.get("globs", [])
+        if not isinstance(globs, list) or not any(
+            path.is_file() and path.stat().st_size >= min_bytes
+            for pattern in globs
+            for path in ROOT.glob(str(pattern))
+        ):
+            missing.append(str(name))
+    if missing:
+        return ["release requires OpenLane signoff artifacts: " + ", ".join(missing)]
+    return []
 
 
 def main() -> int:
@@ -86,12 +129,13 @@ def main() -> int:
         )
         digest_pin = DEFAULT_OPENLANE_DIGEST
 
+    configs: dict[str, dict] = {}
     for config_name in (
         "pd/openlane/config.json",
         "pd/openlane/config.sky130.json",
         "pd/openlane/config.gf180.json",
     ):
-        validate_openlane_config(ROOT / config_name, failures)
+        configs[config_name] = validate_openlane_config(ROOT / config_name, failures)
 
     run_roots = manifest.get("run_roots", [])
     if not isinstance(run_roots, list) or not run_roots:
@@ -102,6 +146,10 @@ def main() -> int:
         ]
         if not run_dirs:
             blockers.append("no OpenLane/OpenROAD run directories exist under configured run_roots")
+
+    if args.release:
+        blockers.extend(release_config_blockers(configs))
+        blockers.extend(release_artifact_blockers(manifest if isinstance(manifest, dict) else {}))
 
     if shutil.which("openlane") or shutil.which("flow.tcl"):
         pass

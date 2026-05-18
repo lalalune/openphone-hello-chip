@@ -48,6 +48,17 @@ def test_boot_script_blocks_without_aosp_dir() -> None:
         raise AssertionError("android sim report must be blocked without AOSP_DIR")
     if "not hello-chip hardware ABI proof" not in data.get("claim_boundary", ""):
         raise AssertionError("android sim report must keep the hello-chip ABI boundary explicit")
+    missing_requirements = data.get("host_requirements", {}).get("missing", [])
+    for requirement in (
+        "AOSP_DIR is not set",
+        "/dev/kvm is missing",
+        "Cuttlefish launcher not found",
+    ):
+        if not any(requirement in item for item in missing_requirements):
+            raise AssertionError(
+                f"android sim report missing host requirement {requirement!r}: "
+                f"{missing_requirements}"
+            )
     for key in ("run_qemu", "run_renode"):
         if not isinstance(data.get(key), bool):
             raise AssertionError(f"android sim report must include boolean {key}")
@@ -74,6 +85,8 @@ def test_checker_reports_blocked_report() -> None:
         )
     assert_contains(result.stdout, "Android simulator boot blocked")
     assert_contains(result.stdout, "AOSP_DIR")
+    assert_contains(result.stdout, "/dev/kvm")
+    assert_contains(result.stdout, "Cuttlefish launcher")
 
 
 def test_checker_rejects_pass_without_required_aosp_evidence() -> None:
