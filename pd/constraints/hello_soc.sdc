@@ -1,5 +1,5 @@
 # hello_soc timing constraints
-# Target: 50 MHz on SKY130A (20 ns period)
+# Target: 10 MHz OpenLane trial on SKY130A (100 ns period)
 # Top-level: hello_chip_top
 # Clock port: CLK_IN   Reset port: RST_N
 
@@ -8,7 +8,7 @@ set_units -time ns -resistance kOhm -capacitance pF -voltage V -current mA
 # ---------------------------------------------------------------------------
 # Primary clock
 # ---------------------------------------------------------------------------
-create_clock -name clk -period 20.0 [get_ports CLK_IN]
+create_clock -name clk -period 100.0 [get_ports CLK_IN]
 set_clock_uncertainty 0.5  [get_clocks clk]
 set_clock_transition  0.15 [get_clocks clk]
 
@@ -46,15 +46,3 @@ set_false_path -from [get_ports RST_N]
 set_false_path -from [get_ports TEST_MODE]
 set_false_path -from [get_ports {JTAG_TCK JTAG_TMS JTAG_TDI}]
 set_false_path -to   [get_ports JTAG_TDO]
-
-# ---------------------------------------------------------------------------
-# Multicycle paths
-# ---------------------------------------------------------------------------
-# NPU datapath — 2-cycle read latency is acceptable for MMIO polling
-set_multicycle_path -setup 2 -from [get_cells u_soc/u_npu*]
-set_multicycle_path -hold  1 -from [get_cells u_soc/u_npu*]
-
-# ---------------------------------------------------------------------------
-# Max fanout for synthesised clock distribution
-# ---------------------------------------------------------------------------
-set_max_fanout 20 [get_clocks clk]
