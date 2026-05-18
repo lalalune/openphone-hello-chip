@@ -358,13 +358,18 @@ def renode_status() -> Status:
 
 
 def benchmark_status() -> Status:
-    report = ROOT / "benchmarks/results/pipeline-check/report.json"
+    host_smoke = ROOT / "benchmarks/results/final-macbook-host-smoke/report.json"
+    report = (
+        host_smoke
+        if host_smoke.is_file()
+        else ROOT / "benchmarks/results/pipeline-check/report.json"
+    )
     if not report.is_file():
         return Status(
             "benchmarks",
             BLOCK,
-            "missing regenerated pipeline dry-run report",
-            "make benchmarks-dry-run",
+            "missing regenerated benchmark report",
+            "make benchmarks-dry-run or run the final-macbook-host-smoke benchmark set",
             "regen_required",
         )
     data = json.loads(report.read_text())
@@ -430,7 +435,7 @@ def benchmark_status() -> Status:
     return Status(
         "benchmarks",
         PASS,
-        "benchmark report records executed results with no blocked entries",
+        f"{rel(report)} records executed results with no blocked entries",
         "none",
         "generated_artifact",
     )

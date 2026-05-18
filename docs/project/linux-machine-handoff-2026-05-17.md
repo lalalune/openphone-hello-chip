@@ -69,6 +69,7 @@ readiness.
 ```sh
 scripts/run_chipyard_openphone_verilator.sh verilog
 python3 scripts/check_chipyard_generator_manifest.py --require-generated
+python3 scripts/check_chipyard_generated_linux_contract.py
 python3 scripts/check_chipyard_payload_path.py
 ```
 
@@ -80,17 +81,17 @@ values must be recorded in
 
 ```sh
 export CHIPYARD_LINUX_BINARY=/path/to/real/opensbi-or-linux-payload.elf
-cd external/chipyard/sims/verilator
-source ../../env.sh
-make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone \
-  BINARY="$CHIPYARD_LINUX_BINARY" LOADMEM=1 run-binary \
-  2>&1 | tee ../../../../build/chipyard/openphone_rocket/verilator-linux-smoke.log
-cd -
+scripts/run_chipyard_openphone_linux_smoke.sh
 python3 scripts/check_chipyard_verilator_linux_smoke.py
 ```
 
 This is the first gate that can start closing an OpenPhone generated-AP Linux
 claim.
+
+If `check_chipyard_verilator_linux_smoke.py` reports stale `/work/` or other
+container paths in `VTestDriver.mk`, regenerate the simulator on the Linux host
+or run inside the same container mount path that produced the generated
+artifacts. Do not patch the generated makefile by hand and call it evidence.
 
 5. Archive CPU/AP evidence:
 
@@ -136,4 +137,3 @@ python3 scripts/check_mvp_simulator.py
 The MVP report may claim `on_chip_os_boot_claim=true` only when the
 `chipyard_verilator_linux_smoke` and CPU/AP evidence gates pass. A passing
 qemu-virt Linux boot only sets `reference_qemu_virt_os_boot_claim=true`.
-

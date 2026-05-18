@@ -1,0 +1,126 @@
+ERC report (2026-05-17T18:04:02, Encoding UTF8)
+Report includes: Errors, Warnings
+
+***** Sheet /
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 45.00 mm): Global Label '+3V3'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 50.00 mm): Global Label '+1V8'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 55.00 mm): Global Label 'GND'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 65.00 mm): Global Label 'OSC_CLK'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 70.00 mm): Global Label 'RESET_N'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 75.00 mm): Global Label 'TEST_MODE'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 100.00 mm): Global Label 'LED0'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 105.00 mm): Global Label 'LED1'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 110.00 mm): Global Label 'LED2'
+[label_dangling]: Label not connected
+    ; error
+    @(20.00 mm, 115.00 mm): Global Label 'LED3'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 45.00 mm): Global Label 'MCU_DBG_VALID'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 50.00 mm): Global Label 'MCU_DBG_LAUNCH'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 55.00 mm): Global Label 'MCU_DBG_WRITE'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 60.00 mm): Global Label 'MCU_DBG_READY'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 70.00 mm): Global Label 'MCU_DBG_ADDR0'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 75.00 mm): Global Label 'MCU_DBG_ADDR1'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 80.00 mm): Global Label 'MCU_DBG_ADDR2'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 85.00 mm): Global Label 'MCU_DBG_ADDR3'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 100.00 mm): Global Label 'LED4'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 105.00 mm): Global Label 'LED5'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 110.00 mm): Global Label 'LED6'
+[label_dangling]: Label not connected
+    ; error
+    @(60.00 mm, 115.00 mm): Global Label 'LED7'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 70.00 mm): Global Label 'MCU_DBG_WDATA0'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 75.00 mm): Global Label 'MCU_DBG_WDATA1'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 80.00 mm): Global Label 'MCU_DBG_WDATA2'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 85.00 mm): Global Label 'MCU_DBG_WDATA3'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 100.00 mm): Global Label 'TP_IRQ_TIMER'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 105.00 mm): Global Label 'TP_IRQ_DMA'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 110.00 mm): Global Label 'TP_IRQ_NPU'
+[label_dangling]: Label not connected
+    ; error
+    @(100.00 mm, 115.00 mm): Global Label 'TP_IRQ_VSYNC'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 70.00 mm): Global Label 'MCU_DBG_RDATA0'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 75.00 mm): Global Label 'MCU_DBG_RDATA1'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 80.00 mm): Global Label 'MCU_DBG_RDATA2'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 85.00 mm): Global Label 'MCU_DBG_RDATA3'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 100.00 mm): Global Label 'JTAG_TCK'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 105.00 mm): Global Label 'JTAG_TMS'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 110.00 mm): Global Label 'JTAG_TDI'
+[label_dangling]: Label not connected
+    ; error
+    @(140.00 mm, 115.00 mm): Global Label 'JTAG_TDO'
+
+ ** ERC messages: 38  Errors 38  Warnings 0
+
+ ** Ignored checks:
+    - Global label only appears once in the schematic
+    - Four connection points are joined together
+    - SPICE model issue
+    - Assigned footprint doesn't match footprint filters

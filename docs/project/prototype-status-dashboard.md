@@ -21,7 +21,7 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 | renode | `PASS` | `generated_artifact` | `none` |
 | pd-contract | `PASS` | `command_pass` | `none` |
 | product-package | `BLOCK` | `release_blocker` | `close package/FPGA/KiCad/PD release blockers or keep product claim below fabrication` |
-| benchmarks | `BLOCK` | `scaffold_only` | `python3 benchmarks/run_benchmarks.py run --metadata benchmarks/metadata/strict-blocked-template.json --strict-missing` |
+| benchmarks | `PASS` | `generated_artifact` | `none` |
 | release-pipeline | `PASS` | `generated_artifact` | `none` |
 
 ## Workstream Dashboard

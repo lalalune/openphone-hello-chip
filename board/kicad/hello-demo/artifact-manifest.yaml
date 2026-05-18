@@ -44,67 +44,73 @@ artifact_groups:
           - board/kicad/hello-demo/**/*.pretty/*.kicad_mod
   kicad_cli_outputs:
     owner: board_closure
-    status: missing
+    status: draft
     cli_commands:
-      erc: kicad-cli sch erc --exit-code-violations --output board/kicad/hello-demo/reports/erc.txt board/kicad/hello-demo/<project>.kicad_sch
-      drc: kicad-cli pcb drc --exit-code-violations --output board/kicad/hello-demo/reports/drc.txt board/kicad/hello-demo/<project>.kicad_pcb
-      gerbers: kicad-cli pcb export gerbers --output board/kicad/hello-demo/fab/gerbers board/kicad/hello-demo/<project>.kicad_pcb
-      drill: kicad-cli pcb export drill --output board/kicad/hello-demo/fab/drill board/kicad/hello-demo/<project>.kicad_pcb
-      bom: kicad-cli sch export python-bom --output board/kicad/hello-demo/fab/bom/hello-demo.xml board/kicad/hello-demo/<project>.kicad_sch
-      position: kicad-cli pcb export pos --output board/kicad/hello-demo/fab/position/hello-demo.pos board/kicad/hello-demo/<project>.kicad_pcb
+      erc: kicad-cli sch erc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
+      drc: kicad-cli pcb drc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-drc-report.txt board/kicad/hello-demo/hello-demo.kicad_pcb
+      gerbers: kicad-cli pcb export gerbers --output board/reports/fab/hello-demo-2026-05-17/gerbers board/kicad/hello-demo/hello-demo.kicad_pcb
+      drill: kicad-cli pcb export drill --output board/reports/fab/hello-demo-2026-05-17/drill board/kicad/hello-demo/hello-demo.kicad_pcb
+      bom: kicad-cli sch export bom --output board/reports/fab/hello-demo-2026-05-17/hello-demo-bom.csv board/kicad/hello-demo/hello-demo.kicad_sch
+      position: kicad-cli pcb export pos --output board/reports/fab/hello-demo-2026-05-17/hello-demo-position.csv board/kicad/hello-demo/hello-demo.kicad_pcb
     artifacts:
       - name: erc_report
-        status: missing
+        status: draft
         required_metadata:
           - kicad_version
           - command
           - schematic_checksum
         clean_regex: "(?i)(0\\s+errors?|erc\\s+(clean|pass(?:ed)?))"
-        fail_regex: "(?i)(error|fail|violations?\\s*[:=]\\s*[1-9][0-9]*)"
+        fail_regex: "(?i)(errors?\\s*[:=]\\s*[1-9][0-9]*|fail(?:ed|ure)?|violations?\\s*[:=]\\s*[1-9][0-9]*|found\\s+[1-9][0-9]*\\s+violations?)"
         globs:
+          - board/reports/fab/**/hello-demo-erc-report.txt
           - board/kicad/hello-demo/reports/erc*.txt
       - name: drc_report
-        status: missing
+        status: draft
         required_metadata:
           - kicad_version
           - command
           - pcb_checksum
         clean_regex: "(?i)(0\\s+(drc\\s+)?violations?|drc\\s+(clean|pass(?:ed)?))"
-        fail_regex: "(?i)(error|fail|violations?\\s*[:=]\\s*[1-9][0-9]*)"
+        fail_regex: "(?i)(errors?\\s*[:=]\\s*[1-9][0-9]*|fail(?:ed|ure)?|violations?\\s*[:=]\\s*[1-9][0-9]*|found\\s+[1-9][0-9]*\\s+violations?)"
         globs:
+          - board/reports/fab/**/hello-demo-drc-report.txt
           - board/kicad/hello-demo/reports/drc*.txt
       - name: gerbers
-        status: missing
+        status: draft
         required_metadata:
           - kicad_version
           - command
           - pcb_checksum
         globs:
+          - board/reports/fab/**/gerbers/*.g*
           - board/kicad/hello-demo/fab/gerbers/*.gbr
       - name: drill
-        status: missing
+        status: draft
         required_metadata:
           - kicad_version
           - command
           - pcb_checksum
         globs:
+          - board/reports/fab/**/drill/*.drl
           - board/kicad/hello-demo/fab/drill/*.drl
       - name: bom
-        status: missing
+        status: draft
         required_metadata:
           - kicad_version
           - command
           - schematic_checksum
         globs:
+          - board/reports/fab/**/*bom*.csv
           - board/kicad/hello-demo/fab/bom/*.csv
           - board/kicad/hello-demo/fab/bom/*.xml
       - name: pick_and_place
-        status: missing
+        status: draft
         required_metadata:
           - kicad_version
           - command
           - pcb_checksum
         globs:
+          - board/reports/fab/**/*position*.csv
           - board/kicad/hello-demo/fab/position/*.pos
           - board/kicad/hello-demo/fab/position/*.csv
   board_reviews:

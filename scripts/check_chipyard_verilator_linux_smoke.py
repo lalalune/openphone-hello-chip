@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +25,13 @@ REQUIRED_GENERATED_ARTIFACTS = (
     OUT_DIR / "OpenPhoneRocketConfig.manifest.json",
 )
 REQUIRED_LOG_MARKERS = ("OpenSBI", "Linux version")
+CONTAINER_PATH_ENV = "CHIPYARD_ALLOW_CONTAINER_GENERATED_PATHS"
+GENERATED_DRIVER_MAKEFILE = (
+    SIM_DIR
+    / "generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+    / "chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+    / "VTestDriver.mk"
+)
 
 
 def rel(path: Path) -> str:
@@ -43,6 +51,7 @@ def next_command(payload: str = f"${PAYLOAD_ENV}") -> str:
 
 
 def write_report(status: str, blockers: list[str], payload: str | None) -> None:
+    allow_container_paths = os.environ.get(CONTAINER_PATH_ENV) == "1"
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     report = {
         "schema": "openphone.chipyard_verilator_linux_smoke.v1",
@@ -53,6 +62,12 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
         "payload_env": PAYLOAD_ENV,
         "payload": payload or "",
         "log": rel(LOG),
+        "host": {
+            "system": platform.system(),
+            "machine": platform.machine(),
+        },
+        "allow_container_generated_paths": allow_container_paths,
+        "generated_driver_makefile": rel(GENERATED_DRIVER_MAKEFILE),
         "required_log_markers": list(REQUIRED_LOG_MARKERS),
         "next_command": next_command(),
         "blockers": blockers,
@@ -73,6 +88,27 @@ def main() -> int:
 
     if not SIM_DIR.is_dir():
         blockers.append(f"missing Chipyard Verilator directory: {rel(SIM_DIR)}")
+
+    if GENERATED_DRIVER_MAKEFILE.is_file():
+        makefile_text = GENERATED_DRIVER_MAKEFILE.read_text(encoding="utf-8", errors="replace")
+        stale_roots = sorted(
+            {
+                token
+                for token in ("/work/", "/workspace/", "/__w/")
+                if token in makefile_text and not str(ROOT).startswith(token.rstrip("/"))
+            }
+        )
+        if stale_roots and os.environ.get(CONTAINER_PATH_ENV) != "1":
+            blockers.append(
+                "generated Verilator driver makefile contains stale container/workspace "
+                f"absolute paths ({', '.join(stale_roots)}): {rel(GENERATED_DRIVER_MAKEFILE)}; "
+                "regenerate the simulator on this host or run inside the same Linux/container path"
+            )
+    elif (SIM_DIR / "generated-src").exists():
+        blockers.append(
+            "missing generated Verilator driver makefile after generation: "
+            f"{rel(GENERATED_DRIVER_MAKEFILE)}"
+        )
 
     for artifact in REQUIRED_GENERATED_ARTIFACTS:
         if not artifact.is_file():

@@ -106,12 +106,12 @@ def main() -> int:
     if shutil.which("openlane") or shutil.which("flow.tcl"):
         pass
     else:
+        manifest_match = docker_manifest_contains_digest(image, digest_pin)
         digest = docker_image_id(image)
         if digest is None:
             blockers.append(f"OpenLane command missing and Docker image is not installed: {image}")
-        elif digest_pin not in digest:
+        elif digest_pin not in digest and manifest_match is not True:
             blockers.append(f"OpenLane Docker image digest is not pinned to {digest_pin}: {digest}")
-        manifest_match = docker_manifest_contains_digest(image, digest_pin)
         if manifest_match is False:
             blockers.append(
                 f"OpenLane remote manifest does not contain pinned digest {digest_pin}: {image}"

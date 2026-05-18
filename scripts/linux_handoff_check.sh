@@ -61,6 +61,7 @@ run_required "python compile" python3 -m py_compile \
 	scripts/check_mvp_simulator.py \
 	scripts/check_chipyard_verilator_preflight.py \
 	scripts/check_chipyard_verilator_linux_smoke.py \
+	scripts/check_chipyard_generated_linux_contract.py \
 	scripts/check_android_sim_boot.py \
 	scripts/check_qemu_linux_payload_status.py \
 	scripts/fetch_qemu_linux_payload.py
@@ -75,6 +76,7 @@ run_required "qemu linux payload status" python3 scripts/check_qemu_linux_payloa
 
 run_optional_blocking "Chipyard Verilator preflight" python3 scripts/check_chipyard_verilator_preflight.py
 run_optional_blocking "Chipyard generated AP gate" python3 scripts/check_chipyard_generator_manifest.py --require-generated
+run_optional_blocking "Chipyard generated Linux contract gate" python3 scripts/check_chipyard_generated_linux_contract.py
 run_optional_blocking "Chipyard payload path gate" python3 scripts/check_chipyard_payload_path.py
 run_optional_blocking "Chipyard Verilator Linux smoke gate" python3 scripts/check_chipyard_verilator_linux_smoke.py
 run_optional_blocking "CPU/AP Linux evidence gate" python3 scripts/check_cpu_ap_evidence.py --require-evidence
