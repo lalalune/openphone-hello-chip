@@ -320,6 +320,18 @@
             "reset": "0x00000000"
           },
           {
+            "offset": "0x60",
+            "name": "DESC_TIMEOUT_COUNT",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x64",
+            "name": "DESC_BYTES_READ",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
             "offset": "0x80",
             "name": "SCRATCH0",
             "access": "RW",

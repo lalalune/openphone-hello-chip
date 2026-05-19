@@ -8,6 +8,8 @@ import json
 import re
 from pathlib import Path
 
+from cpu_ap_evidence_lib import load_evidence_manifest, transcript_specs
+
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "build/chipyard/openphone_rocket"
 GEN = BUILD / "generated-src"
@@ -24,13 +26,6 @@ REGMAPS = {
     "plic": GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.0xc000000.0.regmap.json",
     "uart": GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.0x10020000.0.regmap.json",
 }
-
-TRANSCRIPTS = [
-    ROOT / "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-    ROOT / "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-    ROOT / "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-    ROOT / "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
-]
 
 
 def rel(path: Path) -> str:
@@ -164,9 +159,20 @@ def check_import_state(failures: list[str], blockers: list[str]) -> None:
         blockers.append(f"missing generated simulator directory {rel(SIMULATOR)}")
     elif not any(SIMULATOR.iterdir()):
         blockers.append(f"generated simulator directory is empty: {rel(SIMULATOR)}")
-    for transcript in TRANSCRIPTS:
+    evidence_manifest = load_evidence_manifest(failures)
+    for spec in transcript_specs(evidence_manifest).values():
+        rel_path = spec.get("path")
+        if not isinstance(rel_path, str):
+            continue
+        transcript = ROOT / rel_path
         if not transcript.is_file():
-            blockers.append(f"missing executable boot evidence {rel(transcript)}")
+            capture = spec.get("capture_command")
+            if isinstance(capture, str) and capture:
+                blockers.append(
+                    f"missing executable AP evidence {rel(transcript)}; next: {capture}"
+                )
+            else:
+                blockers.append(f"missing executable AP evidence {rel(transcript)}")
 
 
 def main() -> int:
@@ -196,6 +202,12 @@ def main() -> int:
         )
         for blocker in blockers:
             print(f"  - {blocker}")
+        print("  capture_preflight: scripts/capture_chipyard_linux_evidence.sh preflight")
+        print("  capture_plan: python3 scripts/capture_cpu_ap_evidence.py plan all --format shell")
+        print(
+            "  smoke_check: python3 scripts/check_chipyard_verilator_linux_smoke.py "
+            "(classifies no run, CPU progress-to-payload, OpenSBI boot, and Linux boot)"
+        )
         return 1 if args.require_boot_evidence else 0
 
     print("STATUS: PASS chipyard.generated_linux_boot")

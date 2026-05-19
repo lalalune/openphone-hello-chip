@@ -24,7 +24,8 @@
   "dma": {
     "path": "hardware_dma",
     "bytes_read": 1,
-    "bytes_written": 1
+    "bytes_written": 1,
+    "trace_bytes": 1
   },
   "measurements": {
     "macs_per_inference": 1,
@@ -47,9 +48,25 @@
     }
   },
   "transcripts": {
-    "adb_devices": "docs/evidence/android/hello-npu/adb-devices.log",
-    "nnapi_accelerator_query": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
-    "benchmark_model_nnapi": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
-    "dma_trace": "docs/evidence/android/hello-npu/dma-trace.log"
+    "adb_devices": {
+      "path": "docs/evidence/android/hello-npu/adb-devices.log",
+      "sha256": "64-character lowercase sha256 of the exact adb devices transcript",
+      "bytes": 1
+    },
+    "nnapi_accelerator_query": {
+      "path": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
+      "sha256": "64-character lowercase sha256 of the exact NNAPI query transcript",
+      "bytes": 1
+    },
+    "benchmark_model_nnapi": {
+      "path": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
+      "sha256": "64-character lowercase sha256 of the exact benchmark_model transcript",
+      "bytes": 1
+    },
+    "dma_trace": {
+      "path": "docs/evidence/android/hello-npu/dma-trace.log",
+      "sha256": "64-character lowercase sha256 of the exact DMA trace transcript",
+      "bytes": 1
+    }
   }
 }

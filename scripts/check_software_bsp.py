@@ -14,8 +14,13 @@ LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
 BOOT_TRANSCRIPT_SCHEMA = ROOT / "docs/android/boot-transcript.schema.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/software-bsp-evidence-manifest.json"
 AOSP_EVIDENCE_MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
+NNAPI_PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json"
+ANDROID_PROOF_TEMPLATE = (
+    ROOT / "docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json"
+)
 AOSP_REFERENCE_ONLY_BOUNDARY = "reference_only_not_hello_chip_ap_evidence"
 AOSP_VIRTUAL_DEVICE_BOUNDARY = "virtual_device_smoke_only_not_boot_or_compatibility_evidence"
+ANDROID_PROOF_TEMPLATE_BOUNDARY = "template_only_not_android_boot_cts_vts_or_nnapi_evidence"
 AOSP_REFERENCE_ONLY_PATHS = [
     "docs/evidence/android/cuttlefish_riscv64_smoke.log",
     "docs/evidence/android/qemu_riscv64_smoke.log",
@@ -30,6 +35,32 @@ ANDROID_COMPAT_METADATA = [
     "RESULT=",
     "COMPATIBILITY_CLAIM=none",
 ]
+REQUIRED_NNAPI_TRANSCRIPTS = {
+    "adb_devices",
+    "nnapi_accelerator_query",
+    "benchmark_model_nnapi",
+    "dma_trace",
+}
+REQUIRED_ANDROID_PROOF_STATUSES = {
+    "aidl_or_hidl_hal_declared",
+    "hal_binary_in_vendorimage",
+    "vintf_check",
+    "selinux_policy_build",
+    "selinux_neverallow",
+    "vts_hello_npu",
+    "cts_nnapi_smoke",
+    "nnapi_accelerator_query",
+    "fail_closed_absent_device",
+}
+REQUIRED_ANDROID_PROOF_ARTIFACTS = {
+    "vts_result": "docs/evidence/android/hello-npu/vts-result.json",
+    "cts_result": "docs/evidence/android/hello-npu/cts-result.json",
+    "selinux_policy_build_log": "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
+    "selinux_neverallow_log": "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
+    "vintf_check_log": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+    "nnapi_query_log": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
+    "absent_device_probe_log": "docs/evidence/android/hello-npu/absent-device-probe.log",
+}
 
 TARGETS: dict[str, dict[str, Any]] = {
     "buildroot": {
@@ -417,6 +448,102 @@ def check_aosp_product_glue(errors: list[str]) -> None:
             )
 
 
+def check_android_proof_templates(errors: list[str]) -> None:
+    nnapi_template = load_json(NNAPI_PROOF_TEMPLATE, errors)
+    if nnapi_template:
+        if nnapi_template.get("schema") != "openphone.hello_npu_nnapi_capability.v1":
+            errors.append("NNAPI proof template has unexpected schema")
+        dma = nnapi_template.get("dma", {})
+        if not isinstance(dma, dict) or "trace_bytes" not in dma:
+            errors.append("NNAPI proof template must bind dma.trace_bytes to the DMA transcript")
+        transcripts = nnapi_template.get("transcripts", {})
+        if not isinstance(transcripts, dict):
+            errors.append("NNAPI proof template transcripts must be an object")
+            transcripts = {}
+        missing_transcripts = REQUIRED_NNAPI_TRANSCRIPTS - set(transcripts)
+        if missing_transcripts:
+            errors.append(
+                "NNAPI proof template missing transcript entries: "
+                + ", ".join(sorted(missing_transcripts))
+            )
+        for name in sorted(REQUIRED_NNAPI_TRANSCRIPTS & set(transcripts)):
+            entry = transcripts[name]
+            if not isinstance(entry, dict):
+                errors.append(
+                    f"NNAPI proof template transcripts.{name} must include path, sha256, and bytes"
+                )
+                continue
+            path = entry.get("path")
+            if not isinstance(path, str) or not path or Path(path).is_absolute():
+                errors.append(f"NNAPI proof template transcripts.{name}.path must be repo-relative")
+            sha = entry.get("sha256")
+            if not isinstance(sha, str) or "64-character lowercase sha256" not in sha:
+                errors.append(f"NNAPI proof template transcripts.{name}.sha256 must require sha256")
+            bytes_value = entry.get("bytes")
+            if not isinstance(bytes_value, int) or isinstance(bytes_value, bool):
+                errors.append(f"NNAPI proof template transcripts.{name}.bytes must be an integer")
+
+    android_template = load_json(ANDROID_PROOF_TEMPLATE, errors)
+    if not android_template:
+        return
+    if android_template.get("schema") != "openphone.hello_npu_android_proof_manifest.v1":
+        errors.append("Android proof manifest template has unexpected schema")
+    if android_template.get("claim_boundary") != ANDROID_PROOF_TEMPLATE_BOUNDARY:
+        errors.append(
+            "Android proof manifest template must keep the template-only no-boot/no-CTS/VTS/no-NNAPI boundary"
+        )
+    if android_template.get("status") != "blocked":
+        errors.append("Android proof manifest template status must remain blocked")
+    proof_gate = android_template.get("proof_gate", {})
+    if not isinstance(proof_gate, dict):
+        errors.append("Android proof manifest template proof_gate must be an object")
+    else:
+        for field in ("android_boot_claim", "compatibility_claim"):
+            if proof_gate.get(field) != "none":
+                errors.append(f"Android proof manifest template {field} must be none")
+        if proof_gate.get("nnapi_acceleration_claim") != (
+            "none_without_all_required_artifacts_passed"
+        ):
+            errors.append("Android proof manifest template must fail closed on NNAPI acceleration")
+    statuses = android_template.get("required_statuses", {})
+    if not isinstance(statuses, dict):
+        errors.append("Android proof manifest required_statuses must be an object")
+        statuses = {}
+    missing_statuses = REQUIRED_ANDROID_PROOF_STATUSES - set(statuses)
+    if missing_statuses:
+        errors.append(
+            "Android proof manifest template missing status gates: "
+            + ", ".join(sorted(missing_statuses))
+        )
+    for status_name, status in statuses.items():
+        if status != "blocked":
+            errors.append(f"Android proof manifest status {status_name} must remain blocked")
+    artifacts = android_template.get("artifacts", {})
+    if not isinstance(artifacts, dict):
+        errors.append("Android proof manifest artifacts must be an object")
+        artifacts = {}
+    missing_artifacts = set(REQUIRED_ANDROID_PROOF_ARTIFACTS) - set(artifacts)
+    if missing_artifacts:
+        errors.append(
+            "Android proof manifest template missing artifacts: "
+            + ", ".join(sorted(missing_artifacts))
+        )
+    for artifact_name, expected_path in REQUIRED_ANDROID_PROOF_ARTIFACTS.items():
+        artifact = artifacts.get(artifact_name)
+        if not isinstance(artifact, dict):
+            continue
+        path = artifact.get("path")
+        if path != expected_path:
+            errors.append(
+                f"Android proof manifest artifact {artifact_name}.path must be {expected_path}"
+            )
+        sha = artifact.get("sha256")
+        if not isinstance(sha, str) or "64-character lowercase sha256" not in sha:
+            errors.append(
+                f"Android proof manifest artifact {artifact_name}.sha256 must require sha256"
+            )
+
+
 def check_target(name: str) -> tuple[list[str], list[str]]:
     spec = TARGETS[name]
     errors: list[str] = []
@@ -463,6 +590,7 @@ def check_target(name: str) -> tuple[list[str], list[str]]:
     if name == "aosp":
         check_boot_transcript_schema(errors)
         check_aosp_product_glue(errors)
+        check_android_proof_templates(errors)
 
     missing_evidence = [path for path in spec.get("evidence", []) if not (ROOT / path).is_file()]
     for path in spec.get("evidence", []):

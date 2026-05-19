@@ -16,9 +16,8 @@ GENERATED_CONFIG_DIR = (
 KNOWN_FILES = (
     GENERATED_CONFIG_DIR / "sim_files.common.f",
     GENERATED_CONFIG_DIR / "sim_files.f",
-    GENERATED_CONFIG_DIR
-    / "chipyard.harness.TestHarness.OpenPhoneRocketConfig"
-    / "VTestDriver.mk",
+    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.all.f",
+    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig" / "VTestDriver.mk",
 )
 DEFAULT_STALE_ROOTS = ("/work",)
 
@@ -38,7 +37,7 @@ def rewrite_text(text: str, stale_root: str, replacement_root: Path) -> tuple[st
         (f"{normalized} ", f"{replacement} "),
         (f"{normalized}\n", f"{replacement}\n"),
         (f"{normalized}:", f"{replacement}:"),
-        (f"{normalized}\"", f"{replacement}\""),
+        (f'{normalized}"', f'{replacement}"'),
         (f"{normalized}'", f"{replacement}'"),
     )
     rewritten = text
@@ -158,7 +157,12 @@ def main() -> int:
     else:
         print("STATUS: BLOCKED chipyard.generated_paths - stale generated roots found")
         for result in stale_results:
-            roots = ", ".join(str(root) for root in result["stale_roots_found"])
+            roots_found = result["stale_roots_found"]
+            roots = (
+                ", ".join(str(root) for root in roots_found)
+                if isinstance(roots_found, list)
+                else str(roots_found)
+            )
             print(f"  - {result['path']}: {roots}")
         print("  next: python3 scripts/repair_chipyard_generated_paths.py --rewrite")
     return 2 if status == "blocked" else 0

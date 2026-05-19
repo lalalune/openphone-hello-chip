@@ -30,6 +30,9 @@ GENERATED_FIR = (
     / "build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.fir"
 )
 GENERATED_SIMULATOR = ROOT / "build/chipyard/openphone_rocket/simulator/simulator"
+PERFORMANCE_TEMPLATE = (
+    ROOT / "docs/evidence/memory/templates/bandwidth-latency-contended-access.template.json"
+)
 
 REQUIRED_BLOCKED = {
     "reset_rom_boot_memory_handoff",
@@ -797,6 +800,7 @@ def check_gate(errors: list[str]) -> None:
     if isinstance(next_commands, dict):
         for key, command in {
             "local_static_gate": "make memory-uma-claim-gate",
+            "memory_evidence_template_check": "python3 scripts/check_memory_evidence_templates.py",
             "rtl_elaboration": "make rtl-check",
             "local_contract_sim": "make cocotb-contract",
             "benchmark_parser_dry_run": "make benchmarks-dry-run",
@@ -811,7 +815,41 @@ def check_gate(errors: list[str]) -> None:
             )
 
     check_bandwidth_latency_evidence_contract(data, errors)
+    check_performance_template(errors)
     check_generated_ap_memory_audit(data, errors)
+
+
+def check_performance_template(errors: list[str]) -> None:
+    if not PERFORMANCE_TEMPLATE.is_file():
+        errors.append(f"missing {PERFORMANCE_TEMPLATE.relative_to(ROOT)}")
+        return
+
+    data = json.loads(PERFORMANCE_TEMPLATE.read_text())
+    require(isinstance(data, dict), "memory performance template must be a JSON object", errors)
+    if not isinstance(data, dict):
+        return
+    require(
+        data.get("schema") == "openphone.memory.bandwidth_latency_contended_access.template.v1",
+        "memory performance template schema drifted",
+        errors,
+    )
+    require(
+        data.get("template_status") == "template_only_not_evidence",
+        "memory performance template must remain template_only_not_evidence",
+        errors,
+    )
+    template_text = PERFORMANCE_TEMPLATE.read_text()
+    for token in (
+        "__REQUIRED_TARGET_ID__",
+        "__REQUIRED_NUMBER__",
+        "host_benchmark",
+        "simulator_wall_clock",
+        "axi_lite_sram_model_cycle_count",
+        "generated_memmap_without_target_run",
+    ):
+        require(
+            token in template_text, f"memory performance template missing token: {token}", errors
+        )
 
 
 def check_bandwidth_latency_evidence_contract(data: dict, errors: list[str]) -> None:
@@ -1118,8 +1156,23 @@ def check_rtl_and_tests(errors: list[str]) -> None:
         errors,
     )
     require(
+        "monitor_cpu_valid_ready_stability" in test,
+        "cocotb contract must include reusable CPU AXI-Lite valid/ready stability monitors",
+        errors,
+    )
+    require(
+        "monitor_cpu_response_liveness_and_balance" in test,
+        "cocotb contract must include response liveness/balance monitors",
+        errors,
+    )
+    require(
         "dram_aperture_outside_sram_model_returns_slverr" in test,
         "cocotb contract must include DRAM aperture capacity boundary test",
+        errors,
+    )
+    require(
+        "decode_error_register_captures_last_unmapped_access" in test,
+        "cocotb contract must include decode-error observability test",
         errors,
     )
     require(
@@ -1141,9 +1194,17 @@ def main() -> int:
             print(f"  - {error}")
         return 1
 
+    data = yaml.safe_load(GATE.read_text())
+    print("Memory/UMA claim gate passed.")
+    print("  current_rtl_storage: 4096 bytes SRAM-backed AXI-Lite model")
+    print("  software_aperture: 0x80000000..0x8fffffff 256 MiB decode aperture")
+    print("  implemented_capacity_vs_aperture: 4 KiB implemented, 256 MiB address contract")
     print(
-        "Memory/UMA claim gate passed: scaffold evidence is separated from real DRAM/UMA/IOMMU claims."
+        "  phone_2028_target: "
+        f"{data['phone_2028_target_profile']['external_memory']['acceptable_types']} "
+        ">=12 GiB, >=120 GB/s sustained, <=120 ns p95 random-read latency"
     )
+    print("  real_dram_lpddr_uma_iommu_qos_status: BLOCKED until real target evidence exists")
     return 0
 
 

@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import check_chipyard_verilator_linux_smoke as smoke  # noqa: E402
+import repair_chipyard_generated_paths as path_repair  # noqa: E402
 
 
 def test_detects_container_paths_when_host_is_not_container_mount() -> None:
@@ -40,12 +42,68 @@ def test_non_container_absolute_path_is_not_flagged_by_this_gate() -> None:
         raise AssertionError(f"unexpected stale roots for unrelated path: {roots}")
 
 
+def test_path_rewrite_replaces_work_root_deterministically() -> None:
+    original = "/work/external/chipyard/foo.f\n+incdir+/work/generated\n"
+    rewritten, replacements = path_repair.rewrite_text(original, "/work", ROOT)
+    if replacements != 2:
+        raise AssertionError(f"expected two replacements, got {replacements}")
+    if "/work/" in rewritten:
+        raise AssertionError(rewritten)
+    if str(ROOT) not in rewritten:
+        raise AssertionError(rewritten)
+
+
+def test_path_repair_check_and_rewrite_modes() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        generated = Path(tmp) / "sim_files.f"
+        generated.write_text("/work/external/chipyard/generated.sv\n", encoding="utf-8")
+        results, replacements = path_repair.inspect_or_rewrite(
+            [generated], ["/work"], ROOT, rewrite=False
+        )
+        if replacements != 0:
+            raise AssertionError("check mode must not apply replacements")
+        if results[0]["stale_roots_found"] != ["/work"]:
+            raise AssertionError(str(results))
+
+        results, replacements = path_repair.inspect_or_rewrite(
+            [generated], ["/work"], ROOT, rewrite=True
+        )
+        if replacements != 1 or not results[0]["rewritten"]:
+            raise AssertionError(str(results))
+        if "/work/" in generated.read_text(encoding="utf-8"):
+            raise AssertionError("stale path survived rewrite")
+
+
+def test_smoke_progress_classification_distinguishes_stages() -> None:
+    complete_log = {"raw_transcript_closed": True}
+    no_trace = {"bootrom_to_payload_handoff": False}
+    payload_trace = {"bootrom_to_payload_handoff": True}
+
+    cases = {
+        "cpu_progress_to_payload": ("SimDRAM loaded ELF entry=0x80000000\n", payload_trace),
+        "opensbi_boot": ("OpenSBI v1.5\nDomain0 Next Address\n", payload_trace),
+        "linux_boot": ("OpenSBI v1.5\nLinux version 6.6.0\n", payload_trace),
+        "payload_loaded_no_cpu_progress": (
+            "SimDRAM loaded ELF entry=0x80000000\n",
+            no_trace,
+        ),
+        "no_run": ("", no_trace),
+    }
+    for expected, (text, trace) in cases.items():
+        classified = smoke.classify_smoke_progress(text, trace, complete_log)
+        if classified["stage"] != expected:
+            raise AssertionError(f"expected {expected}, got {classified}")
+
+
 def main() -> int:
     tests = (
         test_detects_container_paths_when_host_is_not_container_mount,
         test_allows_container_paths_when_running_inside_container_mount,
         test_allow_env_semantics_suppress_container_path_block,
         test_non_container_absolute_path_is_not_flagged_by_this_gate,
+        test_path_rewrite_replaces_work_root_deterministically,
+        test_path_repair_check_and_rewrite_modes,
+        test_smoke_progress_classification_distinguishes_stages,
     )
     for test in tests:
         test()

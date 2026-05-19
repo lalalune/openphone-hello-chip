@@ -17,7 +17,9 @@ class MemoryUmaClaimGateTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("scaffold evidence is separated", result.stdout)
+        self.assertIn("current_rtl_storage: 4096 bytes SRAM-backed AXI-Lite model", result.stdout)
+        self.assertIn("software_aperture: 0x80000000..0x8fffffff 256 MiB", result.stdout)
+        self.assertIn("real_dram_lpddr_uma_iommu_qos_status: BLOCKED", result.stdout)
 
     def test_phone_target_profile_blocks_real_claims(self) -> None:
         data = yaml.safe_load(gate.GATE.read_text())

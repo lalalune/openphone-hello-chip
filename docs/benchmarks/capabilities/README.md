@@ -61,7 +61,8 @@ The proof JSON must use this schema:
   "dma": {
     "path": "hardware_dma",
     "bytes_read": 1,
-    "bytes_written": 1
+    "bytes_written": 1,
+    "trace_bytes": 1
   },
   "measurements": {
     "macs_per_inference": 1,
@@ -84,17 +85,33 @@ The proof JSON must use this schema:
     }
   },
   "transcripts": {
-    "adb_devices": "docs/evidence/android/hello-npu/adb-devices.log",
-    "nnapi_accelerator_query": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
-    "benchmark_model_nnapi": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
-    "dma_trace": "docs/evidence/android/hello-npu/dma-trace.log"
+    "adb_devices": {
+      "path": "docs/evidence/android/hello-npu/adb-devices.log",
+      "sha256": "64-character lowercase sha256 of the exact transcript",
+      "bytes": 1
+    },
+    "nnapi_accelerator_query": {
+      "path": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
+      "sha256": "64-character lowercase sha256 of the exact transcript",
+      "bytes": 1
+    },
+    "benchmark_model_nnapi": {
+      "path": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
+      "sha256": "64-character lowercase sha256 of the exact transcript",
+      "bytes": 1
+    },
+    "dma_trace": {
+      "path": "docs/evidence/android/hello-npu/dma-trace.log",
+      "sha256": "64-character lowercase sha256 of the exact transcript",
+      "bytes": 1
+    }
   }
 }
 ```
 
 Each transcript path is relative to the repository root and must exist as a
-non-empty file. A blank marker file is not accepted by
-`benchmarks/run_benchmarks.py`.
+non-empty file with matching `sha256` and `bytes` fields. A blank marker file is
+not accepted by `benchmarks/run_benchmarks.py`.
 
 The proof must also bind to the exact checked-in model SHA-256, report the
 `hello-npu` accelerator name in both the top-level proof and `nnapi` object, and
@@ -121,6 +138,12 @@ the proof JSON to the archived logs.
 Target capture job command set:
 
 ```sh
+scripts/android/capture_hello_npu_nnapi_evidence.sh
+```
+
+Equivalent manual command set:
+
+```sh
 adb devices | tee docs/evidence/android/hello-npu/adb-devices.log
 adb push benchmarks/models/mobile_smoke.tflite /data/local/tmp/mobile_smoke.tflite
 adb shell cmd neuralnetworks list | tee docs/evidence/android/hello-npu/nnapi-accelerator-query.log
@@ -130,6 +153,26 @@ adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite \
   | tee docs/evidence/android/hello-npu/benchmark-model-nnapi.log
 adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace \
   | tee docs/evidence/android/hello-npu/dma-trace.log
+```
+
+Local fail-closed HAL negative evidence can be captured without an Android
+target:
+
+```sh
+scripts/android/capture_hello_npu_hal_absent_device.sh
+python3 scripts/check_hello_npu_android_proof_manifest.py
+```
+
+The first command proves only that the host-buildable HAL probe refuses to
+claim NNAPI acceleration when the backing device node is absent. The second
+command validates the checked-in Android proof manifest template and reports
+that real Android HAL, CTS, VTS, and NNAPI proof remains blocked. A filled
+manifest must be checked with:
+
+```sh
+python3 scripts/check_hello_npu_android_proof_manifest.py \
+  --manifest docs/evidence/android/hello-npu/android-proof-manifest.json \
+  --require-pass
 ```
 
 The Android and power/thermal manifests are separate from the NNAPI benchmark

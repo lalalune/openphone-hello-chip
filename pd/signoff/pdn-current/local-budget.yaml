@@ -9,6 +9,7 @@ source_artifacts:
   - pd/openlane/runs/RUN_2026-05-18_05-41-42/57-openroad-irdropreport/irdrop.rpt
   - pd/openlane/runs/RUN_2026-05-18_05-41-42/20-openroad-generatepdn/openroad-generatepdn.log
   - pd/openlane/runs/RUN_2026-05-18_05-41-42/signoff-run.yaml
+  - benchmarks/power/local-estimates/hello-npu-openlane-npu-estimates.json
 derived_values:
   - name: vddcore_voltage
     value: 1.8 V
@@ -28,6 +29,12 @@ derived_values:
   - name: vgnd_worst_bounce_nom_tt_025C_1v80
     value: 0.00010598 V
     source: pd/openlane/runs/RUN_2026-05-18_05-41-42/final/metrics.json design_powergrid__drop__worst__net:VGND
+  - name: npu_arch_model_min_observed_tops_reference_only
+    value: 47.66254545454546 TOPS
+    source: benchmarks/results/npu-arch-sim-open-2028/report.json metrics.min_observed_tops
+  - name: invalid_cross_substrate_tops_per_w_reference_only
+    value: 8581.556130253872 to 8849.729759324306 TOPS/W
+    source: benchmarks/power/local-estimates/hello-npu-openlane-npu-estimates.json cross_substrate_arithmetic; prohibited for release use
 rails:
   - name: VDDCORE
     board_net: +1V8
@@ -44,7 +51,8 @@ rails:
     status: missing_io_power_model
 release_blockers:
   - Power is from OpenLane metrics only, not workload-calibrated vector or silicon data.
+  - OpenLane power and modeled NPU TOPS do not share a substrate, workload, or measurement window; any TOPS/W arithmetic is invalid for release.
   - IR-drop evidence covers only local OpenROAD nominal analysis, not release corners.
   - EM evidence is not archived.
   - VDDIO current is not derived because IO pad and board load models are missing.
-  - Board regulator, fuse, thermal, and first-article current-limit review is not archived.
+  - Board regulator, fuse, thermal, sustained-run, and first-article current-limit review is not archived.

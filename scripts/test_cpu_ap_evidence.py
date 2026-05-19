@@ -146,6 +146,55 @@ def test_capture_wrapper_preflight_reports_missing_command_envs() -> None:
     assert_contains(result.stdout, "OPENPHONE_AP_BENCHMARKS_CMD")
 
 
+def test_capture_command_wiring_derives_linux_smoke_lanes_only() -> None:
+    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENPHONE_")}
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/wire_cpu_ap_capture_commands.py",
+            "--format",
+            "json",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        env=env,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stdout + result.stderr)
+    wiring = json.loads(result.stdout)
+    if wiring["schema"] != "openphone.cpu_ap_capture_command_wiring.v1":
+        raise AssertionError("CPU/AP command wiring schema drifted")
+    entries = {entry["mode"]: entry for entry in wiring["entries"]}
+    for mode in ("opensbi-boot", "linux-boot"):
+        if entries[mode]["source"] != "generated_ap_linux_smoke":
+            raise AssertionError(f"{mode} should derive from the generated AP smoke runner")
+        assert_contains(entries[mode]["command"], "scripts/run_chipyard_openphone_linux_smoke.sh")
+        assert_contains(
+            entries[mode]["command"],
+            "cat build/chipyard/openphone_rocket/verilator-linux-smoke.log",
+        )
+    for mode in ("trap-timer-irq", "isa-cache-mmu", "ap-benchmarks"):
+        if entries[mode]["status"] != "blocked":
+            raise AssertionError(f"{mode} must stay blocked without a real lane command")
+
+
+def test_capture_wire_preflight_reports_remaining_unwired_lanes() -> None:
+    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENPHONE_")}
+    result = subprocess.run(
+        ["scripts/capture_chipyard_linux_evidence.sh", "wire-preflight"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        env=env,
+    )
+    if result.returncode != 2:
+        raise AssertionError(result.stdout + result.stderr)
+    assert_contains(result.stdout, "READY opensbi-boot: OPENPHONE_OPENSBI_BOOT_CMD is set")
+    assert_contains(result.stdout, "READY linux-boot: OPENPHONE_LINUX_BOOT_CMD is set")
+    assert_contains(result.stdout, "BLOCKED trap-timer-irq: OPENPHONE_TRAP_TIMER_IRQ_CMD is unset")
+
+
 def test_capture_wrapper_all_reports_every_missing_command_env() -> None:
     env = {key: value for key, value in os.environ.items() if not key.startswith("OPENPHONE_")}
     result = subprocess.run(
@@ -282,6 +331,8 @@ def main() -> int:
         test_capture_template_lists_required_markers_and_no_pass_claim,
         test_capture_plan_json_is_machine_readable,
         test_capture_wrapper_preflight_reports_missing_command_envs,
+        test_capture_command_wiring_derives_linux_smoke_lanes_only,
+        test_capture_wire_preflight_reports_remaining_unwired_lanes,
         test_capture_wrapper_all_reports_every_missing_command_env,
         test_dts_audit_separates_ap_boot_from_hello_peripherals,
         test_new_transcripts_reject_placeholder_or_incomplete_text,

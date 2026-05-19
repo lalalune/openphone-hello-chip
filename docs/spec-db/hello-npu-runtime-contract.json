@@ -6,13 +6,13 @@
     "classification": "L0_RTL_UNIT",
     "rtl": "rtl/npu/hello_npu.sv",
     "runtime": "compiler/runtime/hello_npu_runtime.py",
-    "software_claim": "MMIO scalar, packed-dot, and bounded scratchpad GEMM prototype only",
+    "software_claim": "MMIO scalar, packed-dot, bounded scratchpad GEMM, and local descriptor-driven DRAM-to-scratchpad tensor prefetch prototype only",
     "not_claimed": [
       "Android NNAPI acceleration",
       "AIDL HAL acceleration",
       "phone-class TOPS",
       "model compiler backend",
-      "DMA-backed tensor execution",
+      "production DMA-backed tensor execution",
       "sustained power or thermal performance"
     ]
   },
@@ -40,6 +40,8 @@
       "PERF_MACS": "0x54",
       "PERF_OPS": "0x58",
       "PERF_ERRORS": "0x5c",
+      "DESC_TIMEOUT_COUNT": "0x60",
+      "DESC_BYTES_READ": "0x64",
       "SCRATCH": "0x80"
     },
     "scratch_bytes": 64,
@@ -67,21 +69,38 @@
   },
   "descriptor_queue_submission": {
     "runtime_api": "submit_descriptors",
-    "state": "reserved_blocked",
+    "state": "rtl_local_descriptor_ring",
     "registers": [
       "DESC_BASE",
       "DESC_HEAD",
       "DESC_TAIL",
       "DESC_STATUS",
-      "CMD_PARAM"
+      "CMD_PARAM",
+      "DESC_TIMEOUT_COUNT",
+      "DESC_BYTES_READ"
+    ],
+    "descriptor_words": [
+      "word0: opcode[3:0], stream_to_scratch[8], scratch_offset[21:16], byte_count[29:24]",
+      "word1: stream source byte address when stream_to_scratch is set; scalar OP_A otherwise",
+      "word2: scalar OP_B or reserved for streamed GEMM",
+      "word3: scalar ACC or reserved for streamed GEMM"
     ],
     "required_error_reporting": [
       "timeout_polls",
       "ctrl_status",
       "desc_status",
-      "perf_counters"
+      "perf_counters",
+      "desc_timeout_count",
+      "desc_bytes_read"
     ],
-    "not_claimed": "DMA-backed tensor execution is not implemented until RTL/BSP evidence completes descriptors"
+    "queue_depth_semantics": {
+      "desc_status_bits": "DESC_STATUS[21:19]",
+      "value": "(DESC_HEAD - DESC_TAIL) modulo 8",
+      "empty_encoding": "0",
+      "full_ring_encoding": "not represented by the current 3-bit head/tail register interface"
+    },
+    "implemented": "Read-only four-word descriptor fetch advances a 3-bit head/tail ring, launches existing scalar/GEMM datapath operations, optionally streams aligned descriptor-sourced DRAM words into the 64-byte scratchpad, and faults autonomously on descriptor timeout",
+    "not_claimed": "This is a local RTL prototype path only; it is not an Android NNAPI, coherent IOMMU, production queue-depth, writeback DMA, or phone-class accelerator proof"
   },
   "precision_matrix": [
     {
@@ -114,8 +133,8 @@
     "Runtime register constants match this manifest",
     "BSP contract header exposes the same NPU perf offsets",
     "Architecture documentation names each manifest perf counter",
-    "Descriptor queue registers are reserved only and must not be treated as implemented DMA submission support",
-    "DMA tensor streaming evidence must include bytes_read and bytes_written from the measured NPU path",
+    "Descriptor queue registers expose only the local RTL 3-bit ring and must not be treated as production queue-depth or Android accelerator support",
+    "DMA tensor streaming evidence must include DESC_BYTES_READ from the measured NPU path and explicitly state that writeback DMA is not implemented",
     "Precision support beyond DOT4_S8, DOT8_S4, and GEMM_S8 must remain blocked until the precision matrix and runtime tests identify the measured path",
     "Verilator GEMM smoke test checks unsupported_ops, cycles, macs, ops, and errors counters",
     "Android HAL/NNAPI acceleration remains blocked without hello_npu_nnapi.proof.json plus VTS/CTS/SELinux evidence",

@@ -125,7 +125,7 @@ def test_simulator_parser_accepts_calibrated_counter_export_shape() -> None:
 
 
 def test_strict_missing_exits_two_and_preserves_blockers() -> None:
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(dir=ROOT / "build") as td:
         temp_root = Path(td)
         temp_plan = temp_root / "benchmark_plan_missing_assets.json"
         plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
@@ -189,7 +189,9 @@ def test_blocked_metadata_template_covers_config_assets() -> None:
 
 
 def test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
-    with tempfile.TemporaryDirectory() as td:
+    temp_parent = ROOT / "build/test-temp"
+    temp_parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=temp_parent) as td:
         temp_root = Path(td)
         temp_plan = temp_root / "benchmark_plan_missing_nnapi_proof.json"
         plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
@@ -229,6 +231,95 @@ def test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
         raise AssertionError(json.dumps(status, indent=2))
 
 
+def test_hello_npu_nnapi_proof_rejects_tops_and_capture_command_drift() -> None:
+    plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
+    bench = next(item for item in plan["benchmarks"] if item["name"] == "tflite_hello_npu")
+    artifact = dict(bench["capability_artifacts"][0])
+    model_path = ROOT / "benchmarks/models/mobile_smoke.tflite"
+
+    temp_parent = ROOT / "build/test-temp"
+    temp_parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=temp_parent) as td:
+        temp_root = Path(td)
+        evidence_dir = temp_root / "evidence"
+        evidence_dir.mkdir()
+        transcripts = {
+            "adb_devices": evidence_dir / "adb-devices.log",
+            "nnapi_accelerator_query": evidence_dir / "nnapi-query.log",
+            "benchmark_model_nnapi": evidence_dir / "benchmark-model.log",
+            "dma_trace": evidence_dir / "dma-trace.log",
+        }
+        transcripts["adb_devices"].write_text("List of devices attached\nabc\tdevice\n")
+        transcripts["nnapi_accelerator_query"].write_text("hello-npu\n")
+        transcripts["benchmark_model_nnapi"].write_text(
+            "--use_nnapi=true --nnapi_accelerator_name=hello-npu NNAPI\n"
+        )
+        transcripts["dma_trace"].write_text("hello-npu DMA bytes_read bytes_written\n")
+
+        proof_path = temp_root / "hello_npu_nnapi.proof.json"
+        proof = {
+            "schema": "openphone.hello_npu_nnapi_capability.v1",
+            "date_utc": "2026-05-18T00:00:00+00:00",
+            "target": "test-target",
+            "generated_by": "unit-test",
+            "accelerator_name": "hello-npu",
+            "capability": {
+                "claim_level": "L4_DEV_BOARD",
+                "precision": "int8",
+            },
+            "nnapi": {
+                "accelerator_name": "hello-npu",
+                "delegated_node_count": 1,
+                "total_node_count": 1,
+                "cpu_fallback_percent": 0,
+                "unsupported_op_count": 0,
+            },
+            "dataflow": {"name": "measured-test-path"},
+            "dma": {
+                "path": "hardware_dma",
+                "bytes_read": 1,
+                "bytes_written": 1,
+                "trace_bytes": transcripts["dma_trace"].stat().st_size,
+            },
+            "measurements": {
+                "macs_per_inference": 1000,
+                "npu_cycles": 1000,
+                "npu_hz": 1_000_000_000,
+                "observed_tops": 0.01,
+                "tops_formula": "observed_tops = macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12",
+            },
+            "capture": {
+                "commands": {
+                    **run_benchmarks.HELLO_NPU_REQUIRED_CAPTURE_COMMANDS,
+                    "benchmark_model_nnapi": "benchmark_model --wrong",
+                }
+            },
+            "model_artifacts": {
+                "benchmarks/models/mobile_smoke.tflite": {
+                    "sha256": run_benchmarks.sha256_file(model_path)
+                }
+            },
+            "transcripts": {
+                name: {
+                    "path": str(path.relative_to(ROOT)),
+                    "sha256": run_benchmarks.sha256_file(path),
+                    "bytes": path.stat().st_size,
+                }
+                for name, path in transcripts.items()
+            },
+        }
+        proof_path.write_text(json.dumps(proof, indent=2) + "\n", encoding="utf-8")
+        artifact["path"] = str(proof_path)
+        status = run_benchmarks.capability_artifact_status(artifact, ROOT)
+
+    assert_equal(status["available"], False, "drifted proof availability")
+    errors = "\n".join(status.get("errors", []))
+    if "observed_tops must match" not in errors:
+        raise AssertionError(errors)
+    if "capture.commands.benchmark_model_nnapi" not in errors:
+        raise AssertionError(errors)
+
+
 def main() -> int:
     for test in (
         test_suite_parsers_accept_real_formats,
@@ -237,6 +328,7 @@ def main() -> int:
         test_strict_missing_exits_two_and_preserves_blockers,
         test_blocked_metadata_template_covers_config_assets,
         test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker,
+        test_hello_npu_nnapi_proof_rejects_tops_and_capture_command_drift,
     ):
         test()
         print(f"PASS {test.__name__}")

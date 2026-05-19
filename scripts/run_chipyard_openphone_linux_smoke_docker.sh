@@ -19,6 +19,8 @@ extra_sim_flags="${CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS:-+custom_boot_pin=1 +uar
 run_target="${CHIPYARD_LINUX_SMOKE_RUN_TARGET:-run-binary-fast}"
 loadmem="${CHIPYARD_LINUX_SMOKE_LOADMEM:-1}"
 clean="${CHIPYARD_LINUX_SMOKE_CLEAN:-0}"
+attempt="${CHIPYARD_LINUX_SMOKE_ATTEMPT:-1}"
+retry_generated="${CHIPYARD_LINUX_SMOKE_RETRY_GENERATED:-1}"
 
 mkdir -p "$out_dir"
 
@@ -37,6 +39,8 @@ fi
 	printf 'openphone-evidence: platform=%s\n' "$platform"
 	printf 'openphone-evidence: config=%s\n' "$config"
 	printf 'openphone-evidence: config_package=%s\n' "$config_package"
+	printf 'openphone-evidence: attempt=%s\n' "$attempt"
+	printf 'openphone-evidence: clean_generated=%s\n' "$clean"
 	printf 'openphone-evidence: payload=%s\n' "$payload_container"
 	printf 'openphone-evidence: binary_arg=%s\n' "$binary_arg"
 	printf 'openphone-evidence: timeout_seconds=%s\n' "$timeout_seconds"
@@ -60,6 +64,7 @@ docker run --rm --platform "$platform" \
 	-e "CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS=$timeout_seconds" \
 	-e "CHIPYARD_LINUX_SMOKE_TIMEOUT_CYCLES=$timeout_cycles" \
 	-e "CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS=$extra_sim_flags" \
+	-e "OPENPHONE_HOST_REPO_DIR=$repo_dir" \
 	-e "CHIPYARD_LINUX_SMOKE_RUN_TARGET=$run_target" \
 	"$image" -lc '
 		set -e
@@ -82,6 +87,9 @@ docker run --rm --platform "$platform" \
 			echo "STATUS: BLOCKED chipyard.verilator_linux_smoke_docker - RISCV lacks FESVR headers: $RISCV"
 			exit 2
 		fi
+		python3 /work/scripts/repair_chipyard_generated_paths.py --rewrite \
+			--stale-root "$OPENPHONE_HOST_REPO_DIR" \
+			--replacement-root /work || true
 		cd external/chipyard/sims/verilator
 		if [ "$CHIPYARD_LINUX_SMOKE_CLEAN" = "1" ]; then
 			python3 - "$CHIPYARD_CONFIG" <<-PY
@@ -110,6 +118,7 @@ docker run --rm --platform "$platform" \
 			rm -f "simulator-chipyard.harness-$CHIPYARD_CONFIG"
 		fi
 		model_mk="/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/VTestDriver.mk"
+		simulator="/work/external/chipyard/sims/verilator/simulator-chipyard.harness-$CHIPYARD_CONFIG"
 		model_dir="$(dirname "$model_mk")"
 		if [ -d "$model_dir" ] && find "$model_dir" -maxdepth 1 -name "VTestDriver*.o" -size 0c -print -quit | grep -q .; then
 			find "$model_dir" -maxdepth 1 -name "VTestDriver*.o" -size 0c -delete
@@ -123,12 +132,12 @@ docker run --rm --platform "$platform" \
 			VERILATOR_OPT_FLAGS="-O0 --x-assign fast --x-initial fast --output-split 2000 --output-split-cfuncs 50" \
 			EXTRA_SIM_CXXFLAGS="-O0 -g0 -I/work/external/riscv-tools-linux-x64/include" \
 			EXTRA_SIM_LDFLAGS="-L/work/external/riscv-tools-linux-x64/lib -Wl,-rpath,/work/external/riscv-tools-linux-x64/lib" \
-			"$model_mk"
+			"$simulator"
 		case "$CHIPYARD_LINUX_SMOKE_RUN_TARGET" in
 			run-binary|run-binary-fast) ;;
 			*) echo "STATUS: BLOCKED chipyard.verilator_linux_smoke_docker - unsupported run target: $CHIPYARD_LINUX_SMOKE_RUN_TARGET"; exit 2 ;;
 		esac
-		run_binary_cmd="make -j \"$CHIPYARD_LINUX_SMOKE_JOBS\" CONFIG=\"$CHIPYARD_CONFIG\" CONFIG_PACKAGE=\"$CHIPYARD_CONFIG_PACKAGE\" RISCV=/work/external/riscv-tools-linux-x64 AR=x86_64-conda-linux-gnu-ar LRISCV= DISABLE_DRAMSIM=1 TIMEOUT_CYCLES=\"$CHIPYARD_LINUX_SMOKE_TIMEOUT_CYCLES\" EXTRA_SIM_CXXFLAGS=\"-O0 -g0 -I/work/external/riscv-tools-linux-x64/include\" EXTRA_SIM_LDFLAGS=\"-L/work/external/riscv-tools-linux-x64/lib -Wl,-rpath,/work/external/riscv-tools-linux-x64/lib\" EXTRA_SIM_FLAGS=\"$CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS\""
+		run_binary_cmd="make -j \"$CHIPYARD_LINUX_SMOKE_JOBS\" CONFIG=\"$CHIPYARD_CONFIG\" CONFIG_PACKAGE=\"$CHIPYARD_CONFIG_PACKAGE\" RISCV=/work/external/riscv-tools-linux-x64 AR=x86_64-conda-linux-gnu-ar LRISCV= DISABLE_DRAMSIM=1 BREAK_SIM_PREREQ=1 TIMEOUT_CYCLES=\"$CHIPYARD_LINUX_SMOKE_TIMEOUT_CYCLES\" EXTRA_SIM_CXXFLAGS=\"-O0 -g0 -I/work/external/riscv-tools-linux-x64/include\" EXTRA_SIM_LDFLAGS=\"-L/work/external/riscv-tools-linux-x64/lib -Wl,-rpath,/work/external/riscv-tools-linux-x64/lib\" EXTRA_SIM_FLAGS=\"$CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS\""
 		if [ "$CHIPYARD_LINUX_SMOKE_LOADMEM" = "1" ]; then
 			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_SMOKE_BINARY_ARG\" LOADMEM=1"
 		elif [ -n "$CHIPYARD_LINUX_SMOKE_LOADMEM" ]; then
@@ -138,7 +147,8 @@ docker run --rm --platform "$platform" \
 		fi
 		run_binary_cmd="$run_binary_cmd \"$CHIPYARD_LINUX_SMOKE_RUN_TARGET\""
 		echo "openphone-evidence: command=$run_binary_cmd"
-		python3 -c '"'"'import os, signal, subprocess, sys
+		python3 - "$CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS" "$run_binary_cmd" <<PY
+import os, signal, subprocess, sys
 timeout = int(sys.argv[1])
 command = sys.argv[2]
 proc = subprocess.Popen(["bash", "-lc", command], start_new_session=True)
@@ -159,7 +169,7 @@ except subprocess.TimeoutExpired:
             pass
         proc.wait()
     raise SystemExit(124)
-'"'"' "$CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS" "$run_binary_cmd"
+PY
 	' >>"$log" 2>&1
 status_code=$?
 set -e
@@ -174,6 +184,19 @@ set -e
 	fi
 } >>"$log"
 
+if [ "$status_code" -ne 0 ] && [ "$retry_generated" = "1" ] && [ "$attempt" = "1" ] && \
+	grep -Eq 'No rule to make target|fatal error: .*: No such file or directory|(^|/)(mm|VTestDriver)[^[:space:]]*\.d|VTestDriver[^[:space:]]*\.(mk|cpp|h|d)' "$log"; then
+	attempt_log="$out_dir/verilator-linux-smoke.attempt1.log"
+	cp "$log" "$attempt_log"
+	printf 'STATUS: REPAIR chipyard.verilator_linux_smoke_docker\n'
+	printf '  reason: generated Verilator model artifact failure in %s\n' "${attempt_log#"$repo_dir"/}"
+	printf '  action: retry once after cleaning only generated Chipyard simulator outputs\n'
+	CHIPYARD_LINUX_SMOKE_ATTEMPT=2 \
+	CHIPYARD_LINUX_SMOKE_RETRY_GENERATED=0 \
+	CHIPYARD_LINUX_SMOKE_CLEAN=1 \
+	exec "$repo_dir/scripts/run_chipyard_openphone_linux_smoke_docker.sh"
+fi
+
 cp "$log" "$runner_log"
 tail -n 120 "$log"
 
@@ -181,6 +204,7 @@ if [ "$status_code" -ne 0 ]; then
 	CHIPYARD_LINUX_BINARY="$payload" CHIPYARD_ALLOW_CONTAINER_GENERATED_PATHS=1 python3 "$repo_dir/scripts/check_chipyard_verilator_linux_smoke.py" >/dev/null 2>&1 || true
 	printf 'STATUS: BLOCKED chipyard.verilator_linux_smoke_docker\n'
 	printf '  log: %s\n' "${log#"$repo_dir"/}"
+	printf '  next_command: CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 CHIPYARD_LINUX_SMOKE_CLEAN=1 %s\n' "${0#"$repo_dir"/}"
 	exit 2
 fi
 

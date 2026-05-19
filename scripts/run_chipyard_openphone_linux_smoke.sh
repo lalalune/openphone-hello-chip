@@ -104,7 +104,7 @@ if [ "$status" -ne 0 ]; then
 		printf '  reason: generated Verilator model artifact failure in %s\n' "${log#"$repo_dir"/}"
 		printf '  action: remove stale/partial generated simulator outputs and retry once\n'
 		python3 "$repo_dir/scripts/check_chipyard_verilator_linux_smoke.py" --repair-stale-generated >/dev/null
-		CHIPYARD_LINUX_SMOKE_ATTEMPT=2 CHIPYARD_LINUX_SMOKE_RETRY_GENERATED=0 exec "$0"
+		CHIPYARD_LINUX_SMOKE_ATTEMPT=2 CHIPYARD_LINUX_SMOKE_RETRY_GENERATED=0 exec "$repo_dir/scripts/run_chipyard_openphone_linux_smoke.sh"
 	fi
 	printf 'STATUS: BLOCKED chipyard.verilator_linux_smoke\n'
 	printf '  simulator_path: external/chipyard/sims/verilator\n'

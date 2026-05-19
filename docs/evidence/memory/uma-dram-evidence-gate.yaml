@@ -479,6 +479,7 @@ claim_rules:
 
 next_commands:
   local_static_gate: make memory-uma-claim-gate
+  memory_evidence_template_check: python3 scripts/check_memory_evidence_templates.py
   rtl_elaboration: make rtl-check
   local_contract_sim: make cocotb-contract
   benchmark_parser_dry_run: make benchmarks-dry-run

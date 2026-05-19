@@ -64,6 +64,16 @@ VALID_PARSERS = {
     "simulator_metrics_v1",
 }
 VALID_PROVENANCE = {"dry_run", "measured", "simulator", "imported"}
+HELLO_NPU_REQUIRED_CAPTURE_COMMANDS = {
+    "adb_devices": "adb devices",
+    "nnapi_accelerator_query": "adb shell cmd neuralnetworks list",
+    "benchmark_model_nnapi": (
+        "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite "
+        "--use_nnapi=true --nnapi_accelerator_name=hello-npu "
+        "--enable_op_profiling=true --verbose=true"
+    ),
+    "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace",
+}
 REAL_METADATA_SECTIONS = ("software", "clocks", "memory", "thermal", "power", "calibration")
 REAL_METADATA_REQUIRED_FIELDS: dict[str, dict[str, Any]] = {
     "software": {
@@ -134,6 +144,7 @@ STRICT_RESULT_METADATA_FIELDS = {
     "parser": str,
 }
 BLOCKED_PREFIX = "blocked-"
+SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
 def utc_now() -> str:
@@ -492,6 +503,17 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def is_sha256(value: Any) -> bool:
+    return isinstance(value, str) and bool(SHA256_RE.fullmatch(value))
+
+
+def record_artifact_hash(result: dict[str, Any], key: str, path: Path) -> None:
+    if not path.is_file():
+        return
+    result["artifacts"][f"{key}_sha256"] = sha256_file(path)
+    result["artifacts"][f"{key}_bytes"] = path.stat().st_size
+
+
 def model_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str, Any]:
     path = root / artifact["path"]
     status: dict[str, Any] = {
@@ -554,6 +576,15 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
         return status
 
     try:
+        status["sha256"] = sha256_file(path)
+        status["size_bytes"] = path.stat().st_size
+    except OSError as exc:
+        status["available"] = False
+        status["blocked_reason"] = "unreadable_capability_proof"
+        status["error"] = str(exc)
+        return status
+
+    try:
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
     except (OSError, json.JSONDecodeError) as exc:
@@ -613,6 +644,14 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
             errors.append(f"{field_path} must be present and non-empty")
 
     if expected_schema == "openphone.hello_npu_nnapi_capability.v1":
+        capture_commands = dotted_get(data, "capture.commands")
+        if not isinstance(capture_commands, dict):
+            errors.append("capture.commands must be an object")
+        else:
+            for name, command in HELLO_NPU_REQUIRED_CAPTURE_COMMANDS.items():
+                if capture_commands.get(name) != command:
+                    errors.append(f"capture.commands.{name} must be exactly {command!r}")
+
         claim_level = dotted_get(data, "capability.claim_level")
         if claim_level not in {"L4_DEV_BOARD", "L5_PROTOTYPE_SILICON", "L6_COMPLETE_PHONE"}:
             errors.append(
@@ -686,17 +725,18 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
                 errors.append(f"model_artifacts.{model_path} must be an object")
                 continue
             recorded_sha = model_entry.get("sha256")
-            if not isinstance(recorded_sha, str) or not re.fullmatch(
-                r"[0-9a-fA-F]{64}", recorded_sha
-            ):
-                errors.append(f"model_artifacts.{model_path}.sha256 must be a SHA-256 hex string")
+            if not is_sha256(recorded_sha):
+                errors.append(
+                    f"model_artifacts.{model_path}.sha256 must be a lowercase SHA-256 hex string"
+                )
                 continue
+            recorded_sha_text = str(recorded_sha)
             local_model = root / model_path
             if not local_model.is_file():
                 errors.append(f"model artifact {model_path} is missing")
                 continue
             actual_sha = sha256_file(local_model)
-            if recorded_sha.lower() != actual_sha:
+            if recorded_sha_text.lower() != actual_sha:
                 errors.append(
                     f"model_artifacts.{model_path}.sha256 does not match current repository file"
                 )
@@ -707,15 +747,46 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
         errors.append("transcripts must be a non-empty object")
     else:
         for name in proof.get("required_files", []):
-            rel = transcript.get(name)
+            entry = transcript.get(name)
+            if not isinstance(entry, dict):
+                errors.append(f"transcripts.{name} must be an object with path, sha256, and bytes")
+                continue
+            rel = entry.get("path")
             if not isinstance(rel, str) or not rel:
-                errors.append(f"transcripts.{name} must name a non-empty file")
+                errors.append(f"transcripts.{name}.path must name a non-empty file")
+                continue
+            if Path(rel).is_absolute():
+                errors.append(f"transcripts.{name}.path must be repo-relative")
                 continue
             transcript_path = root / rel
             if not transcript_path.is_file() or transcript_path.stat().st_size == 0:
                 errors.append(f"transcript {rel} is missing or empty")
                 continue
+            expected_sha = entry.get("sha256")
+            if not is_sha256(expected_sha):
+                errors.append(f"transcripts.{name}.sha256 must be lowercase SHA-256 hex")
+            else:
+                actual_sha = sha256_file(transcript_path)
+                if expected_sha != actual_sha:
+                    errors.append(f"transcripts.{name}.sha256 does not match {rel}")
+            expected_bytes = entry.get("bytes")
+            actual_bytes = transcript_path.stat().st_size
+            if not isinstance(expected_bytes, int) or isinstance(expected_bytes, bool):
+                errors.append(f"transcripts.{name}.bytes must be an integer byte count")
+            elif expected_bytes != actual_bytes:
+                errors.append(
+                    f"transcripts.{name}.bytes must match {rel}; got {expected_bytes}, expected {actual_bytes}"
+                )
             transcript_paths[name] = transcript_path
+
+    dma_trace_path = transcript_paths.get("dma_trace")
+    dma_trace_bytes = dotted_get(data, "dma.trace_bytes")
+    if dma_trace_path is None:
+        errors.append("dma.trace_bytes requires a validated dma_trace transcript")
+    elif not isinstance(dma_trace_bytes, int) or isinstance(dma_trace_bytes, bool):
+        errors.append("dma.trace_bytes must be an integer byte count")
+    elif dma_trace_bytes != dma_trace_path.stat().st_size:
+        errors.append("dma.trace_bytes must match transcripts.dma_trace.bytes")
 
     for name, markers in proof.get("required_transcript_markers", {}).items():
         marker_transcript_path = transcript_paths.get(name)
@@ -1525,6 +1596,7 @@ def run_benchmark(
         if blocked:
             result["blocked_assets"] = blocked
         log_path.write_text("dry-run: command was not executed\n", encoding="utf-8")
+        record_artifact_hash(result, "raw_output", log_path)
         return result
 
     if blocked or blocked_requirements:
@@ -1545,6 +1617,7 @@ def run_benchmark(
             f"- {item['name']}: {item['reason']}; {item.get('resolution', '')}" for item in blocked
         )
         log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        record_artifact_hash(result, "raw_output", log_path)
         return result
 
     if missing:
@@ -1563,6 +1636,7 @@ def run_benchmark(
             + "\n",
             encoding="utf-8",
         )
+        record_artifact_hash(result, "raw_output", log_path)
         return result
 
     started = time.monotonic()
@@ -1583,15 +1657,18 @@ def run_benchmark(
         if isinstance(output, bytes):
             output = output.decode(errors="replace")
         log_path.write_text(output + "\nTIMEOUT\n", encoding="utf-8")
+        record_artifact_hash(result, "raw_output", log_path)
         result.update({"status": "timeout", "elapsed_seconds": elapsed})
         return result
     except OSError as exc:
         result.update({"status": "error", "error": str(exc)})
         log_path.write_text(str(exc) + "\n", encoding="utf-8")
+        record_artifact_hash(result, "raw_output", log_path)
         return result
 
     elapsed = time.monotonic() - started
     log_path.write_text(completed.stdout, encoding="utf-8")
+    record_artifact_hash(result, "raw_output", log_path)
     result.update(
         {
             "status": "passed" if completed.returncode == 0 else "failed",
@@ -1787,6 +1864,15 @@ def run_plan_or_real(args: argparse.Namespace) -> int:
     if any_failed:
         return 1
     if (any_missing or any_blocked) and args.strict_missing:
+        print("strict missing mode failed closed:", file=sys.stderr)
+        if any_missing:
+            print("  one or more benchmarks have missing dependencies", file=sys.stderr)
+        if any_blocked:
+            print(
+                "  one or more benchmarks have blocked assets or metadata requirements",
+                file=sys.stderr,
+            )
+        print(f"  inspect {display_path} for machine-readable blocker details", file=sys.stderr)
         return 2
     return 0
 
