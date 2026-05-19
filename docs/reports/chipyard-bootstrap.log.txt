@@ -1,0 +1,91 @@
+From https://github.com/ucb-bar/chipyard
+   9ba46df9..d966598c  firesim-f2-bump -> origin/firesim-f2-bump
+Fetching submodule sims/firesim
+From https://github.com/firesim/firesim
+   229fb5591..c3e64ff44  sk-f2-update -> origin/sk-f2-update
+warning: unable to access 'synth/BramDwc/.gitignore': Too many levels of symbolic links
+warning: unable to access 'behav/BramDwc/.gitignore': Too many levels of symbolic links
+HEAD is now at 69eba860 Merge pull request #2066 from ucb-bar/1.13.0-changelog
+M	dockerfiles/Dockerfile
+M	generators/testchipip
+M	sims/verilator/Makefile
+M	software/coremark
+M	software/firemarshal
+M	software/nvdla-workload
+M	software/spec2017
+M	toolchains/libgloss
+M	toolchains/riscv-tools/riscv-isa-sim
+M	toolchains/riscv-tools/riscv-openocd
+M	toolchains/riscv-tools/riscv-pk
+M	toolchains/riscv-tools/riscv-spike-devices
+M	toolchains/riscv-tools/riscv-tests
+M	toolchains/riscv-tools/riscv-tools-feedstock
+M	tools/axe
+M	variables.mk
+Synchronizing submodule url for 'fpga/fpga-shells'
+Synchronizing submodule url for 'generators/ara'
+Synchronizing submodule url for 'generators/ara/ara'
+Synchronizing submodule url for 'generators/ara/ara/toolchain/newlib'
+Synchronizing submodule url for 'generators/ara/ara/toolchain/riscv-gnu-toolchain'
+Synchronizing submodule url for 'generators/ara/ara/toolchain/riscv-isa-sim'
+Synchronizing submodule url for 'generators/ara/ara/toolchain/riscv-llvm'
+Synchronizing submodule url for 'generators/ara/ara/toolchain/verilator'
+Synchronizing submodule url for 'generators/bar-fetchers'
+Synchronizing submodule url for 'generators/boom'
+Synchronizing submodule url for 'generators/caliptra-aes-acc'
+Synchronizing submodule url for 'generators/compress-acc'
+Synchronizing submodule url for 'generators/constellation'
+Synchronizing submodule url for 'generators/constellation/espresso'
+Synchronizing submodule url for 'generators/constellation/src/main/resources/csrc/netrace'
+Synchronizing submodule url for 'generators/cva6'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/axi'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/axi_riscv_atomics'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/common_cells'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/fpga-support'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/fpu'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/fpu/src/common_cells'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/fpu/src/fpu_div_sqrt_mvp'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/fpu/tb/flexfloat'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/register_interface'
+Synchronizing submodule url for 'generators/cva6/src/main/resources/cva6/vsrc/cva6/src/riscv-dbg'
+Synchronizing submodule url for 'generators/diplomacy'
+Synchronizing submodule url for 'generators/fft-generator'
+Synchronizing submodule url for 'generators/gemmini'
+Synchronizing submodule url for 'generators/gemmini/software/gemmini-rocc-tests'
+Synchronizing submodule url for 'generators/gemmini/software/gemmini-rocc-tests/riscv-tests'
+Synchronizing submodule url for 'generators/gemmini/software/gemmini-rocc-tests/riscv-tests/env'
+Synchronizing submodule url for 'generators/gemmini/software/gemmini-rocc-tests/rocc-software'
+Synchronizing submodule url for 'generators/hardfloat'
+Synchronizing submodule url for 'generators/hardfloat/berkeley-softfloat-3'
+Synchronizing submodule url for 'generators/hardfloat/berkeley-testfloat-3'
+Synchronizing submodule url for 'generators/ibex'
+Synchronizing submodule url for 'generators/ibex/src/main/resources/vsrc/ibex'
+Synchronizing submodule url for 'generators/icenet'
+Synchronizing submodule url for 'generators/mempress'
+Synchronizing submodule url for 'generators/nvdla'
+Synchronizing submodule url for 'generators/nvdla/src/main/resources/hw'
+Synchronizing submodule url for 'generators/rerocc'
+Synchronizing submodule url for 'generators/riscv-sodor'
+Synchronizing submodule url for 'generators/rocc-acc-utils'
+Synchronizing submodule url for 'generators/rocket-chip'
+Synchronizing submodule url for 'generators/rocket-chip/dependencies/cde'
+Synchronizing submodule url for 'generators/rocket-chip/dependencies/chisel'
+Synchronizing submodule url for 'generators/rocket-chip/dependencies/diplomacy'
+Synchronizing submodule url for 'generators/rocket-chip/dependencies/hardfloat'
+Synchronizing submodule url for 'generators/rocket-chip/dependencies/hardfloat/berkeley-softfloat-3'
+Synchronizing submodule url for 'generators/rocket-chip/dependencies/hardfloat/berkeley-testfloat-3'
+Synchronizing submodule url for 'generators/rocket-chip-blocks'
+Synchronizing submodule url for 'generators/rocket-chip-inclusive-cache'
+Synchronizing submodule url for 'generators/saturn'
+Synchronizing submodule url for 'generators/saturn/benchmarks/env'
+Synchronizing submodule url for 'generators/saturn/riscv-vector-tests'
+Synchronizing submodule url for 'generators/saturn/riscv-vector-tests/env/riscv-test-env'
+Synchronizing submodule url for 'generators/shuttle'
+Synchronizing submodule url for 'generators/testchipip'
+Synchronizing submodule url for 'generators/vexiiriscv'
+Synchronizing submodule url for 'generators/vexiiriscv/VexiiRiscv'
+fatal: No such ref: HEAD
+Synchronizing submodule url for 'generators/vexiiriscv/VexiiRiscv/ext/SpinalHDL'
+fatal: failed to recurse into submodule 'VexiiRiscv'
+fatal: failed to recurse into submodule 'generators/vexiiriscv'

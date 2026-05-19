@@ -24,3 +24,4 @@ pd/reports/*
 pd/openlane/runs/
 benchmarks/results/*
 !benchmarks/results/.gitkeep
+external/chipyard/
