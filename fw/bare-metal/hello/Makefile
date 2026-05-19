@@ -1,14 +1,14 @@
 # Tier 0 bare-metal hello for QEMU virt.
 #
 # Requires a riscv64 bare-metal toolchain. Override CROSS if you use
-# riscv64-linux-gnu- or riscv64-elf- instead of riscv64-unknown-elf-.
+# riscv64-linux-gnu- or riscv64-elf- instead of riscv64-elf-.
 
-CROSS    ?= riscv64-unknown-elf-
+CROSS    ?= riscv64-elf-
 CC       := $(CROSS)gcc
 OBJCOPY  := $(CROSS)objcopy
 
 CFLAGS   := -nostdlib -nostartfiles -ffreestanding -fno-pic \
-            -mcmodel=medany -march=rv64imac -mabi=lp64 \
+            -mcmodel=medany -march=rv64imac_zicsr -mabi=lp64 \
             -O2 -Wall -Wextra -g
 LDFLAGS  := -Wl,-T,linker.ld -Wl,--no-warn-rwx-segments
 

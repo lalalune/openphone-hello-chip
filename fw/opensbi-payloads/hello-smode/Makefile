@@ -1,11 +1,11 @@
 # Tier 1 OpenSBI S-mode payload.
 
-CROSS    ?= riscv64-unknown-elf-
+CROSS    ?= riscv64-elf-
 CC       := $(CROSS)gcc
 OBJCOPY  := $(CROSS)objcopy
 
 CFLAGS   := -nostdlib -nostartfiles -ffreestanding -fno-pic \
-            -mcmodel=medany -march=rv64imac -mabi=lp64 \
+            -mcmodel=medany -march=rv64imac_zicsr -mabi=lp64 \
             -O2 -Wall -Wextra -g
 LDFLAGS  := -Wl,-T,linker.ld -Wl,--no-warn-rwx-segments
 
