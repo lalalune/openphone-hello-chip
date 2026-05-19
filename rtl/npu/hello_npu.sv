@@ -8,7 +8,15 @@ module hello_npu (
     input  logic [5:0]  addr,
     input  logic [31:0] wdata,
     output logic [31:0] rdata,
-    output logic        irq
+    output logic        irq,
+
+    output logic        m_axil_arvalid,
+    input  logic        m_axil_arready,
+    output logic [31:0] m_axil_araddr,
+    input  logic        m_axil_rvalid,
+    output logic        m_axil_rready,
+    input  logic [31:0] m_axil_rdata,
+    input  logic [1:0]  m_axil_rresp
 );
     localparam logic [3:0] OP_ADD      = 4'h0;
     localparam logic [3:0] OP_SUB      = 4'h1;
@@ -21,6 +29,19 @@ module hello_npu (
     localparam logic [3:0] OP_GEMM_S8  = 4'h8;
 
     localparam int unsigned SCRATCH_WORDS = 16;
+    localparam int unsigned DESC_WORDS = 4;
+    /* verilator lint_off UNUSEDPARAM */
+    localparam logic [31:0] DESC_TIMEOUT_LIMIT = 32'd128;
+
+    localparam logic [2:0] DESC_IDLE        = 3'd0;
+    localparam logic [2:0] DESC_FETCH_ADDR  = 3'd1;
+    localparam logic [2:0] DESC_FETCH_DATA  = 3'd2;
+    localparam logic [2:0] DESC_STREAM_ADDR = 3'd3;
+    localparam logic [2:0] DESC_STREAM_DATA = 3'd4;
+    localparam logic [2:0] DESC_LAUNCH      = 3'd5;
+    localparam logic [2:0] DESC_WAIT        = 3'd6;
+    localparam logic [2:0] DESC_ADVANCE     = 3'd7;
+    /* verilator lint_on UNUSEDPARAM */
 
     logic [31:0] op_a;
     logic [31:0] op_b;
@@ -64,8 +85,17 @@ module hello_npu (
     logic [2:0]  desc_tail;
     logic [2:0]  desc_err_index;
     logic [31:0] desc_status;
+    logic [2:0]  desc_pending;
     logic        desc_busy;
-    logic gemm_busy;
+    logic [2:0]  desc_state;
+    logic [1:0]  desc_fetch_word;
+    logic [31:0] desc_words [0:DESC_WORDS-1];
+    logic [31:0] desc_timeout_count;
+    logic [31:0] desc_bytes_read;
+    logic [31:0] desc_current_addr;
+    logic [5:0]  desc_stream_done;
+    logic [2:0]  desc_tail_next;
+    logic        gemm_busy;
 
     logic [7:0] gemm_a_addr;
     logic [7:0] gemm_b_addr;
@@ -73,6 +103,15 @@ module hello_npu (
     logic gemm_cfg_ok;
     logic signed [7:0] gemm_a_value;
     logic signed [7:0] gemm_b_value;
+    logic [3:0] desc_opcode;
+    logic       desc_stream_enable;
+    logic [5:0] desc_stream_dst;
+    logic [5:0] desc_stream_len;
+    logic [3:0] desc_stream_word_addr;
+    logic       desc_stream_cfg_ok;
+    logic       desc_scalar_done;
+    logic       desc_gemm_done;
+    logic       desc_engine_done;
 
     function automatic logic signed [31:0] sx8(input logic [7:0] value);
         sx8 = {{24{value[7]}}, value};
@@ -103,6 +142,10 @@ module hello_npu (
         scratch[word_addr] <= value;
     endtask
 
+    task automatic scratch_stream_write_word(input logic [3:0] word_addr, input logic [31:0] value);
+        scratch[word_addr] <= value;
+    endtask
+
     function automatic logic [2:0] opcode_latency(input logic [3:0] op);
         unique case (op)
             OP_MUL_LO:  opcode_latency = 3'd2;
@@ -121,6 +164,33 @@ module hello_npu (
     endfunction
 
     assign irq = status[1];
+    assign desc_pending = desc_head - desc_tail;
+    assign desc_opcode = desc_words[0][3:0];
+    assign desc_stream_enable = desc_words[0][8];
+    assign desc_stream_dst = desc_words[0][21:16];
+    assign desc_stream_len = desc_words[0][29:24];
+    assign desc_stream_word_addr = desc_stream_dst[5:2] + desc_stream_done[5:2];
+    assign desc_tail_next = desc_tail + 3'd1;
+    assign desc_stream_cfg_ok = (!desc_stream_enable) ||
+                                ((desc_words[1][1:0] == 2'b00) &&
+                                 (desc_stream_dst[1:0] == 2'b00) &&
+                                 (desc_stream_len != 6'h0) &&
+                                 (desc_stream_len[1:0] == 2'b00) &&
+                                 (({2'b00, desc_stream_dst} + {2'b00, desc_stream_len}) <= 8'd64));
+    assign desc_scalar_done = (desc_opcode != OP_GEMM_S8) && (busy_count == 3'h1);
+    assign desc_gemm_done = (desc_opcode == OP_GEMM_S8) && gemm_busy && gemm_cfg_ok &&
+                            (gemm_l == gemm_k - 3'd1) &&
+                            (gemm_j == gemm_n - 2'd1) &&
+                            (gemm_i == gemm_m - 2'd1);
+    assign desc_engine_done = desc_scalar_done || desc_gemm_done;
+    assign desc_current_addr = desc_base + {25'h0, desc_tail, 4'h0} + {28'h0, desc_fetch_word, 2'b00};
+    assign m_axil_arvalid = status[0] && desc_busy &&
+                            ((desc_state == DESC_FETCH_ADDR) || (desc_state == DESC_STREAM_ADDR));
+    assign m_axil_araddr = (desc_state == DESC_STREAM_ADDR) ?
+                           (desc_words[1] + {26'h0, desc_stream_done}) :
+                           desc_current_addr;
+    assign m_axil_rready = status[0] && desc_busy &&
+                           ((desc_state == DESC_FETCH_DATA) || (desc_state == DESC_STREAM_DATA));
     assign gemm_a_addr = {2'h0, gemm_a_base} + ({6'h0, gemm_i} * {4'h0, gemm_a_stride}) + {5'h0, gemm_l};
     assign gemm_b_addr = {2'h0, gemm_b_base} + ({5'h0, gemm_l} * {4'h0, gemm_b_stride}) + {6'h0, gemm_j};
     assign gemm_c_addr = {2'h0, gemm_c_base} + ({6'h0, gemm_i} * {4'h0, gemm_c_stride}) + {4'h0, gemm_j, 2'b00};
@@ -201,7 +271,15 @@ module hello_npu (
             desc_err_index <= 3'h0;
             desc_status <= 32'h0000_0001;
             desc_busy <= 1'b0;
+            desc_state <= DESC_IDLE;
+            desc_fetch_word <= 2'h0;
+            desc_timeout_count <= 32'h0;
+            desc_bytes_read <= 32'h0;
+            desc_stream_done <= 6'h0;
             gemm_busy <= 1'b0;
+            for (int desc_idx = 0; desc_idx < DESC_WORDS; desc_idx++) begin
+                desc_words[desc_idx] <= 32'h0;
+            end
             for (int idx = 0; idx < SCRATCH_WORDS; idx++) begin
                 scratch[idx] <= 32'h0;
             end
@@ -210,7 +288,9 @@ module hello_npu (
                 busy_count <= busy_count - 3'h1;
                 if (busy_count == 3'h1) begin
                     {result_hi, result} <= datapath_wide;
-                    status <= 32'h0000_0002;
+                    if (!desc_busy) begin
+                        status <= 32'h0000_0002;
+                    end
                 end
             end
 
@@ -231,7 +311,9 @@ module hello_npu (
                             if (gemm_i == gemm_m - 2'd1) begin
                                 gemm_i <= 2'h0;
                                 gemm_busy <= 1'b0;
-                                status <= 32'h0000_0002;
+                                if (!desc_busy) begin
+                                    status <= 32'h0000_0002;
+                                end
                             end else begin
                                 gemm_i <= gemm_i + 2'd1;
                             end
@@ -242,6 +324,144 @@ module hello_npu (
                         gemm_acc <= gemm_acc + (gemm_a_value * gemm_b_value);
                         gemm_l <= gemm_l + 3'd1;
                     end
+                end
+            end
+
+            if (desc_busy) begin
+                desc_timeout_count <= desc_timeout_count + 32'd1;
+                if (desc_timeout_count >= DESC_TIMEOUT_LIMIT) begin
+                    desc_busy <= 1'b0;
+                    desc_state <= DESC_IDLE;
+                    busy_count <= 3'h0;
+                    gemm_busy <= 1'b0;
+                    status <= 32'h0000_0006;
+                    desc_status <= 32'h0000_000c;
+                    perf_errors <= perf_errors + 32'd1;
+                    perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                end else begin
+                    unique case (desc_state)
+                        DESC_FETCH_ADDR: begin
+                            if (m_axil_arready) begin
+                                desc_state <= DESC_FETCH_DATA;
+                            end
+                        end
+                        DESC_FETCH_DATA: begin
+                            if (m_axil_rvalid) begin
+                                if (m_axil_rresp != 2'b00) begin
+                                    desc_busy <= 1'b0;
+                                    desc_state <= DESC_IDLE;
+                                    status <= 32'h0000_0006;
+                                    desc_status <= 32'h0000_0014;
+                                    perf_errors <= perf_errors + 32'd1;
+                                    perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                                end else begin
+                                    desc_words[desc_fetch_word] <= m_axil_rdata;
+                                    desc_bytes_read <= desc_bytes_read + 32'd4;
+                                    if (desc_fetch_word == 2'd3) begin
+                                        desc_fetch_word <= 2'h0;
+                                        desc_state <= DESC_LAUNCH;
+                                    end else begin
+                                        desc_fetch_word <= desc_fetch_word + 2'd1;
+                                        desc_state <= DESC_FETCH_ADDR;
+                                    end
+                                end
+                            end
+                        end
+                        DESC_STREAM_ADDR: begin
+                            if (m_axil_arready) begin
+                                desc_state <= DESC_STREAM_DATA;
+                            end
+                        end
+                        DESC_STREAM_DATA: begin
+                            if (m_axil_rvalid) begin
+                                if (m_axil_rresp != 2'b00) begin
+                                    desc_busy <= 1'b0;
+                                    desc_state <= DESC_IDLE;
+                                    status <= 32'h0000_0006;
+                                    desc_status <= 32'h0000_0034;
+                                    perf_errors <= perf_errors + 32'd1;
+                                    perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                                end else begin
+                                    scratch_stream_write_word(desc_stream_word_addr, m_axil_rdata);
+                                    desc_bytes_read <= desc_bytes_read + 32'd4;
+                                    if ((desc_stream_done + 6'd4) >= desc_stream_len) begin
+                                        desc_stream_done <= desc_stream_done + 6'd4;
+                                        desc_state <= DESC_LAUNCH;
+                                    end else begin
+                                        desc_stream_done <= desc_stream_done + 6'd4;
+                                        desc_state <= DESC_STREAM_ADDR;
+                                    end
+                                end
+                            end
+                        end
+                        DESC_LAUNCH: begin
+                            if (!opcode_valid(desc_opcode)) begin
+                                desc_busy <= 1'b0;
+                                desc_state <= DESC_IDLE;
+                                status <= 32'h0000_0006;
+                                desc_status <= 32'h0000_0006;
+                                perf_errors <= perf_errors + 32'd1;
+                                perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                            end else if (!desc_stream_cfg_ok) begin
+                                desc_busy <= 1'b0;
+                                desc_state <= DESC_IDLE;
+                                status <= 32'h0000_0006;
+                                desc_status <= 32'h0000_0024;
+                                perf_errors <= perf_errors + 32'd1;
+                                perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                            end else if (desc_stream_enable && desc_stream_done == 6'h0) begin
+                                desc_state <= DESC_STREAM_ADDR;
+                            end else if (desc_opcode == OP_GEMM_S8) begin
+                                if (gemm_cfg_ok) begin
+                                    gemm_busy <= 1'b1;
+                                    gemm_i <= 2'h0;
+                                    gemm_j <= 2'h0;
+                                    gemm_l <= 3'h0;
+                                    gemm_acc <= 32'sh0;
+                                    perf_ops <= perf_ops + 32'd1;
+                                    desc_state <= DESC_WAIT;
+                                end else begin
+                                    desc_busy <= 1'b0;
+                                    desc_state <= DESC_IDLE;
+                                    status <= 32'h0000_0006;
+                                    desc_status <= 32'h0000_0006;
+                                    perf_errors <= perf_errors + 32'd1;
+                                    perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                                end
+                            end else begin
+                                busy_count <= opcode_latency(desc_opcode);
+                                op_a_q <= desc_words[1];
+                                op_b_q <= desc_words[2];
+                                acc_q <= desc_words[3];
+                                opcode_q <= desc_opcode;
+                                perf_ops <= perf_ops + 32'd1;
+                                desc_state <= DESC_WAIT;
+                            end
+                        end
+                        DESC_WAIT: begin
+                            if (desc_engine_done) begin
+                                desc_state <= DESC_ADVANCE;
+                            end
+                        end
+                        DESC_ADVANCE: begin
+                            desc_tail <= desc_tail_next;
+                            desc_err_index <= desc_tail;
+                            desc_status <= 32'h0000_0002;
+                            desc_timeout_count <= 32'h0;
+                            desc_stream_done <= 6'h0;
+                            if (desc_tail_next == desc_head) begin
+                                desc_busy <= 1'b0;
+                                desc_state <= DESC_IDLE;
+                                status <= 32'h0000_0002;
+                            end else begin
+                                desc_fetch_word <= 2'h0;
+                                desc_state <= DESC_FETCH_ADDR;
+                            end
+                        end
+                        default: begin
+                            desc_state <= DESC_FETCH_ADDR;
+                        end
+                    endcase
                 end
             end
 
@@ -280,21 +500,29 @@ module hello_npu (
                         end
                     end
                     6'h03: begin
-                        if (wdata[0] && busy_count == 3'h0 && !gemm_busy) begin
+                        if (wdata[0] && busy_count == 3'h0 && !gemm_busy && !desc_busy) begin
                             if (cmd_param[0]) begin
-                                desc_busy <= 1'b1;
                                 desc_err_index <= desc_tail;
                                 if (desc_base[1:0] != 2'b00) begin
-                                    desc_status <= {20'h0, desc_tail, 6'h0, 3'b100};
+                                    desc_status <= 32'h0000_0004;
+                                    status <= 32'h0000_0006;
+                                    perf_errors <= perf_errors + 32'd1;
+                                    perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
                                 end else if (desc_head == desc_tail) begin
-                                    desc_status <= {20'h0, desc_tail, 6'h0, 3'b001};
+                                    desc_status <= 32'h0000_0001;
+                                    status <= 32'h0000_0006;
+                                    perf_errors <= perf_errors + 32'd1;
+                                    perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
                                 end else begin
-                                    desc_status <= {20'h0, desc_tail, 6'h0, 3'b110};
+                                    status <= 32'h0000_0001;
+                                    desc_status <= 32'h0;
+                                    desc_busy <= 1'b1;
+                                    desc_state <= DESC_FETCH_ADDR;
+                                    desc_fetch_word <= 2'h0;
+                                    desc_timeout_count <= 32'h0;
+                                    desc_bytes_read <= 32'h0;
+                                    desc_stream_done <= 6'h0;
                                 end
-                                status <= 32'h0000_0006;
-                                desc_busy <= 1'b0;
-                                perf_errors <= perf_errors + 32'd1;
-                                perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
                             end else if (opcode == OP_GEMM_S8) begin
                                 if (gemm_cfg_ok) begin
                                     status <= 32'h0000_0001;
@@ -328,6 +556,7 @@ module hello_npu (
                             status[2] <= 1'b0;
                             desc_status <= 32'h0;
                             desc_err_index <= 3'h0;
+                            desc_timeout_count <= 32'h0;
                         end
                     end
                     default: begin
@@ -358,11 +587,13 @@ module hello_npu (
             6'h10: rdata = desc_base;
             6'h11: rdata = {29'h0, desc_head};
             6'h12: rdata = {29'h0, desc_tail};
-            6'h13: rdata = desc_status | {20'h0, desc_err_index, 6'h0, desc_busy, 2'b00};
+            6'h13: rdata = desc_status | {10'h0, desc_pending, 7'h0, desc_err_index, desc_busy, 8'h0};
                     6'h14: rdata = perf_cycles;
                     6'h15: rdata = perf_macs;
                     6'h16: rdata = perf_ops;
                     6'h17: rdata = perf_errors;
+                    6'h18: rdata = desc_timeout_count;
+                    6'h19: rdata = desc_bytes_read;
                     6'h20: rdata = scratch[0];
                     6'h21: rdata = scratch[1];
                     6'h22: rdata = scratch[2];

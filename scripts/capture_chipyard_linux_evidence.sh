@@ -7,7 +7,7 @@ generated_manifest="${OPENPHONE_GENERATED_MANIFEST:-build/chipyard/openphone_roc
 mode="${1:-all}"
 
 usage() {
-	printf 'usage: %s [preflight|plan|all|opensbi-boot|linux-boot|trap-timer-irq|isa-cache-mmu|ap-benchmarks]\n' "$0"
+	printf 'usage: %s [preflight|wire|wire-preflight|plan|all|opensbi-boot|linux-boot|trap-timer-irq|isa-cache-mmu|ap-benchmarks]\n' "$0"
 	printf '\n'
 	printf 'Set one command env var per capture. Each command must run the generated AP simulator/test and print the real transcript to stdout/stderr:\n'
 	printf '  OPENPHONE_OPENSBI_BOOT_CMD\n'
@@ -24,6 +24,10 @@ usage() {
 	printf '\n'
 	printf 'Check command wiring without running the simulator:\n'
 	printf '  %s preflight\n' "$0"
+	printf '\n'
+	printf 'Derive Linux-host command env vars from checked-in generated-AP runners where possible:\n'
+	printf "  eval \"\$(python3 scripts/wire_cpu_ap_capture_commands.py --format shell)\"\n"
+	printf '  %s wire-preflight\n' "$0"
 	printf '\n'
 	printf 'Marker checklist:\n'
 	printf '  python3 scripts/capture_cpu_ap_evidence.py template all\n'
@@ -76,9 +80,18 @@ preflight_all() {
 		printf 'STATUS: PASS cpu_ap.capture_preflight - all command lanes are wired\n'
 	else
 		printf 'STATUS: BLOCKED cpu_ap.capture_preflight - capture wiring incomplete\n'
-		printf '  next: python3 scripts/capture_cpu_ap_evidence.py plan all --format shell\n'
+		printf '  next: python3 scripts/wire_cpu_ap_capture_commands.py --format shell\n'
 	fi
 	return "$rc"
+}
+
+wire_commands() {
+	python3 "$repo_dir/scripts/wire_cpu_ap_capture_commands.py" --format shell
+}
+
+wire_preflight() {
+	eval "$(python3 "$repo_dir/scripts/wire_cpu_ap_capture_commands.py" --format shell)"
+	preflight_all
 }
 
 run_mode() {
@@ -128,6 +141,12 @@ plan)
 	;;
 preflight)
 	preflight_all
+	;;
+wire)
+	wire_commands
+	;;
+wire-preflight)
+	wire_preflight
 	;;
 all)
 		rc=0

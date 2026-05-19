@@ -119,7 +119,7 @@ artifact_groups:
           - docs/manufacturing/evidence/current/**/*
           - pd/reports/power/**/*
       - name: thermal_review
-        status: missing
+        status: draft
         globs:
           - docs/manufacturing/evidence/thermal/**/*
           - board/reports/thermal/**/*

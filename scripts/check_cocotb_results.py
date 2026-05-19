@@ -13,6 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RESULT = ROOT / "verify/cocotb/results.xml"
 REPORT_DIR = ROOT / "build/reports/cocotb"
 MANIFEST = REPORT_DIR / "manifest.json"
+PIPELINE_TARGETS = {
+    "hello_chip_top_test_hello_chip",
+    "hello_linux_soc_contract_test_cpu_mem_intc_contract",
+    "hello_npu_test_hello_npu",
+    "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
+}
 
 
 def sha256(path: Path) -> str:
@@ -96,12 +102,36 @@ def load_manifest() -> dict:
     if MANIFEST.is_file():
         data = json.loads(MANIFEST.read_text())
         if isinstance(data, dict):
+            targets = data.get("targets")
+            if isinstance(targets, dict):
+                data["targets"] = {
+                    name: entry for name, entry in targets.items() if name in PIPELINE_TARGETS
+                }
             return data
     return {
         "schema": "hello-chip-cocotb-evidence-v1",
         "generated_at_utc": None,
         "targets": {},
     }
+
+
+def rebuild_manifest_from_archives(manifest: dict) -> dict:
+    targets = {}
+    existing_targets = manifest.get("targets")
+    if not isinstance(existing_targets, dict):
+        existing_targets = {}
+    for target in sorted(PIPELINE_TARGETS):
+        archived = REPORT_DIR / f"{target}.xml"
+        entry = existing_targets.get(target)
+        if not archived.is_file() or not isinstance(entry, dict):
+            continue
+        entry = dict(entry)
+        entry["result_xml"] = str(archived.relative_to(ROOT))
+        entry["result_sha256"] = sha256(archived)
+        entry["stats"] = result_stats(archived)
+        targets[target] = entry
+    manifest["targets"] = targets
+    return manifest
 
 
 def main() -> int:
@@ -133,7 +163,7 @@ def main() -> int:
         archived = REPORT_DIR / f"{target}.xml"
         archived.write_bytes(path.read_bytes())
 
-        manifest = load_manifest()
+        manifest = rebuild_manifest_from_archives(load_manifest())
         manifest["generated_at_utc"] = datetime.now(UTC).isoformat()
         manifest.setdefault("targets", {})[target] = {
             "top": args.top,

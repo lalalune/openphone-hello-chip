@@ -61,7 +61,7 @@ def main() -> int:
         "Android NNAPI acceleration",
         "phone-class TOPS",
         "model compiler backend",
-        "DMA-backed tensor execution",
+        "production DMA-backed tensor execution",
         "sustained power or thermal performance",
     ):
         if required not in not_claimed:
@@ -158,6 +158,19 @@ def main() -> int:
         if token not in header_text or token not in generated_header_text:
             errors.append(f"descriptor queue register {token} missing from platform headers")
 
+    for name, expected in (
+        ("DESC_RING_ENTRIES", 8),
+        ("DESC_STATUS_EMPTY", 0x1),
+        ("DESC_STATUS_DONE", 0x2),
+        ("DESC_STATUS_ERROR", 0x4),
+        ("DESC_STATUS_TIMEOUT", 0x8),
+        ("DESC_STATUS_MEM_ERROR", 0x10),
+        ("DESC_STATUS_STREAM_ERROR", 0x20),
+        ("DESC_FLAG_STREAM_TO_SCRATCH", 1 << 8),
+    ):
+        if getattr(runtime, name, None) != expected:
+            errors.append(f"runtime {name}={getattr(runtime, name, None)!r} != {expected!r}")
+
     for absolute in (
         runtime.PERF_UNSUPPORTED_OPS,
         runtime.PERF_CYCLES,
@@ -200,9 +213,18 @@ def main() -> int:
         if contract_precision.get(blocked) != "blocked":
             errors.append(f"contract precision matrix must keep {blocked} blocked")
     descriptor_queue = contract.get("descriptor_queue_submission", {})
-    if descriptor_queue.get("state") != "reserved_blocked":
-        errors.append("contract descriptor queue submission must remain reserved_blocked")
-    for token in ("timeout_polls", "ctrl_status", "desc_status", "perf_counters"):
+    if descriptor_queue.get("state") != "rtl_local_descriptor_ring":
+        errors.append(
+            "contract descriptor queue submission must describe rtl_local_descriptor_ring"
+        )
+    for token in (
+        "timeout_polls",
+        "ctrl_status",
+        "desc_status",
+        "perf_counters",
+        "desc_timeout_count",
+        "desc_bytes_read",
+    ):
         if token not in descriptor_queue.get("required_error_reporting", []):
             errors.append(f"descriptor queue error reporting missing {token}")
 

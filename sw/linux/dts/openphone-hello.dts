@@ -28,19 +28,39 @@
 		stdout-path = &uart0;
 	};
 
-	wifi_pwrseq: wifi-pwrseq {
-		compatible = "mmc-pwrseq-simple";
-		status = "disabled";
+		wifi_pwrseq: wifi-pwrseq {
+			compatible = "mmc-pwrseq-simple";
+			status = "disabled";
 		/*
 		 * Stub for a Murata Type 1DX / CYW4343W-class external module.
 		 * Bind WIFI_EN/WIFI_RST_N to real GPIO phandles after hello-chip
 		 * grows a GPIO/pinctrl-backed SDIO host integration.
 		 */
 		post-power-on-delay-ms = <200>;
-		/* reset-gpios = <&gpioX N GPIO_ACTIVE_LOW>; required before enable. */
-	};
+			/* reset-gpios = <&gpioX N GPIO_ACTIVE_LOW>; required before enable. */
+		};
 
-	soc {
+		cpus {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			timebase-frequency = <10000000>;
+
+			cpu0: cpu@0 {
+				compatible = "riscv";
+				device_type = "cpu";
+				reg = <0>;
+				riscv,isa = "rv64imac";
+				status = "okay";
+
+				cpu0_intc: interrupt-controller {
+					compatible = "riscv,cpu-intc";
+					interrupt-controller;
+					#interrupt-cells = <1>;
+				};
+			};
+		};
+
+		soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -94,12 +114,6 @@
 			status = "okay";
 		};
 
-		wifi_pwrseq: wifi-pwrseq {
-			compatible = "mmc-pwrseq-simple";
-			status = "disabled";
-			post-power-on-delay-ms = <200>;
-		};
-
 		sdio0: mmc@10050000 {
 			compatible = "hello,sdio-host-1.0";
 			status = "disabled";
@@ -122,10 +136,10 @@
 			};
 		};
 
-		uart1: uart@10051000 {
-			compatible = "hello,uart-1.0";
-			status = "disabled";
-			reg = <0x0 0x10051000 0x0 0x1000>;
+			uart1: uart@10051000 {
+				compatible = "hello,uart-1.0";
+				status = "disabled";
+				reg = <0x10051000 0x00001000>;
 			/*
 			 * BT_UART_TX/RX/CTS_N/RTS_N: RTL UART and flow-control
 			 * pinctrl are not implemented.

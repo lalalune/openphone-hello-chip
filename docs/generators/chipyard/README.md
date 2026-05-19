@@ -110,6 +110,28 @@ submodule status, and SHA-256 values into
 manifest is required before CPU/AP transcript intake, but it still does not
 claim OpenSBI or Linux boot.
 
+If Chipyard generated filelists or driver makefiles contain stale container
+paths such as `/work/...`, check and rewrite only the generated path text with:
+
+```sh
+python3 scripts/repair_chipyard_generated_paths.py
+python3 scripts/repair_chipyard_generated_paths.py --rewrite
+```
+
+The rewrite is deterministic: known generated Verilator filelists and
+`VTestDriver.mk` references to `/work` are replaced with the current repository
+root. It does not synthesize missing generated files. If the driver makefile or
+model objects are missing, rerun the Chipyard simulator build.
+
+`python3 scripts/check_chipyard_verilator_linux_smoke.py` reports progress
+stages separately from pass/fail:
+
+- `cpu_progress_to_payload`: instruction trace reached the payload address, but
+  no OpenSBI marker was found.
+- `opensbi_boot`: OpenSBI markers exist, but Linux markers are absent.
+- `linux_boot`: Linux markers exist. This is still not accepted AP evidence
+  until transcript intake validates and archives the required logs.
+
 The Linux/amd64 container path uses the pinned local base image and writes the
 full attempt transcript to `build/chipyard/openphone_rocket/docker-verilog-attempt.log`:
 

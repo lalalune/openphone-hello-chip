@@ -97,6 +97,37 @@ def adb_probe() -> dict[str, Any]:
     return status
 
 
+def proof_json_state(artifact_status: dict[str, Any]) -> str:
+    if artifact_status.get("available"):
+        return "valid"
+    reason = artifact_status.get("blocked_reason", "unavailable")
+    if reason == "missing_hello_npu_nnapi_accelerator":
+        return "missing"
+    if reason == "invalid_capability_proof":
+        return "invalid"
+    return str(reason)
+
+
+def benchmark_model_state(dependencies: list[dict[str, Any]]) -> str:
+    for item in dependencies:
+        if item.get("kind") != "executable" or item.get("name") != "benchmark_model":
+            continue
+        if item.get("available"):
+            return "real_tool_available"
+        if item.get("blocked_reason") == "repo_local_host_smoke_tool":
+            return "host_smoke_rejected"
+        return str(item.get("blocked_reason", "missing"))
+    return "missing"
+
+
+def adb_state(probe: dict[str, Any] | None) -> str:
+    if probe is None:
+        return "not_probed"
+    if probe.get("status") == "available":
+        return "device_available"
+    return str(probe.get("blocked_reason", "adb_unavailable"))
+
+
 def main(argv: list[str]) -> int:
     root = repo_root()
     sys.path.insert(0, str(root))
@@ -109,6 +140,13 @@ def main(argv: list[str]) -> int:
     artifacts = bench.get("capability_artifacts", [])
     if len(artifacts) != 1:
         raise ValueError("tflite_hello_npu must have exactly one capability artifact")
+    proof_config = artifacts[0].get("proof", {})
+    required_fields = set(proof_config.get("required_json_fields", []))
+    missing_capture_fields = sorted(
+        f"capture.commands.{name}"
+        for name in CAPTURE_COMMANDS
+        if f"capture.commands.{name}" not in required_fields
+    )
 
     artifact_status = run_benchmarks.capability_artifact_status(artifacts[0], root)
     dependencies = run_benchmarks.dependency_status(
@@ -150,13 +188,26 @@ def main(argv: list[str]) -> int:
         for blocker in missing_details
     )
     target_ready = bool(probe and probe.get("status") == "available")
+    local_capture_state = (
+        "ready"
+        if real_tool_ready and target_ready
+        else "blocked"
+        if args.probe_adb
+        else "not_probed"
+    )
 
     status = {
         "schema": "openphone.hello_npu_nnapi_proof_readiness.v1",
         "benchmark": "tflite_hello_npu",
-        "status": "ready" if artifact_status.get("available") else "blocked",
+        "status": "proof_valid" if artifact_status.get("available") else "blocked",
+        "proof_json_state": proof_json_state(artifact_status),
+        "benchmark_model_state": benchmark_model_state(dependencies),
+        "adb_state": adb_state(probe),
+        "local_capture_state": local_capture_state,
         "proof_valid": bool(artifact_status.get("available")),
         "can_generate_locally": bool(real_tool_ready and target_ready),
+        "config_capture_command_fields_required": not missing_capture_fields,
+        "missing_capture_command_fields": missing_capture_fields,
         "proof_artifact": artifact_status,
         "dependencies": dependencies,
         "local_blockers": local_blockers,
@@ -172,7 +223,7 @@ def main(argv: list[str]) -> int:
         status_path.parent.mkdir(parents=True, exist_ok=True)
         status_path.write_text(output, encoding="utf-8")
     print(output, end="")
-    return 0 if status["status"] == "ready" else 2
+    return 0 if status["proof_valid"] else 2
 
 
 if __name__ == "__main__":

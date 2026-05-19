@@ -22,19 +22,26 @@
   "artifacts": {
     "power_trace": {
       "path": "docs/evidence/android/hello-npu/power-trace.csv",
-      "sha256": "64-character lowercase sha256 of the exact power trace"
+      "sha256": "64-character lowercase sha256 of the exact power trace",
+      "required_columns": ["timestamp_s", "watts"],
+      "min_samples": 1
     },
     "thermal_trace": {
       "path": "docs/evidence/android/hello-npu/thermal-trace.csv",
-      "sha256": "64-character lowercase sha256 of the exact thermal trace"
+      "sha256": "64-character lowercase sha256 of the exact thermal trace",
+      "required_columns": ["timestamp_s", "die_c"],
+      "min_samples": 1
     },
     "frequency_trace": {
       "path": "docs/evidence/android/hello-npu/frequency-trace.csv",
-      "sha256": "64-character lowercase sha256 of the exact frequency trace"
+      "sha256": "64-character lowercase sha256 of the exact frequency trace",
+      "required_columns": ["timestamp_s", "npu_hz"],
+      "min_samples": 1
     },
     "calibration_record": {
       "path": "docs/evidence/android/hello-npu/power-thermal-calibration.json",
-      "sha256": "64-character lowercase sha256 of the exact calibration record"
+      "sha256": "64-character lowercase sha256 of the exact calibration record",
+      "required_fields": ["power_meter", "thermal_sensor", "calibrated_utc"]
     }
   },
   "computed_metrics": {

@@ -16,12 +16,16 @@ release the board for fabrication or bring-up.
 
 | Rail | Initial current limit | Initial voltage | Enable condition |
 | --- | ---: | ---: | --- |
-| 1.8 V core/planning rail | 50 mA | 1.8 V | Enable first with SoC held in reset |
-| 3.3 V IO/planning rail | 50 mA | 3.3 V | Enable after 1.8 V rail is stable |
+| 1.8 V core/planning rail | 25 mA | 1.8 V | Enable first with SoC held in reset |
+| 3.3 V IO/planning rail | 25 mA | 3.3 V | Enable after 1.8 V rail is stable |
 
-After shorts and static current are reviewed, limits may be raised only by an
-approved first-article procedure tied to the final board revision and package
-load model.
+The 25 mA starting point is a conservative lab limit, not an expected operating
+current. It is tied to the local OpenLane-only VDDCORE estimate in
+`pd/signoff/pdn-current/local-budget.yaml` and must be replaced before hardware
+execution by a board-revision-specific procedure. After shorts and static
+current are reviewed, limits may be raised only by an approved first-article
+procedure tied to the final board revision, regulator behavior, fuse limits,
+package load model, and thermal stop conditions.
 
 ## Stop Conditions
 
@@ -38,6 +42,8 @@ load model.
 - No final rail current budget exists for the selected padframe/package.
 - No thermal limit or package power model is approved.
 - No regulator current-limit tolerance or foldback behavior is signed off.
+- No sustained power/thermal capture manifest has passed
+  `benchmarks/power/scripts/check_sustained_run_evidence.py`.
 - No bring-up owner has accepted these limits for hardware execution.
 
 ## Required Release Evidence
@@ -46,5 +52,7 @@ load model.
   smoke-test currents.
 - Lab current log for each rail, including supply model, limit settings,
   voltage ramp, ambient temperature, and board serial number.
+- Sustained power/thermal manifest with calibrated power, thermal, frequency,
+  workload transcript, and calibration artifacts.
 - Explicit stop-condition review and first-article disposition.
 - Updated limit table replacing this draft before any hardware power-on.

@@ -85,6 +85,8 @@ class HelloNpuRuntime:
     PERF_MACS = 0x1002_0054
     PERF_OPS = 0x1002_0058
     PERF_ERRORS = 0x1002_005C
+    DESC_TIMEOUT_COUNT = 0x1002_0060
+    DESC_BYTES_READ = 0x1002_0064
     SCRATCH = 0x1002_0080
     SCRATCH_BYTES = 64
 
@@ -97,8 +99,14 @@ class HelloNpuRuntime:
     OP_MIN_U32 = 6
     OP_DOT8_S4 = 7
     OP_GEMM_S8 = 8
+    DESC_RING_ENTRIES = 8
+    DESC_STATUS_EMPTY = 0x1
     DESC_STATUS_DONE = 0x2
     DESC_STATUS_ERROR = 0x4
+    DESC_STATUS_TIMEOUT = 0x8
+    DESC_STATUS_MEM_ERROR = 0x10
+    DESC_STATUS_STREAM_ERROR = 0x20
+    DESC_FLAG_STREAM_TO_SCRATCH = 1 << 8
 
     PRECISION_MATRIX = (
         NpuPrecisionSupport(
@@ -172,6 +180,7 @@ class HelloNpuRuntime:
         )
 
     def run(self, opcode: int, a: int, b: int, acc: int = 0, timeout_polls: int = 1024) -> int:
+        self.write32(self.CMD_PARAM, 0)
         self.write32(self.OP_A, a & 0xFFFF_FFFF)
         self.write32(self.OP_B, b & 0xFFFF_FFFF)
         self.write32(self.ACC, acc & 0xFFFF_FFFF)
@@ -215,11 +224,13 @@ class HelloNpuRuntime:
         return [entry.as_dict() for entry in self.PRECISION_MATRIX]
 
     def submit_descriptors(self, submission: NpuDescriptorSubmission) -> NpuRuntimeStatus:
-        """Program reserved queue registers and fail closed unless hardware completes them."""
+        """Program the RTL descriptor ring and wait for hardware completion proof."""
         if submission.base & 0x3:
             raise ValueError("descriptor base must be 32-bit aligned")
         if submission.head < 0 or submission.tail < 0:
             raise ValueError("descriptor head/tail must be non-negative")
+        if submission.head >= self.DESC_RING_ENTRIES or submission.tail >= self.DESC_RING_ENTRIES:
+            raise ValueError("descriptor head/tail exceed RTL 3-bit queue window")
         if submission.head == submission.tail:
             raise ValueError("descriptor submission requires at least one queued descriptor")
         self.write32(self.DESC_BASE, submission.base & 0xFFFF_FFFF)
@@ -243,10 +254,28 @@ class HelloNpuRuntime:
         )
         if not runtime_status.ok:
             raise NpuRuntimeError(
-                f"hello NPU descriptor submission lacks completion proof: desc_status=0x{desc_status:08x}",
+                f"hello NPU descriptor submission failed: desc_status=0x{desc_status:08x}",
                 runtime_status,
             )
         return runtime_status
+
+    @classmethod
+    def pack_stream_descriptor_word0(cls, opcode: int, scratch_offset: int, byte_count: int) -> int:
+        """Pack descriptor word 0 for memory-to-scratchpad prefetch plus command launch."""
+        if opcode < 0 or opcode > 0xF:
+            raise ValueError("descriptor opcode must fit in 4 bits")
+        if scratch_offset < 0 or scratch_offset > 63 or scratch_offset & 0x3:
+            raise ValueError("descriptor scratch offset must be 32-bit aligned within scratchpad")
+        if byte_count <= 0 or byte_count > 63 or byte_count & 0x3:
+            raise ValueError("descriptor byte count must be a positive aligned value below 64")
+        if scratch_offset + byte_count > cls.SCRATCH_BYTES:
+            raise ValueError("descriptor stream exceeds 64-byte NPU scratchpad")
+        return (
+            (opcode & 0xF)
+            | cls.DESC_FLAG_STREAM_TO_SCRATCH
+            | ((scratch_offset & 0x3F) << 16)
+            | ((byte_count & 0x3F) << 24)
+        )
 
     def write_scratch(self, offset: int, data: bytes):
         if offset < 0 or offset + len(data) > self.SCRATCH_BYTES:

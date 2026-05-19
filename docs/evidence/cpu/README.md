@@ -21,6 +21,7 @@ and check the result:
 ```sh
 python3 scripts/capture_cpu_ap_evidence.py template all
 python3 scripts/capture_cpu_ap_evidence.py plan all --format shell
+python3 scripts/wire_cpu_ap_capture_commands.py --format shell
 scripts/capture_chipyard_linux_evidence.sh --help
 scripts/capture_chipyard_linux_evidence.sh preflight
 python3 scripts/check_cpu_ap_evidence.py --require-evidence
@@ -53,8 +54,24 @@ logs:
 ## Linux Host Flow
 
 On the Linux host, first generate/build the pinned Chipyard target and create
-`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`. Then set
-the command variables consumed by `scripts/capture_chipyard_linux_evidence.sh`.
+`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`. Then
+derive the command variables that can be backed by checked-in generated-AP
+runners:
+
+```sh
+python3 scripts/wire_cpu_ap_capture_commands.py --format text
+eval "$(python3 scripts/wire_cpu_ap_capture_commands.py --format shell)"
+scripts/capture_chipyard_linux_evidence.sh preflight
+```
+
+The generated wiring exports `OPENPHONE_OPENSBI_BOOT_CMD` and
+`OPENPHONE_LINUX_BOOT_CMD` from the real
+`scripts/run_chipyard_openphone_linux_smoke.sh` path when the generated
+manifest and FireMarshal payload are present. It deliberately leaves
+`OPENPHONE_TRAP_TIMER_IRQ_CMD`, `OPENPHONE_ISA_CACHE_MMU_CMD`, and
+`OPENPHONE_AP_BENCHMARKS_CMD` unset until real generated-AP test or benchmark
+commands exist. Do not replace those with marker echo scripts, copied
+reference logs, or edited transcripts.
 
 The two boot captures may use the same simulator command if one full boot log
 contains all OpenSBI and Linux markers. Trap/cache/benchmark captures should

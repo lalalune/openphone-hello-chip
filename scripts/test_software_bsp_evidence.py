@@ -52,6 +52,48 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
             )
             self.assertIn("reference", by_path[path]["claim"].lower())
 
+    def test_nnapi_proof_template_matches_fail_closed_harness_contract(self) -> None:
+        template = json.loads(check_software_bsp.NNAPI_PROOF_TEMPLATE.read_text())
+        self.assertEqual(template["schema"], "openphone.hello_npu_nnapi_capability.v1")
+        self.assertIn("trace_bytes", template["dma"])
+
+        transcripts = template["transcripts"]
+        self.assertEqual(set(transcripts), check_software_bsp.REQUIRED_NNAPI_TRANSCRIPTS)
+        for name, entry in transcripts.items():
+            with self.subTest(transcript=name):
+                self.assertIsInstance(entry, dict)
+                self.assertFalse(Path(entry["path"]).is_absolute())
+                self.assertTrue(entry["path"].startswith("docs/evidence/android/hello-npu/"))
+                self.assertIn("64-character lowercase sha256", entry["sha256"])
+                self.assertIsInstance(entry["bytes"], int)
+
+    def test_android_proof_manifest_template_is_blocked_and_path_pinned(self) -> None:
+        template = json.loads(check_software_bsp.ANDROID_PROOF_TEMPLATE.read_text())
+        self.assertEqual(
+            template["claim_boundary"],
+            check_software_bsp.ANDROID_PROOF_TEMPLATE_BOUNDARY,
+        )
+        self.assertEqual(template["status"], "blocked")
+        self.assertEqual(template["proof_gate"]["android_boot_claim"], "none")
+        self.assertEqual(template["proof_gate"]["compatibility_claim"], "none")
+        self.assertEqual(
+            template["proof_gate"]["nnapi_acceleration_claim"],
+            "none_without_all_required_artifacts_passed",
+        )
+
+        self.assertEqual(
+            set(template["required_statuses"]),
+            check_software_bsp.REQUIRED_ANDROID_PROOF_STATUSES,
+        )
+        self.assertTrue(
+            all(status == "blocked" for status in template["required_statuses"].values())
+        )
+        for name, expected_path in check_software_bsp.REQUIRED_ANDROID_PROOF_ARTIFACTS.items():
+            with self.subTest(artifact=name):
+                artifact = template["artifacts"][name]
+                self.assertEqual(artifact["path"], expected_path)
+                self.assertIn("64-character lowercase sha256", artifact["sha256"])
+
     def test_scaffold_only_passes_while_listing_missing_external_logs(self) -> None:
         result = subprocess.run(
             [sys.executable, "scripts/check_software_bsp.py", "all", "--scaffold-only"],

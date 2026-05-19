@@ -4,11 +4,12 @@ The hello NPU is a small synthesizable datapath behind a single-cycle MMIO
 control interface. Software programs operands, selects an opcode, starts the
 command, then polls `CTRL_STATUS.done` or waits for `irq_npu`.
 
-This block is not a phone-class accelerator. It has no DMA-fed command queue,
-IOMMU, cache coherency, tensor compiler backend, Android NNAPI delegate,
-production SRAM, or sustained TOPS/power evidence. It may be cited only as
-L0 RTL/unit evidence unless a higher-level report supplies the proof artifacts
-listed in `docs/benchmarks/capabilities/README.md`.
+This block is not a phone-class accelerator. It has only a local RTL descriptor
+ring and DRAM-to-scratchpad read path, with no IOMMU, cache coherency, tensor
+compiler backend, Android NNAPI delegate, production SRAM, or sustained
+TOPS/power evidence. It may be cited only as L0 RTL/unit evidence unless a
+higher-level report supplies the proof artifacts listed in
+`docs/benchmarks/capabilities/README.md`.
 
 ```text
 write OP_A
@@ -77,9 +78,8 @@ Additional registers:
 | `0x54` | `PERF_MACS` | signed INT8 MAC operations issued |
 | `0x58` | `PERF_OPS` | accepted operation counter |
 | `0x5c` | `PERF_ERRORS` | rejected commands/configurations; write bit 0 to clear all perf counters |
-| `0x2c` | `PERF_CYCLES` | cycles spent in GEMM active state |
-| `0x30` | `PERF_MACS` | signed INT8 MAC operations issued |
-| `0x34` | `PERF_ERRORS` | rejected commands/configurations |
+| `0x60` | `DESC_TIMEOUT_COUNT` | cycles spent in the active descriptor engine |
+| `0x64` | `DESC_BYTES_READ` | descriptor plus tensor-stream bytes accepted by the NPU read path |
 | `0x80`-`0xbc` | `SCRATCH[0..15]` | 16 little-endian 32-bit scratchpad words |
 
 For row-major `A[M][K]`, `B[K][N]`, and `C[M][N]`, use `A_STRIDE = K`,
@@ -99,17 +99,27 @@ completion interrupt
 performance counters
 ```
 
-Current integration is still an MMIO-visible datapath model. The descriptor
-registers now have an explicit fail-closed v0 contract: when `CMD_PARAM[0]` is
+Current integration is still a prototype datapath model. When `CMD_PARAM[0]` is
 set and software writes `CTRL_STATUS.start`, the RTL validates base alignment
-and empty/non-empty queue state, then completes with `CTRL_STATUS.done|error`
-because descriptor fetch and DMA-fed tensor execution are not implemented.
-`DESC_STATUS[0]` reports empty, `[1]` reports unsupported descriptor execution,
-`[2]` reports unaligned base, and `[11:9]` reports the descriptor index that
-faulted. This is not a valid/ready descriptor ring, queue-depth enforcement, or
-timeout-capable tensor DMA path. The DMA block tracks aligned 32-bit beat issue,
-byte completion, last source/destination addresses, and final write strobe, but
-it does not yet feed an NPU scratchpad/command queue.
+and empty/non-empty queue state, then fetches four 32-bit descriptor words from
+the read-only `m_axil_ar/r` descriptor port for each visible queue entry.
+Descriptor word 0 carries `opcode[3:0]`, `stream_to_scratch[8]`,
+`scratch_offset[21:16]`, and `byte_count[29:24]`. Word 1 is the stream source
+byte address when streaming is enabled, or scalar `OP_A` otherwise. Words 2 and
+3 are scalar `OP_B` and `ACC`, or reserved for streamed GEMM. The stream path is
+aligned 32-bit reads only and writes into the 64-byte scratchpad before launching
+the selected existing opcode.
+
+`DESC_STATUS[0]` reports empty, `[1]` reports descriptor completion, `[2]`
+reports descriptor error, `[3]` reports autonomous timeout, `[4]` reports
+descriptor fetch read error, `[5]` reports tensor stream read/configuration
+error, `[8]` reports descriptor engine busy, and `[11:9]` reports the descriptor
+index that faulted or completed. The three visible head/tail bits do not encode
+a full-ring condition. A missing descriptor or stream read response times out
+with `CTRL_STATUS.done|error`; read-response errors fail closed. The standalone
+DMA block tracks aligned 32-bit beat issue, byte completion, last
+source/destination addresses, and final write strobe, but NPU descriptor
+streaming uses the NPU read master and still has no writeback DMA path.
 
 ## Evidence gates
 
@@ -121,7 +131,8 @@ must include:
 - total/delegated NNAPI node count, zero CPU fallback, and zero unsupported ops,
 - precision actually used by the delegate,
 - dataflow name and description from the measured path,
-- DMA path plus bytes read and written by the NPU workload,
+- DMA path plus bytes read and written by the NPU workload; current local RTL can
+  report `DESC_BYTES_READ` only,
 - descriptor queue depth, head/tail completion evidence, and timeout/error
   behavior for queued commands,
 - MACs per inference, NPU cycles, NPU clock, DMA byte counters, operation/error
@@ -136,9 +147,7 @@ TOPS is a derived review field, not proof by itself:
 observed_tops <= macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12
 ```
 
-The current RTL cannot satisfy those gates because its GEMM input/output path is
-the 64-byte MMIO scratchpad, not a hardware DMA tensor path.
-Current integration is still an MMIO-visible datapath model. The DMA block
-tracks aligned 32-bit beat issue, byte completion, last source/destination
-addresses, and final write strobe, but it does not yet drive a real memory
-master or feed an NPU scratchpad/command queue.
+The current RTL cannot satisfy those gates because its measured GEMM output path
+is still the 64-byte scratchpad and descriptor stream reads have no writeback
+DMA, cache coherency, production queue ownership, or software-owned completion
+queue.

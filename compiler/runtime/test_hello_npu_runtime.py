@@ -138,6 +138,15 @@ class DescriptorDoneWithoutProofMmio(FakeMmio):
             self.regs[HelloNpuRuntime.DESC_STATUS] = 0
 
 
+class DescriptorCompletingMmio(FakeMmio):
+    def write32(self, addr, value):
+        super().write32(addr, value)
+        if addr == HelloNpuRuntime.CTRL_STATUS and (value & 0x1):
+            self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x2
+            self.regs[HelloNpuRuntime.DESC_STATUS] = HelloNpuRuntime.DESC_STATUS_DONE
+            self.regs[HelloNpuRuntime.DESC_TAIL] = self.regs.get(HelloNpuRuntime.DESC_HEAD, 0)
+
+
 def make_runtime():
     mmio = FakeMmio()
     return HelloNpuRuntime(mmio.read32, mmio.write32), mmio
@@ -254,19 +263,42 @@ def test_descriptor_submission_rejects_invalid_requests_before_mmio():
         runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2002, head=0, tail=1))
     with pytest.raises(ValueError, match="at least one"):
         runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=2, tail=2))
+    with pytest.raises(ValueError, match="3-bit queue window"):
+        runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=8))
 
     assert mmio.writes == []
+
+
+def test_descriptor_submission_accepts_hardware_completion_proof():
+    mmio = DescriptorCompletingMmio()
+    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+
+    status = runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=3, tail=1))
+
+    assert status.ok
+    assert status.desc_status == runtime.DESC_STATUS_DONE
+    assert mmio.regs[runtime.DESC_TAIL] == 3
 
 
 def test_descriptor_submission_requires_descriptor_completion_proof():
     mmio = DescriptorDoneWithoutProofMmio()
     runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
 
-    with pytest.raises(NpuRuntimeError, match="lacks completion proof") as exc_info:
+    with pytest.raises(NpuRuntimeError, match="descriptor submission failed") as exc_info:
         runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=1))
 
     assert exc_info.value.status.status == 0x2
     assert exc_info.value.status.desc_status == 0
+
+
+def test_stream_descriptor_word0_packing_and_validation():
+    word0 = HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 12)
+
+    assert word0 == HelloNpuRuntime.OP_GEMM_S8 | (1 << 8) | (12 << 24)
+    with pytest.raises(ValueError, match="scratch offset"):
+        HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 2, 12)
+    with pytest.raises(ValueError, match="byte count"):
+        HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 13)
 
 
 def test_precision_matrix_reports_supported_and_blocked_states_without_overclaiming():

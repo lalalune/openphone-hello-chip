@@ -58,6 +58,7 @@ REQUIRED_NPU_PROOF_FIELDS = {
     "dma.path",
     "dma.bytes_read",
     "dma.bytes_written",
+    "dma.trace_bytes",
     "measurements.macs_per_inference",
     "measurements.npu_cycles",
     "measurements.npu_hz",
@@ -252,6 +253,19 @@ def check_benchmark_evidence_gates(errors: list[str]) -> None:
         errors.append(
             "proof template missing transcript(s): " + ", ".join(missing_template_transcripts)
         )
+    for transcript_name in REQUIRED_NPU_PROOF_TRANSCRIPTS & transcripts:
+        entry = template.get("transcripts", {}).get(transcript_name)
+        if not isinstance(entry, dict):
+            errors.append(f"proof template transcript {transcript_name} must be an object")
+            continue
+        if not isinstance(entry.get("path"), str) or not entry["path"]:
+            errors.append(f"proof template transcript {transcript_name}.path must be non-empty")
+        if SHA256_PLACEHOLDER not in str(entry.get("sha256", "")):
+            errors.append(
+                f"proof template transcript {transcript_name}.sha256 must require lowercase sha256"
+            )
+        if not isinstance(entry.get("bytes"), int) or entry.get("bytes", 0) <= 0:
+            errors.append(f"proof template transcript {transcript_name}.bytes must be positive")
 
     for token, path in (
         ("observed_tops", CAPABILITY_README),
@@ -300,6 +314,19 @@ def check_benchmark_evidence_gates(errors: list[str]) -> None:
     ):
         if metric not in metrics:
             errors.append(f"power/thermal manifest missing computed metric {metric}")
+    power_artifacts = power_template.get("artifacts", {})
+    for trace_name in ("power_trace", "thermal_trace", "frequency_trace"):
+        trace = power_artifacts.get(trace_name, {})
+        if not isinstance(trace.get("required_columns"), list) or not trace["required_columns"]:
+            errors.append(f"power/thermal manifest {trace_name} must define required_columns")
+        if not isinstance(trace.get("min_samples"), int) or trace.get("min_samples", 0) <= 0:
+            errors.append(f"power/thermal manifest {trace_name} must define positive min_samples")
+    calibration = power_artifacts.get("calibration_record", {})
+    if (
+        not isinstance(calibration.get("required_fields"), list)
+        or not calibration["required_fields"]
+    ):
+        errors.append("power/thermal manifest calibration_record must define required_fields")
 
 
 REQUIRED_PRECISIONS = {

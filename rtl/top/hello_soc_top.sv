@@ -71,6 +71,13 @@ module hello_soc_top (
     logic dma_m_rready;
     logic [31:0] dma_m_rdata;
     logic [1:0] dma_m_rresp;
+    logic npu_m_arvalid;
+    logic npu_m_arready;
+    logic [31:0] npu_m_araddr;
+    logic npu_m_rvalid;
+    logic npu_m_rready;
+    logic [31:0] npu_m_rdata;
+    logic [1:0] npu_m_rresp;
     logic display_scan_hsync;
     logic display_scan_vsync;
     logic display_scan_active;
@@ -100,11 +107,14 @@ module hello_soc_top (
     wire [DRAM_INDEX_BITS-1:0] mmio_dram_word = mmio_addr[2 +: DRAM_INDEX_BITS];
     wire [DRAM_INDEX_BITS-1:0] dma_wr_word = dma_m_awaddr[2 +: DRAM_INDEX_BITS];
     wire [DRAM_INDEX_BITS-1:0] dma_rd_word = dma_m_araddr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] npu_rd_word = npu_m_araddr[2 +: DRAM_INDEX_BITS];
     wire [DRAM_INDEX_BITS-1:0] display_rd_word = display_fb_read_addr[2 +: DRAM_INDEX_BITS];
     wire        dma_wr_fire = dma_m_awvalid && dma_m_awready && dma_m_wvalid && dma_m_wready;
     wire        dma_rd_fire = dma_m_arvalid && dma_m_arready;
+    wire        npu_rd_fire = npu_m_arvalid && npu_m_arready;
     wire        dma_wr_ok = (dma_m_awaddr[31:12] == 20'h8000_0) && (dma_m_awaddr[1:0] == 2'b00);
     wire        dma_rd_ok = (dma_m_araddr[31:12] == 20'h8000_0) && (dma_m_araddr[1:0] == 2'b00);
+    wire        npu_rd_ok = (npu_m_araddr[31:12] == 20'h8000_0) && (npu_m_araddr[1:0] == 2'b00);
     wire        display_rd_ok = display_fb_read_valid &&
                                 (display_fb_read_addr[31:12] == 20'h8000_0) &&
                                 (display_fb_read_addr[1:0] == 2'b00);
@@ -169,7 +179,8 @@ module hello_soc_top (
 
     assign dma_m_awready = !dma_m_bvalid;
     assign dma_m_wready  = !dma_m_bvalid;
-    assign dma_m_arready = !dma_m_rvalid;
+    assign dma_m_arready = !dma_m_rvalid && !npu_m_arvalid;
+    assign npu_m_arready = !npu_m_rvalid && !dma_m_arvalid && !dma_m_rvalid;
     assign display_fb_read_ready = display_rd_ok;
     assign display_fb_read_data  = display_rd_ok ? dram_mem[display_rd_word] : 32'hDEAD_BEEF;
 
@@ -180,6 +191,9 @@ module hello_soc_top (
             dma_m_rvalid <= 1'b0;
             dma_m_rdata  <= 32'h0;
             dma_m_rresp  <= 2'b00;
+            npu_m_rvalid <= 1'b0;
+            npu_m_rdata  <= 32'h0;
+            npu_m_rresp  <= 2'b00;
         end else begin
             if (dma_m_bvalid && dma_m_bready) begin
                 dma_m_bvalid <= 1'b0;
@@ -187,6 +201,10 @@ module hello_soc_top (
 
             if (dma_m_rvalid && dma_m_rready) begin
                 dma_m_rvalid <= 1'b0;
+            end
+
+            if (npu_m_rvalid && npu_m_rready) begin
+                npu_m_rvalid <= 1'b0;
             end
 
             if (mmio_valid && mmio_write && dram_sel) begin
@@ -215,6 +233,17 @@ module hello_soc_top (
                     dma_m_rresp <= 2'b10;
                 end
                 dma_m_rvalid <= 1'b1;
+            end
+
+            if (npu_rd_fire) begin
+                if (npu_rd_ok) begin
+                    npu_m_rdata <= dram_mem[npu_rd_word];
+                    npu_m_rresp <= 2'b00;
+                end else begin
+                    npu_m_rdata <= 32'hDEAD_BEEF;
+                    npu_m_rresp <= 2'b10;
+                end
+                npu_m_rvalid <= 1'b1;
             end
         end
     end
@@ -516,7 +545,14 @@ module hello_soc_top (
         .addr(mmio_addr[7:2]),
         .wdata(mmio_wdata),
         .rdata(npu_rdata),
-        .irq(irq_npu)
+        .irq(irq_npu),
+        .m_axil_arvalid(npu_m_arvalid),
+        .m_axil_arready(npu_m_arready),
+        .m_axil_araddr(npu_m_araddr),
+        .m_axil_rvalid(npu_m_rvalid),
+        .m_axil_rready(npu_m_rready),
+        .m_axil_rdata(npu_m_rdata),
+        .m_axil_rresp(npu_m_rresp)
     );
 
     hello_display u_display (

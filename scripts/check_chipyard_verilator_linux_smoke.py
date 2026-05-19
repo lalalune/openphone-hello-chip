@@ -14,6 +14,7 @@ import stat
 from pathlib import Path
 
 import locate_chipyard_linux_payload
+import repair_chipyard_generated_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKOUT = ROOT / "external/chipyard"
@@ -32,6 +33,8 @@ REQUIRED_GENERATED_ARTIFACTS = (
     OUT_DIR / "OpenPhoneRocketConfig.manifest.json",
 )
 REQUIRED_LOG_MARKERS = ("OpenSBI", "Linux version")
+OPENSBI_MARKERS = ("OpenSBI", "SBI specification", "Domain0 Next Address")
+LINUX_MARKERS = ("Linux version", "Kernel command line:", "Freeing unused kernel")
 PROGRESS_MARKERS = (
     "SimDRAM loaded ELF entry=",
     "SimDRAM loading ELF ",
@@ -103,9 +106,11 @@ def generated_path_blockers() -> list[str]:
                 blockers.append(
                     "generated Verilator filelist contains stale container/workspace "
                     f"absolute paths ({', '.join(stale_roots)}): {rel(generated_filelist)}; "
-                    "regenerate the full generated-src config directory on this host or run "
-                    "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh` "
-                    "inside the /work-mounted container path"
+                    "run `python3 scripts/repair_chipyard_generated_paths.py --rewrite`, "
+                    "regenerate the full generated-src config directory on this host, or run "
+                    "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 "
+                    "scripts/run_chipyard_openphone_linux_smoke.sh` inside the /work-mounted "
+                    "container path"
                 )
     if GENERATED_DRIVER_MAKEFILE.is_file():
         makefile_text = GENERATED_DRIVER_MAKEFILE.read_text(encoding="utf-8", errors="replace")
@@ -114,10 +119,12 @@ def generated_path_blockers() -> list[str]:
             blockers.append(
                 "generated Verilator driver makefile contains stale container/workspace "
                 f"absolute paths ({', '.join(stale_roots)}): {rel(GENERATED_DRIVER_MAKEFILE)}; "
+                "run `python3 scripts/repair_chipyard_generated_paths.py --rewrite`, "
                 "regenerate the simulator on this host with "
-                "`scripts/run_chipyard_openphone_verilator.sh run-binary` or run "
-                "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh` "
-                "inside the /work-mounted container path"
+                "`scripts/run_chipyard_openphone_verilator.sh run-binary`, or run "
+                "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 "
+                "scripts/run_chipyard_openphone_linux_smoke.sh` inside the /work-mounted "
+                "container path"
             )
     elif (SIM_DIR / "generated-src").exists():
         blockers.append(
@@ -164,6 +171,28 @@ def remove_path(path: Path) -> None:
 
 def repair_stale_generated_paths() -> int:
     blockers = generated_path_blockers()
+    generated_files = [
+        path for path in (*GENERATED_FILELISTS, GENERATED_DRIVER_MAKEFILE) if path.is_file()
+    ]
+    destructive_repair_needed = any(
+        "partial generated Verilator" in blocker or "zero-byte model artifacts" in blocker
+        for blocker in blockers
+    )
+    if generated_files:
+        _results, replacements = repair_chipyard_generated_paths.inspect_or_rewrite(
+            generated_files,
+            ["/work"],
+            ROOT,
+            rewrite=True,
+        )
+        if replacements:
+            print(
+                "STATUS: REPAIR chipyard.verilator_generated_paths - rewrote "
+                f"{replacements} stale /work path occurrence(s)"
+            )
+            if not destructive_repair_needed:
+                print("  next: rerun python3 scripts/check_chipyard_verilator_linux_smoke.py")
+                return 0
     repairable = [
         blocker
         for blocker in blockers
@@ -190,16 +219,21 @@ def repair_stale_generated_paths() -> int:
 def parse_log_metadata() -> dict[str, object]:
     metadata: dict[str, object] = {
         "exists": LOG.is_file(),
+        "attempt": None,
+        "clean_generated": None,
         "exit_code": None,
         "payload": None,
         "binary_arg": None,
         "command": None,
         "timeout_after_seconds": None,
         "timeout_cycles": None,
+        "core_timeout_cycles": None,
+        "tilelink_timeout_cycles": None,
         "run_target": None,
         "raw_transcript_closed": False,
         "lines_after_raw_transcript_end": 0,
         "fatal_errors": [],
+        "sim_failures": [],
         "simdram_entry": None,
         "simdram_load_range": None,
         "last_progress_marker": "",
@@ -213,7 +247,11 @@ def parse_log_metadata() -> dict[str, object]:
     for line in LOG.read_text(encoding="utf-8", errors="replace").splitlines():
         if raw_transcript_closed and line.strip() and not line.startswith("openphone-evidence:"):
             lines_after_raw_transcript_end += 1
-        if line.startswith("openphone-evidence: exit_code="):
+        if line.startswith("openphone-evidence: attempt="):
+            metadata["attempt"] = line.split("=", 1)[1].strip()
+        elif line.startswith("openphone-evidence: clean_generated="):
+            metadata["clean_generated"] = line.split("=", 1)[1].strip()
+        elif line.startswith("openphone-evidence: exit_code="):
             metadata["exit_code"] = line.split("=", 1)[1].strip()
         elif line.startswith("openphone-evidence: payload="):
             metadata["payload"] = line.split("=", 1)[1].strip()
@@ -227,6 +265,10 @@ def parse_log_metadata() -> dict[str, object]:
             last_progress = line
         elif line.startswith("openphone-evidence: timeout_cycles="):
             metadata["timeout_cycles"] = line.split("=", 1)[1].strip()
+        elif line.startswith("openphone-evidence: core_timeout_cycles="):
+            metadata["core_timeout_cycles"] = line.split("=", 1)[1].strip()
+        elif line.startswith("openphone-evidence: tilelink_timeout_cycles="):
+            metadata["tilelink_timeout_cycles"] = line.split("=", 1)[1].strip()
         elif line.startswith("openphone-evidence: run_target="):
             metadata["run_target"] = line.split("=", 1)[1].strip()
         elif line.startswith("openphone-evidence: raw_transcript_end"):
@@ -246,6 +288,10 @@ def parse_log_metadata() -> dict[str, object]:
             fatal_errors = metadata["fatal_errors"]
             if isinstance(fatal_errors, list):
                 fatal_errors.append(line.strip())
+        if "*** FAILED ***" in line:
+            sim_failures = metadata["sim_failures"]
+            if isinstance(sim_failures, list):
+                sim_failures.append(line.strip())
     metadata["last_progress_marker"] = last_progress
     metadata["lines_after_raw_transcript_end"] = lines_after_raw_transcript_end
     return metadata
@@ -267,6 +313,7 @@ def parse_instruction_trace(payload: str | None) -> dict[str, object]:
     metadata: dict[str, object] = {
         "path": rel(trace),
         "exists": trace.is_file(),
+        "fresh_for_log": False,
         "retired_instruction_count": 0,
         "first_pc": None,
         "last_pc": None,
@@ -277,6 +324,7 @@ def parse_instruction_trace(payload: str | None) -> dict[str, object]:
     }
     if not trace.is_file():
         return metadata
+    metadata["fresh_for_log"] = not LOG.is_file() or trace.stat().st_mtime >= LOG.stat().st_mtime
 
     first_pc: int | None = None
     last_pc: int | None = None
@@ -313,10 +361,56 @@ def parse_instruction_trace(payload: str | None) -> dict[str, object]:
     return metadata
 
 
+def classify_smoke_progress(
+    log_text: str, instruction_trace: dict[str, object], log_metadata: dict[str, object]
+) -> dict[str, str]:
+    if not log_text:
+        return {
+            "stage": "no_run",
+            "next_step": "run scripts/run_chipyard_openphone_linux_smoke.sh with a real OpenSBI/Linux payload",
+        }
+    if any(marker in log_text for marker in LINUX_MARKERS):
+        return {
+            "stage": "linux_boot",
+            "next_step": "capture the complete generated-AP Linux boot transcript",
+        }
+    if any(marker in log_text for marker in OPENSBI_MARKERS):
+        return {
+            "stage": "opensbi_boot",
+            "next_step": "continue the smoke until the Linux kernel banner appears",
+        }
+    if instruction_trace.get("bootrom_to_payload_handoff"):
+        return {
+            "stage": "cpu_progress_to_payload",
+            "next_step": "debug why the payload runs after boot ROM handoff but emits no OpenSBI/Linux UART markers",
+        }
+    if log_metadata.get("simdram_entry") or "SimDRAM loaded ELF entry=" in log_text:
+        return {
+            "stage": "payload_loaded_no_cpu_progress",
+            "next_step": "continue or debug the simulator after SimDRAM loads the ELF payload",
+        }
+    if log_metadata.get("raw_transcript_closed"):
+        return {
+            "stage": "simulator_attempt_complete",
+            "next_step": "inspect the completed smoke transcript for build or simulator failure",
+        }
+    if LOG.is_file():
+        return {
+            "stage": "incomplete_attempt",
+            "next_step": "rerun the smoke wrapper until raw_transcript_end and exit_code are recorded",
+        }
+    return {
+        "stage": "no_run",
+        "next_step": "run scripts/run_chipyard_openphone_linux_smoke.sh with a real OpenSBI/Linux payload",
+    }
+
+
 def write_report(status: str, blockers: list[str], payload: str | None) -> None:
     allow_container_paths = os.environ.get(CONTAINER_PATH_ENV) == "1"
     log_metadata = parse_log_metadata()
     instruction_trace = parse_instruction_trace(payload)
+    log_text = LOG.read_text(encoding="utf-8", errors="replace") if LOG.is_file() else ""
+    progress = classify_smoke_progress(log_text, instruction_trace, log_metadata)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     report = {
         "schema": "openphone.chipyard_verilator_linux_smoke.v1",
@@ -329,6 +423,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
         "log": rel(LOG),
         "log_metadata": log_metadata,
         "instruction_trace": instruction_trace,
+        "progress": progress,
         "host": {
             "system": platform.system(),
             "machine": platform.machine(),
@@ -403,11 +498,12 @@ def main() -> int:
         )
 
     instruction_trace = parse_instruction_trace(payload)
+    log_text = ""
     if not LOG.is_file():
         blockers.append(f"missing Verilator OpenSBI/Linux smoke log: {rel(LOG)}")
     else:
-        text = LOG.read_text(encoding="utf-8", errors="replace")
-        if "openphone-evidence: raw_transcript_begin" in text and not log_metadata.get(
+        log_text = LOG.read_text(encoding="utf-8", errors="replace")
+        if "openphone-evidence: raw_transcript_begin" in log_text and not log_metadata.get(
             "raw_transcript_closed"
         ):
             blockers.append(
@@ -425,6 +521,16 @@ def main() -> int:
         if isinstance(fatal_errors, list):
             for fatal_error in fatal_errors:
                 blockers.append(f"{rel(LOG)} records build fatal error: {fatal_error}")
+        sim_failures = log_metadata.get("sim_failures")
+        if isinstance(sim_failures, list):
+            for sim_failure in sim_failures:
+                hint = ""
+                if "timeout" in sim_failure and "max_core_cycles" not in log_text:
+                    hint = (
+                        "; pass +max_core_cycles=0 or a larger value through "
+                        "CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS"
+                    )
+                blockers.append(f"{rel(LOG)} records simulator failure: {sim_failure}{hint}")
         exit_code = log_metadata.get("exit_code")
         if exit_code and exit_code != "0":
             reason = f"{rel(LOG)} records simulator wrapper exit_code={exit_code}"
@@ -433,10 +539,19 @@ def main() -> int:
                 reason += f" after timeout_after_seconds={timeout_after}"
             blockers.append(reason)
         last_progress = log_metadata.get("last_progress_marker")
-        if last_progress and not any(marker in text for marker in REQUIRED_LOG_MARKERS):
+        if last_progress and not any(marker in log_text for marker in REQUIRED_LOG_MARKERS):
             blockers.append(f"last simulator progress before missing boot markers: {last_progress}")
-        if instruction_trace.get("bootrom_to_payload_handoff") and not any(
-            marker in text for marker in REQUIRED_LOG_MARKERS
+        trace_is_fresh = bool(instruction_trace.get("fresh_for_log"))
+        if instruction_trace.get("exists") and not trace_is_fresh:
+            blockers.append(
+                "instruction trace is older than the current smoke log; rerun "
+                "with CHIPYARD_LINUX_SMOKE_RUN_TARGET=run-binary for fresh PC evidence: "
+                f"{instruction_trace.get('path')}"
+            )
+        if (
+            trace_is_fresh
+            and instruction_trace.get("bootrom_to_payload_handoff")
+            and not any(marker in log_text for marker in REQUIRED_LOG_MARKERS)
         ):
             blockers.append(
                 "instruction trace proves CPU forward progress through boot ROM "
@@ -446,13 +561,16 @@ def main() -> int:
                 f"trace={instruction_trace.get('path')}"
             )
         for marker in REQUIRED_LOG_MARKERS:
-            if marker not in text:
+            if marker not in log_text:
                 blockers.append(f"{rel(LOG)} lacks required marker: {marker}")
 
+    progress = classify_smoke_progress(log_text, instruction_trace, log_metadata)
     if blockers:
         write_report("blocked", blockers, payload)
-        print("STATUS: BLOCKED chipyard.verilator_linux_smoke")
+        print(f"STATUS: BLOCKED chipyard.verilator_linux_smoke.{progress['stage']}")
         print(f"  simulator_path: {rel(SIM_DIR)}")
+        print(f"  progress_stage: {progress['stage']}")
+        print(f"  next_progress_step: {progress['next_step']}")
         print(f"  next_command: {next_command()}")
         for blocker in blockers:
             print(f"  - {blocker}")
@@ -461,6 +579,7 @@ def main() -> int:
     write_report("pass", [], payload)
     print("STATUS: PASS chipyard.verilator_linux_smoke")
     print(f"  simulator_path: {rel(SIM_DIR)}")
+    print(f"  progress_stage: {progress['stage']}")
     print(f"  log: {rel(LOG)}")
     return 0
 

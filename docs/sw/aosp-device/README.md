@@ -182,6 +182,8 @@ AOSP_QEMU_SMOKE_COMMAND='/exact/qemu-system-riscv64 smoke command' \
 AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' \
   /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp renode-smoke
 python3 scripts/intake_android_evidence.py --target aosp --from-dir /path/to/logs --install
+scripts/android/capture_hello_npu_hal_absent_device.sh
+python3 scripts/check_hello_npu_android_proof_manifest.py
 ```
 
 These commands write under `docs/evidence/android/`. They capture command
@@ -192,6 +194,19 @@ transcripts only; they do not make a boot claim. The legacy `cuttlefish-boot`,
 aliases for simulator tooling and are not the full `scripts/check_software_bsp.py`
 AOSP gate. Install or validate the nine current gate logs with
 `scripts/intake_android_evidence.py`.
+
+Use `scripts/android/capture_hello_npu_nnapi_evidence.sh` only on a connected
+Android target that exposes a real `hello-npu` NNAPI accelerator. It captures
+the four NNAPI transcripts and a transcript manifest under
+`docs/evidence/android/hello-npu/`; it does not create
+`benchmarks/capabilities/hello_npu_nnapi.proof.json` or assert acceleration.
+That proof JSON still requires reviewed target counters, exact transcript
+hashes, model hash, DMA bytes, and zero CPU fallback.
+
+Use `python3 scripts/check_hello_npu_android_proof_manifest.py --manifest
+docs/evidence/android/hello-npu/android-proof-manifest.json --require-pass` for
+a filled Android proof manifest. The checked-in template is valid only as a
+blocked shape and cannot satisfy HAL, CTS, VTS, or NNAPI proof.
 
 The Cuttlefish boot capture defaults to `AOSP_PRODUCT=openphone_ai_soc-userdebug`
 and `AOSP_CUTTLEFISH_ARGS="--cpus=4 --memory_mb=8192 --gpu_mode=none"`.
@@ -204,6 +219,8 @@ For a commit-ready local validation pass that does not fabricate logs, run:
 make aosp-scaffold-check
 make aosp-linux-preflight
 scripts/run_aosp_linux_handoff.sh --preflight-only
+scripts/android/capture_hello_npu_hal_absent_device.sh
+python3 scripts/check_hello_npu_android_proof_manifest.py
 make android-sim-status-test
 make software-bsp-test
 ```

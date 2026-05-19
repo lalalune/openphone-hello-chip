@@ -128,12 +128,19 @@ CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh
 5. Archive CPU/AP evidence:
 
 ```sh
-python3 scripts/capture_cpu_ap_evidence.py plan all --format shell
+python3 scripts/wire_cpu_ap_capture_commands.py --format text
+eval "$(python3 scripts/wire_cpu_ap_capture_commands.py --format shell)"
 scripts/capture_chipyard_linux_evidence.sh preflight
 ```
 
-After the preflight reports all command lanes ready, either use the wrapper to
-run each generated-target capture command and intake the accepted transcript:
+The wiring helper derives `OPENPHONE_OPENSBI_BOOT_CMD` and
+`OPENPHONE_LINUX_BOOT_CMD` from the generated AP Linux smoke runner when the
+payload and generated manifest are present. It does not invent the
+trap/timer/IRQ, ISA/cache/MMU, or benchmark commands; those must be real
+generated-target tests and must remain blocked until supplied.
+
+After the preflight reports all command lanes ready, use the wrapper to run
+each generated-target capture command and intake the accepted transcript:
 
 ```sh
 scripts/capture_chipyard_linux_evidence.sh all

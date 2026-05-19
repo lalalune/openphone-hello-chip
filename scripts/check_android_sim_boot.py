@@ -13,6 +13,12 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import check_software_bsp  # noqa: E402
 
 VALID_STATUSES = {"pass", "blocked", "failed"}
+VIRTUAL_SMOKE_EVIDENCE = {
+    "docs/evidence/android/cuttlefish_riscv64_smoke.log",
+    "docs/evidence/android/qemu_riscv64_smoke.log",
+    "docs/evidence/android/renode_hello_soc_smoke.log",
+}
+CTS_VTS_PLAN_EVIDENCE = "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log"
 REQUIRED_REPORT_FIELDS = {
     "schema": str,
     "status": str,
@@ -72,6 +78,49 @@ def main() -> int:
             "AOSP log evidence manifest missing required specs: "
             + ", ".join(missing_manifest_specs)
         )
+    for path in required_evidence:
+        spec = manifest_logs.get(path, {})
+        if not isinstance(spec, dict):
+            errors.append(f"AOSP log evidence manifest spec for {path} must be an object")
+            continue
+        if not spec.get("blocker_code"):
+            errors.append(f"AOSP log evidence manifest spec for {path} missing blocker_code")
+        required_metadata = spec.get("required_metadata", [])
+        if not isinstance(required_metadata, list):
+            errors.append(
+                f"AOSP log evidence manifest spec for {path} required_metadata must be a list"
+            )
+            required_metadata = []
+        if (
+            path.startswith("docs/evidence/android/")
+            and "COMPATIBILITY_CLAIM=none" not in required_metadata
+        ):
+            errors.append(
+                f"AOSP log evidence manifest spec for {path} must require COMPATIBILITY_CLAIM=none"
+            )
+        if path in VIRTUAL_SMOKE_EVIDENCE:
+            for marker in (
+                "BOOT_CLAIM=none",
+                "SCHEMA=docs/android/boot-transcript.schema.json",
+            ):
+                if marker not in required_metadata:
+                    errors.append(f"AOSP virtual smoke spec for {path} must require {marker}")
+            if spec.get("claim_boundary") not in {
+                "expected_future_log_markers_only_not_boot_evidence",
+                "virtual_device_smoke_only_not_boot_or_compatibility_evidence",
+            }:
+                errors.append(f"AOSP virtual smoke spec for {path} has unsafe claim boundary")
+        if path == CTS_VTS_PLAN_EVIDENCE:
+            forbidden_claims = spec.get("forbidden_claims", [])
+            for claim in (
+                "CTS passed",
+                "VTS passed",
+                "full CTS",
+                "full VTS",
+                "Android compatible",
+            ):
+                if claim not in forbidden_claims:
+                    errors.append(f"AOSP CTS/VTS plan spec must forbid broad claim {claim!r}")
 
     if not REPORT.is_file():
         return report(
