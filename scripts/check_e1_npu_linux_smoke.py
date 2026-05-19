@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check target-side e1 NPU Linux ML smoke wiring and transcript intake."""
+"""Check target-side hello NPU Linux ML smoke wiring and transcript intake."""
 
 from __future__ import annotations
 
@@ -14,19 +14,19 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "build/reports/hello_npu_linux_smoke_source.json"
 SMOKE = ROOT / "sw/buildroot/package/hello-npu-ml-smoke/src/hello-npu-ml-smoke.c"
 PACKAGE_CONFIG = ROOT / "sw/buildroot/package/hello-npu-ml-smoke/Config.in"
-DRIVER = ROOT / "sw/linux/drivers/e1/hello-npu.c"
-UAPI = ROOT / "sw/linux/drivers/e1/hello-npu-uapi.h"
-DTS = ROOT / "sw/linux/dts/openagent-e1.dts"
-CONTRACT = ROOT / "sw/linux/drivers/DUMMY_NEVER_platform_contract.h"
+DRIVER = ROOT / "sw/linux/drivers/hello/hello-npu.c"
+UAPI = ROOT / "sw/linux/drivers/hello/hello-npu-uapi.h"
+DTS = ROOT / "sw/linux/dts/openphone-hello.dts"
+CONTRACT = ROOT / "sw/linux/drivers/hello/hello_platform_contract.h"
 BUILDROOT_CONFIG = ROOT / "sw/buildroot/Config.in"
-BUILDROOT_DEFCONFIG = ROOT / "sw/buildroot/configs/openagent_e1_defconfig"
-LINUX_EVIDENCE = ROOT / "docs/evidence/linux/openagent_hello_npu_ml_smoke.log"
+BUILDROOT_DEFCONFIG = ROOT / "sw/buildroot/configs/openphone_hello_defconfig"
+LINUX_EVIDENCE = ROOT / "docs/evidence/linux/openphone_hello_npu_ml_smoke.log"
 
 CAPTURE_COMMANDS = {
-    "buildroot": "make BR2_EXTERNAL=$PWD/sw/buildroot openagent_e1_defconfig && make BR2_EXTERNAL=$PWD/sw/buildroot",
+    "buildroot": "make BR2_EXTERNAL=$PWD/sw/buildroot openphone_hello_defconfig && make BR2_EXTERNAL=$PWD/sw/buildroot",
     "kernel_import": "sw/linux/scripts/import-linux-bsp.sh /path/to/linux",
     "target_smoke": "ssh root@TARGET /usr/bin/hello-npu-ml-smoke",
-    "capture_wrapper": "E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
+    "capture_wrapper": "HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
 }
 
 
@@ -80,27 +80,27 @@ def build_report() -> dict[str, Any]:
         require(problems, path.is_file(), f"missing required source: {rel(path)}")
 
     require(problems, "hello-npu-ml-smoke" in smoke, "smoke source lacks command identity")
-    require(problems, "E1_NPU_IOC_RUN_GEMM_S8" in smoke, "smoke does not use RUN_GEMM_S8")
-    require(problems, "E1_NPU_IOC_GET_CONTRACT" in smoke, "smoke does not validate the runtime contract")
-    require(problems, "E1_NPU_IOC_GET_COUNTERS" in smoke, "smoke does not read counters")
+    require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in smoke, "smoke does not use RUN_GEMM_S8")
+    require(problems, "HELLO_NPU_IOC_GET_CONTRACT" in smoke, "smoke does not validate the runtime contract")
+    require(problems, "HELLO_NPU_IOC_GET_COUNTERS" in smoke, "smoke does not read counters")
     require(problems, "CPU-only" in smoke or "cpu-only" in smoke.lower(), "smoke must reject CPU-only fallback")
     require(problems, "input_sha256" in smoke and "output_sha256" in smoke, "smoke lacks input/output hash markers")
-    require(problems, "E1_NPU_IOC_RUN_GEMM_S8" in uapi, "UAPI lacks RUN_GEMM_S8 ioctl")
-    require(problems, "E1_NPU_IOC_GET_CONTRACT" in uapi, "UAPI lacks GET_CONTRACT ioctl")
-    require(problems, "E1_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl")
-    require(problems, "E1_NPU_DESC_BYTES_READ_OFFSET" in driver, "driver lacks descriptor bytes-read counter readout")
+    require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in uapi, "UAPI lacks RUN_GEMM_S8 ioctl")
+    require(problems, "HELLO_NPU_IOC_GET_CONTRACT" in uapi, "UAPI lacks GET_CONTRACT ioctl")
+    require(problems, "HELLO_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl")
+    require(problems, "HELLO_NPU_DESC_BYTES_READ_OFFSET" in driver, "driver lacks descriptor bytes-read counter readout")
     require(
         problems,
-        "E1_NPU_DESC_BYTES_WRITTEN_OFFSET" in driver
-        and "E1_NPU_DESC_READ_BEATS_OFFSET" in driver
-        and "E1_NPU_DESC_WRITE_BEATS_OFFSET" in driver,
+        "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" in driver
+        and "HELLO_NPU_DESC_READ_BEATS_OFFSET" in driver
+        and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" in driver,
         "driver lacks descriptor write/read/write-beat counter readout",
     )
     require(
         problems,
-        "E1_NPU_DESC_BYTES_WRITTEN_OFFSET" in contract
-        and "E1_NPU_DESC_READ_BEATS_OFFSET" in contract
-        and "E1_NPU_DESC_WRITE_BEATS_OFFSET" in contract,
+        "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" in contract
+        and "HELLO_NPU_DESC_READ_BEATS_OFFSET" in contract
+        and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" in contract,
         "Linux platform contract lacks descriptor write/read/write-beat counters",
     )
     require(
@@ -110,17 +110,17 @@ def build_report() -> dict[str, Any]:
         and "desc_write_beats" in uapi,
         "UAPI lacks descriptor write/read/write-beat counters",
     )
-    require(problems, "E1_NPU_BASE 0x10020000u" in contract, "platform contract has unexpected NPU base")
-    require(problems, "openagent,hello-npu" in dts, "DTS lacks openagent,hello-npu compatible")
+    require(problems, "HELLO_NPU_BASE 0x10020000u" in contract, "platform contract has unexpected NPU base")
+    require(problems, "openphone,hello-npu" in dts, "DTS lacks openphone,hello-npu compatible")
     require(
         problems,
         "package/hello-npu-ml-smoke/Config.in" in buildroot_config
-        and "BR2_PACKAGE_E1_NPU_ML_SMOKE" in package_config,
+        and "BR2_PACKAGE_HELLO_NPU_ML_SMOKE" in package_config,
         "Buildroot package is not sourced or lacks BR2 symbol",
     )
     require(
         problems,
-        "BR2_PACKAGE_E1_NPU_ML_SMOKE=y" in buildroot_defconfig,
+        "BR2_PACKAGE_HELLO_NPU_ML_SMOKE=y" in buildroot_defconfig,
         "Buildroot defconfig does not enable hello-npu-ml-smoke",
     )
 
@@ -132,7 +132,7 @@ def build_report() -> dict[str, Any]:
         if LINUX_EVIDENCE.stat().st_size < 256:
             problems.append(f"{rel(LINUX_EVIDENCE)} is too small to be a target transcript")
         for marker in (
-            "openagent-evidence: target=linux artifact=hello_npu_ml_smoke",
+            "openphone-evidence: target=linux artifact=hello_npu_ml_smoke",
             "COMMAND=",
             "/usr/bin/hello-npu-ml-smoke",
             "hello-npu-ml-smoke: PASS",
@@ -141,7 +141,7 @@ def build_report() -> dict[str, Any]:
             "desc_bytes_read=",
             "desc_timeout_count=",
             "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
-            "openagent-evidence: status=PASS",
+            "openphone-evidence: status=PASS",
         ):
             if marker not in text:
                 problems.append(f"{rel(LINUX_EVIDENCE)} missing marker: {marker}")
@@ -149,7 +149,7 @@ def build_report() -> dict[str, Any]:
             problems.append(f"{rel(LINUX_EVIDENCE)} contains failure or fallback text")
 
     return {
-        "schema": "openagent.hello_npu_linux_smoke_source.v1",
+        "schema": "openphone.hello_npu_linux_smoke_source.v1",
         "status": "fail" if problems else ("blocked" if blockers else "pass"),
         "claim_boundary": "source wiring plus explicit target transcript gate; not NNAPI or hardware benchmark proof",
         "sources": {

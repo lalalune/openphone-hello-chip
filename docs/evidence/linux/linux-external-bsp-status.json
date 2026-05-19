@@ -1,10 +1,6 @@
 {
   "blockers": [
     {
-      "detail": "run import command before kernel-build or dtb-check evidence capture",
-      "id": "external_linux_bsp_not_imported"
-    },
-    {
       "detail": "set CROSS_COMPILE=... or install a riscv64 Linux compiler",
       "id": "riscv_cross_compiler_missing"
     },
@@ -14,15 +10,15 @@
     },
     {
       "detail": "docs/evidence/linux/openagent_e1_kernel_build.log",
-      "id": "linux_kernel_build_evidence_missing"
+      "id": "linux_kernel_build_evidence_blocked"
     },
     {
       "detail": "docs/evidence/linux/openagent_e1_dtb_check.log",
-      "id": "linux_dtb_check_evidence_missing"
+      "id": "linux_dtb_check_evidence_blocked"
     },
     {
       "detail": "docs/evidence/linux/e1-mmio-smoke.log",
-      "id": "linux_mmio_smoke_evidence_missing"
+      "id": "linux_mmio_smoke_evidence_blocked"
     }
   ],
   "claim_boundary": "status_only_not_linux_boot_evidence",
@@ -30,89 +26,80 @@
     "linux_dtb_check": {
       "blocked_marker": "docs/evidence/linux/openagent_e1_dtb_check.log.BLOCKED",
       "path": "docs/evidence/linux/openagent_e1_dtb_check.log",
-      "state": "missing"
+      "reason": "reason: external/linux exists and has imported the OpenPhone hello DTS/bindings, but host tools cannot run dtbs_check and no PASS transcript has been captured.",
+      "state": "blocked"
     },
     "linux_kernel_build": {
       "blocked_marker": "docs/evidence/linux/openagent_e1_kernel_build.log.BLOCKED",
       "path": "docs/evidence/linux/openagent_e1_kernel_build.log",
-      "state": "missing"
+      "reason": "reason: external/linux exists and has imported the OpenPhone hello BSP, but host tools cannot run the kernel build and no PASS transcript has been captured.",
+      "state": "blocked"
     },
     "linux_mmio_smoke": {
       "blocked_marker": "docs/evidence/linux/e1-mmio-smoke.log.BLOCKED",
       "path": "docs/evidence/linux/e1-mmio-smoke.log",
-      "state": "missing"
+      "reason": "reason: no boot transcript of an imported OpenPhone hello kernel/rootfs exists, so /dev/hello-npu and DMA sysfs smoke output cannot be captured.",
+      "state": "blocked"
     }
   },
   "imported_bsp": {
-    "missing_optional": [
-      "board_dts_makefile",
-      "npu_binding",
-      "dma_binding",
-      "display_binding"
-    ],
-    "missing_required": [
-      "driver_kconfig",
-      "driver_makefile",
-      "npu_driver",
-      "dma_driver",
-      "platform_header",
-      "board_dts"
-    ],
+    "missing_optional": [],
+    "missing_required": [],
     "optional": {
       "board_dts_makefile": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openagent/Makefile"
       },
       "display_binding": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-display.yaml"
       },
       "dma_binding": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-dma.yaml"
       },
       "npu_binding": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml"
       }
     },
     "required": {
       "board_dts": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openagent/openagent-e1.dts"
       },
       "dma_driver": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1-dma.c"
       },
       "driver_kconfig": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/Kconfig"
       },
       "driver_makefile": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/Makefile"
       },
       "npu_driver": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1-npu.c"
       },
       "platform_header": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1_platform_contract.h"
       }
     },
-    "status": "not_imported",
+    "status": "imported",
     "text_checks": {
       "drivers_misc_kconfig_sources_openagent": true,
       "drivers_misc_makefile_links_openagent": true,
