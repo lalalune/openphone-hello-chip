@@ -71,6 +71,7 @@ def payload_locator_status() -> dict[str, Any]:
         status["problems"].append(f"cannot import payload locator: {rel(LOCATOR)}")
         return status
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
 
     selected = None

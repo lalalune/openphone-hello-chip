@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs/project/minimum-linux-npu-target.md"
 REPORT = ROOT / "build/reports/minimum-linux-kernel-target.json"
 LINUX_DTS = ROOT / "sw/linux/dts/openphone-hello.dts"
+LINUX_EXTERNAL_STATUS = ROOT / "docs/evidence/linux/linux-external-bsp-status.json"
 
 REQUIRED_LOCAL_ARTIFACTS = {
     "linux_bsp_readme": "docs/sw/linux/README.md",
@@ -20,6 +22,7 @@ REQUIRED_LOCAL_ARTIFACTS = {
     "linux_evidence_capture": "sw/linux/scripts/capture-linux-bsp-evidence.sh",
     "linux_boot_artifact_manifest": "docs/evidence/linux/openphone-linux-boot-artifacts.json",
     "linux_boot_artifact_checker": "scripts/check_linux_boot_artifacts.py",
+    "linux_external_bsp_checker": "scripts/check_linux_external_bsp.py",
     "cpu_ap_boot_readiness_checker": "scripts/check_cpu_ap_boot_readiness.py",
     "linux_dts": "sw/linux/dts/openphone-hello.dts",
     "linux_npu_driver": "sw/linux/drivers/hello/hello-npu.c",
@@ -71,6 +74,16 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
 
 
+def load_json(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(read(path))
+    except json.JSONDecodeError:
+        return {"_invalid_json": True}
+    return data if isinstance(data, dict) else {"_invalid_json": True}
+
+
 def check_evidence(path: Path) -> dict[str, Any]:
     blocked = path.with_suffix(path.suffix + ".BLOCKED")
     if path.is_file() and path.stat().st_size > 0:
@@ -114,6 +127,18 @@ def collect() -> dict[str, Any]:
         if not passed:
             errors.append(f"Linux DTS missing {name}: {REQUIRED_DTS_TOKENS[name]}")
 
+    subprocess.run(
+        [sys.executable, "scripts/check_linux_external_bsp.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    linux_external_bsp = load_json(LINUX_EXTERNAL_STATUS)
+    if not linux_external_bsp:
+        errors.append(f"missing Linux external BSP status report: {rel(LINUX_EXTERNAL_STATUS)}")
+
     evidence = {name: check_evidence(ROOT / path) for name, path in REQUIRED_EVIDENCE.items()}
     for name, item in evidence.items():
         if item["status"] == "blocked":
@@ -128,6 +153,7 @@ def collect() -> dict[str, Any]:
         "checklist": rel(DOC),
         "local_artifacts": artifacts,
         "dts_checks": dts_checks,
+        "linux_external_bsp": linux_external_bsp,
         "evidence": evidence,
         "errors": errors,
         "blockers": blockers,

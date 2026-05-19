@@ -11,6 +11,7 @@
 #include <linux/ioctl.h>
 #include <linux/miscdevice.h>
 #include <linux/module.h>
+#include <linux/mutex.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/platform_device.h>
@@ -22,6 +23,7 @@
 struct hello_npu {
 	void __iomem *regs;
 	struct miscdevice miscdev;
+	struct mutex lock;
 };
 
 static int hello_npu_wait_done(struct hello_npu *npu, u32 *status)
@@ -54,9 +56,6 @@ static void hello_npu_fill_counters(struct hello_npu *npu, struct hello_npu_coun
 	c->desc_tail = readl(npu->regs + HELLO_NPU_DESC_TAIL_OFFSET);
 	c->desc_timeout_count = readl(npu->regs + HELLO_NPU_DESC_TIMEOUT_COUNT_OFFSET);
 	c->desc_bytes_read = readl(npu->regs + HELLO_NPU_DESC_BYTES_READ_OFFSET);
-	c->desc_bytes_written = readl(npu->regs + HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET);
-	c->desc_read_beats = readl(npu->regs + HELLO_NPU_DESC_READ_BEATS_OFFSET);
-	c->desc_write_beats = readl(npu->regs + HELLO_NPU_DESC_WRITE_BEATS_OFFSET);
 	c->perf_cycles = readl(npu->regs + HELLO_NPU_PERF_CYCLES_OFFSET);
 	c->perf_macs = readl(npu->regs + HELLO_NPU_PERF_MACS_OFFSET);
 	c->perf_ops = readl(npu->regs + HELLO_NPU_PERF_OPS_OFFSET);
@@ -85,6 +84,7 @@ static long hello_npu_run_cmd(struct hello_npu *npu, unsigned long arg)
 	if (cmd.opcode > 0xf)
 		return -EINVAL;
 
+	mutex_lock(&npu->lock);
 	writel(0, npu->regs + HELLO_NPU_CMD_PARAM_OFFSET);
 	writel(cmd.a, npu->regs + HELLO_NPU_OP_A_OFFSET);
 	writel(cmd.b, npu->regs + HELLO_NPU_OP_B_OFFSET);
@@ -96,6 +96,7 @@ static long hello_npu_run_cmd(struct hello_npu *npu, unsigned long arg)
 	ret = hello_npu_wait_done(npu, &status);
 	cmd.status = status;
 	cmd.result = readl(npu->regs + HELLO_NPU_RESULT_OFFSET);
+	mutex_unlock(&npu->lock);
 	if (copy_to_user((void __user *)arg, &cmd, sizeof(cmd)))
 		return -EFAULT;
 	return ret;
@@ -149,10 +150,15 @@ static long hello_npu_run_gemm_s8(struct hello_npu *npu, unsigned long arg)
 	if (c_base + c_bytes > 64)
 		return -EINVAL;
 
+	mutex_lock(&npu->lock);
+	writel(HELLO_NPU_CTRL_DONE | HELLO_NPU_CTRL_ERROR,
+	       npu->regs + HELLO_NPU_CTRL_STATUS_OFFSET);
+	writel(1, npu->regs + HELLO_NPU_PERF_ERRORS_OFFSET);
+	for (i = 0; i < HELLO_NPU_SCRATCH_BYTES; i += 4)
+		writel(0, npu->regs + HELLO_NPU_SCRATCH0_OFFSET + i);
+
 	hello_npu_write_scratch_bytes(npu, 0, (const u8 *)gemm.a, a_bytes);
 	hello_npu_write_scratch_bytes(npu, a_bytes, (const u8 *)gemm.b, b_bytes);
-	for (i = 0; i < c_bytes; i += 4)
-		writel(0, npu->regs + HELLO_NPU_SCRATCH0_OFFSET + c_base + i);
 
 	writel(gemm.m | (gemm.n << 8) | (gemm.k << 16), npu->regs + HELLO_NPU_GEMM_CFG_OFFSET);
 	writel((a_bytes << 8) | (c_base << 16), npu->regs + HELLO_NPU_GEMM_BASE_OFFSET);
@@ -166,6 +172,7 @@ static long hello_npu_run_gemm_s8(struct hello_npu *npu, unsigned long arg)
 	gemm.status = status;
 	for (i = 0; i < gemm.m * gemm.n; i++)
 		gemm.c[i] = readl(npu->regs + HELLO_NPU_SCRATCH0_OFFSET + c_base + i * 4);
+	mutex_unlock(&npu->lock);
 	if (copy_to_user((void __user *)arg, &gemm, sizeof(gemm)))
 		return -EFAULT;
 	return ret;
@@ -197,9 +204,6 @@ static long hello_npu_submit_descriptors(struct hello_npu *npu, unsigned long ar
 	ret = hello_npu_wait_done(npu, &status);
 	submit.status = readl(npu->regs + HELLO_NPU_DESC_STATUS_OFFSET);
 	submit.bytes_read = readl(npu->regs + HELLO_NPU_DESC_BYTES_READ_OFFSET);
-	submit.bytes_written = readl(npu->regs + HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET);
-	submit.read_beats = readl(npu->regs + HELLO_NPU_DESC_READ_BEATS_OFFSET);
-	submit.write_beats = readl(npu->regs + HELLO_NPU_DESC_WRITE_BEATS_OFFSET);
 	submit.timeout_count = readl(npu->regs + HELLO_NPU_DESC_TIMEOUT_COUNT_OFFSET);
 	if (!submit.status)
 		submit.status = status;
@@ -215,6 +219,18 @@ static long hello_npu_ioctl(struct file *file, unsigned int cmd, unsigned long a
 	struct hello_npu_perf perf;
 
 	switch (cmd) {
+	case HELLO_NPU_IOC_GET_CONTRACT: {
+		struct hello_npu_contract contract = {
+			.version = HELLO_CONTRACT_VERSION,
+			.npu_base = HELLO_NPU_BASE,
+			.window_bytes = HELLO_IMPLEMENTED_WINDOW_BYTES,
+			.scratch_bytes = HELLO_NPU_SCRATCH_BYTES,
+		};
+
+		if (copy_to_user((void __user *)arg, &contract, sizeof(contract)))
+			return -EFAULT;
+		return 0;
+	}
 	case HELLO_NPU_IOC_RUN_CMD:
 		return hello_npu_run_cmd(npu, arg);
 	case HELLO_NPU_IOC_RUN_GEMM_S8:
@@ -261,6 +277,7 @@ static int hello_npu_probe(struct platform_device *pdev)
 	npu->regs = devm_ioremap_resource(&pdev->dev, res);
 	if (IS_ERR(npu->regs))
 		return PTR_ERR(npu->regs);
+	mutex_init(&npu->lock);
 
 	npu->miscdev.minor = MISC_DYNAMIC_MINOR;
 	npu->miscdev.name = "hello-npu";

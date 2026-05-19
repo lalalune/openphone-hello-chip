@@ -35,6 +35,20 @@
       ],
       "minimum_claim_to_clear_block": "external Linux kernel build, DTB validation, module artifacts, and runtime smoke transcript captured"
     },
+    "opensbi": {
+      "external_tree": "OpenSBI checkout with optional sw/opensbi/platform/openphone imported under platform/openphone",
+      "source_command": "make PLATFORM=generic FW_DYNAMIC=y and an exact external QEMU/Renode/board fw_dynamic handoff command",
+      "required_outputs": [
+        "build/platform/generic/firmware/fw_dynamic.bin",
+        "build/platform/generic/firmware/fw_dynamic.elf",
+        "external boot or simulator UART transcript containing OpenSBI fw_dynamic handoff"
+      ],
+      "required_repo_evidence": [
+        "docs/evidence/linux/opensbi_openphone_build.log",
+        "docs/evidence/linux/opensbi_fw_dynamic_handoff.log"
+      ],
+      "minimum_claim_to_clear_block": "external OpenSBI build and fw_dynamic handoff transcript captured"
+    },
     "aosp": {
       "external_tree": "AOSP checkout with sw/aosp-device imported to device/openphone/openphone_ai_soc",
       "source_command": "source build/envsetup.sh && lunch openphone_ai_soc-userdebug && m vendorimage vendor_sepolicy.cil sepolicy_neverallows && checkvintf",

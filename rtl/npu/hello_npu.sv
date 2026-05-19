@@ -92,6 +92,9 @@ module hello_npu (
     logic [31:0] desc_words [0:DESC_WORDS-1];
     logic [31:0] desc_timeout_count;
     logic [31:0] desc_bytes_read;
+    logic [31:0] desc_bytes_written;
+    logic [31:0] desc_read_beats;
+    logic [31:0] desc_write_beats;
     logic [31:0] desc_current_addr;
     logic [5:0]  desc_stream_done;
     logic [2:0]  desc_tail_next;
@@ -104,6 +107,8 @@ module hello_npu (
     logic signed [7:0] gemm_a_value;
     logic signed [7:0] gemm_b_value;
     logic [3:0] desc_opcode;
+    logic       desc_valid;
+    logic       desc_writeback_enable;
     logic       desc_stream_enable;
     logic [5:0] desc_stream_dst;
     logic [5:0] desc_stream_len;
@@ -166,6 +171,8 @@ module hello_npu (
     assign irq = status[1];
     assign desc_pending = desc_head - desc_tail;
     assign desc_opcode = desc_words[0][3:0];
+    assign desc_valid = desc_words[0][31];
+    assign desc_writeback_enable = desc_words[0][30];
     assign desc_stream_enable = desc_words[0][8];
     assign desc_stream_dst = desc_words[0][21:16];
     assign desc_stream_len = desc_words[0][29:24];
@@ -275,6 +282,9 @@ module hello_npu (
             desc_fetch_word <= 2'h0;
             desc_timeout_count <= 32'h0;
             desc_bytes_read <= 32'h0;
+            desc_bytes_written <= 32'h0;
+            desc_read_beats <= 32'h0;
+            desc_write_beats <= 32'h0;
             desc_stream_done <= 6'h0;
             gemm_busy <= 1'b0;
             for (int desc_idx = 0; desc_idx < DESC_WORDS; desc_idx++) begin

@@ -79,9 +79,6 @@ struct hello_npu_descriptor_submit {
 	__u32 tail;
 	__u32 status;
 	__u32 bytes_read;
-	__u32 bytes_written;
-	__u32 read_beats;
-	__u32 write_beats;
 	__u32 timeout_count;
 };
 

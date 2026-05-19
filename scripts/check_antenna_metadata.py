@@ -63,6 +63,8 @@ def main() -> int:
     args = parser.parse_args()
 
     report_path = args.report if args.report else latest_report()
+    if report_path is not None and not report_path.is_absolute():
+        report_path = ROOT / report_path
     if report_path is None or not report_path.is_file():
         print("antenna metadata blocker: no OpenLane design antenna report found")
         return 1 if args.release else 0
