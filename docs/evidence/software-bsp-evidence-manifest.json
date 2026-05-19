@@ -271,24 +271,109 @@
           ]
         },
         {
-          "artifact": "AOSP Cuttlefish riscv64 boot transcript",
-          "path": "docs/evidence/android/cuttlefish_riscv64_boot.log",
-          "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
-          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot",
+          "artifact": "AOSP SELinux policy build transcript",
+          "path": "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp sepolicy-build",
+          "external_artifacts": [
+            "out/target/product/openphone_ai_soc/obj/ETC/vendor_sepolicy.cil_intermediates/vendor_sepolicy.cil",
+            "out/target/product/openphone_ai_soc/obj/ETC/sepolicy_intermediates/sepolicy"
+          ],
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=openphone_ai_soc_sepolicy_build",
+            "openphone-evidence: command=m vendor_sepolicy.cil selinux_policy",
+            "openphone-evidence: started_utc=",
+            "hello_npu_device",
+            "hal_hello_npu_default",
+            "openphone-evidence: ended_utc=",
+            "openphone-evidence: status=PASS"
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+          "forbidden_strings": [
+            "neverallow check failed",
+            "FAILED:",
+            "ninja failed",
+            "placeholder",
+            "Android compatible",
+            "CTS passed",
+            "VTS passed"
+          ]
+        },
+        {
+          "artifact": "AOSP SELinux neverallow transcript",
+          "path": "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp selinux-neverallow",
+          "external_artifacts": [
+            "out/target/product/openphone_ai_soc/obj/FAKE/sepolicy_neverallows_intermediates"
+          ],
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=openphone_ai_soc_selinux_neverallow",
+            "openphone-evidence: command=m sepolicy_neverallows",
+            "openphone-evidence: started_utc=",
+            "hello_npu",
+            "openphone-evidence: ended_utc=",
+            "openphone-evidence: status=PASS"
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+          "forbidden_strings": [
+            "neverallow check failed",
+            "FAILED:",
+            "ninja failed",
+            "placeholder",
+            "Android compatible",
+            "CTS passed",
+            "VTS passed"
+          ]
+        },
+        {
+          "artifact": "AOSP CTS/VTS scope intake transcript",
+          "path": "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-vts-plan",
+          "external_artifacts": [
+            "out/host/linux-x86/cts",
+            "out/host/linux-x86/vts",
+            "Tradefed result directory"
+          ],
+          "min_bytes": 160,
+          "required_strings": [
+            "openphone-evidence: target=aosp artifact=openphone_ai_soc_cts_vts_plan",
+            "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
+            "CTS_SCOPE=smoke_only",
+            "VTS_SCOPE=vintf_selinux_hal_manager_only",
+            "EXCLUDED_MODULES=",
+            "RESULT_DIR=",
+            "openphone-evidence: ended_utc=",
+            "openphone-evidence: status=PASS"
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
+          "forbidden_strings": [
+            "CDD compliant",
+            "full CTS pass",
+            "full VTS pass",
+            "Android compatible"
+          ]
+        },
+        {
+          "artifact": "AOSP Cuttlefish riscv64 smoke transcript",
+          "path": "docs/evidence/android/cuttlefish_riscv64_smoke.log",
+          "claim_boundary": "virtual_device_smoke_only_not_boot_or_compatibility_evidence",
+          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-smoke",
           "external_artifacts": [
             "out/target/product/openphone_ai_soc/vendor.img",
-            "out/target/product/openphone_ai_soc/installed-files-vendor.txt",
             "Cuttlefish instance adb transport"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
-            "openphone-evidence: claim_boundary=reference_only_not_hello_chip_ap_evidence",
+            "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_smoke",
+            "openphone-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
             "openphone-evidence: command=",
             "openphone-evidence: started_utc=",
             "launch_cvd",
             "adb shell",
             "ro.product.cpu.abi=riscv64",
+            "openphone_ai_soc",
             "sys.boot_completed=1",
             "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
@@ -306,50 +391,55 @@
           ]
         },
         {
-          "artifact": "Android CTS virtual-device subset transcript",
-          "path": "docs/evidence/android/cts_virtual_device_subset.log",
-          "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
-          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset",
+          "artifact": "AOSP QEMU riscv64 smoke transcript",
+          "path": "docs/evidence/android/qemu_riscv64_smoke.log",
+          "claim_boundary": "virtual_device_smoke_only_not_boot_or_compatibility_evidence",
+          "capture_command": "AOSP_QEMU_SMOKE_COMMAND='/exact/qemu-system-riscv64 smoke command' sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp qemu-smoke",
           "external_artifacts": [
-            "Cuttlefish instance adb transport",
-            "cts-tradefed result directory"
+            "AOSP-built kernel or image artifacts",
+            "QEMU console or adb transport"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=cts_virtual_device_subset",
-            "openphone-evidence: claim_boundary=reference_only_not_hello_chip_ap_evidence",
-            "openphone-evidence: compatibility_scope=virtual_device_subset",
-            "openphone-evidence: started_utc=",
+            "openphone-evidence: target=aosp artifact=qemu_riscv64_smoke",
+            "openphone-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
             "openphone-evidence: command=",
-            "cts-tradefed",
+            "openphone-evidence: started_utc=",
+            "qemu-system-riscv64",
+            "openphone_ai_soc",
             "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
+            "Kernel panic",
+            "boot timeout",
+            "adb: device offline",
+            "FAILED",
+            "placeholder",
+            "Android compatible",
             "CDD compliant",
-            "full CTS pass",
-            "full VTS pass",
-            "Android compatible"
+            "CTS passed",
+            "VTS passed"
           ]
         },
         {
-          "artifact": "Android VTS virtual-device subset transcript",
-          "path": "docs/evidence/android/vts_virtual_device_subset.log",
-          "claim_boundary": "reference_only_not_hello_chip_ap_evidence",
-          "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset",
+          "artifact": "AOSP Renode hello_soc smoke transcript",
+          "path": "docs/evidence/android/renode_hello_soc_smoke.log",
+          "claim_boundary": "virtual_device_smoke_only_not_boot_or_compatibility_evidence",
+          "capture_command": "AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp renode-smoke",
           "external_artifacts": [
-            "Cuttlefish instance adb transport",
-            "vts-tradefed result directory"
+            "Renode monitor transcript",
+            "UART smoke transcript"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=vts_virtual_device_subset",
-            "openphone-evidence: claim_boundary=reference_only_not_hello_chip_ap_evidence",
-            "openphone-evidence: compatibility_scope=virtual_device_subset",
-            "openphone-evidence: started_utc=",
+            "openphone-evidence: target=aosp artifact=renode_hello_soc_smoke",
+            "openphone-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
             "openphone-evidence: command=",
-            "vts-tradefed",
+            "openphone-evidence: started_utc=",
+            "renode",
+            "openphone_ai_soc",
             "openphone-evidence: ended_utc=",
             "openphone-evidence: status=PASS"
           ],

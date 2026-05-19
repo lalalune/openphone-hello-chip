@@ -24,7 +24,8 @@
   "dma": {
     "path": "hardware_dma",
     "bytes_read": 1,
-    "bytes_written": 1
+    "bytes_written": 1,
+    "trace_bytes": 1
   },
   "measurements": {
     "macs_per_inference": 1,
@@ -33,15 +34,39 @@
     "observed_tops": 0.000000000002,
     "tops_formula": "observed_tops = macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12"
   },
+  "capture": {
+    "commands": {
+      "adb_devices": "adb devices",
+      "nnapi_accelerator_query": "adb shell cmd neuralnetworks list",
+      "benchmark_model_nnapi": "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite --use_nnapi=true --nnapi_accelerator_name=hello-npu --enable_op_profiling=true --verbose=true",
+      "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace"
+    }
+  },
   "model_artifacts": {
     "benchmarks/models/mobile_smoke.tflite": {
       "sha256": "64-character lowercase sha256 of the exact model used"
     }
   },
   "transcripts": {
-    "adb_devices": "docs/evidence/android/hello-npu/adb-devices.log",
-    "nnapi_accelerator_query": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
-    "benchmark_model_nnapi": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
-    "dma_trace": "docs/evidence/android/hello-npu/dma-trace.log"
+    "adb_devices": {
+      "path": "docs/evidence/android/hello-npu/adb-devices.log",
+      "sha256": "64-character lowercase sha256 of the exact adb devices transcript",
+      "bytes": 1
+    },
+    "nnapi_accelerator_query": {
+      "path": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
+      "sha256": "64-character lowercase sha256 of the exact NNAPI query transcript",
+      "bytes": 1
+    },
+    "benchmark_model_nnapi": {
+      "path": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
+      "sha256": "64-character lowercase sha256 of the exact benchmark_model transcript",
+      "bytes": 1
+    },
+    "dma_trace": {
+      "path": "docs/evidence/android/hello-npu/dma-trace.log",
+      "sha256": "64-character lowercase sha256 of the exact DMA trace transcript",
+      "bytes": 1
+    }
   }
 }

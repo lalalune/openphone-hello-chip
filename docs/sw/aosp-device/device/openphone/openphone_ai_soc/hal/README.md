@@ -9,6 +9,12 @@ evidence logs.
 Local fail-closed proof:
 
 ```sh
+scripts/android/capture_hello_npu_hal_absent_device.sh
+```
+
+Equivalent manual command:
+
+```sh
 c++ -std=c++17 -Wall -Wextra -Werror \
   sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu_runtime.cc \
   sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu_probe_main.cc \
@@ -27,9 +33,11 @@ nnapi_acceleration=false
 claim_boundary=no_nnapi_acceleration_without_android_nnapi_hal_and_device_evidence
 ```
 
-`python3 sw/check_bsp_scaffolds.py aosp` builds and runs this probe with a
-temporary missing path. That is local checker evidence only; it is not device
-evidence and it does not prove Android NNAPI acceleration.
+`scripts/android/capture_hello_npu_hal_absent_device.sh` writes the transcript
+to `docs/evidence/android/hello-npu/absent-device-probe.log`.
+`python3 sw/check_bsp_scaffolds.py aosp` still verifies the scaffold terms.
+Both are local checker evidence only; they are not device evidence and they do
+not prove Android NNAPI acceleration.
 
 Required fail-closed behavior:
 
@@ -50,6 +58,11 @@ Evidence required before enabling packages:
 - SELinux policy and neverallow build logs.
 - Bounded Cuttlefish, QEMU, or Renode smoke transcript that keeps Android boot
   claims separate from virtual-device smoke evidence.
+- Filled Android proof manifest derived from
+  `docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json`
+  with blocked statuses replaced only by real external AOSP results and
+  SHA-256 values for VTS, CTS, VINTF, SELinux, NNAPI query, and absent-device
+  probe artifacts.
 # HAL Evidence Boundary
 
 HAL source or prebuilts are not checked in. `hello_npu.default` and

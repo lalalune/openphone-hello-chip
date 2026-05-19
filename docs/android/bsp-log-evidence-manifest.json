@@ -422,7 +422,8 @@
         "END_UTC=",
         "RESULT=",
         "BOOT_CLAIM=none",
-        "COMPATIBILITY_CLAIM=none"
+        "COMPATIBILITY_CLAIM=none",
+        "SCHEMA=docs/android/boot-transcript.schema.json"
       ],
       "required_any": [
         "sys.boot_completed=1",
@@ -458,7 +459,8 @@
         "END_UTC=",
         "RESULT=",
         "BOOT_CLAIM=none",
-        "COMPATIBILITY_CLAIM=none"
+        "COMPATIBILITY_CLAIM=none",
+        "SCHEMA=docs/android/boot-transcript.schema.json"
       ],
       "required_any": [
         "sys.boot_completed=1",
@@ -496,7 +498,8 @@
         "END_UTC=",
         "RESULT=",
         "BOOT_CLAIM=none",
-        "COMPATIBILITY_CLAIM=none"
+        "COMPATIBILITY_CLAIM=none",
+        "SCHEMA=docs/android/boot-transcript.schema.json"
       ],
       "required_any": [
         "sys.boot_completed=1",

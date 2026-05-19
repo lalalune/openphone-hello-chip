@@ -4,13 +4,11 @@
 
 The hello chip debug-visible boot ROM is an identity/contract ROM used by
 simulation and synthesis checks:
-The hello chip boot ROM is an identity ROM used by simulation and synthesis checks:
 
 ```text
 0x0000_0000 = "OPSO"
 0x0000_0004 = "CHIP"
 0x0000_0008 = contract version 1
-0x0000_000C = current reset-scaffold handoff word
 0x0000_000C = boot vector placeholder
 ```
 

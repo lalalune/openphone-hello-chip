@@ -1,0 +1,3 @@
+reason: no external Linux kernel checkout has imported sw/linux/drivers/openphone/ and produced a build log
+required: external Linux tree at $LINUX_SRC with drivers/misc/openphone/ populated from sw/linux/drivers/openphone/, then `make ARCH=riscv -j$(nproc) | tee docs/evidence/linux/openphone_hello_kernel_build.log`
+audit: docs/android/bsp-critical-gap-audit-2026-05-17.md (Machine-readable BLOCK gates)

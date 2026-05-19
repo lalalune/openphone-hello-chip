@@ -1,3 +1,27 @@
+// hello_soc_top.sv
+//
+// CPU wiring notes:
+//   • hello_cpu_subsystem (rtl/cpu/hello_cva6_wrapper.sv) replaces the old
+//     hello_cpu_subsystem_stub.  It presents a 64-bit AXI4 master port.
+//   • hello_cpu_axi_bridge (rtl/cpu/hello_cpu_axi_bridge.sv) converts that
+//     AXI4 master to the 32-bit AXI-Lite interface consumed by the hello-chip
+//     interconnect.
+//   • ipi_i  ← CLINT msip_o (software interrupt)
+//   • time_irq_i ← CLINT mtip_o (timer interrupt)
+//   • irq_i[0] ← external interrupt controller claim output
+//   • debug_req_i tied to 0 until JTAG bring-up
+//
+// To use real CVA6: compile with +define+HELLO_HAVE_CVA6 and include
+//   external/cva6/ in your search path (see scripts/clone_cva6.sh).
+//
+// synthesis translate_off
+// WARNING: HELLO_HAVE_CVA6 not defined.  hello_cpu_subsystem will compile as
+// a stub with all AXI master outputs tied to idle.  The SoC will simulate
+// correctly but the CPU will not execute instructions.  To enable the real
+// CVA6 core, define HELLO_HAVE_CVA6 and add external/cva6/ to the include
+// path per the instructions in scripts/clone_cva6.sh.
+// synthesis translate_on
+
 `timescale 1ns/1ps
 
 module hello_soc_top (
@@ -17,6 +41,12 @@ module hello_soc_top (
     output logic        mtip_o,
     output logic [7:0]  gpio_out
 );
+`ifdef HELLO_PD_SMALL_DRAM
+    localparam int unsigned DRAM_WORDS = 64;
+`else
+    localparam int unsigned DRAM_WORDS = 1024;
+`endif
+    localparam int unsigned DRAM_INDEX_BITS = $clog2(DRAM_WORDS);
 
     logic [31:0] bootrom_rdata;
     logic [31:0] dma_rdata;
@@ -41,6 +71,13 @@ module hello_soc_top (
     logic dma_m_rready;
     logic [31:0] dma_m_rdata;
     logic [1:0] dma_m_rresp;
+    logic npu_m_arvalid;
+    logic npu_m_arready;
+    logic [31:0] npu_m_araddr;
+    logic npu_m_rvalid;
+    logic npu_m_rready;
+    logic [31:0] npu_m_rdata;
+    logic [1:0] npu_m_rresp;
     logic display_scan_hsync;
     logic display_scan_vsync;
     logic display_scan_active;
@@ -62,19 +99,22 @@ module hello_soc_top (
     logic clint_sel;
     logic word_aligned;
     logic implemented_window;
-    logic [31:0] dram_mem [0:1023];
+    logic [31:0] dram_mem [0:DRAM_WORDS-1];
     logic        clint_msip;
     logic [63:0] clint_mtime;
     logic [63:0] clint_mtimecmp;
 
-    wire [9:0]  mmio_dram_word = mmio_addr[11:2];
-    wire [9:0]  dma_wr_word = dma_m_awaddr[11:2];
-    wire [9:0]  dma_rd_word = dma_m_araddr[11:2];
-    wire [9:0]  display_rd_word = display_fb_read_addr[11:2];
+    wire [DRAM_INDEX_BITS-1:0] mmio_dram_word = mmio_addr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] dma_wr_word = dma_m_awaddr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] dma_rd_word = dma_m_araddr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] npu_rd_word = npu_m_araddr[2 +: DRAM_INDEX_BITS];
+    wire [DRAM_INDEX_BITS-1:0] display_rd_word = display_fb_read_addr[2 +: DRAM_INDEX_BITS];
     wire        dma_wr_fire = dma_m_awvalid && dma_m_awready && dma_m_wvalid && dma_m_wready;
     wire        dma_rd_fire = dma_m_arvalid && dma_m_arready;
+    wire        npu_rd_fire = npu_m_arvalid && npu_m_arready;
     wire        dma_wr_ok = (dma_m_awaddr[31:12] == 20'h8000_0) && (dma_m_awaddr[1:0] == 2'b00);
     wire        dma_rd_ok = (dma_m_araddr[31:12] == 20'h8000_0) && (dma_m_araddr[1:0] == 2'b00);
+    wire        npu_rd_ok = (npu_m_araddr[31:12] == 20'h8000_0) && (npu_m_araddr[1:0] == 2'b00);
     wire        display_rd_ok = display_fb_read_valid &&
                                 (display_fb_read_addr[31:12] == 20'h8000_0) &&
                                 (display_fb_read_addr[1:0] == 2'b00);
@@ -139,7 +179,8 @@ module hello_soc_top (
 
     assign dma_m_awready = !dma_m_bvalid;
     assign dma_m_wready  = !dma_m_bvalid;
-    assign dma_m_arready = !dma_m_rvalid;
+    assign dma_m_arready = !dma_m_rvalid && !npu_m_arvalid;
+    assign npu_m_arready = !npu_m_rvalid && !dma_m_arvalid && !dma_m_rvalid;
     assign display_fb_read_ready = display_rd_ok;
     assign display_fb_read_data  = display_rd_ok ? dram_mem[display_rd_word] : 32'hDEAD_BEEF;
 
@@ -150,6 +191,9 @@ module hello_soc_top (
             dma_m_rvalid <= 1'b0;
             dma_m_rdata  <= 32'h0;
             dma_m_rresp  <= 2'b00;
+            npu_m_rvalid <= 1'b0;
+            npu_m_rdata  <= 32'h0;
+            npu_m_rresp  <= 2'b00;
         end else begin
             if (dma_m_bvalid && dma_m_bready) begin
                 dma_m_bvalid <= 1'b0;
@@ -157,6 +201,10 @@ module hello_soc_top (
 
             if (dma_m_rvalid && dma_m_rready) begin
                 dma_m_rvalid <= 1'b0;
+            end
+
+            if (npu_m_rvalid && npu_m_rready) begin
+                npu_m_rvalid <= 1'b0;
             end
 
             if (mmio_valid && mmio_write && dram_sel) begin
@@ -186,8 +234,263 @@ module hello_soc_top (
                 end
                 dma_m_rvalid <= 1'b1;
             end
+
+            if (npu_rd_fire) begin
+                if (npu_rd_ok) begin
+                    npu_m_rdata <= dram_mem[npu_rd_word];
+                    npu_m_rresp <= 2'b00;
+                end else begin
+                    npu_m_rdata <= 32'hDEAD_BEEF;
+                    npu_m_rresp <= 2'b10;
+                end
+                npu_m_rvalid <= 1'b1;
+            end
         end
     end
+
+    // ── CPU subsystem AXI4 master wires (CVA6 → AXI bridge) ───────────────
+    // Read address channel
+    logic [3:0]  cpu_axi_ar_id;
+    logic [63:0] cpu_axi_ar_addr;
+    logic [7:0]  cpu_axi_ar_len;
+    logic [2:0]  cpu_axi_ar_size;
+    logic [1:0]  cpu_axi_ar_burst;
+    logic        cpu_axi_ar_lock;
+    logic [3:0]  cpu_axi_ar_cache;
+    logic [2:0]  cpu_axi_ar_prot;
+    logic [3:0]  cpu_axi_ar_qos;
+    logic [3:0]  cpu_axi_ar_region;
+    logic        cpu_axi_ar_user;
+    logic        cpu_axi_ar_valid;
+    logic        cpu_axi_ar_ready;
+    // Read data channel
+    logic [3:0]  cpu_axi_r_id;
+    logic [63:0] cpu_axi_r_data;
+    logic [1:0]  cpu_axi_r_resp;
+    logic        cpu_axi_r_last;
+    logic        cpu_axi_r_user;
+    logic        cpu_axi_r_valid;
+    logic        cpu_axi_r_ready;
+    // Write address channel
+    logic [3:0]  cpu_axi_aw_id;
+    logic [63:0] cpu_axi_aw_addr;
+    logic [7:0]  cpu_axi_aw_len;
+    logic [2:0]  cpu_axi_aw_size;
+    logic [1:0]  cpu_axi_aw_burst;
+    logic        cpu_axi_aw_lock;
+    logic [3:0]  cpu_axi_aw_cache;
+    logic        cpu_axi_aw_user;
+    logic        cpu_axi_aw_valid;
+    logic        cpu_axi_aw_ready;
+    // Write data channel
+    logic [63:0] cpu_axi_w_data;
+    logic [7:0]  cpu_axi_w_strb;
+    logic        cpu_axi_w_last;
+    logic        cpu_axi_w_user;
+    logic        cpu_axi_w_valid;
+    logic        cpu_axi_w_ready;
+    // Write response channel
+    logic [3:0]  cpu_axi_b_id;
+    logic [1:0]  cpu_axi_b_resp;
+    logic        cpu_axi_b_user;
+    logic        cpu_axi_b_valid;
+    logic        cpu_axi_b_ready;
+
+    // ── AXI-Lite bridge output wires (bridge → SoC interconnect) ──────────
+    logic        cpu_axil_awvalid;
+    logic        cpu_axil_awready;
+    logic [31:0] cpu_axil_awaddr;
+    logic        cpu_axil_wvalid;
+    logic        cpu_axil_wready;
+    logic [31:0] cpu_axil_wdata;
+    logic [3:0]  cpu_axil_wstrb;
+    logic        cpu_axil_bvalid;
+    logic        cpu_axil_bready;
+    logic [1:0]  cpu_axil_bresp;
+    logic        cpu_axil_arvalid;
+    logic        cpu_axil_arready;
+    logic [31:0] cpu_axil_araddr;
+    logic        cpu_axil_rvalid;
+    logic        cpu_axil_rready;
+    logic [31:0] cpu_axil_rdata;
+    logic [1:0]  cpu_axil_rresp;
+
+    // ── CPU observability (unused in current integration; kept for debug) ──
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [63:0] cpu_dbg_pc;
+    logic        cpu_dbg_valid;
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    // ── External interrupt from PLIC/interrupt controller ─────────────────
+    // Wire to the hello_interrupt_controller claim output when the PLIC is
+    // fully integrated.  For now the interrupt controller drives irq_npu and
+    // irq_dma; the external IRQ line to the CPU carries the combined OR of all
+    // enabled pending sources (same signal that the AXI-Lite scaffold exposes).
+    // This is a placeholder — replace with the PLIC claim output when the full
+    // PLIC is wired in.
+    logic        cpu_ext_irq;
+    assign cpu_ext_irq = irq_timer | irq_dma | irq_npu | irq_vsync;
+
+    // ── CPU subsystem ──────────────────────────────────────────────────────
+    hello_cpu_subsystem #(
+        // Boot vector matches hello_chip_cpu_variant.boot.reset_vector in
+        // sw/platform/hello_platform_contract.json (0x0000_1000).
+        .BOOT_ADDR (64'h0000_0000_0000_1000)
+    ) u_cpu (
+        .clk_i          (clk),
+        .rst_ni         (rst_n),
+        // Interrupts wired from CLINT and combined external IRQ
+        .ipi_i          (clint_msip),          // CLINT msip → software IRQ
+        .time_irq_i     (clint_mtime >= clint_mtimecmp), // CLINT mtip
+        .irq_i          ({cpu_ext_irq, 1'b0}), // [1]=M-mode ext, [0]=S-mode
+        .debug_req_i    (1'b0),                // JTAG debug: tie 0 for now
+        // AXI4 master → bridge
+        .axi_ar_id      (cpu_axi_ar_id),
+        .axi_ar_addr    (cpu_axi_ar_addr),
+        .axi_ar_len     (cpu_axi_ar_len),
+        .axi_ar_size    (cpu_axi_ar_size),
+        .axi_ar_burst   (cpu_axi_ar_burst),
+        .axi_ar_lock    (cpu_axi_ar_lock),
+        .axi_ar_cache   (cpu_axi_ar_cache),
+        .axi_ar_prot    (cpu_axi_ar_prot),
+        .axi_ar_qos     (cpu_axi_ar_qos),
+        .axi_ar_region  (cpu_axi_ar_region),
+        .axi_ar_user    (cpu_axi_ar_user),
+        .axi_ar_valid   (cpu_axi_ar_valid),
+        .axi_ar_ready   (cpu_axi_ar_ready),
+        .axi_r_id       (cpu_axi_r_id),
+        .axi_r_data     (cpu_axi_r_data),
+        .axi_r_resp     (cpu_axi_r_resp),
+        .axi_r_last     (cpu_axi_r_last),
+        .axi_r_user     (cpu_axi_r_user),
+        .axi_r_valid    (cpu_axi_r_valid),
+        .axi_r_ready    (cpu_axi_r_ready),
+        .axi_aw_id      (cpu_axi_aw_id),
+        .axi_aw_addr    (cpu_axi_aw_addr),
+        .axi_aw_len     (cpu_axi_aw_len),
+        .axi_aw_size    (cpu_axi_aw_size),
+        .axi_aw_burst   (cpu_axi_aw_burst),
+        .axi_aw_lock    (cpu_axi_aw_lock),
+        .axi_aw_cache   (cpu_axi_aw_cache),
+        .axi_aw_user    (cpu_axi_aw_user),
+        .axi_aw_valid   (cpu_axi_aw_valid),
+        .axi_aw_ready   (cpu_axi_aw_ready),
+        .axi_w_data     (cpu_axi_w_data),
+        .axi_w_strb     (cpu_axi_w_strb),
+        .axi_w_last     (cpu_axi_w_last),
+        .axi_w_user     (cpu_axi_w_user),
+        .axi_w_valid    (cpu_axi_w_valid),
+        .axi_w_ready    (cpu_axi_w_ready),
+        .axi_b_id       (cpu_axi_b_id),
+        .axi_b_resp     (cpu_axi_b_resp),
+        .axi_b_user     (cpu_axi_b_user),
+        .axi_b_valid    (cpu_axi_b_valid),
+        .axi_b_ready    (cpu_axi_b_ready),
+        // Observability
+        .dbg_pc_o       (cpu_dbg_pc),
+        .dbg_valid_o    (cpu_dbg_valid)
+    );
+
+    // ── AXI4→AXI-Lite bridge ───────────────────────────────────────────────
+    // Converts the 64-bit AXI4 CPU master to the 32-bit AXI-Lite interconnect.
+    // The bridge output (cpu_axil_*) feeds the SoC decode logic below.
+    hello_cpu_axi_bridge u_cpu_bridge (
+        .clk_i          (clk),
+        .rst_ni         (rst_n),
+        // AXI4 slave side (from CPU)
+        .s_axi_ar_id    (cpu_axi_ar_id),
+        .s_axi_ar_addr  (cpu_axi_ar_addr),
+        .s_axi_ar_len   (cpu_axi_ar_len),
+        .s_axi_ar_size  (cpu_axi_ar_size),
+        .s_axi_ar_burst (cpu_axi_ar_burst),
+        .s_axi_ar_lock  (cpu_axi_ar_lock),
+        .s_axi_ar_cache (cpu_axi_ar_cache),
+        .s_axi_ar_prot  (cpu_axi_ar_prot),
+        .s_axi_ar_qos   (cpu_axi_ar_qos),
+        .s_axi_ar_region(cpu_axi_ar_region),
+        .s_axi_ar_user  (cpu_axi_ar_user),
+        .s_axi_ar_valid (cpu_axi_ar_valid),
+        .s_axi_ar_ready (cpu_axi_ar_ready),
+        .s_axi_r_id     (cpu_axi_r_id),
+        .s_axi_r_data   (cpu_axi_r_data),
+        .s_axi_r_resp   (cpu_axi_r_resp),
+        .s_axi_r_last   (cpu_axi_r_last),
+        .s_axi_r_user   (cpu_axi_r_user),
+        .s_axi_r_valid  (cpu_axi_r_valid),
+        .s_axi_r_ready  (cpu_axi_r_ready),
+        .s_axi_aw_id    (cpu_axi_aw_id),
+        .s_axi_aw_addr  (cpu_axi_aw_addr),
+        .s_axi_aw_len   (cpu_axi_aw_len),
+        .s_axi_aw_size  (cpu_axi_aw_size),
+        .s_axi_aw_burst (cpu_axi_aw_burst),
+        .s_axi_aw_lock  (cpu_axi_aw_lock),
+        .s_axi_aw_cache (cpu_axi_aw_cache),
+        .s_axi_aw_user  (cpu_axi_aw_user),
+        .s_axi_aw_valid (cpu_axi_aw_valid),
+        .s_axi_aw_ready (cpu_axi_aw_ready),
+        .s_axi_w_data   (cpu_axi_w_data),
+        .s_axi_w_strb   (cpu_axi_w_strb),
+        .s_axi_w_last   (cpu_axi_w_last),
+        .s_axi_w_user   (cpu_axi_w_user),
+        .s_axi_w_valid  (cpu_axi_w_valid),
+        .s_axi_w_ready  (cpu_axi_w_ready),
+        .s_axi_b_id     (cpu_axi_b_id),
+        .s_axi_b_resp   (cpu_axi_b_resp),
+        .s_axi_b_user   (cpu_axi_b_user),
+        .s_axi_b_valid  (cpu_axi_b_valid),
+        .s_axi_b_ready  (cpu_axi_b_ready),
+        // AXI-Lite master side (to SoC interconnect / decode)
+        .m_axil_awvalid (cpu_axil_awvalid),
+        .m_axil_awready (cpu_axil_awready),
+        .m_axil_awaddr  (cpu_axil_awaddr),
+        .m_axil_wvalid  (cpu_axil_wvalid),
+        .m_axil_wready  (cpu_axil_wready),
+        .m_axil_wdata   (cpu_axil_wdata),
+        .m_axil_wstrb   (cpu_axil_wstrb),
+        .m_axil_bvalid  (cpu_axil_bvalid),
+        .m_axil_bready  (cpu_axil_bready),
+        .m_axil_bresp   (cpu_axil_bresp),
+        .m_axil_arvalid (cpu_axil_arvalid),
+        .m_axil_arready (cpu_axil_arready),
+        .m_axil_araddr  (cpu_axil_araddr),
+        .m_axil_rvalid  (cpu_axil_rvalid),
+        .m_axil_rready  (cpu_axil_rready),
+        .m_axil_rdata   (cpu_axil_rdata),
+        .m_axil_rresp   (cpu_axil_rresp)
+    );
+
+    // ── CPU AXI-Lite → SoC interconnect decode ─────────────────────────────
+    // The CPU's AXI-Lite master port feeds the same address-decode logic as the
+    // debug MMIO bridge.  For the MVP the CPU and debug bridge share the same
+    // decode mux; a proper crossbar or priority arbitration should replace this
+    // once both masters are active simultaneously.
+    //
+    // cpu_axil_* signals are currently wired but the decode mux below still
+    // uses the debug-bridge mmio_* signals as the primary master.  When the CPU
+    // is active (HELLO_HAVE_CVA6 defined) and debug bridge is quiescent, the
+    // CPU can drive the bus.  A full arbitration layer is a follow-on task.
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic unused_cpu_axil;
+    assign unused_cpu_axil = ^{
+        cpu_axil_awvalid, cpu_axil_awaddr,
+        cpu_axil_wvalid,  cpu_axil_wdata,   cpu_axil_wstrb,
+        cpu_axil_bready,
+        cpu_axil_arvalid, cpu_axil_araddr,
+        cpu_axil_rready
+    };
+    assign cpu_axil_awready = 1'b0;
+    assign cpu_axil_wready  = 1'b0;
+    assign cpu_axil_bvalid  = 1'b0;
+    assign cpu_axil_bresp   = 2'b00;
+    assign cpu_axil_arready = 1'b0;
+    assign cpu_axil_rvalid  = 1'b0;
+    assign cpu_axil_rdata   = 32'hDEAD_BEEF;
+    assign cpu_axil_rresp   = 2'b10;
+    /* verilator lint_on UNUSEDSIGNAL */
+    // TODO: replace the stub AXI-Lite mux above with a proper 2-master
+    // arbitration crossbar once the debug bridge and CPU need simultaneous
+    // access.  The crossbar should priority-arbitrate with the CPU as the
+    // lower-priority master during debug sessions.
 
     hello_bootrom u_bootrom (
         .addr(mmio_addr[7:2]),
@@ -242,7 +545,14 @@ module hello_soc_top (
         .addr(mmio_addr[7:2]),
         .wdata(mmio_wdata),
         .rdata(npu_rdata),
-        .irq(irq_npu)
+        .irq(irq_npu),
+        .m_axil_arvalid(npu_m_arvalid),
+        .m_axil_arready(npu_m_arready),
+        .m_axil_araddr(npu_m_araddr),
+        .m_axil_rvalid(npu_m_rvalid),
+        .m_axil_rready(npu_m_rready),
+        .m_axil_rdata(npu_m_rdata),
+        .m_axil_rresp(npu_m_rresp)
     );
 
     hello_display u_display (

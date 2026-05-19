@@ -19,6 +19,7 @@ aosp_shell=${AOSP_SHELL:-bash}
 aosp_product=${AOSP_PRODUCT:-openphone_ai_soc-userdebug}
 aosp_target_product=${AOSP_TARGET_PRODUCT:-openphone_ai_soc}
 aosp_cuttlefish_args=${AOSP_CUTTLEFISH_ARGS:---cpus=4 --memory_mb=8192 --gpu_mode=none}
+aosp_cuttlefish_launcher=${AOSP_CUTTLEFISH_LAUNCHER:-}
 aosp_adb_timeout_seconds=${AOSP_ADB_TIMEOUT_SECONDS:-180}
 aosp_cts_vts_excluded_modules=${AOSP_CTS_VTS_EXCLUDED_MODULES:-full_cts,full_vts,device_compatibility_claims}
 aosp_cts_vts_result_dir=${AOSP_CTS_VTS_RESULT_DIR:-out/host/linux-x86/cts-vts-plan}
@@ -26,6 +27,7 @@ aosp_cts_vts_plan_command=${AOSP_CTS_VTS_PLAN_COMMAND:-}
 aosp_qemu_smoke_command=${AOSP_QEMU_SMOKE_COMMAND:-}
 aosp_renode_smoke_command=${AOSP_RENODE_SMOKE_COMMAND:-}
 reference_only_boundary=reference_only_not_hello_chip_ap_evidence
+virtual_device_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence
 boot_transcript_schema=docs/android/boot-transcript.schema.json
 
 if [ ! -f "$aosp/build/envsetup.sh" ] || [ ! -d "$aosp/device" ]; then
@@ -58,7 +60,7 @@ run_capture() {
 		echo "COMPATIBILITY_CLAIM=none"
 		case "$metadata_kind" in
 			smoke)
-				echo "openphone-evidence: claim_boundary=$reference_only_boundary"
+				echo "openphone-evidence: claim_boundary=$virtual_device_boundary"
 				echo "BOOT_CLAIM=none"
 				echo "SCHEMA=$boot_transcript_schema"
 				;;
@@ -228,12 +230,24 @@ case "$mode" in
 			"$evidence_dir/cuttlefish_riscv64_smoke.log" \
 			"source build/envsetup.sh && lunch $aosp_product && launch_cvd $aosp_cuttlefish_args -daemon" \
 			smoke \
-			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" AOSP_CUTTLEFISH_ARGS="$aosp_cuttlefish_args" "$aosp_shell" -lc '
+			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" AOSP_CUTTLEFISH_ARGS="$aosp_cuttlefish_args" AOSP_CUTTLEFISH_LAUNCHER="$aosp_cuttlefish_launcher" "$aosp_shell" -lc '
 				source build/envsetup.sh &&
 				lunch "$AOSP_PRODUCT" >/dev/null &&
-				cleanup() { stop_cvd >/dev/null 2>&1 || true; } &&
+				cleanup() { stop_cvd >/dev/null 2>&1 || cvd stop >/dev/null 2>&1 || true; } &&
 				trap cleanup EXIT INT TERM &&
-				launch_cvd $AOSP_CUTTLEFISH_ARGS -daemon &&
+				if [ -n "$AOSP_CUTTLEFISH_LAUNCHER" ]; then
+					cuttlefish_launcher=$AOSP_CUTTLEFISH_LAUNCHER
+				elif command -v launch_cvd >/dev/null 2>&1; then
+					cuttlefish_launcher=launch_cvd
+				else
+					cuttlefish_launcher=cvd
+				fi &&
+				echo "CUTTLEFISH_LAUNCHER=$cuttlefish_launcher" &&
+				if [ "$cuttlefish_launcher" = cvd ]; then
+					cvd start $AOSP_CUTTLEFISH_ARGS --daemon
+				else
+					"$cuttlefish_launcher" $AOSP_CUTTLEFISH_ARGS -daemon
+				fi &&
 				deadline=$((SECONDS + '"$aosp_adb_timeout_seconds"')) &&
 				until adb get-state >/dev/null 2>&1; do
 					if [ "$SECONDS" -ge "$deadline" ]; then

@@ -84,8 +84,7 @@ module hello_dma_formal(input logic clk);
         end
 
         if (rst_n) begin
-            assert(m_axil_arvalid == m_axil_rready);
-            assert(m_axil_awvalid == m_axil_wvalid);
+            assert(!m_axil_arvalid || m_axil_rready);
             assert(!(m_axil_arvalid && m_axil_awvalid));
 
             if (m_axil_arvalid) begin

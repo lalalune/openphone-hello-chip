@@ -18,13 +18,10 @@ runtime command inputs. This prints commands only; it does not create evidence:
 python3 scripts/check_software_bsp.py capture-plan all \
   --buildroot /abs/path/to/buildroot \
   --linux /abs/path/to/linux \
-  --opensbi /abs/path/to/opensbi \
-  --u-boot /abs/path/to/u-boot \
   --aosp /abs/path/to/aosp \
   --target-host root@TARGET \
-  --opensbi-handoff-cmd '/exact/OpenSBI/fw_dynamic/boot/command' \
-  --uboot-build-cmd '/exact/U-Boot/build/command' \
-  --uboot-boot-cmd '/exact/OpenSBI/to/U-Boot/boot/command'
+  --qemu-smoke-cmd '/exact/qemu-system-riscv64 smoke command' \
+  --renode-smoke-cmd '/exact/renode smoke command'
 ```
 
 Run the fail-closed evidence gate after importing real external logs:
@@ -59,35 +56,20 @@ HELLO_SMOKE_CMD='ssh root@TARGET /tmp/hello-mmio-smoke' \
 python3 scripts/check_software_bsp.py linux --require-evidence
 ```
 
-## OpenSBI
-
-```sh
-OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' \
-  sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build
-OPENPHONE_OPENSBI_HANDOFF_CMD='/path/to/qemu-or-renode boot command' \
-  sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff
-python3 scripts/check_software_bsp.py opensbi --require-evidence
-```
-
-## U-Boot
-
-```sh
-OPENPHONE_UBOOT_CMD='make openphone_defconfig && make' \
-  sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot build
-OPENPHONE_UBOOT_BOOT_CMD='/path/to/qemu-or-renode boot command' \
-  sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot boot-chain
-python3 scripts/check_software_bsp.py u-boot --require-evidence
-```
-
 ## AOSP
 
 ```sh
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf
-sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
-sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset
-sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp sepolicy-build
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp selinux-neverallow
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-vts-plan
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-smoke
+AOSP_QEMU_SMOKE_COMMAND='/exact/qemu-system-riscv64 smoke command' \
+  sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp qemu-smoke
+AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' \
+  sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp renode-smoke
 python3 scripts/check_software_bsp.py aosp --require-evidence
 ```
 

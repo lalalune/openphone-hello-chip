@@ -180,6 +180,96 @@ def test_os_boot_check_blocks_without_payloads() -> None:
         raise AssertionError(f"unexpected OS attempt payload fields: {manifest}")
 
 
+def test_os_boot_check_fails_on_kernel_panic() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        bindir = Path(td) / "bin"
+        bindir.mkdir()
+        qemu = bindir / "qemu-system-riscv64"
+        kernel = Path(td) / "Image"
+        initrd = Path(td) / "rootfs.cpio"
+        kernel.write_text("kernel placeholder\n")
+        initrd.write_text("initrd placeholder\n")
+        write_executable(
+            qemu,
+            "#!/bin/sh\n"
+            "printf '[    0.10] Run /init as init process\\n'\n"
+            "printf '[    0.11] Kernel panic - not syncing: No working init found\\n'\n",
+        )
+        result = run_os_check(
+            {
+                "PATH": f"{bindir}:{os.environ['PATH']}",
+                "QEMU_OS_BOOT_SECONDS": "1",
+            },
+            ["--linux-kernel", str(kernel), "--initrd", str(initrd)],
+        )
+    if result.returncode != 1:
+        raise AssertionError(
+            f"expected kernel panic OS boot to fail, got {result.returncode}\n{result.stdout}"
+        )
+    assert_contains(result.stdout, "STATUS: FAIL qemu.os_boot")
+    assert_contains(result.stdout, "kernel panic")
+    manifest = json.loads(QEMU_OS_ATTEMPT_MANIFEST.read_text())
+    if manifest["status"] != "FAIL":
+        raise AssertionError(f"unexpected OS attempt status: {manifest}")
+
+
+def test_os_boot_check_passes_with_payloads_and_init_marker() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        bindir = Path(td) / "bin"
+        bindir.mkdir()
+        qemu = bindir / "qemu-system-riscv64"
+        kernel = Path(td) / "Image"
+        initrd = Path(td) / "rootfs.cpio"
+        dtb = Path(td) / "virt.dtb"
+        kernel.write_text("kernel placeholder\n")
+        initrd.write_text("initrd placeholder\n")
+        dtb.write_text("dtb placeholder\n")
+        write_executable(
+            qemu,
+            "#!/bin/sh\n"
+            "printf '[    0.10] Freeing unused kernel memory\\n'\n"
+            "printf '[    0.11] Run /init as init process\\n'\n"
+            "printf 'Debian GNU/Linux installer\\n'\n",
+        )
+        result = run_os_check(
+            {
+                "PATH": f"{bindir}:{os.environ['PATH']}",
+                "QEMU_OS_BOOT_SECONDS": "1",
+            },
+            [
+                "--linux-kernel",
+                str(kernel),
+                "--initrd",
+                str(initrd),
+                "--dtb",
+                str(dtb),
+            ],
+        )
+    if result.returncode != 0:
+        raise AssertionError(
+            f"expected payload-present OS boot to pass, got {result.returncode}\n{result.stdout}"
+        )
+    assert_contains(result.stdout, "STATUS: PASS qemu.semantic")
+    assert_contains(result.stdout, "STATUS: PASS qemu.os_boot")
+    assert_contains(result.stdout, "qemu_os_boot_attempt.log")
+    transcript = QEMU_OS_ATTEMPT_LOG.read_text(errors="ignore")
+    assert_contains(transcript, "Run /init as init process")
+    assert_contains(transcript, "Debian GNU/Linux installer")
+    manifest = json.loads(QEMU_OS_ATTEMPT_MANIFEST.read_text())
+    if manifest["status"] != "PASS":
+        raise AssertionError(f"unexpected OS attempt status: {manifest}")
+    if manifest["claim_boundary"] != "qemu_virt_reference_only_not_hello_chip_rtl":
+        raise AssertionError(f"unexpected OS attempt claim boundary: {manifest}")
+    if manifest["kernel"] != str(kernel):
+        raise AssertionError(f"unexpected OS attempt kernel field: {manifest}")
+    if manifest["initrd"] != str(initrd):
+        raise AssertionError(f"unexpected OS attempt initrd field: {manifest}")
+    if manifest["dtb"] != str(dtb):
+        raise AssertionError(f"unexpected OS attempt dtb field: {manifest}")
+    if manifest["transcript"] != "build/reports/qemu_os_boot_attempt.log":
+        raise AssertionError(f"unexpected OS attempt transcript field: {manifest}")
+
+
 def main() -> int:
     tests = [
         test_missing_toolchain_is_non_strict_blocked,
@@ -187,6 +277,8 @@ def main() -> int:
         test_build_failure_is_fail,
         test_fake_toolchain_and_qemu_pass,
         test_os_boot_check_blocks_without_payloads,
+        test_os_boot_check_fails_on_kernel_panic,
+        test_os_boot_check_passes_with_payloads_and_init_marker,
     ]
     saved = QEMU_ELF.read_bytes() if QEMU_ELF.is_file() else None
     saved_log = QEMU_LOG.read_bytes() if QEMU_LOG.is_file() else None

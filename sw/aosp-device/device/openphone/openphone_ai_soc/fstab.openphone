@@ -4,5 +4,10 @@
 # recovery behavior, update success, or secure flashing.
 # not AVB, A/B, recovery, OTA, rollback evidence.
 
-/dev/block/by-name/vendor /vendor ext4 ro,barrier=1 wait,slotselect,avb
-/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,inline_xattr wait,check,formattable,fileencryption=ice
+# /vendor: read-only vendor image. Block-device name matches the Android
+# dynamic-partition convention; the underlying super partition layout is
+# not defined by this scaffold.
+/dev/block/by-name/vendor   /vendor   ext4   ro,barrier=1                                                                       wait,first_stage_mount,logical
+# /data: userdata. ICE/file-based encryption is NOT enabled yet; left out
+# until a keymaster/keymint HAL and storage key path exist.
+/dev/block/by-name/userdata /data     f2fs   noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065,inlinecrypt           wait,check,formattable,quota

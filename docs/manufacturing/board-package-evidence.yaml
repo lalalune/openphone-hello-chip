@@ -43,7 +43,7 @@ next_commands:
 source_contracts:
   package_pinout: package/hello-demo-pinout.yaml
   padframe_contract: pd/padframe/hello_demo_padframe.yaml
-  board_cross_probe: board/kicad/hello-demo/package-pinout-cross-probe.yaml
+  board_cross_probe: docs/board/kicad/hello-demo/package-pinout-cross-probe.yaml
   board_fab_notes: docs/board/kicad/hello-demo/fab-notes.md
 placeholder_blockers:
   - id: placeholder_package_pinout
@@ -135,70 +135,70 @@ artifact_groups:
           - source_sha256
   fab_exports:
     owner: board_closure
-    status: missing
+    status: draft
     artifacts:
       - name: erc_transcript
         release_blocker_id: erc
-        release_blocker: KiCad ERC transcript is missing.
-        status: missing
+        release_blocker: KiCad ERC transcript is draft planning evidence only; release requires rerun after vendor-derived footprint and final schematic.
+        status: draft
         globs:
           - board/kicad/hello-demo/reports/*erc*.txt
           - board/kicad/hello-demo/reports/*erc*.log
-          - board/reports/fab/erc*.txt
-          - board/reports/fab/erc*.log
+          - board/reports/fab/**/*erc*.txt
+          - board/reports/fab/**/*erc*.log
       - name: drc_transcript
         release_blocker_id: drc
-        release_blocker: KiCad DRC transcript is missing.
-        status: missing
+        release_blocker: KiCad DRC transcript is draft planning evidence only; release requires rerun after vendor-derived footprint and final board rules.
+        status: draft
         globs:
           - board/kicad/hello-demo/reports/*drc*.txt
           - board/kicad/hello-demo/reports/*drc*.log
-          - board/reports/fab/drc*.txt
-          - board/reports/fab/drc*.log
+          - board/reports/fab/**/*drc*.txt
+          - board/reports/fab/**/*drc*.log
       - name: gerbers
         release_blocker_id: gerbers
-        release_blocker: Gerber fabrication outputs are missing.
-        status: missing
+        release_blocker: Gerber outputs exist as draft planning exports only; release requires vendor-footprint regeneration and DFM acceptance.
+        status: draft
         globs:
           - board/kicad/hello-demo/fab/gerbers/*.gbr
           - board/kicad/hello-demo/fab/gerbers/*.gbrjob
-          - board/reports/fab/gerbers/*.gbr
-          - board/reports/fab/gerbers/*.gbrjob
+          - board/reports/fab/**/gerbers/*.g*
+          - board/reports/fab/**/gerbers/*.gbrjob
       - name: drill
         release_blocker_id: drill
-        release_blocker: Drill fabrication outputs are missing.
-        status: missing
+        release_blocker: Drill outputs exist as draft planning exports only; release requires final board stackup and fabrication review.
+        status: draft
         globs:
           - board/kicad/hello-demo/fab/drill/*.drl
           - board/kicad/hello-demo/fab/drill/*.xln
-          - board/reports/fab/drill/*.drl
-          - board/reports/fab/drill/*.xln
+          - board/reports/fab/**/drill/*.drl
+          - board/reports/fab/**/drill/*.xln
       - name: bom
         release_blocker_id: bom
-        release_blocker: Fabrication BOM export is missing.
-        status: missing
+        release_blocker: BOM export exists as draft planning evidence only; release requires approved MPNs and package-derived U1 footprint.
+        status: draft
         globs:
           - board/kicad/hello-demo/fab/bom/*.csv
           - board/kicad/hello-demo/fab/bom/*.xml
-          - board/reports/fab/bom*.csv
-          - board/reports/fab/bom*.xml
+          - board/reports/fab/**/*bom*.csv
+          - board/reports/fab/**/*bom*.xml
       - name: pick_and_place
         release_blocker_id: pick_and_place
-        release_blocker: Pick-and-place/position export is missing.
-        status: missing
+        release_blocker: Pick-and-place export exists as draft planning evidence only; release requires final footprints and assembly review.
+        status: draft
         globs:
           - board/kicad/hello-demo/fab/position/*.pos
           - board/kicad/hello-demo/fab/position/*.csv
-          - board/reports/fab/position*.pos
-          - board/reports/fab/position*.csv
+          - board/reports/fab/**/*position*.pos
+          - board/reports/fab/**/*position*.csv
   release_reviews:
     owner: manufacturing_closure
-    status: missing
+    status: draft
     artifacts:
       - name: package_padframe_board_cross_probe
         release_blocker_id: cross_probe
-        release_blocker: Package-padframe-board cross-probe report is missing.
-        status: missing
+        release_blocker: Package-padframe-board cross-probe report is local draft evidence only; vendor package, foundry padframe, and board release cross-probe evidence is missing.
+        status: draft
         globs:
           - docs/manufacturing/evidence/package/*cross-probe*
           - docs/manufacturing/evidence/board/*cross-probe*
@@ -208,15 +208,15 @@ artifact_groups:
           - reviewer
       - name: assembly_dfm_review
         release_blocker_id: dfm
-        release_blocker: Assembly DFM review is missing.
-        status: missing
+        release_blocker: Assembly DFM review is local draft evidence only; assembly-house DFM release evidence is missing.
+        status: draft
         globs:
           - docs/manufacturing/evidence/board/*dfm*
           - board/reports/fab/*dfm*
       - name: board_si_pi_review
         release_blocker_id: si_pi
-        release_blocker: Board SI/PI review is missing.
-        status: missing
+        release_blocker: Board SI/PI review is local draft evidence only; released stackup, impedance, package model, and board SI/PI signoff evidence is missing.
+        status: draft
         globs:
           - board/reports/si/**/*
           - board/reports/pi/**/*
@@ -224,8 +224,8 @@ artifact_groups:
           - docs/manufacturing/evidence/board/*pi*
       - name: first_article_current_limits
         release_blocker_id: first_article
-        release_blocker: First-article current-limit and stop-condition evidence is missing.
-        status: missing
+        release_blocker: First-article current-limit record is a draft local plan only; measured first-article current-limit and stop-condition evidence is missing.
+        status: draft
         globs:
           - docs/manufacturing/evidence/current/**/*
           - board/reports/fab/*current*

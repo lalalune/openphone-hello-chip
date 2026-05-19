@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +12,20 @@ CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
 ARTIFACT_MANIFEST = ROOT / "docs/android/bsp-artifact-manifest.json"
 LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
 BOOT_TRANSCRIPT_SCHEMA = ROOT / "docs/android/boot-transcript.schema.json"
+EVIDENCE_MANIFEST = ROOT / "docs/evidence/software-bsp-evidence-manifest.json"
+AOSP_EVIDENCE_MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
+NNAPI_PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json"
+ANDROID_PROOF_TEMPLATE = (
+    ROOT / "docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json"
+)
+AOSP_REFERENCE_ONLY_BOUNDARY = "reference_only_not_hello_chip_ap_evidence"
+AOSP_VIRTUAL_DEVICE_BOUNDARY = "virtual_device_smoke_only_not_boot_or_compatibility_evidence"
+ANDROID_PROOF_TEMPLATE_BOUNDARY = "template_only_not_android_boot_cts_vts_or_nnapi_evidence"
+AOSP_REFERENCE_ONLY_PATHS = [
+    "docs/evidence/android/cuttlefish_riscv64_smoke.log",
+    "docs/evidence/android/qemu_riscv64_smoke.log",
+    "docs/evidence/android/renode_hello_soc_smoke.log",
+]
 DEFAULT_EVIDENCE_METADATA = ["EXTERNAL_TREE=", "COMMAND=", "START_UTC=", "END_UTC=", "RESULT="]
 ANDROID_COMPAT_METADATA = [
     "EXTERNAL_TREE=",
@@ -20,6 +35,32 @@ ANDROID_COMPAT_METADATA = [
     "RESULT=",
     "COMPATIBILITY_CLAIM=none",
 ]
+REQUIRED_NNAPI_TRANSCRIPTS = {
+    "adb_devices",
+    "nnapi_accelerator_query",
+    "benchmark_model_nnapi",
+    "dma_trace",
+}
+REQUIRED_ANDROID_PROOF_STATUSES = {
+    "aidl_or_hidl_hal_declared",
+    "hal_binary_in_vendorimage",
+    "vintf_check",
+    "selinux_policy_build",
+    "selinux_neverallow",
+    "vts_hello_npu",
+    "cts_nnapi_smoke",
+    "nnapi_accelerator_query",
+    "fail_closed_absent_device",
+}
+REQUIRED_ANDROID_PROOF_ARTIFACTS = {
+    "vts_result": "docs/evidence/android/hello-npu/vts-result.json",
+    "cts_result": "docs/evidence/android/hello-npu/cts-result.json",
+    "selinux_policy_build_log": "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
+    "selinux_neverallow_log": "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
+    "vintf_check_log": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+    "nnapi_query_log": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
+    "absent_device_probe_log": "docs/evidence/android/hello-npu/absent-device-probe.log",
+}
 
 TARGETS: dict[str, dict[str, Any]] = {
     "buildroot": {
@@ -110,16 +151,108 @@ TARGETS: dict[str, dict[str, Any]] = {
     },
 }
 
+FORBIDDEN_TRANSCRIPT_MARKERS = [
+    "placeholder",
+    "substitute",
+    "blocked",
+    "not run",
+    "status=FAIL",
+    "status: FAIL",
+    "openphone-evidence: status=FAIL",
+]
+
+
+def rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
 
 def load_json(path: Path, errors: list[str]) -> dict:
     if not path.is_file():
         errors.append(f"{path.relative_to(ROOT)} is missing")
         return {}
     try:
-        return json.loads(path.read_text())
+        payload = json.loads(path.read_text())
     except json.JSONDecodeError as exc:
         errors.append(f"{path.relative_to(ROOT)} is invalid JSON: {exc}")
         return {}
+    if not isinstance(payload, dict):
+        errors.append(f"{path.relative_to(ROOT)} must be a JSON object")
+        return {}
+    return payload
+
+
+def load_evidence_manifest(errors: list[str] | None = None) -> dict:
+    return load_json(EVIDENCE_MANIFEST, errors if errors is not None else [])
+
+
+def evidence_items_for_target(name: str) -> list[dict[str, Any]]:
+    manifest = load_evidence_manifest([])
+    return list(manifest.get("targets", {}).get(name, {}).get("evidence", []))
+
+
+def validate_evidence_file(item: dict[str, Any]) -> list[str]:
+    path = ROOT / item["path"]
+    problems: list[str] = []
+    if not path.is_file():
+        return [f"missing {item['path']}"]
+
+    text = path.read_text(errors="ignore")
+    if len(text.encode("utf-8")) < int(item.get("min_bytes", 0)):
+        problems.append(
+            f"{item['path']} is too small for external evidence "
+            f"({len(text.encode('utf-8'))} bytes < {item.get('min_bytes', 0)})"
+        )
+
+    missing_required = [term for term in item.get("required_strings", []) if term not in text]
+    if missing_required:
+        problems.append(
+            f"{item['path']} missing required transcript markers: " + ", ".join(missing_required)
+        )
+
+    for group in item.get("at_least_one", []):
+        if not any(term in text for term in group):
+            problems.append(
+                f"{item['path']} missing at least one transcript marker from: " + ", ".join(group)
+            )
+
+    configured_forbidden = item.get("forbidden_strings", [])
+    lowered = text.lower()
+    forbidden = [
+        term
+        for term in [*FORBIDDEN_TRANSCRIPT_MARKERS, *configured_forbidden]
+        if term.lower() in lowered
+    ]
+    if forbidden:
+        problems.append(
+            f"{item['path']} contains forbidden placeholder/failure markers: "
+            + ", ".join(dict.fromkeys(forbidden))
+        )
+
+    status_match = re.search(r"openphone-evidence:\s*status=([A-Z]+)", text)
+    if not status_match:
+        problems.append(f"{item['path']} missing openphone-evidence PASS status marker")
+    elif status_match.group(1) != "PASS":
+        problems.append(f"{item['path']} reports non-PASS evidence status: {status_match.group(1)}")
+
+    claim_boundary = item.get("claim_boundary", "")
+    if claim_boundary in {AOSP_REFERENCE_ONLY_BOUNDARY, AOSP_VIRTUAL_DEVICE_BOUNDARY}:
+        marker = f"openphone-evidence: claim_boundary={claim_boundary}"
+        if marker not in text:
+            problems.append(f"{item['path']} missing reference-only claim boundary marker")
+
+    return problems
+
+
+def validate_manifest_evidence(name: str, *, include_missing: bool = True) -> list[str]:
+    problems: list[str] = []
+    for item in evidence_items_for_target(name):
+        if not include_missing and not (ROOT / item["path"]).is_file():
+            continue
+        problems.extend(validate_evidence_file(item))
+    return problems
 
 
 def existing_repo_path(path: str) -> Path | None:
@@ -284,10 +417,8 @@ def check_aosp_product_glue(errors: list[str]) -> None:
                 errors.append(f"AOSP VINTF manifest missing XML marker {term}")
         if "</manifest>" not in manifest_text and "/>" not in manifest_text:
             errors.append("AOSP VINTF manifest is missing closing </manifest> marker")
-        active_text = "\n".join(
-            line for line in manifest_text.splitlines() if not line.strip().startswith("<!--")
-        )
-        if "<hal" in active_text:
+        active_text = re.sub(r"<!--.*?-->", "", manifest_text, flags=re.DOTALL)
+        if re.search(r"<hal(?:\s|>)", active_text):
             errors.append(
                 "AOSP VINTF manifest must not declare active HAL entries until source or prebuilts exist"
             )
@@ -314,6 +445,102 @@ def check_aosp_product_glue(errors: list[str]) -> None:
         if term in lowered_device_text:
             errors.append(
                 f"AOSP device.mk must not declare Android product feature claim without evidence: {term}"
+            )
+
+
+def check_android_proof_templates(errors: list[str]) -> None:
+    nnapi_template = load_json(NNAPI_PROOF_TEMPLATE, errors)
+    if nnapi_template:
+        if nnapi_template.get("schema") != "openphone.hello_npu_nnapi_capability.v1":
+            errors.append("NNAPI proof template has unexpected schema")
+        dma = nnapi_template.get("dma", {})
+        if not isinstance(dma, dict) or "trace_bytes" not in dma:
+            errors.append("NNAPI proof template must bind dma.trace_bytes to the DMA transcript")
+        transcripts = nnapi_template.get("transcripts", {})
+        if not isinstance(transcripts, dict):
+            errors.append("NNAPI proof template transcripts must be an object")
+            transcripts = {}
+        missing_transcripts = REQUIRED_NNAPI_TRANSCRIPTS - set(transcripts)
+        if missing_transcripts:
+            errors.append(
+                "NNAPI proof template missing transcript entries: "
+                + ", ".join(sorted(missing_transcripts))
+            )
+        for name in sorted(REQUIRED_NNAPI_TRANSCRIPTS & set(transcripts)):
+            entry = transcripts[name]
+            if not isinstance(entry, dict):
+                errors.append(
+                    f"NNAPI proof template transcripts.{name} must include path, sha256, and bytes"
+                )
+                continue
+            path = entry.get("path")
+            if not isinstance(path, str) or not path or Path(path).is_absolute():
+                errors.append(f"NNAPI proof template transcripts.{name}.path must be repo-relative")
+            sha = entry.get("sha256")
+            if not isinstance(sha, str) or "64-character lowercase sha256" not in sha:
+                errors.append(f"NNAPI proof template transcripts.{name}.sha256 must require sha256")
+            bytes_value = entry.get("bytes")
+            if not isinstance(bytes_value, int) or isinstance(bytes_value, bool):
+                errors.append(f"NNAPI proof template transcripts.{name}.bytes must be an integer")
+
+    android_template = load_json(ANDROID_PROOF_TEMPLATE, errors)
+    if not android_template:
+        return
+    if android_template.get("schema") != "openphone.hello_npu_android_proof_manifest.v1":
+        errors.append("Android proof manifest template has unexpected schema")
+    if android_template.get("claim_boundary") != ANDROID_PROOF_TEMPLATE_BOUNDARY:
+        errors.append(
+            "Android proof manifest template must keep the template-only no-boot/no-CTS/VTS/no-NNAPI boundary"
+        )
+    if android_template.get("status") != "blocked":
+        errors.append("Android proof manifest template status must remain blocked")
+    proof_gate = android_template.get("proof_gate", {})
+    if not isinstance(proof_gate, dict):
+        errors.append("Android proof manifest template proof_gate must be an object")
+    else:
+        for field in ("android_boot_claim", "compatibility_claim"):
+            if proof_gate.get(field) != "none":
+                errors.append(f"Android proof manifest template {field} must be none")
+        if proof_gate.get("nnapi_acceleration_claim") != (
+            "none_without_all_required_artifacts_passed"
+        ):
+            errors.append("Android proof manifest template must fail closed on NNAPI acceleration")
+    statuses = android_template.get("required_statuses", {})
+    if not isinstance(statuses, dict):
+        errors.append("Android proof manifest required_statuses must be an object")
+        statuses = {}
+    missing_statuses = REQUIRED_ANDROID_PROOF_STATUSES - set(statuses)
+    if missing_statuses:
+        errors.append(
+            "Android proof manifest template missing status gates: "
+            + ", ".join(sorted(missing_statuses))
+        )
+    for status_name, status in statuses.items():
+        if status != "blocked":
+            errors.append(f"Android proof manifest status {status_name} must remain blocked")
+    artifacts = android_template.get("artifacts", {})
+    if not isinstance(artifacts, dict):
+        errors.append("Android proof manifest artifacts must be an object")
+        artifacts = {}
+    missing_artifacts = set(REQUIRED_ANDROID_PROOF_ARTIFACTS) - set(artifacts)
+    if missing_artifacts:
+        errors.append(
+            "Android proof manifest template missing artifacts: "
+            + ", ".join(sorted(missing_artifacts))
+        )
+    for artifact_name, expected_path in REQUIRED_ANDROID_PROOF_ARTIFACTS.items():
+        artifact = artifacts.get(artifact_name)
+        if not isinstance(artifact, dict):
+            continue
+        path = artifact.get("path")
+        if path != expected_path:
+            errors.append(
+                f"Android proof manifest artifact {artifact_name}.path must be {expected_path}"
+            )
+        sha = artifact.get("sha256")
+        if not isinstance(sha, str) or "64-character lowercase sha256" not in sha:
+            errors.append(
+                f"Android proof manifest artifact {artifact_name}.sha256 must require sha256"
             )
 
 
@@ -363,10 +590,12 @@ def check_target(name: str) -> tuple[list[str], list[str]]:
     if name == "aosp":
         check_boot_transcript_schema(errors)
         check_aosp_product_glue(errors)
+        check_android_proof_templates(errors)
 
     missing_evidence = [path for path in spec.get("evidence", []) if not (ROOT / path).is_file()]
     for path in spec.get("evidence", []):
         blockers.extend(check_log_evidence(path, errors, strict=False))
+    blockers.extend(validate_manifest_evidence(name, include_missing=False))
     if missing_evidence:
         manifest = load_json(LOG_EVIDENCE_MANIFEST, [])
         missing_with_codes = []
@@ -387,29 +616,160 @@ def check_target(name: str) -> tuple[list[str], list[str]]:
 
 def target_report(name: str) -> dict:
     errors, blockers = check_target(name)
-    missing_evidence = [
-        path for path in TARGETS[name].get("evidence", []) if not (ROOT / path).is_file()
+    manifest_items = evidence_items_for_target(name)
+    missing_evidence = [item for item in manifest_items if not (ROOT / item["path"]).is_file()]
+    invalid_evidence = [
+        {"path": item["path"], "problems": validate_evidence_file(item)}
+        for item in manifest_items
+        if (ROOT / item["path"]).is_file() and validate_evidence_file(item)
     ]
-    manifest = load_json(LOG_EVIDENCE_MANIFEST, [])
+    log_manifest = load_json(LOG_EVIDENCE_MANIFEST, [])
     missing = []
-    for path in missing_evidence:
-        spec = manifest.get("logs", {}).get(path, {})
+    for item in missing_evidence:
+        path = item["path"]
+        spec = log_manifest.get("logs", {}).get(path, {})
         missing.append(
             {
                 "path": path,
                 "blocker_code": spec.get("blocker_code", "missing_external_evidence"),
-                "producer_command": spec.get("producer_command", ""),
-                "claim_boundary": spec.get("claim_boundary", ""),
+                "artifact": item.get("artifact", ""),
+                "capture_command": item.get("capture_command", spec.get("producer_command", "")),
+                "validation_command": item.get(
+                    "validation_command",
+                    f"python3 scripts/check_software_bsp.py {name} --require-evidence",
+                ),
+                "claim_boundary": item.get("claim_boundary", spec.get("claim_boundary", "")),
             }
         )
     return {
         "target": name,
         "scaffold_status": "FAIL" if errors else "PASS",
-        "evidence_status": "BLOCKED" if missing_evidence else ("FAIL" if errors else "PASS"),
+        "evidence_status": (
+            "BLOCKED" if missing_evidence else ("FAIL" if invalid_evidence or errors else "PASS")
+        ),
         "errors": errors,
         "blockers": blockers,
         "missing_evidence": missing,
+        "invalid_evidence": invalid_evidence,
     }
+
+
+def print_status(name: str) -> int:
+    report = target_report(name)
+    print(f"{name}: software BSP evidence status")
+    print(f"  scaffold: {report['scaffold_status']}")
+    print(f"  evidence: {report['evidence_status']}")
+    for error in report["errors"]:
+        print(f"  [SCAFFOLD-ERROR] {error}")
+    for item in evidence_items_for_target(name):
+        path = ROOT / item["path"]
+        state = "PRESENT" if path.is_file() else "MISSING"
+        print(f"  [{state}] {item.get('artifact', item['path'])}")
+        print(f"    path: {item['path']}")
+        print(f"    capture: {item.get('capture_command', '')}")
+        print(
+            "    validate: "
+            + item.get(
+                "validation_command",
+                f"python3 scripts/check_software_bsp.py {name} --require-evidence",
+            )
+        )
+        if not path.is_file():
+            print(f"    blocker: missing {item['path']}")
+        else:
+            for problem in validate_evidence_file(item):
+                print(f"    problem: {problem}")
+    if report["evidence_status"] != "PASS":
+        return 2
+    return 0 if report["scaffold_status"] == "PASS" else 1
+
+
+def capture_plan_commands(
+    name: str,
+    *,
+    buildroot: str | None,
+    linux: str | None,
+    aosp: str | None,
+    target_host: str | None,
+    qemu_smoke_cmd: str | None,
+    renode_smoke_cmd: str | None,
+) -> list[str]:
+    target = target_host or "TARGET"
+    if name == "buildroot":
+        tree = buildroot or "/path/to/buildroot"
+        return [
+            f"sw/buildroot/scripts/import-buildroot-external.sh --check {tree}",
+            f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} defconfig",
+            f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} image-manifest",
+            "HELLO_SMOKE_CMD='ssh "
+            + target
+            + " /usr/bin/hello-mmio-smoke' "
+            + f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} smoke",
+            "python3 scripts/check_software_bsp.py buildroot --require-evidence",
+        ]
+    if name == "linux":
+        tree = linux or "/path/to/linux"
+        return [
+            f"sw/linux/scripts/import-linux-bsp.sh --check {tree}",
+            f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} kernel-build",
+            f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} dtb-check",
+            "HELLO_SMOKE_CMD='ssh "
+            + target
+            + " /tmp/hello-mmio-smoke' "
+            + f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} smoke",
+            "python3 scripts/check_software_bsp.py linux --require-evidence",
+        ]
+    if name == "aosp":
+        tree = aosp or "/path/to/aosp"
+        commands = [
+            f"sw/aosp-device/import-aosp-device.sh --check {tree}",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} lunch",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} vendorimage",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} checkvintf",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} sepolicy-build",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} selinux-neverallow",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} cts-vts-plan",
+            f"sw/aosp-device/capture-aosp-evidence.sh {tree} cuttlefish-smoke",
+        ]
+        if qemu_smoke_cmd:
+            commands.append(
+                f"AOSP_QEMU_SMOKE_COMMAND={qemu_smoke_cmd!r} "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} qemu-smoke"
+            )
+        else:
+            commands.append(
+                "AOSP_QEMU_SMOKE_COMMAND='/exact/qemu-system-riscv64 smoke command' "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} qemu-smoke"
+            )
+        if renode_smoke_cmd:
+            commands.append(
+                f"AOSP_RENODE_SMOKE_COMMAND={renode_smoke_cmd!r} "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} renode-smoke"
+            )
+        else:
+            commands.append(
+                "AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' "
+                + f"sw/aosp-device/capture-aosp-evidence.sh {tree} renode-smoke"
+            )
+        commands.append("python3 scripts/check_software_bsp.py aosp --require-evidence")
+        return commands
+    raise ValueError(name)
+
+
+def print_capture_plan(args: argparse.Namespace) -> None:
+    names = TARGETS.keys() if args.target == "all" else [args.target]
+    for name in names:
+        print(f"{name}: capture/import plan")
+        for command in capture_plan_commands(
+            name,
+            buildroot=args.buildroot,
+            linux=args.linux,
+            aosp=args.aosp,
+            target_host=args.target_host,
+            qemu_smoke_cmd=args.qemu_smoke_cmd,
+            renode_smoke_cmd=args.renode_smoke_cmd,
+        ):
+            print(f"  {command}")
 
 
 def print_evidence_plan(name: str) -> None:
@@ -439,6 +799,40 @@ def print_evidence_plan(name: str) -> None:
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "status":
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", choices=["status"])
+        parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
+        parser.add_argument("--json", action="store_true")
+        args = parser.parse_args()
+        names = TARGETS.keys() if args.target == "all" else [args.target]
+        if args.json:
+            reports = [target_report(name) for name in names]
+            print(
+                json.dumps(
+                    {"schema": "openphone.software_bsp_status.v1", "targets": reports},
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 2 if any(report["evidence_status"] != "PASS" for report in reports) else 0
+        statuses = [print_status(name) for name in names]
+        return max(statuses) if statuses else 0
+
+    if len(sys.argv) > 1 and sys.argv[1] == "capture-plan":
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", choices=["capture-plan"])
+        parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
+        parser.add_argument("--buildroot")
+        parser.add_argument("--linux")
+        parser.add_argument("--aosp")
+        parser.add_argument("--target-host")
+        parser.add_argument("--qemu-smoke-cmd")
+        parser.add_argument("--renode-smoke-cmd")
+        args = parser.parse_args()
+        print_capture_plan(args)
+        return 0
+
     parser = argparse.ArgumentParser()
     parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
     parser.add_argument(
@@ -521,6 +915,17 @@ def main() -> int:
             print(f"{name} BSP external evidence blocked:")
             for blocker in blockers:
                 print(f"  - {blocker}")
+            for item in evidence_items_for_target(name):
+                if not (ROOT / item["path"]).is_file():
+                    print(f"  - missing {item['path']}")
+                    print(f"    capture: {item.get('capture_command', '')}")
+                    print(
+                        "    validate: "
+                        + item.get(
+                            "validation_command",
+                            f"python3 scripts/check_software_bsp.py {name} --require-evidence",
+                        )
+                    )
 
     return 1 if failed else 0
 

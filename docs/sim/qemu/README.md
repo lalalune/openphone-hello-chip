@@ -69,6 +69,11 @@ boundary:
 qemu_virt_reference_only_not_hello_chip_rtl
 ```
 
+The default OS smoke memory is `2G` because the Debian riscv64 installer initrd
+can panic with `No working init found` after initramfs unpacking fails on much
+smaller RAM sizes. Override with `QEMU_OS_MEMORY=...` only when intentionally
+testing the low-memory failure path.
+
 Validate the payload manifest, boot transcript, and reference-only boundary
 with:
 

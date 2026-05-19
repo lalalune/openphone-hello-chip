@@ -150,13 +150,20 @@ make chipyard-generator-check cpu-ap-scaffold-check cpu-ap-completion-gate
 Prepare the external generated AP path:
 
 ```sh
+make chipyard-external-generation-plan
 python3 scripts/check_chipyard_import_preflight.py --require-checkout
+python3 scripts/check_chipyard_verilator_preflight.py
+scripts/run_chipyard_openphone_verilator.sh
+python3 scripts/generate_chipyard_openphone.py
 make chipyard-generated-check
+make cpu-ap-dts-audit chipyard-generated-linux-contract-check
 ```
 
 Archive real transcripts only after the generated AP target has produced them:
 
 ```sh
+python3 scripts/capture_cpu_ap_evidence.py plan all --format shell
+scripts/capture_chipyard_linux_evidence.sh preflight
 python3 scripts/capture_cpu_ap_evidence.py intake opensbi-boot --source /path/to/opensbi.log --command '/exact/boot command'
 python3 scripts/capture_cpu_ap_evidence.py intake linux-boot --source /path/to/linux.log --command '/exact/boot command'
 python3 scripts/capture_cpu_ap_evidence.py intake trap-timer-irq --source /path/to/trap.log --command '/exact/test command'

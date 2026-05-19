@@ -37,7 +37,9 @@ areas:
           - rtl/interconnect/hello_linux_soc_contract.sv
           - verify/cocotb/hello_tiny_cpu_contract_tb.sv
           - verify/cocotb/test_tiny_cpu_execution.py
-        current_evidence: Tiny single-issue RV contract model supports only a small unprivileged instruction subset and halts on unsupported opcodes, fetch errors, and unaligned word accesses.
+        partial_closure_evidence:
+          - docs/rtl/cpu-config-selection.md (Chipyard Rocket RV64GC + SV39 + L1 I/D selection, wrapper layout under rtl/wrappers/, pin TODO)
+        current_evidence: Tiny single-issue RV contract model supports only a small unprivileged instruction subset and halts on unsupported opcodes, fetch errors, and unaligned word accesses. Selected v0 CPU config is documented in docs/rtl/cpu-config-selection.md; generated RTL not yet imported.
         blocking_gate: Linux-capable SoC, bootable firmware, and product claims must remain blocked while this stub is present.
         closure_evidence: Production RV64 integration with privileged mode, reset/interrupt/timer path, boot ROM handoff, memory map, generated DTS, and executable boot smoke evidence.
         work_order: Replace the tiny contract model with a production RV64 core integration and privileged boot path.
@@ -50,7 +52,13 @@ areas:
           - rtl/bootrom/hello_bootrom.sv
           - scripts/run_qemu.sh
           - scripts/run_renode.sh
-        current_evidence: Boot ROM exposes fixed readable words and a boot-vector contract, but pad-level RTL has no CLINT, PLIC-compatible target, MMU, cache, UART console, or real firmware entry path.
+        partial_closure_evidence:
+          - docs/arch/boot-rom-spec.md (reset vector, OTP layout, secure-boot stub algorithm, OpenSBI handoff ABI, debug-lock policy)
+          - fw/boot-rom/reset.S (executable RV64 reset stub jumping to OpenSBI entry)
+          - fw/boot-rom/Makefile (tools-checked build rule producing hello_boot_rom.bin/.hex/.dump)
+          - fw/boot-rom/linker.ld (4 KiB ROM aperture at 0x0000_1000)
+          - verify/cocotb/test_clint_timer_irq.py (CLINT timer/software-irq scaffold, skipped until CLINT lands)
+        current_evidence: Boot ROM exposes fixed readable words and a boot-vector contract; the executable reset stub now exists in fw/boot-rom/ and the OpenSBI handoff ABI is specified in docs/arch/boot-rom-spec.md. Pad-level RTL still has no CLINT, PLIC-compatible target, MMU, cache, UART console, or live firmware entry path.
         blocking_gate: QEMU/Renode semantic checks must not be treated as hello-chip boot validation.
         closure_evidence: Firmware ELF boots through the RTL-equivalent address map in simulation or emulation and emits a checked serial transcript.
         work_order: Define and verify a bootable CPU, timer, interrupt, memory, and console contract before claiming OS bring-up.
@@ -62,7 +70,9 @@ areas:
           - rtl/cpu/hello_cpu_subsystem_stub.sv
           - Makefile
           - scripts/run_rtl_check.sh
-        current_evidence: The executable model is still named as a stub and is included in normal RTL and synthesis source lists.
+        partial_closure_evidence:
+          - docs/rtl/cpu-config-selection.md (integration step 7 schedules the rename to hello_tiny_cpu_contract with a one-release alias)
+        current_evidence: The executable model is still named as a stub and is included in normal RTL and synthesis source lists; rename plan now documented but not yet executed.
         blocking_gate: Passing lint/synthesis must not imply that a production CPU subsystem exists.
         closure_evidence: Production-named CPU wrapper with any compatibility alias clearly documented as non-product scaffolding.
         work_order: Preserve the legacy hello_cpu_subsystem_stub wrapper only as a compatibility alias once a production-named CPU wrapper exists.
@@ -87,7 +97,10 @@ areas:
           - rtl/interconnect/hello_axi_lite_interconnect.sv
           - rtl/interconnect/hello_linux_soc_contract.sv
           - verify/cocotb/test_cpu_mem_intc_contract.py
-        current_evidence: Debug-MMIO top routes fixed device windows and a small internal DRAM array; Linux contract fabric routes only DRAM, DMA MMIO, and interrupt-controller windows.
+        partial_closure_evidence:
+          - verify/cocotb/test_mmio_decode_error.py (unmapped-address DECERR sweep for reads/writes and post-DECERR liveness)
+          - verify/cocotb/test_reset_domain_cleanup.py (post-reset register defaults and handshake-signal idle)
+        current_evidence: Debug-MMIO top routes fixed device windows and a small internal DRAM array; Linux contract fabric routes only DRAM, DMA MMIO, and interrupt-controller windows. Unmapped-MMIO DECERR sweep and reset-domain idle checks added as cocotb scaffolds.
         blocking_gate: Full SoC routing, ordering, coherency, and multi-master claims remain blocked.
         closure_evidence: Address map generated from the platform contract with protocol assertions, backpressure coverage, error response tests, and arbitration coverage across all masters.
         work_order: Add complete SoC address routing, ordering, and arbitration coverage beyond the current contract windows.
@@ -111,6 +124,10 @@ areas:
           - verify/formal/hello_soc_top_formal.sv
           - scripts/yosys_formal_top_structural.ys
           - scripts/run_formal.sh
+        partial_closure_evidence:
+          - verify/properties/axi_lite.sv (parametric AXI-Lite property pack ready for bind to debug bridge, interconnect, DRAM, DMA master, and interrupt-controller paths)
+          - verify/properties/README.md (bind usage and SymbiYosys harness instructions)
+          - verify/properties/dma_axil_bind.sv + verify/properties/dma_axil.sby (first concrete bind targeting the DMA master)
         current_evidence: Top formal proves a few structural facts with shallow BMC or Yosys check fallback; it does not use an AXI-Lite property set.
         blocking_gate: Formal pass must be reported as shallow structural coverage only.
         closure_evidence: AXI-Lite assume/assert coverage for valid-ready stability, response liveness under bounded fairness, unmapped DECERR paths, and independent read/write channel stalls.
@@ -134,6 +151,8 @@ areas:
           - rtl/interconnect/hello_linux_soc_contract.sv
           - verify/cocotb/test_cpu_mem_intc_contract.py
           - verify/formal/hello_dma_formal.sv
+        partial_closure_evidence:
+          - verify/cocotb/dma/test_dma_long_transfer.py (1 KiB transfer, partial-tail byte strobes, unaligned-programming error, completion IRQ, SLVERR propagation; not yet wired into make cocotb)
         current_evidence: DMA is a word-copy AXI-Lite master with status/error counters; pad-level top connects it to a 4 KiB internal DRAM array, not a production memory hierarchy.
         blocking_gate: DMA throughput, coherency, burst, cache interaction, and software-driver performance claims remain blocked.
         closure_evidence: Verified production memory target, long transfer tests, partial-beat behavior, backpressure permutations, coherency policy, interrupt completion, and error injection coverage.
@@ -146,6 +165,10 @@ areas:
           - verify/formal/hello_dma_formal.sv
           - verify/formal/hello_dma.sby
           - scripts/yosys_formal_dma.ys
+        partial_closure_evidence:
+          - verify/properties/axi_lite.sv (reusable AXI-Lite property pack: VALID/payload stability, response legality, bounded liveness, outstanding-transaction balance)
+          - verify/properties/dma_axil_bind.sv (bind harness wrapping hello_dma master ports)
+          - verify/properties/dma_axil.sby (SymbiYosys bmc depth 32 + prove depth 16 tasks)
         current_evidence: Formal depth is 12 and checks basic status and signal relationships, but not full transfer completion, liveness, backpressure stability, or all response/error interleavings.
         blocking_gate: Formal pass must not be described as full DMA correctness.
         closure_evidence: Bounded and induction-style proofs or exhaustive constrained tests for transfer progress, no double issue, response matching, error propagation, and clear/restart sequencing.
@@ -169,6 +192,9 @@ areas:
           - verify/cocotb/test_hello_npu.py
           - verify/verilator/test_npu_gemm.cpp
           - verify/formal/hello_npu_formal.sv
+        partial_closure_evidence:
+          - docs/arch/npu-microarch.md (Gemmini v0 selection, MMIO map, 64-byte descriptor format, tensor memory ABI, v0 op set, IRQ/error registers, CPU fallback contract, validated envelope)
+          - verify/cocotb/npu/test_npu_queue_stress.py (skipped scaffolds for descriptor queue stress, completion IRQ, unsupported-op status pending hello_npu_gemmini_wrapper RTL)
         current_evidence: NPU is an MMIO datapath with scalar ops and bounded scratch GEMM registers; it has no queue, descriptor fetch, tensor memory interface, backpressure, or integration with a production accelerator.
         blocking_gate: AI accelerator, throughput, model execution, and software fallback percentage claims remain blocked.
         closure_evidence: Selected accelerator microarchitecture or wrapped IP with descriptor ABI, memory interface, tensor layout, interrupts, driver contract, performance counters, and coverage reports.
@@ -205,6 +231,9 @@ areas:
           - rtl/display/hello_display.sv
           - rtl/top/hello_soc_top.sv
           - verify/cocotb/test_hello_display.py
+        partial_closure_evidence:
+          - arch/display.md "v0 reference panel" section (720x1280 MIPI-DSI selection and DCS init sequence summary)
+          - verify/cocotb/display/test_display_timing.py (hsync/vsync cadence under perfect framebuffer; fetched+underflow invariant under backpressuring framebuffer)
         current_evidence: Display has timing registers and a top-level SRAM-backed framebuffer read path, but no panel PHY, DSI bridge, format conversion pipeline, production underflow policy, or real panel init path.
         blocking_gate: Display subsystem pass must not imply real panel bring-up or production scanout bandwidth.
         closure_evidence: Framebuffer fetch with production memory QoS, underflow detection, pixel format coverage, mode programming, panel init, timing validation, and hardware-in-loop or cycle-accurate trace evidence.
@@ -217,6 +246,8 @@ areas:
           - rtl/display/hello_display.sv
           - verify/formal/hello_soc_top_formal.sv
           - scripts/run_formal.sh
+        partial_closure_evidence:
+          - verify/cocotb/display/test_display_timing.py (starved-framebuffer underflow counter check drives UNDERFLOW_COUNT to exactly active_pixels)
         current_evidence: Display behavior is covered by cocotb smoke tests and top structural formal only; no dedicated formal properties constrain timing, coordinates, IRQ cadence, or read handshakes.
         blocking_gate: Formal pass does not cover display correctness.
         closure_evidence: Assertions for hsync/vsync cadence, active window bounds, framebuffer address monotonicity, disabled-state behavior, unsupported formats, and read-ready stalls.
@@ -245,10 +276,15 @@ areas:
           - rtl/bootrom/hello_bootrom.sv
           - sw/bootrom/hello_qemu_firmware.S
           - scripts/run_qemu.sh
-        current_evidence: ROM returns identity/version words and a debug-visible handoff word. fw/boot-rom now builds a minimal executable RV64 reset scaffold when a local RISC-V toolchain is available.
-        blocking_gate: Firmware, secure boot, OpenSBI, and OS boot gates remain blocked until the scaffold is integrated into an RTL CPU reset path and covered by a transcript.
-        closure_evidence: Executable reset ROM is consumed by RTL or an equivalent emulator target, initializes the required machine state, validates the selected handoff address, and emits checked boot transcript evidence.
-        work_order: Integrate the reset ROM artifact into the CPU reset path and replace the fixed handoff with the selected firmware payload policy.
+        partial_closure_evidence:
+          - docs/arch/boot-rom-spec.md (reset vector, OTP layout, signature-verification stub algorithm, OpenSBI handoff ABI, debug-lock policy)
+          - fw/boot-rom/reset.S (executable RV64 reset stub: hart parking, CSR cleanup, trap shim, jr to OpenSBI entry)
+          - fw/boot-rom/linker.ld (ROM aperture at architectural reset vector 0x0000_1000)
+          - fw/boot-rom/Makefile (riscv64 cross-build with fail-closed tools-check)
+        current_evidence: Contract ROM still returns identity/version words. An executable v0 reset stub now exists under fw/boot-rom/, with build rule and a documented OpenSBI handoff ABI. The stub is not yet wired into any CPU wrapper or exercised under simulation.
+        blocking_gate: Firmware and OS boot gates remain blocked.
+        closure_evidence: Executable reset ROM initializes machine state, validates handoff address, and is covered by RTL or emulator boot transcript checks.
+        work_order: Replace the identity contract ROM with executable reset code that initializes M-mode state and hands off to OpenSBI or equivalent firmware.
   dram:
     current_posture: small_sram_backed_dram_aperture
     local_closures:

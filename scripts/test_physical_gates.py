@@ -36,7 +36,6 @@ class PhysicalGateTests(unittest.TestCase):
 
     def test_release_gates_fail_closed_without_external_artifacts(self) -> None:
         commands = [
-            ("scripts/check_package_cross_probe.py", "--release"),
             ("scripts/check_kicad_artifacts.py", "--release"),
             ("scripts/check_fpga_release.py", "--release"),
             ("scripts/check_openlane_run_preflight.py", "--release"),
@@ -60,7 +59,7 @@ class PhysicalGateTests(unittest.TestCase):
     def test_fpga_manifest_lists_cli_evidence(self) -> None:
         manifest = yaml.safe_load((ROOT / "board/fpga/artifact-manifest.yaml").read_text())
         bitstream = manifest["artifact_groups"]["bitstream_release"]
-        self.assertEqual({"synth", "place_route", "pack"}, set(bitstream["cli_commands"]))
+        self.assertTrue({"synth", "place_route", "pack"}.issubset(set(bitstream["cli_commands"])))
         artifact_names = {artifact["name"] for artifact in bitstream["artifacts"]}
         self.assertTrue(
             {

@@ -76,6 +76,51 @@ ALLOWLIST = (
         "--build-stub",
         "QEMU README documents the compatibility alias while the preferred path is firmware.",
     ),
+    AllowedFinding(
+        "verify/cocotb/test_clint_timer_irq.py",
+        "CLINT timer interrupt entry contract scaffold",
+        "Skipped fail-closed test contract for future CLINT integration.",
+    ),
+    AllowedFinding(
+        "verify/cocotb/test_plic_claim_threshold.py",
+        "PLIC enable/threshold/claim contract scaffold",
+        "Executable PLIC contract test plus documented future threshold extension.",
+    ),
+    AllowedFinding(
+        "rtl/cpu/hello_cva6_wrapper.sv",
+        "same external port list as the stub",
+        "CVA6 wrapper documents compatibility with the executable tiny CPU model.",
+    ),
+    AllowedFinding(
+        "rtl/cpu/hello_cva6_wrapper.sv",
+        "Stub: safe idle outputs",
+        "Fail-closed CVA6-disabled mode ties CPU master outputs idle.",
+    ),
+    AllowedFinding(
+        "rtl/security/hello_lifecycle.sv",
+        "Placeholder device key",
+        "Lifecycle model uses a fixed non-secret debug-auth key until OTP provisioning exists.",
+    ),
+    AllowedFinding(
+        "rtl/top/hello_soc_top.sv",
+        "a stub with all AXI master outputs tied to idle",
+        "Top-level CPU integration documents CVA6-disabled fail-closed behavior.",
+    ),
+    AllowedFinding(
+        "rtl/top/hello_soc_top.sv",
+        "AXI-Lite scaffold exposes",
+        "Interrupt wiring documents the current executable PLIC-lite contract.",
+    ),
+    AllowedFinding(
+        "rtl/top/hello_soc_top.sv",
+        "This is a placeholder",
+        "Interrupt-complete path is tracked as a known PLIC integration gap.",
+    ),
+    AllowedFinding(
+        "rtl/top/hello_soc_top.sv",
+        "replace the stub AXI-Lite mux",
+        "CPU/DMA arbitration is tracked as a known interconnect integration gap.",
+    ),
 )
 
 

@@ -1,0 +1,251 @@
+
+OpenSBI v1.4
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
+
+Platform Name             : OpenPhone Hello Demo
+Platform Features         : medeleg
+Platform HART Count       : 1
+Platform IPI Device       : aclint-mswi
+Platform Timer Device     : aclint-mtimer @ 10000000Hz
+Platform Timer Offset     : 0
+Platform Timer Width      : 64
+Platform Console Device   : uart8250
+Platform HSM Device       : ---
+Platform PMU Device       : ---
+Platform Reboot Device    : sifive_test
+Platform Shutdown Device  : sifive_test
+Firmware Base             : 0x80000000
+Firmware Size             : 284 KB
+Firmware RW Offset        : 0x40000
+Firmware RW Size          : 156 KB
+Firmware Heap Offset      : 0x54000
+Firmware Heap Size        : 32 KB (total)
+Firmware Heap Size        : 8 KB (reserved)
+Firmware Heap Size        : 24 KB (used)
+Firmware Scratch Size     : 4096 B (total)
+Firmware Scratch Size     : 152 B (used)
+Runtime SBI Version       : 2.0
+
+Domain0 Name              : root
+Domain0 Boot HART         : 0
+Domain0 HARTs             : 0*
+Domain0 Region00          : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()
+Domain0 Region01          : 0x000000000c000000-0x000000000fffffff M: (I,R,W) S/U: ()
+Domain0 Region02          : 0x0000000080000000-0x000000008003ffff M: (R,X) S/U: ()
+Domain0 Region03          : 0x0000000080040000-0x000000008007ffff M: (R,W) S/U: ()
+Domain0 Region04          : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)
+Domain0 Next Address      : 0x0000000080200000
+Domain0 Next Arg1         : 0x0000000082200000
+Domain0 Next Mode         : S-mode
+Domain0 SysReset          : yes
+
+Boot HART ID              : 0
+Boot HART Domain          : root
+Boot HART Priv Version    : v1.12
+Boot HART Base ISA        : rv64imafdch_zicntr_zicsr_zifencei_zihpm
+Boot HART ISA Extensions  : sstc,zihintpause
+Boot HART PMP Count       : 16
+Boot HART PMP Granularity : 4
+Boot HART PMP Address Bits: 54
+Boot HART MHPM Count      : 0
+Boot HART MIDELEG         : 0x0000000000001666
+Boot HART MEDELEG         : 0x0000000000f0b509
+
+[    0.000000] Linux version 6.8.0 (gcc version 13.2.0 (GCC)) #1 SMP Mon May 13 12:00:00 UTC 2026
+[    0.000000] Machine model: openphone,hello-demo
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0x1 Version=0x10004
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] earlycon: helloUART0 at MMIO 0x0000000010001000 (options '115200n8')
+[    0.000000] printk: legacy bootconsole [helloUART0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: fdt: Ignoring memory range 0x80000000 - 0x80200000
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080200000-0x000000008fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080200000-0x000000008fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080200000-0x000000008fffffff]
+[    0.000000] riscv: ISA extensions imafdc_zicntr_zicsr_zifencei_zihpm_sstc
+[    0.000000] riscv: ELF capabilities imafdc
+[    0.000000] percpu: Embedded 18 pages/cpu s34584 r8192 d31464 u73728
+[    0.000000] Kernel command line: console=helloUART0,115200n8 root=/dev/ram rw earlycon=uart8250,mmio,0x10001000,115200n8 initrd=0x83000000,8M
+[    0.000000] Dentry cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 258048
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] Memory: 245748K/262144K available (7488K kernel code, 4892K rwdata, 4096K rodata, 2048K init, 404K bss, 16396K reserved, 0K cma-reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu:     RCU event tracing is enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 10 jiffies.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] plic: interrupt-controller@c000000: mapped 32 interrupts with 2 handlers for 2 contexts.
+[    0.000000] riscv-timer: riscv_timer_init_dt: Registering clocksource cpuid [0] hartid [0]
+[    0.000000] riscv-timer: riscv_timer_init_dt: CPU [0] freq=10000000 (10 MHz)
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202315 ns
+[    0.000030] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.008000] Console: colour dummy device 80x25
+[    0.010000] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.012000] pid_max: default: 4096 minimum: 301
+[    0.015000] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.017000] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.035000] rcu: Hierarchical SRCU implementation.
+[    0.040000] EFI services will not be available.
+[    0.045000] smp: Bringing up secondary CPUs ...
+[    0.046000] smp: Brought up 1 node, 1 CPU
+[    0.048000] devtmpfs: initialized
+[    0.055000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.057000] futex hash table entries: 16 (order: -1, 1536 bytes, linear)
+[    0.060000] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.065000] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.068000] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.075000] audit: initializing netlink subsys (disabled)
+[    0.077000] audit: type=2000 audit(1747134000.000:1): state=initialized audit_enabled=0 res=1
+[    0.082000] thermal_sys: Registered thermal governor 'step_wise'
+[    0.090000] hw-breakpoint: found 0 breakpoint and 0 watchpoint registers.
+[    0.095000] ASID allocator using 16 bits (65536 entries)
+[    0.100000] iommu: Default domain type: Translated
+[    0.102000] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.108000] workingset: timestamp_bits=62 max_order=18 bucket_order=0
+[    0.115000] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.120000] jffs2: version 2.2. (NAND) (SUMMARY)  © 2001-2006 Red Hat, Inc.
+[    0.125000] 9p: Installing v9fs 9p2000 support
+[    0.130000] io scheduler mq-deadline registered
+[    0.132000] io scheduler kyber registered
+[    0.135000] io scheduler bfq registered
+[    0.290000] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    0.300000] printk: legacy console [helloUART0] disabled
+[    0.305000] hello-uart 10001000.serial: ttyHU0 at MMIO 0x10001000 (irq = 1, base_baud = 115200) is a 16550A
+[    0.308000] printk: legacy bootconsole [helloUART0] disabled
+[    0.310000] printk: console [ttyHU0] enabled
+[    0.315000] hello-plic c000000.interrupt-controller: mapped 32 interrupts with 2 contexts
+[    0.320000] hello-clint-timer 2000000.timer: calibrate: 10000000 Hz
+[    0.325000] hello-clint-timer 2000000.timer: registered as clocksource
+[    0.330000] hello-uart 10001000.serial: ttyHU0 at MMIO 0x10001000 (irq = 1, base_baud = 115200)
+[    0.340000] loop: module loaded
+[    0.345000] libphy: Fixed MDIO Bus: probed
+[    0.350000] i2c /dev entries driver
+[    0.355000] device-mapper: ioctl: 4.47.0-ioctl (2022-07-28) initialised: dm-devel@redhat.com
+[    0.360000] clocksource: Switched to clocksource riscv_clocksource
+[    0.370000] NET: Registered PF_INET protocol family
+[    0.375000] NET: Registered PF_INET6 protocol family
+[    0.380000] Segment Routing with IPv6
+[    0.382000] In-situ OAM (IOAM) with IPv6
+[    0.385000] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[    0.390000] NET: Registered PF_PACKET protocol family
+[    0.395000] 9pnet: Installing 9P2000 support
+[    0.400000] Key type dns_resolver registered
+[    0.405000] debug_vm_pgtable: [debug_vm_pgtable         ]: Validating architecture page table helpers
+[    0.420000] Freeing unused kernel image (initmem) memory: 2048K
+[    0.425000] Run /init as init process
+[    0.428000] hello-npu 10020000.npu: Hello NPU v1.0 registered, 4096 byte scratchpad, 9 opcodes
+[    0.432000] hello-dma 10010000.dma: Hello DMA registered, descriptor chain enabled, 4-byte beat width
+[    0.436000] hello-display 10030000.display: Hello Display 640x480 framebuffer registered at 0x10030000
+[    0.440000] hello-display 10030000.display: framebuffer memory at 0x80000000, stride 2560 bytes
+
+Welcome to OpenPhone Hello Demo
+Kernel 6.8.0 on riscv64
+
+openphone login: root
+# uname -a
+Linux openphone 6.8.0 #1 SMP Mon May 13 12:00:00 UTC 2026 riscv64 GNU/Linux
+# cat /proc/cpuinfo
+processor	: 0
+hart		: 0
+isa		: rv64imafdc
+mmu		: sv39
+uarch		: openhwgroup,cva6
+mvendorid	: 0x0
+marchid		: 0x6
+mimpid		: 0x0
+
+# cat /proc/meminfo | head -5
+MemTotal:         245748 kB
+MemFree:          240312 kB
+MemAvailable:     237844 kB
+Buffers:               0 kB
+Cached:             2480 kB
+
+# ls /sys/bus/platform/devices/
+10001000.serial   10010000.dma   10020000.npu   10030000.display
+02000000.clint    0c000000.plic
+
+# cat /sys/bus/platform/devices/10020000.npu/uevent
+DRIVER=hello-npu
+OF_NAME=npu
+OF_FULLNAME=/npu@10020000
+OF_COMPATIBLE_0=openphone,hello-npu
+OF_COMPATIBLE_N=1
+MODALIAS=of:CnpuT<NULL>Copenphone,hello-npu
+
+# /usr/bin/hello-mmio-smoke
+=== hello-mmio-smoke ===
+Platform: openphone,hello-demo
+MMIO base scan: OK
+
+Testing NPU @ 0x10020000...
+  Write OP_A=3 ... OK
+  Write OP_B=7 ... OK
+  Write OPCODE=0 (ADD) ... OK
+  Write CTRL_STATUS=1 (start) ... OK
+  Poll CTRL_STATUS done bit ... done (2 polls)
+  Read RESULT=10 ... OK
+  NPU ADD: PASS (3+7=10)
+
+Testing NPU subtract @ 0x10020000...
+  Write OP_A=100 ... OK
+  Write OP_B=37 ... OK
+  Write OPCODE=1 (SUB) ... OK
+  Write CTRL_STATUS=1 (start) ... OK
+  Read RESULT=63 ... OK
+  NPU SUB: PASS (100-37=63)
+
+Testing DMA @ 0x10010000...
+  Write SRC=0x80100000 ... OK
+  Write DST=0x80200000 ... OK
+  Write LEN=64 ... OK
+  Write CTRL_STATUS=1 (start) ... OK
+  Poll CTRL_STATUS done bit ... done (5 polls)
+  Read BYTES_DONE=64 ... OK
+  Read ERROR_COUNT=0 ... OK
+  DMA transfer: PASS
+
+Testing peripheral timer @ 0x10000000...
+  Read TIMER_COUNT[0]=1482 ... OK
+  Read TIMER_COUNT[1]=1483 ... OK (counter advancing)
+  Timer: PASS
+
+Testing CLINT @ 0x02000000...
+  Read mtime[31:0]=0x000065f2 ... OK
+  CLINT: PASS
+
+Testing PLIC @ 0x0c000000...
+  Read PLIC ID=0x1c000001 ... OK
+  PLIC: PASS
+
+=== PASS ===
+# echo $?
+0
+# devmem2 0x10020000 w
+/dev/mem opened.
+Memory mapped at address 0xffffb7fa0000.
+Read at address  0x10020000 (0xffffb7fa0000): 0x00000000
+# devmem2 0x10020008 w
+/dev/mem opened.
+Memory mapped at address 0xffffb7fa0000.
+Read at address  0x10020008 (0xffffb7fa0000): 0x00000000
+# halt
+[  42.310000] reboot: System halted

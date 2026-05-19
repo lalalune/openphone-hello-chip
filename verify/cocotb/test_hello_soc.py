@@ -191,6 +191,52 @@ async def npu_scratchpad_gemm_matches_golden_model(dut):
 
 
 @cocotb.test()
+async def npu_descriptor_streams_tensor_from_dram(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    a = [[1, -2, 3], [4, 5, -6]]
+    b = [[7, -8], [9, 10], [-11, 12]]
+    tensor = bytes(value & 0xFF for row in a for value in row) + bytes(
+        b[row][col] & 0xFF for row in range(3) for col in range(2)
+    )
+    for index in range(3):
+        await write32(
+            dut,
+            0x8000_0200 + index * 4,
+            int.from_bytes(tensor[index * 4 : index * 4 + 4], "little"),
+        )
+
+    await write32(dut, 0x8000_0100, 8 | (1 << 8) | (12 << 24))
+    await write32(dut, 0x8000_0104, 0x8000_0200)
+    await write32(dut, 0x8000_0108, 0)
+    await write32(dut, 0x8000_010C, 0)
+
+    await write32(dut, 0x1002_005C, 1)
+    await write32(dut, 0x1002_0020, 2 | (2 << 8) | (3 << 16))
+    await write32(dut, 0x1002_0024, 0 | (6 << 8) | (12 << 16))
+    await write32(dut, 0x1002_0028, 3 | (2 << 8) | (8 << 16))
+    await write32(dut, 0x1002_0040, 0x8000_0100)
+    await write32(dut, 0x1002_0044, 1)
+    await write32(dut, 0x1002_0048, 0)
+    await write32(dut, 0x1002_0030, 1)
+    await write32(dut, 0x1002_000C, 1)
+
+    assert await poll_done(dut, 0x1002_000C, cycles=160) == 0x2
+    assert await read32(dut, 0x1002_0048) == 1
+    assert await read32(dut, 0x1002_004C) == 0x2
+    assert await read32(dut, 0x1002_0064) == 28
+
+    observed = []
+    for row in range(2):
+        observed_row = []
+        for col in range(2):
+            observed_row.append(s32(await read32(dut, 0x1002_0080 + 12 + (row * 2 + col) * 4)))
+        observed.append(observed_row)
+    assert observed == golden_gemm_s8(a, b)
+
+
+@cocotb.test()
 async def reset_unmapped_and_clear_edges(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     await reset(dut)

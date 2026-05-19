@@ -9,6 +9,7 @@ aosp_dir=${AOSP_DIR:-}
 aosp_shell=${AOSP_SHELL:-bash}
 aosp_product=${AOSP_PRODUCT:-openphone_ai_soc-userdebug}
 aosp_cuttlefish_args=${AOSP_CUTTLEFISH_ARGS:---cpus=4 --memory_mb=8192 --gpu_mode=none}
+aosp_cuttlefish_launcher=${AOSP_CUTTLEFISH_LAUNCHER:-}
 aosp_adb_timeout_seconds=${AOSP_ADB_TIMEOUT_SECONDS:-180}
 run_cuttlefish=0
 run_cts=0
@@ -101,9 +102,43 @@ json_bool() {
 	fi
 }
 
-host_requirements_json() {
-	python3 - "$host_os" "$host_arch" "$run_cuttlefish" "$run_qemu" "$run_renode" <<'PY'
+linux_requirements_json() {
+	python3 - <<'PY'
 import json
+
+print(json.dumps([
+    "Linux host with hardware virtualization enabled",
+    "AOSP_DIR set to an AOSP checkout containing build/envsetup.sh and device/",
+    "/dev/kvm present and readable/writable by the running user",
+    "repo and adb available on PATH",
+    "launch_cvd or cvd available on PATH or under AOSP_DIR/out/host/linux-x86/bin",
+    "user in kvm/cvdnetwork/render groups, or equivalent host permissions",
+], indent=2))
+PY
+}
+
+handoff_commands_json() {
+	python3 - <<'PY'
+import json
+
+print(json.dumps([
+    "python3 scripts/check_aosp_linux_preflight.py --write-report",
+    "AOSP_DIR=$AOSP_DIR scripts/run_aosp_linux_handoff.sh --build-only",
+    "sw/aosp-device/import-aosp-device.sh --check \"$AOSP_DIR\"",
+    "make aosp-bsp-check",
+    "AOSP_DIR=$AOSP_DIR scripts/boot_android_simulator.sh --run-cuttlefish --run-cts --run-vts --run-qemu --run-renode",
+    "python3 scripts/check_android_sim_boot.py",
+    "python3 scripts/check_software_bsp.py aosp --require-evidence",
+], indent=2))
+PY
+}
+
+host_requirements_json() {
+	python3 - "$host_os" "$host_arch" "$run_cuttlefish" "$run_qemu" "$run_renode" "${aosp_dir:-}" <<'PY'
+import json
+import os
+from pathlib import Path
+import subprocess
 import shutil
 import sys
 
@@ -111,12 +146,56 @@ host_os, host_arch = sys.argv[1], sys.argv[2]
 run_cuttlefish = sys.argv[3] == "1"
 run_qemu = sys.argv[4] == "1"
 run_renode = sys.argv[5] == "1"
+aosp_dir_text = sys.argv[6]
+aosp_dir = Path(aosp_dir_text).expanduser().resolve() if aosp_dir_text else None
 missing = []
 if host_os != "Linux":
     missing.append("Linux host required for local Android virtual-device launches")
-if run_cuttlefish and host_os == "Linux" and not any(shutil.which(tool) for tool in ("launch_cvd", "cvd")):
-    missing.append("Cuttlefish launcher not found on PATH")
-if run_cuttlefish and host_os == "Linux" and shutil.which("adb") is None:
+if aosp_dir is None:
+    missing.append("AOSP_DIR is not set")
+else:
+    if not (aosp_dir / "build/envsetup.sh").is_file():
+        missing.append(f"{aosp_dir}/build/envsetup.sh is missing")
+    if not (aosp_dir / "device").is_dir():
+        missing.append(f"{aosp_dir}/device is missing")
+kvm = Path("/dev/kvm")
+if not kvm.exists():
+    missing.append("/dev/kvm is missing")
+elif not os.access(kvm, os.R_OK | os.W_OK):
+    missing.append("/dev/kvm is not readable and writable by this user")
+cuttlefish_candidates = ["launch_cvd", "cvd"]
+cuttlefish_found = any(shutil.which(tool) for tool in cuttlefish_candidates)
+if not cuttlefish_found and aosp_dir is not None:
+    cuttlefish_found = any(
+        (aosp_dir / "out/host/linux-x86/bin" / tool).exists()
+        for tool in cuttlefish_candidates
+    )
+if run_cuttlefish and not cuttlefish_found:
+    missing.append(
+        "Cuttlefish launcher not found; expected launch_cvd or cvd on PATH "
+        "or under AOSP_DIR/out/host/linux-x86/bin"
+    )
+repo_path = shutil.which("repo")
+if repo_path is None:
+    missing.append("repo not found on PATH")
+else:
+    try:
+        repo_version = subprocess.run(
+            [repo_path, "--version"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        missing.append(f"repo launcher at {repo_path} could not run --version")
+    else:
+        if repo_version.returncode != 0:
+            missing.append(f"repo launcher at {repo_path} failed --version")
+        elif "<repo not installed>" in repo_version.stdout:
+            missing.append(f"repo launcher found at {repo_path}, but repo is not installed")
+if run_cuttlefish and shutil.which("adb") is None:
     missing.append("adb not found on PATH")
 if run_qemu and shutil.which("qemu-system-riscv64") is None:
     missing.append("qemu-system-riscv64 not found on PATH")
@@ -159,6 +238,8 @@ write_report() {
 	reason=$2
 	next=$3
 	host_requirements=$(host_requirements_json)
+	linux_requirements=$(linux_requirements_json)
+	handoff_commands=$(handoff_commands_json)
 	required_evidence=$(evidence_json full)
 	attempted_evidence=$(evidence_json build)
 	if [ "$require_full_evidence" -eq 1 ]; then
@@ -184,6 +265,8 @@ write_report() {
   "required_evidence": $required_evidence,
   "attempted_evidence": $attempted_evidence,
   "host_requirements": $host_requirements,
+  "linux_requirements": $linux_requirements,
+  "handoff_commands": $handoff_commands,
   "claim_boundary": "Android virtual-device evidence is software/reference evidence only; it is not hello-chip hardware ABI proof, CDD compliance, GMS certification, or a full Android compatibility claim."
 }
 EOF
@@ -245,6 +328,7 @@ capture_aosp_shell() {
 		set +e
 		env AOSP_PRODUCT="$aosp_product" \
 			AOSP_CUTTLEFISH_ARGS="$aosp_cuttlefish_args" \
+			AOSP_CUTTLEFISH_LAUNCHER="$aosp_cuttlefish_launcher" \
 			AOSP_ADB_TIMEOUT_SECONDS="$aosp_adb_timeout_seconds" \
 			"$aosp_shell" -lc "$command_script"
 		rc=$?
@@ -357,9 +441,21 @@ if [ "$run_cuttlefish" -eq 1 ]; then
 		'source build/envsetup.sh &&
 			lunch "$AOSP_PRODUCT" >/dev/null &&
 			echo "openphone_ai_soc" &&
-			cleanup() { stop_cvd >/dev/null 2>&1 || true; } &&
+			cleanup() { stop_cvd >/dev/null 2>&1 || cvd stop >/dev/null 2>&1 || true; } &&
 			trap cleanup EXIT INT TERM &&
-			launch_cvd $AOSP_CUTTLEFISH_ARGS -daemon &&
+			if [ -n "$AOSP_CUTTLEFISH_LAUNCHER" ]; then
+				cuttlefish_launcher=$AOSP_CUTTLEFISH_LAUNCHER
+			elif command -v launch_cvd >/dev/null 2>&1; then
+				cuttlefish_launcher=launch_cvd
+			else
+				cuttlefish_launcher=cvd
+			fi &&
+			echo "CUTTLEFISH_LAUNCHER=$cuttlefish_launcher" &&
+			if [ "$cuttlefish_launcher" = cvd ]; then
+				cvd start $AOSP_CUTTLEFISH_ARGS --daemon
+			else
+				"$cuttlefish_launcher" $AOSP_CUTTLEFISH_ARGS -daemon
+			fi &&
 			deadline=$((SECONDS + AOSP_ADB_TIMEOUT_SECONDS)) &&
 			until adb get-state >/dev/null 2>&1; do
 				if [ "$SECONDS" -ge "$deadline" ]; then

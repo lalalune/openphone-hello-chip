@@ -70,10 +70,14 @@ def main() -> int:
         )
         return 0
 
-    missing = rel(GENERATED_MANIFEST)
+    generated_detail = (
+        f"generated manifest present: {rel(GENERATED_MANIFEST)}"
+        if GENERATED_MANIFEST.is_file()
+        else f"missing generated manifest: {rel(GENERATED_MANIFEST)}"
+    )
     print(
         "STATUS: BLOCKED cpu_ap.completion_gate - no real RV64GC/Linux AP completion claim; "
-        f"Linux boot evidence is absent or incomplete ({missing})"
+        f"Linux boot evidence is absent or incomplete ({generated_detail})"
     )
     errors: list[str] = []
     evidence_manifest = load_evidence_manifest(errors)

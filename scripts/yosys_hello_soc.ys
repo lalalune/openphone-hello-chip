@@ -6,6 +6,8 @@ read_verilog -sv rtl/peripherals/hello_peripherals.sv
 read_verilog -sv rtl/dma/hello_dma.sv
 read_verilog -sv rtl/npu/hello_npu.sv
 read_verilog -sv rtl/display/hello_display.sv
+read_verilog -sv rtl/cpu/hello_cva6_wrapper.sv
+read_verilog -sv rtl/cpu/hello_cpu_axi_bridge.sv
 read_verilog -sv rtl/cpu/hello_cpu_subsystem_stub.sv
 read_verilog -sv rtl/interconnect/hello_axi_lite_interconnect.sv
 read_verilog -sv rtl/memory/hello_axi_lite_dram.sv

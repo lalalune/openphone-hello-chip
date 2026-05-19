@@ -6,10 +6,10 @@ blocked_gates:
   pd_release:
     blocked: true
     evidence_manifest: pd/signoff/manifest.yaml
-    reason: Routed PD closure artifacts are not archived.
+    reason: Routed PD closure artifacts are archived, but antenna and post-route timing/DRV closure remain non-clean in the selected run.
     unblock_requires:
-      - Pass scripts/check_pd_signoff.py against one complete routed run.
-      - Archive selected PDK, corner, tool-version, report, and waiver evidence.
+      - Pass scripts/check_pd_closure.py against one complete routed run with zero antenna, timing, and DRV violations.
+      - Replace antenna/STA waivers with release-clean signoff reports.
   tapeout_release:
     blocked: true
     evidence_manifest: pd/signoff/manifest.yaml
@@ -20,10 +20,10 @@ blocked_gates:
   board_fabrication_release:
     blocked: true
     evidence_manifest: docs/manufacturing/release-manifest.yaml
-    reason: Board fabrication package, KiCad, DFM, SI/PI, and first-article evidence is missing.
+    reason: Board fabrication package has draft KiCad exports and local review notes, but vendor-derived footprint, assembly DFM signoff, SI/PI signoff, and first-article evidence are not complete.
     unblock_requires:
       - Release a KiCad schematic/PCB package from vendor footprint data.
-      - Archive ERC, DRC, Gerber, drill, BOM, position, DFM, current-limit, and first-article evidence.
+      - Archive release ERC, DRC, Gerber, drill, BOM, position, DFM, current-limit, and first-article evidence that supersedes the local drafts.
       - Pass scripts/check_kicad_artifacts.py and scripts/check_manufacturing_artifacts.py without release blockers.
 readiness:
   si_pi:

@@ -8,6 +8,9 @@ module hello_npu_formal(input logic clk);
     (* anyseq *) logic [31:0] wdata;
     logic [31:0] rdata;
     logic irq;
+    logic m_axil_arvalid;
+    logic [31:0] m_axil_araddr;
+    logic m_axil_rready;
     logic [3:0] opcode_shadow = 4'h0;
     logic [31:0] op_a_shadow = 32'h0;
     logic [31:0] op_b_shadow = 32'h0;
@@ -21,7 +24,14 @@ module hello_npu_formal(input logic clk);
         .addr(addr),
         .wdata(wdata),
         .rdata(rdata),
-        .irq(irq)
+        .irq(irq),
+        .m_axil_arvalid(m_axil_arvalid),
+        .m_axil_arready(1'b0),
+        .m_axil_araddr(m_axil_araddr),
+        .m_axil_rvalid(1'b0),
+        .m_axil_rready(m_axil_rready),
+        .m_axil_rdata(32'h0),
+        .m_axil_rresp(2'b00)
     );
 
     initial rst_n = 1'b0;
@@ -67,6 +77,11 @@ module hello_npu_formal(input logic clk);
 
         if (rst_n && addr == 6'h07) begin
             assert(rdata[31:7] == 25'h0);
+        end
+
+        if (rst_n) begin
+            assert(!m_axil_arvalid);
+            assert(!m_axil_rready);
         end
 
         if (rst_n && valid && write && addr == 6'h04) begin

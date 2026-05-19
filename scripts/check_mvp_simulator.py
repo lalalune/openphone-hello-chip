@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "build/reports/mvp_simulator.json"
+REPORT = Path(os.environ.get("MVP_SIMULATOR_REPORT", ROOT / "build/reports/mvp_simulator.json"))
 REQUIRED_STEPS = {
     "local_rtl_sim_ladder",
     "chipyard_generated_ap",
@@ -21,9 +22,16 @@ REQUIRED_STEPS = {
 }
 
 
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def main() -> int:
     if not REPORT.is_file():
-        print(f"MVP simulator check blocked: missing {REPORT.relative_to(ROOT)}")
+        print(f"MVP simulator check blocked: missing {display_path(REPORT)}")
         print("Next step: python3 scripts/run_mvp_simulator.py")
         return 2
     try:
@@ -35,6 +43,8 @@ def main() -> int:
     errors: list[str] = []
     if data.get("schema") != "openphone.mvp_simulator.v1":
         errors.append("schema mismatch")
+    if data.get("status") not in {"pass", "blocked", "fail"}:
+        errors.append("status must be pass, blocked, or fail")
     boundary = data.get("claim_boundary", "")
     if "not a fabrication or phone-class performance claim" not in boundary:
         errors.append(
@@ -54,10 +64,26 @@ def main() -> int:
         errors.append("reference_qemu_virt_os_boot_claim must be bool")
     if not isinstance(data.get("reference_android_os_boot_claim"), bool):
         errors.append("reference_android_os_boot_claim must be bool")
+    if data.get("qemu_virt_reference_only") is not True:
+        errors.append("qemu_virt_reference_only must be true")
+    if data.get("renode_reference_only") is not True:
+        errors.append("renode_reference_only must be true")
     if data.get("os_boot_claim") != data.get("on_chip_os_boot_claim"):
         errors.append("os_boot_claim must remain an alias for on_chip_os_boot_claim")
     if not isinstance(data.get("best_executable_evidence"), str):
         errors.append("best_executable_evidence must be string")
+    if data.get("best_executable_evidence") in {
+        "qemu_os_boot",
+        "qemu_firmware_smoke",
+        "renode_firmware_smoke",
+        "android_sim_boot",
+        "android_sim_report_check",
+    }:
+        errors.append(
+            "best_executable_evidence must not name reference-only QEMU/Renode/Android results"
+        )
+    if not isinstance(data.get("best_reference_evidence"), str):
+        errors.append("best_reference_evidence must be string")
     if data.get("best_executable_tier") not in {
         "os_boot",
         "os_prereq",
@@ -66,6 +92,12 @@ def main() -> int:
         "none",
     }:
         errors.append("best_executable_tier is invalid")
+    if data.get("best_reference_tier") not in {
+        "os_boot",
+        "firmware_smoke",
+        "none",
+    }:
+        errors.append("best_reference_tier is invalid")
     if not isinstance(data.get("remaining_blockers"), list):
         errors.append("remaining_blockers must be list")
     if not isinstance(data.get("blockers_to_on_chip_os_boot"), list):
@@ -79,8 +111,8 @@ def main() -> int:
         results = []
     seen = {item.get("name") for item in results if isinstance(item, dict)}
     missing = sorted(REQUIRED_STEPS - seen)
-    if missing and data.get("status") == "pass":
-        errors.append("pass report missing required steps: " + ", ".join(missing))
+    if missing:
+        errors.append("report missing required steps: " + ", ".join(missing))
     for index, item in enumerate(results):
         if not isinstance(item, dict):
             errors.append(f"results[{index}] must be an object")
@@ -91,6 +123,7 @@ def main() -> int:
             errors.append(f"results[{index}] tier is invalid")
         if item.get("scope") not in {
             "qemu_virt_reference",
+            "renode_reference",
             "android_reference",
             "our_chip_prereq",
             "our_chip_os_boot",

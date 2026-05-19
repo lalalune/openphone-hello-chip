@@ -228,20 +228,26 @@ def cocotb_status() -> Status:
     target_names = [
         "hello_chip_top_test_hello_chip",
         "hello_linux_soc_contract_test_cpu_mem_intc_contract",
+        "hello_npu_test_hello_npu",
         "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
     ]
     results = []
+    missing_names = []
     for name in target_names:
         canonical = ROOT / f"build/reports/cocotb/{name}.xml"
         legacy = ROOT / f"verify/cocotb/results/{name}.xml"
-        results.append(canonical if canonical.is_file() else legacy)
-    missing = [rel(path) for path in results if not path.is_file()]
-    if missing:
+        if canonical.is_file():
+            results.append(canonical)
+        elif legacy.is_file():
+            results.append(legacy)
+        else:
+            missing_names.append(name)
+    if missing_names:
         return Status(
             "cocotb",
             BLOCK,
-            "missing per-target cocotb artifact(s): " + ", ".join(missing),
-            "make cocotb cocotb-contract cocotb-cpu",
+            "missing per-target cocotb artifact(s): " + ", ".join(missing_names),
+            "make cocotb cocotb-npu cocotb-contract cocotb-cpu",
             "regen_required",
         )
     for result in results:
@@ -251,7 +257,7 @@ def cocotb_status() -> Status:
                 "cocotb",
                 FAIL,
                 f"{rel(result)} contains failures/errors or no testcase",
-                "make cocotb cocotb-contract cocotb-cpu",
+                "make cocotb cocotb-npu cocotb-contract cocotb-cpu",
                 "test_fail",
             )
     return Status(
@@ -353,13 +359,18 @@ def renode_status() -> Status:
 
 
 def benchmark_status() -> Status:
-    report = ROOT / "benchmarks/results/pipeline-check/report.json"
+    host_smoke = ROOT / "benchmarks/results/final-macbook-host-smoke/report.json"
+    report = (
+        host_smoke
+        if host_smoke.is_file()
+        else ROOT / "benchmarks/results/pipeline-check/report.json"
+    )
     if not report.is_file():
         return Status(
             "benchmarks",
             BLOCK,
-            "missing regenerated pipeline dry-run report",
-            "make benchmarks-dry-run",
+            "missing regenerated benchmark report",
+            "make benchmarks-dry-run or run the final-macbook-host-smoke benchmark set",
             "regen_required",
         )
     data = json.loads(report.read_text())
@@ -425,7 +436,7 @@ def benchmark_status() -> Status:
     return Status(
         "benchmarks",
         PASS,
-        "benchmark report records executed results with no blocked entries",
+        f"{rel(report)} records executed results with no blocked entries",
         "none",
         "generated_artifact",
     )

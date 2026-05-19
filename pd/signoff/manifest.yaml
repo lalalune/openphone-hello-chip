@@ -4,22 +4,37 @@ status: required_for_pd_release
 run_manifest_schema: pd/signoff/run-manifest.schema.json
 next_commands:
   manifest_preflight: python3 scripts/check_pd_signoff.py --manifest-only
+  si_pi_pdn_local_evidence: python3 scripts/check_si_pi_pdn_evidence.py
   local_input_preflight: python3 scripts/check_pd_preflight.py --dry-run-commands --config pd/openlane/config.sky130.json
+  local_exploratory_run: scripts/run_openlane.sh --exploratory
+  local_release_run: scripts/run_openlane.sh --release
+  latest_closure_metrics: python3 scripts/check_pd_closure.py --run pd/openlane/runs/RUN_2026-05-18_05-41-42
+  antenna_metadata_gate: python3 scripts/check_antenna_metadata.py --release
   release_gate: python3 scripts/check_pd_signoff.py
   product_release_gate: python3 scripts/product_check.py --release
 runner:
   openlane_image: ghcr.io/efabless/openlane2:2.4.0.dev1
   openlane_image_digest: sha256:bcaabac3b114dfb9e739af9f16b53a79ce1b744bcdb3ad4fc476c961581fe5d5
   require_pinned_runner_for_release: true
+openlane_configs:
+  release:
+    - pd/openlane/config.json
+    - pd/openlane/config.sky130.json
+    - pd/openlane/config.gf180.json
+  exploratory:
+    - pd/openlane/config.sky130.exploratory.json
+    - pd/openlane/config.gf180.exploratory.json
+    - pd/openlane/config.pd-smoke.sky130.json
 blocked_gates:
   pd_release:
     blocked: true
     evidence_manifest: pd/signoff/manifest.yaml
-    reason: No complete routed run has archived all required physical signoff artifacts, corners, backannotation, and run-quality reports.
+    reason: Latest completed OpenLane run has archived the required artifact classes, but antenna and post-route timing/DRV reports are still waived rather than release-clean.
     unblock_requires:
-      - Complete one selected OpenLane/OpenROAD run with final GDS, DEF, netlist, SDC, SPEF, SDF, DRC, LVS, antenna, STA, utilization, congestion, density/fill, and tool-version reports.
-      - Archive waiver files for any non-clean report.
-      - Record selected PDK, library, RC, and timing corners.
+      - Close or formally disposition all antenna violations in the selected run.
+      - Clear top-level antenna metadata warnings for JTAG_TCK, JTAG_TDI, JTAG_TMS, TEST_MODE, DBG_READY, and JTAG_TDO through real logic/pad-cell evidence, not hand-edited LEF claims.
+      - Close post-route hold, max-slew, and max-cap violations across selected signoff corners.
+      - Replace waiver-only antenna/STA evidence with release-clean reports.
   tapeout_release:
     blocked: true
     evidence_manifest: pd/signoff/manifest.yaml
@@ -50,15 +65,19 @@ si_pi:
         - "package/models/**/*"
         - "pd/signoff/si-pi/package-models/**/*"
     - name: board_signal_integrity_report
-      status: missing
+      status: draft
       globs:
         - "board/reports/si/**/*"
         - "pd/signoff/si-pi/board-si/**/*"
+        - "pd/signoff/si-pi/local-gap-report.md"
+        - "pd/signoff/si-pi/local-evidence.yaml"
     - name: power_integrity_report
-      status: missing
+      status: draft
       globs:
         - "board/reports/pi/**/*"
         - "pd/signoff/si-pi/power-integrity/**/*"
+        - "pd/signoff/si-pi/local-gap-report.md"
+        - "pd/signoff/si-pi/local-evidence.yaml"
 pdn_current_budget:
   status: blocked
   release_blocking: true
@@ -66,34 +85,42 @@ pdn_current_budget:
     - name: VDDCORE
       voltage: 1.8V
       board_net: +1V8
-      current_limit_status: missing
-      pdn_status: missing
+      current_limit_status: draft_local_estimate
+      pdn_status: draft_local_openroad_ir
     - name: VDDIO
       voltage: 3.3V
       board_net: +3V3
-      current_limit_status: missing
+      current_limit_status: draft_first_article_limit_only
       pdn_status: missing
   blockers:
-    - Current budgets are not derived from post-route power or measured silicon data.
-    - IR-drop, EM, decoupling, and first-article current-limit reports are not archived.
+    - VDDCORE local current estimate is derived from OpenLane metrics only, not workload-calibrated post-route vectors or measured silicon data.
+    - VDDIO current is not derived because IO pad, package, and board load models are missing.
+    - EM, decoupling, and external first-article current-limit review reports are not archived.
   required_artifacts:
     - name: post_route_power_report
-      status: missing
+      status: draft
       globs:
         - "pd/reports/power/**/*"
         - "pd/openlane/runs/*/reports/power/**/*"
         - "runs/*/reports/power/**/*"
+        - "pd/signoff/pdn-current/local-budget.yaml"
+        - "pd/signoff/pdn-current/local-budget.md"
     - name: ir_drop_em_report
-      status: missing
+      status: draft
       globs:
         - "pd/reports/pdn/**/*"
         - "pd/openlane/runs/*/reports/pdn/**/*"
         - "runs/*/reports/pdn/**/*"
+        - "pd/openlane/runs/*/*-openroad-irdropreport/irdrop.rpt"
+        - "pd/signoff/pdn-current/local-budget.yaml"
+        - "pd/signoff/pdn-current/local-budget.md"
     - name: board_current_limit_plan
       status: draft
       globs:
         - "docs/board/kicad/hello-demo/fab-notes.md"
         - "docs/manufacturing/hello-demo-checklist.md"
+        - "pd/signoff/pdn-current/local-budget.yaml"
+        - "pd/signoff/pdn-current/local-budget.md"
 thermal_package_board:
   status: blocked
   release_blocking: true
@@ -135,10 +162,6 @@ padframe_package:
       status: draft
       globs:
         - "docs/board/kicad/hello-demo/fab-notes.md"
-    - name: package_pinout_board_cross_probe
-      status: draft
-      globs:
-        - "board/kicad/hello-demo/package-pinout-cross-probe.yaml"
 run_roots:
   - pd/openlane/runs
   - runs

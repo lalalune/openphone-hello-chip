@@ -53,6 +53,7 @@ module hello_linux_soc_contract #(
     logic [31:0] dma_mmio_araddr;
     logic        dma_mmio_rvalid, dma_mmio_rready;
     logic [31:0] dma_mmio_rdata;
+    logic [31:0] dma_mmio_rdata_q;
     logic [1:0]  dma_mmio_rresp;
 
     logic        dma_mem_awvalid, dma_mem_awready;
@@ -96,6 +97,16 @@ module hello_linux_soc_contract #(
     logic        wr_dma_owner, rd_dma_owner;
     logic        wr_active, rd_active;
     logic        dma_irq;
+    logic        unused_dma_awready, unused_dma_wready, unused_dma_arready;
+    logic        unused_dma_bvalid, unused_dma_rvalid;
+    logic [1:0]  unused_dma_bresp, unused_dma_rresp;
+    logic [31:0] unused_dma_rdata;
+    logic        unused_dbg_awready, unused_dbg_wready, unused_dbg_arready;
+    logic        unused_dbg_bvalid, unused_dbg_rvalid;
+    logic [1:0]  unused_dbg_bresp, unused_dbg_rresp;
+    logic [31:0] unused_dbg_rdata;
+    logic [2:0]  unused_grants;
+    logic [2:0]  unused_timeouts;
     /* verilator lint_off UNUSEDSIGNAL */
     logic        unused_dma_mmio;
     /* verilator lint_on UNUSEDSIGNAL */
@@ -130,6 +141,40 @@ module hello_linux_soc_contract #(
         .m_axil_rready(cpu_rready),
         .m_axil_rdata(cpu_rdata),
         .m_axil_rresp(cpu_rresp),
+        .dma_m_awvalid(1'b0),
+        .dma_m_awready(unused_dma_awready),
+        .dma_m_awaddr(32'h0),
+        .dma_m_wvalid(1'b0),
+        .dma_m_wready(unused_dma_wready),
+        .dma_m_wdata(32'h0),
+        .dma_m_wstrb(4'h0),
+        .dma_m_bvalid(unused_dma_bvalid),
+        .dma_m_bready(1'b1),
+        .dma_m_bresp(unused_dma_bresp),
+        .dma_m_arvalid(1'b0),
+        .dma_m_arready(unused_dma_arready),
+        .dma_m_araddr(32'h0),
+        .dma_m_rvalid(unused_dma_rvalid),
+        .dma_m_rready(1'b1),
+        .dma_m_rdata(unused_dma_rdata),
+        .dma_m_rresp(unused_dma_rresp),
+        .dbg_m_awvalid(1'b0),
+        .dbg_m_awready(unused_dbg_awready),
+        .dbg_m_awaddr(32'h0),
+        .dbg_m_wvalid(1'b0),
+        .dbg_m_wready(unused_dbg_wready),
+        .dbg_m_wdata(32'h0),
+        .dbg_m_wstrb(4'h0),
+        .dbg_m_bvalid(unused_dbg_bvalid),
+        .dbg_m_bready(1'b1),
+        .dbg_m_bresp(unused_dbg_bresp),
+        .dbg_m_arvalid(1'b0),
+        .dbg_m_arready(unused_dbg_arready),
+        .dbg_m_araddr(32'h0),
+        .dbg_m_rvalid(unused_dbg_rvalid),
+        .dbg_m_rready(1'b1),
+        .dbg_m_rdata(unused_dbg_rdata),
+        .dbg_m_rresp(unused_dbg_rresp),
         .dram_awvalid(cpu_mem_awvalid),
         .dram_awready(cpu_mem_awready),
         .dram_awaddr(cpu_mem_awaddr),
@@ -179,8 +224,10 @@ module hello_linux_soc_contract #(
         .dma_araddr(dma_mmio_araddr),
         .dma_rvalid(dma_mmio_rvalid),
         .dma_rready(dma_mmio_rready),
-        .dma_rdata(dma_mmio_rdata),
-        .dma_rresp(dma_mmio_rresp)
+        .dma_rdata(dma_mmio_rdata_q),
+        .dma_rresp(dma_mmio_rresp),
+        .arb_grant(unused_grants),
+        .timeout_irq(unused_timeouts)
     );
 
     assign dram_awvalid = !wr_active && (grant_dma_wr ? dma_mem_awvalid : cpu_mem_awvalid);
@@ -272,6 +319,7 @@ module hello_linux_soc_contract #(
         if (!rst_n) begin
             dma_mmio_bvalid <= 1'b0;
             dma_mmio_rvalid <= 1'b0;
+            dma_mmio_rdata_q <= 32'h0;
         end else begin
             if (dma_mmio_bvalid && dma_mmio_bready) begin
                 dma_mmio_bvalid <= 1'b0;
@@ -284,6 +332,7 @@ module hello_linux_soc_contract #(
             end
             if (dma_mmio_arvalid && dma_mmio_arready) begin
                 dma_mmio_rvalid <= 1'b1;
+                dma_mmio_rdata_q <= dma_mmio_rdata;
             end
         end
     end

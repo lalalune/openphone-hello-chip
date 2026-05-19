@@ -8,21 +8,21 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 | --- | --- | --- | --- |
 | docs-and-project-plan | `PASS` | `command_pass` | `none` |
 | architecture-docs | `PASS` | `command_pass` | `none` |
-| toolchain-fast-path | `BLOCK` | `tool_blocker` | `scripts/check_tools.sh && scripts/tool_versions.sh` |
+| toolchain-fast-path | `PASS` | `tool_available` | `none` |
 | platform-contract | `PASS` | `command_pass` | `none` |
 | software-bsp | `BLOCK` | `scaffold_only` | `make software-bsp-evidence-check` |
 | real-world-release-gates | `PASS` | `command_pass` | `none` |
 | rtl-source | `PASS` | `source_present` | `none` |
 | synthesis | `PASS` | `generated_artifact` | `none` |
-| cocotb | `BLOCK` | `regen_required` | `make cocotb cocotb-contract cocotb-cpu` |
-| verilator | `BLOCK` | `regen_required` | `make verilator` |
-| formal | `BLOCK` | `regen_required` | `make formal` |
+| cocotb | `PASS` | `generated_artifact` | `none` |
+| verilator | `PASS` | `generated_artifact` | `none` |
+| formal | `PASS` | `generated_artifact` | `none` |
 | qemu | `PASS` | `generated_artifact` | `none` |
-| renode | `BLOCK` | `tool_blocker` | `make renode-check` |
+| renode | `PASS` | `generated_artifact` | `none` |
 | pd-contract | `PASS` | `command_pass` | `none` |
 | product-package | `BLOCK` | `release_blocker` | `close package/FPGA/KiCad/PD release blockers or keep product claim below fabrication` |
-| benchmarks | `BLOCK` | `regen_required` | `make benchmarks-dry-run` |
-| release-pipeline | `BLOCK` | `regen_required` | `make tool-versions pipeline-check` |
+| benchmarks | `PASS` | `generated_artifact` | `none` |
+| release-pipeline | `PASS` | `generated_artifact` | `none` |
 
 ## Workstream Dashboard
 

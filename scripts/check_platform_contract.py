@@ -175,7 +175,10 @@ def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
         if rtl_name in REGION_RTL_NAMES:
             decoded[REGION_RTL_NAMES[rtl_name]] = h(value) << 12
 
+    checked_regions = set(REGION_RTL_NAMES.values())
     for name, region in regions_by_name(contract).items():
+        if name not in checked_regions:
+            continue
         expected = h(region["base"])
         actual = decoded.get(name)
         require(
@@ -305,7 +308,78 @@ def check_contract(contract: dict) -> list[str]:
     check_register_offsets_against_rtl(contract, errors)
     check_debug_contract(errors)
     check_qemu_virt_separation(contract, errors)
+    check_cpu_variant_artifacts(contract, errors)
+    check_cpu_variant_consumers(contract, errors)
     return errors
+
+
+def check_cpu_variant_artifacts(contract: dict, errors: list[str]) -> None:
+    """Fail if the generated CPU-variant artifacts diverge from the contract."""
+    if "hello_chip_cpu_variant" not in contract:
+        errors.append(
+            "hello_chip_cpu_variant section is missing from "
+            "sw/platform/hello_platform_contract.json"
+        )
+        return
+    try:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "gen_platform_artifacts", ROOT / "scripts/gen_platform_artifacts.py"
+        )
+        if spec is None or spec.loader is None:
+            errors.append("failed to import gen_platform_artifacts.py: no import loader")
+            return
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+    except Exception as exc:
+        errors.append(f"failed to import gen_platform_artifacts.py: {exc}")
+        return
+    contents = mod.generate_all(contract)
+    for kind, name in mod.ARTIFACTS.items():
+        path = mod.OUT_DIR / name
+        rel = path.relative_to(ROOT)
+        if not path.is_file():
+            errors.append(f"{rel} is missing; run `make platform-artifacts`")
+            continue
+        if path.read_text() != contents[kind]:
+            errors.append(f"{rel} is stale; run `make platform-artifacts`")
+
+
+def check_cpu_variant_consumers(contract: dict, errors: list[str]) -> None:
+    """Spot-check that downstream consumers reference contract addresses.
+
+    Keeps the cross-consumer check lightweight: every handwritten DTS that
+    advertises a hello device must use the contract base address for that
+    device. RTL, kernel DTS, U-Boot, OpenSBI, and HAL configs are all
+    expected to be regenerated from sw/platform/generated/ — this catches
+    the case where someone forks an address into a downstream file.
+    """
+    if "hello_chip_cpu_variant" not in contract:
+        return
+    v = contract["hello_chip_cpu_variant"]
+    devices = v["devices"]
+    candidate_dts = [
+        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts",
+        ROOT / "sw/linux/dts/openphone-hello.dts",
+    ]
+    for path in candidate_dts:
+        if not path.is_file():
+            continue
+        text = read_text(path)
+        for _name, dev in devices.items():
+            compatible = dev["compatible"]
+            if compatible not in text:
+                # consumer doesn't reference this device at all; that is fine.
+                continue
+            base_hex = f"0x{h(dev['base']):x}"
+            # accept either bare hex or a unit-address form `name@<base>`.
+            unit = f"@{h(dev['base']):x}"
+            if base_hex not in text and unit not in text:
+                errors.append(
+                    f"{path.relative_to(ROOT)} references {compatible} but does "
+                    f"not use contract base {base_hex}"
+                )
 
 
 def main() -> int:

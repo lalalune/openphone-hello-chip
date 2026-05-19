@@ -117,16 +117,37 @@ It does not run `repo sync`, download AOSP, or build Android.
 The single-command driver for this flow is:
 
 ```sh
-AOSP_DIR=/path/to/aosp make android-sim-boot-check
+AOSP_DIR=/path/to/aosp make aosp-linux-preflight
+AOSP_DIR=/path/to/aosp make aosp-linux-handoff-build-only
+AOSP_DIR=/path/to/aosp make aosp-linux-handoff
 ```
 
-That target imports the device tree, captures `lunch`, `vendorimage`, and
-`checkvintf` evidence, then validates the AOSP evidence manifest. The stricter
-AOSP BSP gate still remains BLOCKED until SELinux policy build, neverallow,
-CTS/VTS scope-intake, and Cuttlefish/QEMU/Renode smoke logs are also installed.
+`make aosp-linux-preflight` checks only Linux host readiness: `AOSP_DIR`,
+`build/envsetup.sh`, `/dev/kvm`, `repo`, `adb`, and Cuttlefish launcher
+visibility from `PATH` or `AOSP_DIR/out/host/linux-x86/bin`. It writes
+`build/reports/aosp_linux_preflight.json` when requested by the Make target.
+That report is host-preflight status only and does not create
+`docs/evidence/android/*.log`. The report also breaks readiness into import,
+build, Cuttlefish, compatibility-intake, QEMU, and Renode tracks so the Linux
+operator can see which blocker is host setup, which is missing command wiring,
+and which is missing real evidence.
+
+`make aosp-linux-handoff-build-only` runs preflight, checks/imports the local
+device tree into the external AOSP checkout, captures the build-only evidence
+categories, and stops before simulator/CTS/VTS claims. `make
+aosp-linux-handoff` attempts the full virtual-device evidence sequence and then
+runs both `scripts/check_android_sim_boot.py` and
+`scripts/check_software_bsp.py aosp --require-evidence`.
+
+`make android-sim-boot-check` imports the device tree, captures `lunch`,
+`vendorimage`, and `checkvintf` evidence, then validates the AOSP evidence
+manifest. The stricter AOSP BSP gate still remains BLOCKED until SELinux policy
+build, neverallow, CTS/VTS scope-intake, and Cuttlefish/QEMU/Renode smoke logs
+are also installed.
 To attempt a Cuttlefish run as well:
 
 ```sh
+AOSP_DIR=/path/to/aosp make aosp-linux-preflight
 AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish
 ```
 
@@ -134,6 +155,11 @@ AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh --run-cuttlefish
 `PATH`. On hosts without `launch_cvd`/`cvd`, the script writes
 `build/reports/android_sim_boot.json` with `status=blocked` instead of treating
 missing simulator support as an Android boot failure.
+
+If the Linux host provides only the modern `cvd` launcher, set
+`AOSP_CUTTLEFISH_LAUNCHER=cvd`; otherwise the scripts prefer `launch_cvd` and
+fall back to `cvd start`. Override `AOSP_CUTTLEFISH_ARGS` for host-specific
+CPU, memory, GPU, or instance settings.
 
 Android compatibility remains blocked separately from AOSP build and virtual
 device smoke. `sw/aosp-device/evidence_manifest.json` requires a bounded
@@ -147,10 +173,17 @@ required provenance markers:
 /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch
 /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage
 /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf
-/path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
-/path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset
-/path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset
+/path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp sepolicy-build
+/path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp selinux-neverallow
+/path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-vts-plan
+/path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-smoke
+AOSP_QEMU_SMOKE_COMMAND='/exact/qemu-system-riscv64 smoke command' \
+  /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp qemu-smoke
+AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' \
+  /path/to/OpenPhone-AI-SoC/sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp renode-smoke
 python3 scripts/intake_android_evidence.py --target aosp --from-dir /path/to/logs --install
+scripts/android/capture_hello_npu_hal_absent_device.sh
+python3 scripts/check_hello_npu_android_proof_manifest.py
 ```
 
 These commands write under `docs/evidence/android/`. They capture command
@@ -162,10 +195,39 @@ aliases for simulator tooling and are not the full `scripts/check_software_bsp.p
 AOSP gate. Install or validate the nine current gate logs with
 `scripts/intake_android_evidence.py`.
 
+Use `scripts/android/capture_hello_npu_nnapi_evidence.sh` only on a connected
+Android target that exposes a real `hello-npu` NNAPI accelerator. It captures
+the four NNAPI transcripts and a transcript manifest under
+`docs/evidence/android/hello-npu/`; it does not create
+`benchmarks/capabilities/hello_npu_nnapi.proof.json` or assert acceleration.
+That proof JSON still requires reviewed target counters, exact transcript
+hashes, model hash, DMA bytes, and zero CPU fallback.
+
+Use `python3 scripts/check_hello_npu_android_proof_manifest.py --manifest
+docs/evidence/android/hello-npu/android-proof-manifest.json --require-pass` for
+a filled Android proof manifest. The checked-in template is valid only as a
+blocked shape and cannot satisfy HAL, CTS, VTS, or NNAPI proof.
+
 The Cuttlefish boot capture defaults to `AOSP_PRODUCT=openphone_ai_soc-userdebug`
 and `AOSP_CUTTLEFISH_ARGS="--cpus=4 --memory_mb=8192 --gpu_mode=none"`.
 Override those environment variables when running a different riscv64
 Cuttlefish product or a home-screen launch.
+
+For a commit-ready local validation pass that does not fabricate logs, run:
+
+```sh
+make aosp-scaffold-check
+make aosp-linux-preflight
+scripts/run_aosp_linux_handoff.sh --preflight-only
+scripts/android/capture_hello_npu_hal_absent_device.sh
+python3 scripts/check_hello_npu_android_proof_manifest.py
+make android-sim-status-test
+make software-bsp-test
+```
+
+On non-Linux hosts, or Linux hosts without `AOSP_DIR`/KVM/Cuttlefish tooling,
+`make aosp-linux-preflight` is expected to return BLOCKED and record the exact
+blockers. Do not convert that blocked report into Android evidence.
 
 Required AOSP evidence inputs are intentionally explicit and do not, by
 themselves, claim Android boot or compatibility:
@@ -212,9 +274,14 @@ From this repository, with `/path/to/aosp` already provisioned:
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage
 sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf
-sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-boot
-sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-subset
-sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vts-subset
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp sepolicy-build
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp selinux-neverallow
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-vts-plan
+sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-smoke
+AOSP_QEMU_SMOKE_COMMAND='/exact/qemu-system-riscv64 smoke command' \
+  sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp qemu-smoke
+AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' \
+  sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp renode-smoke
 python3 scripts/intake_android_evidence.py --target aosp --from-dir /path/to/logs --install
 make software-bsp-evidence-check
 ```
@@ -239,10 +306,6 @@ not be described as full Android compatibility evidence.
 | Init | `device/openphone/openphone_ai_soc/init.openphone.rc` | Creates the hello device namespace and starts the NPU HAL only when enabled. |
 | Fstab | `device/openphone/openphone_ai_soc/fstab.openphone` | Documents first vendor/data mount contract for simulator integration. |
 | VINTF manifest | `device/openphone/openphone_ai_soc/manifest.xml` | Reserves graphics-composer and hello_npu names in comments only. |
-| Product makefile | `device/openphone/openphone_ai_soc/device.mk` | Copies init, fstab, VINTF manifest, and declares HAL packages. |
-| Init | `device/openphone/openphone_ai_soc/init.openphone.rc` | Creates the hello device namespace and starts the NPU HAL only when enabled. |
-| Fstab | `device/openphone/openphone_ai_soc/fstab.openphone` | Documents first vendor/data mount contract for simulator integration. |
-| VINTF manifest | `device/openphone/openphone_ai_soc/manifest.xml` | Declares only graphics-composer and hello_npu scaffolds. |
 | SELinux contexts | `device/openphone/openphone_ai_soc/sepolicy/file_contexts` | Labels HAL binaries and `/dev/hello-npu`. |
 | SELinux types | `device/openphone/openphone_ai_soc/sepolicy/hello_npu.te` | Defines the fail-closed NPU device and HAL domains. |
 | Kernel fragment | `device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment` | Records Android kernel config needed by the scaffold. |

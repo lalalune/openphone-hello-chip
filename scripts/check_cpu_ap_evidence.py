@@ -251,9 +251,28 @@ def main() -> int:
         return 1
     if absent:
         print("STATUS: BLOCKED cpu_ap.linux_evidence - missing production boot/trap evidence:")
+        capture_commands: list[str] = []
+        evidence_manifest = load_evidence_manifest([])
+        specs_by_path = {
+            spec.get("path"): spec
+            for spec in transcript_specs(evidence_manifest).values()
+            if isinstance(spec.get("path"), str)
+        }
         for path in absent:
             print(f"  - {path}")
-        print("  next: python3 scripts/capture_cpu_ap_evidence.py --help")
+            command = specs_by_path.get(path, {}).get("capture_command")
+            if isinstance(command, str) and command:
+                capture_commands.append(command)
+        if capture_commands:
+            print("  capture commands:")
+            for command in capture_commands:
+                print(f"    {command}")
+        print(
+            "  next: run python3 scripts/capture_cpu_ap_evidence.py plan all --format shell, "
+            "wire the generated AP simulator/test commands, run "
+            "scripts/capture_chipyard_linux_evidence.sh preflight, then capture real generated-AP "
+            "transcripts and rerun python3 scripts/check_cpu_ap_evidence.py --require-evidence"
+        )
         return 1 if args.require_evidence else 0
 
     print("STATUS: PASS cpu_ap.linux_evidence")

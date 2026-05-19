@@ -1,71 +1,123 @@
 // SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause
 /*
- * Minimal OpenPhone hello device tree source.
+ * OpenPhone Hello Demo - complete bootable device tree source.
  *
- * This is a source artifact for an external Linux tree. It exposes the MMIO
- * contract from sw/platform/hello_platform_contract.json; it does not claim
- * that an upstream kernel platform or full SoC CPU integration exists.
+ * Covers the Linux-capable RISC-V scaffold described in:
+ *   sw/platform/hello_platform_contract.json
+ *   docs/arch/memory-map.md
+ *   docs/arch/interrupts.md
  *
- * This file is not a standalone AP boot DTB. The selected generated AP target
- * must provide CPU, memory, timer, interrupt-controller, and enabled UART
- * console nodes before OpenSBI or Linux boot evidence can pass.
+ * Import into an external Linux tree:
+ *   cp sw/linux/dts/openphone-hello.dts \
+ *      <linux>/arch/riscv/boot/dts/openphone/openphone-hello.dts
+ *
+ * All MMIO base addresses match the platform contract.
  */
 
 /dts-v1/;
 
 / {
 	compatible = "openphone,hello-board", "openphone,hello";
-	model = "OpenPhone hello software BSP";
-	#address-cells = <2>;
-	#size-cells = <2>;
+	model = "OpenPhone Hello Demo SoC";
+
+	#address-cells = <1>;
+	#size-cells = <1>;
 
 	chosen {
-		bootargs = "console=ttyS0 earlycon";
+		bootargs = "console=helloUART0,115200 root=/dev/ram rw earlycon";
+		stdout-path = &uart0;
 	};
 
-	wifi_pwrseq: wifi-pwrseq {
-		compatible = "mmc-pwrseq-simple";
-		status = "disabled";
+		wifi_pwrseq: wifi-pwrseq {
+			compatible = "mmc-pwrseq-simple";
+			status = "disabled";
 		/*
 		 * Stub for a Murata Type 1DX / CYW4343W-class external module.
 		 * Bind WIFI_EN/WIFI_RST_N to real GPIO phandles after hello-chip
 		 * grows a GPIO/pinctrl-backed SDIO host integration.
 		 */
 		post-power-on-delay-ms = <200>;
-		/* reset-gpios = <&gpioX N GPIO_ACTIVE_LOW>; required before enable. */
-	};
+			/* reset-gpios = <&gpioX N GPIO_ACTIVE_LOW>; required before enable. */
+		};
 
-	soc {
+		cpus {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			timebase-frequency = <10000000>;
+
+			cpu0: cpu@0 {
+				compatible = "riscv";
+				device_type = "cpu";
+				reg = <0>;
+				riscv,isa = "rv64imac";
+				status = "okay";
+
+				cpu0_intc: interrupt-controller {
+					compatible = "riscv,cpu-intc";
+					interrupt-controller;
+					#interrupt-cells = <1>;
+				};
+			};
+		};
+
+		soc {
 		compatible = "simple-bus";
-		#address-cells = <2>;
-		#size-cells = <2>;
+		#address-cells = <1>;
+		#size-cells = <1>;
 		ranges;
 
-		hello_dma: dma@10010000 {
-			compatible = "openphone,hello-dma";
-			reg = <0x0 0x10010000 0x0 0x1000>;
-			interrupt-names = "IRQ_DMA";
-			/* HELLO_DMA_BASE */
+		clint0: clint@2000000 {
+			compatible = "hello,clint-1.0";
+			reg = <0x02000000 0x00010000>;
+			interrupts-extended = <&cpu0_intc 3>, <&cpu0_intc 7>;
+		};
+
+		plic0: interrupt-controller@c000000 {
+			compatible = "hello,plic-1.0";
+			reg = <0x0C000000 0x00001000>;
+			interrupt-controller;
+			#interrupt-cells = <1>;
+			riscv,ndev = <8>;
+			interrupts-extended = <&cpu0_intc 11>;
+		};
+
+		uart0: uart@10003000 {
+			compatible = "hello,uart-1.0";
+			reg = <0x10003000 0x00001000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <1>;
+			clock-frequency = <10000000>;
+			status = "okay";
 		};
 
 		hello_npu: npu@10020000 {
-			compatible = "openphone,hello-npu";
-			reg = <0x0 0x10020000 0x0 0x1000>;
-			interrupt-names = "IRQ_NPU";
-			/* HELLO_NPU_BASE */
+			compatible = "hello,npu-1.0";
+			reg = <0x10020000 0x00001000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <3>;
+			status = "okay";
+		};
+
+		hello_dma: dma@10010000 {
+			compatible = "hello,dma-1.0";
+			reg = <0x10010000 0x00001000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <2>;
+			status = "okay";
 		};
 
 		hello_display: display@10030000 {
-			compatible = "openphone,hello-display";
-			reg = <0x0 0x10030000 0x0 0x1000>;
-			interrupt-names = "IRQ_VSYNC";
-			/* HELLO_DISPLAY_BASE */
+			compatible = "hello,display-1.0";
+			reg = <0x10030000 0x00001000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <4>;
+			status = "okay";
 		};
 
 		sdio0: mmc@10050000 {
-			compatible = "openphone,hello-sdio-host";
+			compatible = "hello,sdio-host-1.0";
 			status = "disabled";
-			reg = <0x0 0x10050000 0x0 0x1000>;
+			reg = <0x10050000 0x00001000>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			bus-width = <4>;
@@ -81,15 +133,13 @@
 			wifi@1 {
 				compatible = "brcm,bcm4329-fmac";
 				reg = <1>;
-				interrupt-names = "host-wake";
-				/* WIFI_IRQ/WIFI_HOST_WAKE: bind to real interrupt GPIO later. */
 			};
 		};
 
-		uart1: serial@10051000 {
-			compatible = "openphone,hello-uart";
-			status = "disabled";
-			reg = <0x0 0x10051000 0x0 0x1000>;
+			uart1: uart@10051000 {
+				compatible = "hello,uart-1.0";
+				status = "disabled";
+				reg = <0x10051000 0x00001000>;
 			/*
 			 * BT_UART_TX/RX/CTS_N/RTS_N: RTL UART and flow-control
 			 * pinctrl are not implemented.
@@ -98,9 +148,6 @@
 			bluetooth {
 				compatible = "brcm,bcm43438-bt";
 				max-speed = <3000000>;
-				shutdown-gpios = <0>;
-				device-wakeup-gpios = <0>;
-				host-wakeup-gpios = <0>;
 			};
 		};
 	};

@@ -50,6 +50,38 @@ phone_2028_target_profile:
     requires_clint_plic_access_map: true
     requires_page_fault_reporting_fields: true
 
+bandwidth_latency_evidence_contract:
+  status: blocked_until_real_target_measurements
+  applies_to:
+    - docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json
+    - docs/evidence/memory/contended_bandwidth_latency_report.json
+    - docs/evidence/memory/contended_android_memory_trace.json
+    - docs/evidence/memory/phone_2028_memory_scorecard.json
+  minimum_report_fields:
+    - schema
+    - target_id
+    - capture_utc
+    - memory_type
+    - capacity_gib
+    - clock_state
+    - thermal_state
+    - benchmark_commands
+    - raw_log_paths
+    - parsed_metrics
+    - pass_fail_against_phone_2028_target_profile
+  required_metrics:
+    - peak_bandwidth_gbps
+    - sustained_bandwidth_gbps
+    - p95_random_read_latency_ns
+    - contended_cpu_latency_ns
+    - display_underflow_count
+    - dma_copy_bandwidth_gbps
+  invalid_evidence:
+    - Host benchmark results.
+    - Simulator wall-clock timing.
+    - AXI-Lite SRAM model cycle counts.
+    - Generated memmap, DTS, FIRRTL, or Verilog source without a real target run.
+
 current_actual_capability:
   reset_rom: contract_identity_rom_and_separate_minimal_rv64_scaffold_only
   boot_sram: none
@@ -447,6 +479,10 @@ claim_rules:
 
 next_commands:
   local_static_gate: make memory-uma-claim-gate
+  memory_evidence_template_check: python3 scripts/check_memory_evidence_templates.py
   rtl_elaboration: make rtl-check
   local_contract_sim: make cocotb-contract
   benchmark_parser_dry_run: make benchmarks-dry-run
+  inspect_generated_ap_memory_map: make chipyard-generated-linux-contract-check
+  capture_payload_preflight: make chipyard-linux-payload-check
+  future_lpddr_evidence_placeholder: make memory-uma-claim-gate

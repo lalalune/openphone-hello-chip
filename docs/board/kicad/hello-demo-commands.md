@@ -1,23 +1,27 @@
 # Hello demo KiCad command capture plan
 
-No KiCad project is currently checked in. These commands are the required
-headless transcript plan once a real `board/kicad/hello-demo/*.kicad_pro`,
-`*.kicad_sch`, `*.kicad_pcb`, symbol library, and footprint library exist.
+The checked-in KiCad project is a local planning scaffold only. These commands
+are the required headless transcript plan for regenerating ERC, DRC, fabrication,
+BOM, position, drawing, and provenance outputs once the package/vendor footprint
+and board review inputs are real.
 
 The commands must be run from the repository root and captured in
-`board/reports/fab/command-transcript-<rev>.txt` with matching
-`board/reports/fab/tool-versions-<rev>.txt`. Do not create the report
-directory as release evidence until the inputs are real and reviewed.
+`board/reports/fab/<rev>/kicad-command-transcript.txt` with matching
+`board/reports/fab/<rev>/kicad-tool-versions.txt`. Existing scaffold outputs do
+not unblock board fabrication release until the package, footprint, SI/PI,
+current-limit, DFM, and first-article evidence is archived and reviewed.
 
 ```sh
 kicad-cli version
-kicad-cli sch erc board/kicad/hello-demo/hello-demo.kicad_sch --output board/reports/fab/erc-hello-demo.txt
-kicad-cli pcb drc board/kicad/hello-demo/hello-demo.kicad_pcb --output board/reports/fab/drc-hello-demo.txt
-kicad-cli pcb export gerbers board/kicad/hello-demo/hello-demo.kicad_pcb --output board/reports/fab/gerbers
-kicad-cli pcb export drill board/kicad/hello-demo/hello-demo.kicad_pcb --output board/reports/fab/drill
-kicad-cli sch export bom board/kicad/hello-demo/hello-demo.kicad_sch --output board/reports/fab/bom-hello-demo.csv
-kicad-cli pcb export pos board/kicad/hello-demo/hello-demo.kicad_pcb --output board/reports/fab/position-hello-demo.csv
-kicad-cli pcb export pdf board/kicad/hello-demo/hello-demo.kicad_pcb --output board/reports/fab/fab-drawing-hello-demo.pdf
+kicad-cli sch erc --output board/reports/fab/<rev>/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
+kicad-cli pcb drc --output board/reports/fab/<rev>/hello-demo-drc-report.txt board/kicad/hello-demo/hello-demo.kicad_pcb
+kicad-cli pcb export gerbers --output board/reports/fab/<rev>/gerbers board/kicad/hello-demo/hello-demo.kicad_pcb
+kicad-cli pcb export drill --output board/reports/fab/<rev>/drill board/kicad/hello-demo/hello-demo.kicad_pcb
+kicad-cli sch export bom --output board/reports/fab/<rev>/hello-demo-bom.csv board/kicad/hello-demo/hello-demo.kicad_sch
+kicad-cli pcb export pos --output board/reports/fab/<rev>/hello-demo-position.csv board/kicad/hello-demo/hello-demo.kicad_pcb
+kicad-cli pcb export pdf --output board/reports/fab/<rev>/pdf/hello-demo-fab-drawing.pdf board/kicad/hello-demo/hello-demo.kicad_pcb
+python3 scripts/check_manufacturing_artifacts.py --resolved-manifest build/reports/manufacturing-resolved-artifacts.json
+python3 scripts/run_product_evidence_command.py --list
 ```
 
 Release capture must also include:

@@ -192,7 +192,7 @@ scripts/install_openlane_image.sh
 Then run:
 
 ```sh
-OPENLANE_CONFIG=pd/openlane/config.sky130.json make openlane
+OPENLANE_TIMEOUT_SECONDS=21600 OPENLANE_CONFIG=pd/openlane/config.sky130.json make openlane
 ```
 
 If the image is unavailable or the registry stalls, `make openlane` fails clearly rather than pretending signoff completed. The exact preflight sequence is:
@@ -200,11 +200,18 @@ If the image is unavailable or the registry stalls, `make openlane` fails clearl
 ```sh
 make pd-contract-check
 OPENLANE_IMAGE=ghcr.io/efabless/openlane2:2.4.0.dev1 OPENLANE_IMAGE_DIGEST=sha256:bcaabac3b114dfb9e739af9f16b53a79ce1b744bcdb3ad4fc476c961581fe5d5 scripts/install_openlane_image.sh
-OPENLANE_CONFIG=pd/openlane/config.sky130.json make openlane
+OPENLANE_TIMEOUT_SECONDS=21600 OPENLANE_CONFIG=pd/openlane/config.sky130.json make openlane
 make pd-signoff-check
 ```
 
 `make pd-signoff-check` must only pass against real OpenLane/OpenROAD run output under `pd/openlane/runs/*` or `runs/*`; do not add placeholder GDS/DEF/report files.
+
+`scripts/run_openlane.sh` creates a repo-local lock at `.openlane-run.lock`,
+labels Docker containers with `openphone.openlane=1` and the absolute repo
+path, and writes a Docker CID file for cleanup. If a run times out or is
+interrupted, the launcher removes its own container before clearing the lock.
+`scripts/check_openlane_run_preflight.py` reports stale locks or active labeled
+containers so duplicate runs are visible before another long PD job starts.
 
 ## FPGA scaffold
 

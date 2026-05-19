@@ -1,0 +1,1605 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.65+37 (git sha1 e87a9bd9a-dirty, aarch64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+
+-- Running command `read_verilog -sv /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_chip_top.sv /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_soc_top.sv /Users/shawwalters/Desktop/npu_experiment/rtl/clock/hello_reset_sync.sv /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv /Users/shawwalters/Desktop/npu_experiment/rtl/interrupts/hello_interrupt_controller.sv /Users/shawwalters/Desktop/npu_experiment/rtl/peripherals/hello_peripherals.sv /Users/shawwalters/Desktop/npu_experiment/rtl/memory/hello_axi_lite_dram.sv /Users/shawwalters/Desktop/npu_experiment/rtl/cpu/hello_cva6_wrapper.sv /Users/shawwalters/Desktop/npu_experiment/rtl/cpu/hello_cpu_axi_bridge.sv /Users/shawwalters/Desktop/npu_experiment/rtl/npu/hello_npu.sv /Users/shawwalters/Desktop/npu_experiment/rtl/dma/hello_dma.sv /Users/shawwalters/Desktop/npu_experiment/rtl/display/hello_display.sv /Users/shawwalters/Desktop/npu_experiment/rtl/bootrom/hello_bootrom.sv /Users/shawwalters/Desktop/npu_experiment/rtl/debug/hello_dbg_mmio_bridge.sv;              hierarchy -top hello_fpga_smoke_top;              synth_ecp5 -top hello_fpga_smoke_top -json /Users/shawwalters/Desktop/npu_experiment/build/fpga/hello_demo/hello_fpga_smoke_top.json' --
+
+1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv' to AST representation.
+Generating RTLIL representation for module `\hello_fpga_smoke_top'.
+Successfully finished Verilog frontend.
+
+2. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_chip_top.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_chip_top.sv' to AST representation.
+Generating RTLIL representation for module `\hello_chip_top'.
+Successfully finished Verilog frontend.
+
+3. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_soc_top.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_soc_top.sv' to AST representation.
+Warning: Encountered `translate_off' comment! Such legacy hot comments are supported by Yosys, but are not part of any formal language specification. Using a portable and standards-compliant construct such as `ifdef is recommended!
+Generating RTLIL representation for module `\hello_soc_top'.
+Warning: Replacing memory \dram_mem with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_soc_top.sv:193
+Successfully finished Verilog frontend.
+
+4. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/clock/hello_reset_sync.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/clock/hello_reset_sync.sv' to AST representation.
+Generating RTLIL representation for module `\hello_reset_sync'.
+Successfully finished Verilog frontend.
+
+5. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv' to AST representation.
+Generating RTLIL representation for module `\hello_axi_lite_interconnect'.
+Warning: Replacing memory \wr_fifo with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:632
+Warning: Replacing memory \rd_fifo with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:631
+Warning: Replacing memory \wr_wd with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:629
+Warning: Replacing memory \rd_wd with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:628
+Warning: Replacing memory \rd_dbg_laddr with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:627
+Warning: Replacing memory \wr_ost with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:626
+Warning: Replacing memory \wr_tail with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:701, /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:625
+Warning: Replacing memory \wr_head with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:751, /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:624
+Warning: Replacing memory \rd_ost with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:623
+Warning: Replacing memory \rd_tail with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:672, /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:622
+Warning: Replacing memory \rd_head with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:739, /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:621
+Warning: Replacing memory \aw_pip_sel with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:620
+Warning: Replacing memory \w_pip_strb with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:619
+Warning: Replacing memory \w_pip_data with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:618
+Warning: Replacing memory \aw_pip_addr with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:617
+Warning: Replacing memory \aw_pip_vld with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:616
+Warning: Replacing memory \ar_pip_sel with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:615
+Warning: Replacing memory \ar_pip_addr with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:614
+Warning: Replacing memory \ar_pip_vld with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:613
+Warning: Replacing memory \w_held_strb with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:612
+Warning: Replacing memory \w_held_data with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:611
+Warning: Replacing memory \w_held_vld with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:610
+Warning: Replacing memory \aw_held_addr with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:609
+Warning: Replacing memory \aw_held_vld with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:608
+Warning: Replacing memory \mo_bresp with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:571
+Warning: Replacing memory \mo_bvalid with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:570
+Warning: Replacing memory \mo_rresp with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:519
+Warning: Replacing memory \mo_rdata with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:518
+Warning: Replacing memory \mo_rvalid with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:517
+Warning: Replacing memory \aw_pip_drain with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:506
+Warning: Replacing memory \mo_arready with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:452
+Warning: Replacing memory \ar_pip_drain with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:446
+Warning: Replacing memory \wr_cand with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:366
+Warning: Replacing memory \rd_cand with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:365
+Warning: Replacing memory \mo_wready with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:353
+Warning: Replacing memory \mo_awready with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:352
+Warning: Replacing memory \wr_ost_full with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:345
+Warning: Replacing memory \rd_ost_full with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:344
+Warning: Replacing memory \mi_rready with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:241
+Warning: Replacing memory \mi_araddr with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:240
+Warning: Replacing memory \mi_arvalid with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:240
+Warning: Replacing memory \mi_bready with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:239
+Warning: Replacing memory \mi_wstrb with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:239
+Warning: Replacing memory \mi_wdata with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:238
+Warning: Replacing memory \mi_wvalid with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:238
+Warning: Replacing memory \mi_awaddr with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:237
+Warning: Replacing memory \mi_awvalid with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/interconnect/hello_axi_lite_interconnect.sv:237
+Successfully finished Verilog frontend.
+
+6. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/interrupts/hello_interrupt_controller.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/interrupts/hello_interrupt_controller.sv' to AST representation.
+Generating RTLIL representation for module `\hello_interrupt_controller'.
+Successfully finished Verilog frontend.
+
+7. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/peripherals/hello_peripherals.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/peripherals/hello_peripherals.sv' to AST representation.
+Generating RTLIL representation for module `\hello_peripherals'.
+Successfully finished Verilog frontend.
+
+8. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/memory/hello_axi_lite_dram.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/memory/hello_axi_lite_dram.sv' to AST representation.
+Generating RTLIL representation for module `\hello_axi_lite_dram'.
+Warning: Replacing memory \mem with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/memory/hello_axi_lite_dram.sv:86
+Successfully finished Verilog frontend.
+
+9. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/cpu/hello_cva6_wrapper.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/cpu/hello_cva6_wrapper.sv' to AST representation.
+Generating RTLIL representation for module `\hello_cpu_subsystem'.
+Successfully finished Verilog frontend.
+
+10. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/cpu/hello_cpu_axi_bridge.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/cpu/hello_cpu_axi_bridge.sv' to AST representation.
+Generating RTLIL representation for module `\hello_cpu_axi_bridge'.
+Successfully finished Verilog frontend.
+
+11. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/npu/hello_npu.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/npu/hello_npu.sv' to AST representation.
+Generating RTLIL representation for module `\hello_npu'.
+Warning: Replacing memory \scratch with list of registers. See /Users/shawwalters/Desktop/npu_experiment/rtl/npu/hello_npu.sv:202
+Successfully finished Verilog frontend.
+
+12. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/dma/hello_dma.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/dma/hello_dma.sv' to AST representation.
+Generating RTLIL representation for module `\hello_dma'.
+Successfully finished Verilog frontend.
+
+13. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/display/hello_display.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/display/hello_display.sv' to AST representation.
+Generating RTLIL representation for module `\hello_display'.
+Successfully finished Verilog frontend.
+
+14. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/bootrom/hello_bootrom.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/bootrom/hello_bootrom.sv' to AST representation.
+Generating RTLIL representation for module `\hello_bootrom'.
+Successfully finished Verilog frontend.
+
+15. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/rtl/debug/hello_dbg_mmio_bridge.sv
+Parsing SystemVerilog input from `/Users/shawwalters/Desktop/npu_experiment/rtl/debug/hello_dbg_mmio_bridge.sv' to AST representation.
+Generating RTLIL representation for module `\hello_dbg_mmio_bridge'.
+Successfully finished Verilog frontend.
+
+16. Executing HIERARCHY pass (managing design hierarchy).
+
+16.1. Analyzing design hierarchy..
+Top module:  \hello_fpga_smoke_top
+
+16.2. Analyzing design hierarchy..
+Top module:  \hello_fpga_smoke_top
+Removing unused module `\hello_dbg_mmio_bridge'.
+Removing unused module `\hello_bootrom'.
+Removing unused module `\hello_display'.
+Removing unused module `\hello_dma'.
+Removing unused module `\hello_npu'.
+Removing unused module `\hello_cpu_axi_bridge'.
+Removing unused module `\hello_cpu_subsystem'.
+Removing unused module `\hello_axi_lite_dram'.
+Removing unused module `\hello_peripherals'.
+Removing unused module `\hello_interrupt_controller'.
+Removing unused module `\hello_axi_lite_interconnect'.
+Removing unused module `\hello_reset_sync'.
+Removing unused module `\hello_soc_top'.
+Removing unused module `\hello_chip_top'.
+Removed 14 unused modules.
+
+17. Executing SYNTH_LATTICE pass.
+
+17.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_sim_ecp5.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_sim_ecp5.v' to AST representation.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\$__ABC9_LUT5'.
+Generating RTLIL representation for module `\$__ABC9_LUT6'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\L6MUX21'.
+Generating RTLIL representation for module `\TRELLIS_RAM16X2'.
+Generating RTLIL representation for module `\PFUMX'.
+Generating RTLIL representation for module `\TRELLIS_DPR16X4'.
+Generating RTLIL representation for module `\DPR16X4C'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\TRELLIS_FF'.
+Generating RTLIL representation for module `\TRELLIS_IO'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\TRELLIS_COMB'.
+Generating RTLIL representation for module `\VLO'.
+Generating RTLIL representation for module `\VHI'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Generating RTLIL representation for module `\CCU2C'.
+Generating RTLIL representation for module `\DP16KD'.
+Replacing existing blackbox module `\FD1P3AX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:2.1-2.261.
+Generating RTLIL representation for module `\FD1P3AX'.
+Replacing existing blackbox module `\FD1P3AY' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:3.1-3.261.
+Generating RTLIL representation for module `\FD1P3AY'.
+Replacing existing blackbox module `\FD1P3BX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:4.1-4.261.
+Generating RTLIL representation for module `\FD1P3BX'.
+Replacing existing blackbox module `\FD1P3DX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:5.1-5.261.
+Generating RTLIL representation for module `\FD1P3DX'.
+Replacing existing blackbox module `\FD1P3IX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:6.1-6.261.
+Generating RTLIL representation for module `\FD1P3IX'.
+Replacing existing blackbox module `\FD1P3JX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:7.1-7.261.
+Generating RTLIL representation for module `\FD1P3JX'.
+Replacing existing blackbox module `\FD1S3AX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:8.1-8.261.
+Generating RTLIL representation for module `\FD1S3AX'.
+Replacing existing blackbox module `\FD1S3AY' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:9.1-9.261.
+Generating RTLIL representation for module `\FD1S3AY'.
+Replacing existing blackbox module `\FD1S3BX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:10.1-10.261.
+Generating RTLIL representation for module `\FD1S3BX'.
+Replacing existing blackbox module `\FD1S3DX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:11.1-11.261.
+Generating RTLIL representation for module `\FD1S3DX'.
+Replacing existing blackbox module `\FD1S3IX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:12.1-12.261.
+Generating RTLIL representation for module `\FD1S3IX'.
+Replacing existing blackbox module `\FD1S3JX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:13.1-13.261.
+Generating RTLIL representation for module `\FD1S3JX'.
+Replacing existing blackbox module `\IFS1P3BX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:26.1-26.301.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Replacing existing blackbox module `\IFS1P3DX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:27.1-27.301.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Replacing existing blackbox module `\IFS1P3IX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:28.1-28.301.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Replacing existing blackbox module `\IFS1P3JX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:29.1-29.301.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Replacing existing blackbox module `\OFS1P3BX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:31.1-31.302.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Replacing existing blackbox module `\OFS1P3DX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:32.1-32.302.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Replacing existing blackbox module `\OFS1P3IX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:33.1-33.302.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Replacing existing blackbox module `\OFS1P3JX' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_ff.vh:34.1-34.302.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Replacing existing blackbox module `\IB' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:2.1-2.157.
+Generating RTLIL representation for module `\IB'.
+Replacing existing blackbox module `\IBPU' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:3.1-3.157.
+Generating RTLIL representation for module `\IBPU'.
+Replacing existing blackbox module `\IBPD' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:4.1-4.157.
+Generating RTLIL representation for module `\IBPD'.
+Replacing existing blackbox module `\OB' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:5.1-5.157.
+Generating RTLIL representation for module `\OB'.
+Replacing existing blackbox module `\OBZ' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:6.1-6.164.
+Generating RTLIL representation for module `\OBZ'.
+Replacing existing blackbox module `\OBZPU' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:7.1-7.164.
+Generating RTLIL representation for module `\OBZPU'.
+Replacing existing blackbox module `\OBZPD' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:8.1-8.164.
+Generating RTLIL representation for module `\OBZPD'.
+Replacing existing blackbox module `\OBCO' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:9.1-9.90.
+Generating RTLIL representation for module `\OBCO'.
+Replacing existing blackbox module `\BB' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:10.1-10.179.
+Generating RTLIL representation for module `\BB'.
+Replacing existing blackbox module `\BBPU' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:11.1-11.179.
+Generating RTLIL representation for module `\BBPU'.
+Replacing existing blackbox module `\BBPD' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:12.1-12.179.
+Generating RTLIL representation for module `\BBPD'.
+Replacing existing blackbox module `\ILVDS' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:13.1-13.139.
+Generating RTLIL representation for module `\ILVDS'.
+Replacing existing blackbox module `\OLVDS' at /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_io.vh:14.1-14.146.
+Generating RTLIL representation for module `\OLVDS'.
+Successfully finished Verilog frontend.
+
+17.2. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_bb_ecp5.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_bb_ecp5.v' to AST representation.
+Generating RTLIL representation for module `\GSR'.
+Generating RTLIL representation for module `\PUR'.
+Generating RTLIL representation for module `\SGSR'.
+Generating RTLIL representation for module `\PDPW16KD'.
+Generating RTLIL representation for module `\MULT18X18D'.
+Generating RTLIL representation for module `\ALU54B'.
+Generating RTLIL representation for module `\CLKDIVF'.
+Generating RTLIL representation for module `\PCSCLKDIV'.
+Generating RTLIL representation for module `\DCSC'.
+Generating RTLIL representation for module `\DCCA'.
+Generating RTLIL representation for module `\ECLKSYNCB'.
+Generating RTLIL representation for module `\ECLKBRIDGECS'.
+Generating RTLIL representation for module `\DELAYF'.
+Generating RTLIL representation for module `\DELAYG'.
+Generating RTLIL representation for module `\USRMCLK'.
+Generating RTLIL representation for module `\DQSBUFM'.
+Generating RTLIL representation for module `\DDRDLLA'.
+Generating RTLIL representation for module `\DLLDELD'.
+Generating RTLIL representation for module `\IDDRX1F'.
+Generating RTLIL representation for module `\IDDRX2F'.
+Generating RTLIL representation for module `\IDDR71B'.
+Generating RTLIL representation for module `\IDDRX2DQA'.
+Generating RTLIL representation for module `\ODDRX1F'.
+Generating RTLIL representation for module `\ODDRX2F'.
+Generating RTLIL representation for module `\ODDR71B'.
+Generating RTLIL representation for module `\OSHX2A'.
+Generating RTLIL representation for module `\TSHX2DQA'.
+Generating RTLIL representation for module `\TSHX2DQSA'.
+Generating RTLIL representation for module `\ODDRX2DQA'.
+Generating RTLIL representation for module `\ODDRX2DQSB'.
+Generating RTLIL representation for module `\EHXPLLL'.
+Generating RTLIL representation for module `\DTR'.
+Generating RTLIL representation for module `\OSCG'.
+Generating RTLIL representation for module `\EXTREFB'.
+Generating RTLIL representation for module `\JTAGG'.
+Generating RTLIL representation for module `\DCUA'.
+Successfully finished Verilog frontend.
+
+17.3. Executing HIERARCHY pass (managing design hierarchy).
+
+17.3.1. Analyzing design hierarchy..
+Top module:  \hello_fpga_smoke_top
+
+17.3.2. Analyzing design hierarchy..
+Top module:  \hello_fpga_smoke_top
+Removed 0 unused modules.
+
+17.4. Executing PROC pass (convert processes to netlists).
+
+17.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+17.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1 in module hello_fpga_smoke_top.
+Removed a total of 0 dead cases.
+
+17.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 2 redundant assignments.
+Promoted 2 assignments to connections.
+
+17.4.4. Executing PROC_INIT pass (extract init attributes).
+
+17.4.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \RST_N in `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+
+17.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~3 debug messages>
+
+17.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:59$8'.
+     1/1: $1\DBG_RDATA[3:0]
+Creating decoders for process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+     1/4: $0\irq_q[3:0]
+     2/4: $0\counter_q[23:0]
+     3/4: $0\launched_q[0:0]
+     4/4: $0\gpio_q[7:0]
+
+17.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\hello_fpga_smoke_top.\DBG_RDATA' from process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:59$8'.
+No latch inferred for signal `\hello_fpga_smoke_top.\DBG_READY' from process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:59$8'.
+
+17.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\hello_fpga_smoke_top.\counter_q' using process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+  created $adff cell `$procdff$1653' with positive edge clock and positive level reset.
+Creating register for signal `\hello_fpga_smoke_top.\gpio_q' using process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+  created $adff cell `$procdff$1658' with positive edge clock and positive level reset.
+Creating register for signal `\hello_fpga_smoke_top.\irq_q' using process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+  created $adff cell `$procdff$1663' with positive edge clock and positive level reset.
+Creating register for signal `\hello_fpga_smoke_top.\launched_q' using process `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+  created $adff cell `$procdff$1668' with positive edge clock and positive level reset.
+
+17.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+17.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:59$8'.
+Removing empty process `hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:59$8'.
+Found and cleaned up 2 empty switches in `\hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+Removing empty process `hello_fpga_smoke_top.$proc$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36$1'.
+Cleaned up 3 empty switches.
+
+17.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+<suppressed ~9 debug messages>
+
+17.5. Executing CHECK pass (checking for obvious problems).
+Checking module hello_fpga_smoke_top...
+Found and reported 0 problems.
+
+17.6. Executing FLATTEN pass (flatten design).
+
+17.7. Executing TRIBUF pass.
+
+17.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+17.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.10. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+Removed 5 unused cells and 21 unused wires.
+<suppressed ~6 debug messages>
+
+17.11. Executing CHECK pass (checking for obvious problems).
+Checking module hello_fpga_smoke_top...
+Found and reported 0 problems.
+
+17.12. Executing OPT pass (performing simple optimizations).
+
+17.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 20 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Computing hashes of 19 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+17.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~6 debug messages>
+
+17.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 19 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+Removed 0 unused cells and 1 unused wires.
+<suppressed ~1 debug messages>
+
+17.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+17.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~6 debug messages>
+
+17.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 19 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.12.16. Finished fast OPT passes. (There is nothing left to do.)
+
+17.13. Executing FSM pass (extract and optimize FSM).
+
+17.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+17.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+17.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+17.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+17.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+17.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+17.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+17.14. Executing OPT pass (performing simple optimizations).
+
+17.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 19 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~6 debug messages>
+
+17.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 19 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $procdff$1658 ($adff) from module hello_fpga_smoke_top (D = { \DBG_WDATA \DBG_WDATA }, Q = \gpio_q).
+Adding EN signal on $procdff$1668 ($adff) from module hello_fpga_smoke_top (D = 1'1, Q = \launched_q).
+
+17.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+Removed 2 unused cells and 2 unused wires.
+<suppressed ~3 debug messages>
+
+17.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+17.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+17.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 17 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+17.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 23 bits (of 24) from port B of cell hello_fpga_smoke_top.$add$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43$3 ($add).
+Removed top 2 bits (of 4) from port B of cell hello_fpga_smoke_top.$procmux$1641_CMP0 ($eq).
+Removed top 2 bits (of 4) from port B of cell hello_fpga_smoke_top.$procmux$1642_CMP0 ($eq).
+Removed top 3 bits (of 4) from port B of cell hello_fpga_smoke_top.$procmux$1643_CMP0 ($eq).
+
+17.16. Executing PEEPOPT pass (run peephole optimizers).
+
+17.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.18. Executing SHARE pass (SAT-based resource sharing).
+
+17.19. Executing TECHMAP pass (map to technology primitives).
+
+17.19.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+17.19.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~6 debug messages>
+
+17.20. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.22. Executing TECHMAP pass (map to technology primitives).
+
+17.22.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+17.22.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+17.23. Executing TECHMAP pass (map to technology primitives).
+
+17.23.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/dsp_map_18x18.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/dsp_map_18x18.v' to AST representation.
+Generating RTLIL representation for module `$__MUL18X18'.
+Successfully finished Verilog frontend.
+
+17.23.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~3 debug messages>
+
+17.24. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module hello_fpga_smoke_top:
+  creating $macc model for $add$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43$3 ($add).
+  creating $alu model for $macc $add$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43$3.
+  creating $alu cell for $add$/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43$3: $auto$alumacc.cc:512:replace_alu$1672
+  created 1 $alu and 0 $macc cells.
+
+17.25. Executing OPT pass (performing simple optimizations).
+
+17.25.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.25.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 17 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.25.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+17.25.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.25.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 17 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.25.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.25.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.25.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.25.9. Finished fast OPT passes. (There is nothing left to do.)
+
+17.26. Executing MEMORY pass.
+
+17.26.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+17.26.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+17.26.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+17.26.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+17.26.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+17.26.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.26.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+17.26.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+17.26.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.26.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+17.27. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.28. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+
+17.29. Executing TECHMAP pass (map to technology primitives).
+
+17.29.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/lutrams_map_trellis.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/lutrams_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$__TRELLIS_DPR16X4_'.
+Successfully finished Verilog frontend.
+
+17.29.2. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/brams_map_16kd.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/brams_map_16kd.v' to AST representation.
+Generating RTLIL representation for module `$__DP16KD_'.
+Generating RTLIL representation for module `$__PDPW16KD_'.
+Successfully finished Verilog frontend.
+
+17.29.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+
+17.30. Executing OPT pass (performing simple optimizations).
+
+17.30.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.30.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 17 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.30.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.30.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.30.5. Finished fast OPT passes.
+
+17.31. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+17.32. Executing OPT pass (performing simple optimizations).
+
+17.32.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.32.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 17 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.32.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+17.32.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.32.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 17 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.32.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.32.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.32.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.32.9. Finished fast OPT passes. (There is nothing left to do.)
+
+17.33. Executing TECHMAP pass (map to technology primitives).
+
+17.33.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/techmap.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+17.33.2. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v' to AST representation.
+Generating RTLIL representation for module `\_80_ccu2c_alu'.
+Successfully finished Verilog frontend.
+
+17.33.3. Continuing TECHMAP pass.
+Using template $paramod$79aa992f2eb7f354d4aaf651790713cf239111fa\_80_ccu2c_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $adffe.
+Using extmapper simplemap for cells of type $logic_and.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $eq.
+Using extmapper simplemap for cells of type $pmux.
+Using extmapper simplemap for cells of type $logic_not.
+Using extmapper simplemap for cells of type $adff.
+Using extmapper simplemap for cells of type $logic_or.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $pos.
+No more expansions possible.
+<suppressed ~166 debug messages>
+
+17.34. Executing OPT pass (performing simple optimizations).
+
+17.34.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+<suppressed ~97 debug messages>
+
+17.34.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 154 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Computing hashes of 144 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Computing hashes of 140 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+<suppressed ~42 debug messages>
+Removed a total of 14 cells.
+
+17.34.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.34.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+Removed 35 unused cells and 76 unused wires.
+<suppressed ~36 debug messages>
+
+17.34.5. Finished fast OPT passes.
+
+17.35. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.36. Executing DFFLEGALIZE pass (convert FFs to types supported by the target).
+
+17.37. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 138 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Computing hashes of 106 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+<suppressed ~96 debug messages>
+Removed a total of 32 cells.
+
+17.38. Executing TECHMAP pass (map to technology primitives).
+
+17.38.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$_DFF_N_'.
+Generating RTLIL representation for module `$_DFF_P_'.
+Generating RTLIL representation for module `$_DFFE_NN_'.
+Generating RTLIL representation for module `$_DFFE_PN_'.
+Generating RTLIL representation for module `$_DFFE_NP_'.
+Generating RTLIL representation for module `$_DFFE_PP_'.
+Generating RTLIL representation for module `$_DFF_NP0_'.
+Generating RTLIL representation for module `$_DFF_NP1_'.
+Generating RTLIL representation for module `$_DFF_PP0_'.
+Generating RTLIL representation for module `$_DFF_PP1_'.
+Generating RTLIL representation for module `$_SDFF_NP0_'.
+Generating RTLIL representation for module `$_SDFF_NP1_'.
+Generating RTLIL representation for module `$_SDFF_PP0_'.
+Generating RTLIL representation for module `$_SDFF_PP1_'.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFE_NP0N_'.
+Generating RTLIL representation for module `$_DFFE_NP1N_'.
+Generating RTLIL representation for module `$_DFFE_PP0N_'.
+Generating RTLIL representation for module `$_DFFE_PP1N_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_SDFFE_NP0N_'.
+Generating RTLIL representation for module `$_SDFFE_NP1N_'.
+Generating RTLIL representation for module `$_SDFFE_PP0N_'.
+Generating RTLIL representation for module `$_SDFFE_PP1N_'.
+Generating RTLIL representation for module `$_ALDFF_NP_'.
+Generating RTLIL representation for module `$_ALDFF_PP_'.
+Generating RTLIL representation for module `$_ALDFFE_NPN_'.
+Generating RTLIL representation for module `$_ALDFFE_NPP_'.
+Generating RTLIL representation for module `$_ALDFFE_PPN_'.
+Generating RTLIL representation for module `$_ALDFFE_PPP_'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Successfully finished Verilog frontend.
+
+17.38.2. Continuing TECHMAP pass.
+Using template $_DFF_PP0_ for cells of type $_DFF_PP0_.
+Using template $_DFFE_PP0P_ for cells of type $_DFFE_PP0P_.
+No more expansions possible.
+<suppressed ~104 debug messages>
+
+17.39. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.40. Executing SIMPLEMAP pass (map simple cells to gate primitives).
+
+17.41. Executing LATTICE_GSR pass (implement FF init values).
+Handling GSR in hello_fpga_smoke_top.
+
+17.42. Executing ATTRMVCP pass (move or copy attributes).
+
+17.43. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+Removed 0 unused cells and 202 unused wires.
+<suppressed ~1 debug messages>
+
+17.44. Executing TECHMAP pass (map to technology primitives).
+
+17.44.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/latches_map.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/latches_map.v' to AST representation.
+Generating RTLIL representation for module `$_DLATCH_N_'.
+Generating RTLIL representation for module `$_DLATCH_P_'.
+Successfully finished Verilog frontend.
+
+17.44.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+17.45. Executing ABC9 pass.
+
+17.45.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+17.45.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+17.45.3. Executing PROC pass (convert processes to netlists).
+
+17.45.3.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+17.45.3.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2340 in module $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.
+Removed a total of 0 dead cases.
+
+17.45.3.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 1 assignment to connection.
+
+17.45.3.4. Executing PROC_INIT pass (extract init attributes).
+Found init rule in `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:278$2341'.
+  Set init value: \Q = 1'0
+
+17.45.3.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \muxlsr in `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2340'.
+
+17.45.3.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~1 debug messages>
+
+17.45.3.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:278$2341'.
+Creating decoders for process `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2340'.
+     1/1: $0\Q[0:0]
+
+17.45.3.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+17.45.3.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.\Q' using process `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2340'.
+  created $adff cell `$procdff$2346' with positive edge clock and positive level reset.
+
+17.45.3.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+17.45.3.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:278$2341'.
+Found and cleaned up 1 empty switch in `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2340'.
+Removing empty process `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2340'.
+Cleaned up 1 empty switch.
+
+17.45.4. Executing PROC pass (convert processes to netlists).
+
+17.45.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+17.45.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2354 in module $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.
+Removed a total of 0 dead cases.
+
+17.45.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 1 assignment to connection.
+
+17.45.4.4. Executing PROC_INIT pass (extract init attributes).
+Found init rule in `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:278$2355'.
+  Set init value: \Q = 1'0
+
+17.45.4.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \muxlsr in `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2354'.
+
+17.45.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~1 debug messages>
+
+17.45.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:278$2355'.
+Creating decoders for process `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2354'.
+     1/1: $0\Q[0:0]
+
+17.45.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+17.45.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.\Q' using process `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2354'.
+  created $adff cell `$procdff$2360' with positive edge clock and positive level reset.
+
+17.45.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+17.45.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:278$2355'.
+Found and cleaned up 1 empty switch in `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2354'.
+Removing empty process `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.$proc$/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/common_sim.vh:282$2354'.
+Cleaned up 1 empty switch.
+
+17.45.5. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module hello_fpga_smoke_top.
+Found 0 SCCs.
+
+17.45.6. Executing ABC9_OPS pass (helper functions for ABC9).
+
+17.45.7. Executing TECHMAP pass (map to technology primitives).
+
+17.45.7.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/techmap.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+17.45.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~170 debug messages>
+
+17.45.8. Executing OPT pass (performing simple optimizations).
+
+17.45.8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.
+Optimizing module $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.
+
+17.45.8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF'.
+Computing hashes of 2 cells of `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF'.
+Finding duplicate cells in `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF'.
+Finding identical cells in module `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF'.
+Computing hashes of 2 cells of `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF'.
+Finding duplicate cells in `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF'.
+Removed a total of 0 cells.
+
+17.45.8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+17.45.8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.
+  Optimizing cells in module $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.
+Performed a total of 0 changes.
+
+17.45.8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF'.
+Computing hashes of 2 cells of `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF'.
+Finding duplicate cells in `$paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF'.
+Finding identical cells in module `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF'.
+Computing hashes of 2 cells of `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF'.
+Finding duplicate cells in `$paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF'.
+Removed a total of 0 cells.
+
+17.45.8.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.45.8.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF..
+Finding unused cells or wires in module $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF..
+
+17.45.8.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.
+Optimizing module $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.
+
+17.45.8.9. Finished fast OPT passes. (There is nothing left to do.)
+
+17.45.9. Executing TECHMAP pass (map to technology primitives).
+
+17.45.9.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/abc9_map.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/abc9_map.v' to AST representation.
+Successfully finished Verilog frontend.
+
+17.45.9.2. Continuing TECHMAP pass.
+Using template $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF for cells of type $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.
+Using template $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF for cells of type $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.
+No more expansions possible.
+<suppressed ~37 debug messages>
+
+17.45.10. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/abc9_model.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+17.45.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+17.45.12. Executing ABC9_OPS pass (helper functions for ABC9).
+
+17.45.13. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+17.45.14. Executing TECHMAP pass (map to technology primitives).
+
+17.45.14.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/techmap.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+17.45.14.2. Continuing TECHMAP pass.
+Using template $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C for cells of type $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod\LUT2\INIT=4'1010 for cells of type LUT2.
+Using template $paramod\LUT4\INIT=16'1001011010101010 for cells of type LUT4.
+Using extmapper simplemap for cells of type $mux.
+No more expansions possible.
+<suppressed ~209 debug messages>
+
+17.45.15. Executing OPT pass (performing simple optimizations).
+
+17.45.15.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+<suppressed ~18 debug messages>
+
+17.45.15.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 59 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Computing hashes of 57 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+<suppressed ~6 debug messages>
+Removed a total of 2 cells.
+
+17.45.15.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+17.45.15.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.45.15.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 57 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.45.15.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.45.15.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+Removed 0 unused cells and 55 unused wires.
+<suppressed ~1 debug messages>
+
+17.45.15.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.45.15.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+17.45.15.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \hello_fpga_smoke_top..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+17.45.15.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \hello_fpga_smoke_top.
+Performed a total of 0 changes.
+
+17.45.15.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\hello_fpga_smoke_top'.
+Computing hashes of 57 cells of `\hello_fpga_smoke_top'.
+Finding duplicate cells in `\hello_fpga_smoke_top'.
+Removed a total of 0 cells.
+
+17.45.15.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+17.45.15.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \hello_fpga_smoke_top..
+
+17.45.15.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module hello_fpga_smoke_top.
+
+17.45.15.16. Finished fast OPT passes. (There is nothing left to do.)
+
+17.45.16. Executing AIGMAP pass (map logic to AIG).
+Module hello_fpga_smoke_top: replaced 18 cells with 120 new cells, skipped 39 cells.
+  replaced 3 cell types:
+      14 $_MUX_
+       2 $_OR_
+       2 $_XOR_
+  not replaced 3 cell types:
+       4 $_AND_
+       4 $_NOT_
+      31 $specify2
+
+17.45.17. Executing AIGMAP pass (map logic to AIG).
+Module hello_fpga_smoke_top: replaced 35 cells with 173 new cells, skipped 104 cells.
+  replaced 3 cell types:
+       4 $_MUX_
+      24 $_OR_
+       7 $_XOR_
+  not replaced 7 cell types:
+      19 $_AND_
+       7 $_NOT_
+       5 $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF
+      28 $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF
+      12 $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C
+       5 $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF_$abc9_byp
+      28 $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF_$abc9_byp
+
+17.45.17.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+17.45.17.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+17.45.17.3. Executing XAIGER backend.
+<suppressed ~11 debug messages>
+Extracted 76 AND gates and 326 wires from module `hello_fpga_smoke_top' to a netlist network with 50 inputs and 49 outputs.
+
+17.45.17.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+17.45.17.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =     50/     49  and =      70  lev =    7 (0.23)  mem = 0.01 MB  box = 45  bb = 33
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =     50/     49  and =     105  lev =    7 (0.22)  mem = 0.01 MB  ch =   16  box = 45  bb = 33
+ABC: cst =       0  cls =     12  lit =      16  unused =     196  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 7. Memory (bytes): Truth =    0. Cut =   76. Obj =  156. Set =  780. CutMin = no
+ABC: Node =     105.  Ch =    12.  Total mem =    0.07 MB. Peak cut mem =    0.01 MB.
+ABC: P:  Del = 1366.00.  Ar =      47.0.  Edge =       56.  Cut =     1167.  T =     0.00 sec
+ABC: P:  Del = 1366.00.  Ar =      47.0.  Edge =       56.  Cut =     1158.  T =     0.00 sec
+ABC: P:  Del = 1366.00.  Ar =      45.0.  Edge =       57.  Cut =     1562.  T =     0.00 sec
+ABC: F:  Del = 1366.00.  Ar =      43.0.  Edge =       62.  Cut =     1288.  T =     0.00 sec
+ABC: A:  Del = 1366.00.  Ar =      43.0.  Edge =       62.  Cut =     1285.  T =     0.00 sec
+ABC: A:  Del = 1366.00.  Ar =      43.0.  Edge =       62.  Cut =     1168.  T =     0.00 sec
+ABC: Total time =     0.00 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: The network is not changed by "&mfs".
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =     50/     49  and =      85  lev =    7 (0.22)  mem = 0.01 MB  box = 45  bb = 33
+ABC: Mapping (K=7)  :  lut =     16  edge =      62  lev =    2 (0.09)  levB =   13  mem = 0.00 MB
+ABC: LUT = 16 : 2=6 37.5 %  3=3 18.8 %  4=2 12.5 %  5=0 0.0 %  6=2 12.5 %  7=3 18.8 %  Ave = 3.88
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.01 sec
+ABC: + time 
+ABC: elapse: 0.01 seconds, total: 0.01 seconds
+
+17.45.17.6. Executing AIGER frontend.
+<suppressed ~208 debug messages>
+Removed 116 unused cells and 478 unused wires.
+
+17.45.17.7. Executing ABC9_OPS pass (helper functions for ABC9).
+ABC RESULTS:              $lut cells:       18
+ABC RESULTS:   $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C cells:       12
+ABC RESULTS:   $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF_$abc9_byp cells:        5
+ABC RESULTS:   $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF_$abc9_byp cells:       28
+ABC RESULTS:           input signals:       44
+ABC RESULTS:          output signals:       13
+Removing temp directory.
+
+17.45.18. Executing TECHMAP pass (map to technology primitives).
+
+17.45.18.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Successfully finished Verilog frontend.
+
+17.45.18.2. Continuing TECHMAP pass.
+Using template $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF for cells of type $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF.
+Using template $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF_$abc9_byp for cells of type $paramod$68581f66a8fa831820fa7633bd24ba569ae9d7e3\TRELLIS_FF_$abc9_byp.
+Using template $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C for cells of type $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C.
+Using template $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF for cells of type $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF.
+Using template $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF_$abc9_byp for cells of type $paramod$37e41664cab9052a9b41c89036e0524f666a0fee\TRELLIS_FF_$abc9_byp.
+No more expansions possible.
+<suppressed ~88 debug messages>
+Removed 5 unused cells and 1111 unused wires.
+
+17.46. Executing TECHMAP pass (map to technology primitives).
+
+17.46.1. Executing Verilog-2005 frontend: /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v
+Parsing Verilog input from `/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$_DFF_N_'.
+Generating RTLIL representation for module `$_DFF_P_'.
+Generating RTLIL representation for module `$_DFFE_NN_'.
+Generating RTLIL representation for module `$_DFFE_PN_'.
+Generating RTLIL representation for module `$_DFFE_NP_'.
+Generating RTLIL representation for module `$_DFFE_PP_'.
+Generating RTLIL representation for module `$_DFF_NP0_'.
+Generating RTLIL representation for module `$_DFF_NP1_'.
+Generating RTLIL representation for module `$_DFF_PP0_'.
+Generating RTLIL representation for module `$_DFF_PP1_'.
+Generating RTLIL representation for module `$_SDFF_NP0_'.
+Generating RTLIL representation for module `$_SDFF_NP1_'.
+Generating RTLIL representation for module `$_SDFF_PP0_'.
+Generating RTLIL representation for module `$_SDFF_PP1_'.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFE_NP0N_'.
+Generating RTLIL representation for module `$_DFFE_NP1N_'.
+Generating RTLIL representation for module `$_DFFE_PP0N_'.
+Generating RTLIL representation for module `$_DFFE_PP1N_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_SDFFE_NP0N_'.
+Generating RTLIL representation for module `$_SDFFE_NP1N_'.
+Generating RTLIL representation for module `$_SDFFE_PP0N_'.
+Generating RTLIL representation for module `$_SDFFE_PP1N_'.
+Generating RTLIL representation for module `$_ALDFF_NP_'.
+Generating RTLIL representation for module `$_ALDFF_PP_'.
+Generating RTLIL representation for module `$_ALDFFE_NPN_'.
+Generating RTLIL representation for module `$_ALDFFE_NPP_'.
+Generating RTLIL representation for module `$_ALDFFE_PPN_'.
+Generating RTLIL representation for module `$_ALDFFE_PPP_'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+17.46.2. Continuing TECHMAP pass.
+Using template $paramod$eb50f47b8c48805cb6d8d9186212bb69d6b1e1ef$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00000001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10101000 for cells of type $lut.
+Using template $paramod$e5acae11b3ee28bb679b5b673b9c42ac9485ae33$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0001 for cells of type $lut.
+Using template $paramod$6f946605d401d287ca204d65d6119ccd7ff7419c$lut for cells of type $lut.
+Using template $paramod$d204dcd684fb26edc5d9b574bf529711b8d47355$lut for cells of type $lut.
+Using template $paramod$fd904e9e35cfd343a9df248824bd3f1408724879$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1000 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0110 for cells of type $lut.
+Using template $paramod$6e238df02989b317f10820a22773676e71120644$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10000000 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000001\LUT=2'01 for cells of type $lut.
+No more expansions possible.
+<suppressed ~259 debug messages>
+
+17.47. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in hello_fpga_smoke_top.
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut2 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut3 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut4 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut5 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut6 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut7 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut2 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut3 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut4 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut5 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut6 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut7 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut2 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut3 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut4 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut5 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut6 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut7 (4 -> 1)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3203.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut3 (4 -> 0)
+  Optimizing lut $abc$3197$lut$aiger3196$137.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut2 (4 -> 3)
+  Optimizing lut $abc$3197$lut$aiger3196$137.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut3 (4 -> 3)
+  Optimizing lut $abc$3197$lut$aiger3196$137.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3203.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $abc$3197$lut$aiger3196$137.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3202.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3203.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3201.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $auto$abc9_ops.cc:1612:reintegrate$3200.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+Removed 0 unused cells and 40 unused wires.
+
+17.48. Executing AUTONAME pass.
+Renamed 214 objects in module hello_fpga_smoke_top (48 iterations).
+<suppressed ~214 debug messages>
+
+17.49. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `hello_fpga_smoke_top'. Setting top module to hello_fpga_smoke_top.
+
+17.49.1. Analyzing design hierarchy..
+Top module:  \hello_fpga_smoke_top
+
+17.49.2. Analyzing design hierarchy..
+Top module:  \hello_fpga_smoke_top
+Removed 0 unused modules.
+
+17.50. Printing statistics.
+
+=== hello_fpga_smoke_top ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      119 wires
+      221 wire bits
+      119 public wires
+      221 public wire bits
+       19 ports
+       35 port bits
+      117 submodules
+       12   CCU2C
+       11   L6MUX21
+       45   LUT4
+       16   PFUMX
+       33   TRELLIS_FF
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+        - hello_fpga_smoke_top
+
+        +----------Count including submodules.
+        | 
+      119 wires
+      221 wire bits
+      119 public wires
+      221 public wire bits
+       19 ports
+       35 port bits
+        - memories
+        - memory bits
+        - processes
+        - cells
+      117 submodules
+       12   CCU2C
+       11   L6MUX21
+       45   LUT4
+       16   PFUMX
+       33   TRELLIS_FF
+
+17.51. Executing CHECK pass (checking for obvious problems).
+Checking module hello_fpga_smoke_top...
+Found and reported 0 problems.
+
+17.52. Executing JSON backend.
+
+Warnings: 51 unique messages, 51 total
+End of script. Logfile hash: 8140c0587a, time: 0.82s, user: 0.76s, system: 0.03s, MEM: 89.50 MB peak
+Yosys 0.65+37 (git sha1 e87a9bd9a-dirty, aarch64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+Time spent: 87% 35x read_verilog (0 sec), 4% 1x abc9_exe (0 sec), ...

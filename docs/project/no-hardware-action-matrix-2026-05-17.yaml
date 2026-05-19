@@ -42,7 +42,7 @@ workstreams:
       - make software-bsp-check
       - make software-bsp-evidence-check
     current_blocker: No external AOSP/Linux/Buildroot build logs, no boot transcript, no HAL binaries, no CTS/VTS evidence.
-    next_artifact: docs/evidence/README.md
+    next_artifact: docs/evidence/software-bsp-capture.md
 
   - id: simulators
     owner_scope: QEMU, Renode, architecture metrics, equivalence proof

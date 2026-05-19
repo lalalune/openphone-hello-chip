@@ -294,23 +294,48 @@ write_os_attempt_manifest() {
     state=$1
     detail=$2
     mkdir -p "$repo_dir/build/reports"
-    cat >"$os_attempt_manifest" <<EOF
-{
-  "schema": "openphone.qemu_virt_os_boot_attempt.v1",
-  "claim_boundary": "qemu_virt_reference_only_not_hello_chip_rtl",
-  "status": "$state",
-  "check": "qemu.os_boot",
-  "detail": $(printf '%s' "$detail" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'),
-  "qemu": "$(command -v qemu-system-riscv64 2>/dev/null || printf 'missing')",
-  "kernel": "${linux_kernel:-missing}",
-  "kernel_sha256": "$(if [ -n "${linux_kernel:-}" ] && [ -f "$linux_kernel" ]; then sha256_file "$linux_kernel"; else printf 'missing'; fi)",
-  "initrd": "${linux_initrd:-missing}",
-  "initrd_sha256": "$(if [ -n "${linux_initrd:-}" ] && [ -f "$linux_initrd" ]; then sha256_file "$linux_initrd"; else printf 'missing'; fi)",
-  "dtb": "${linux_dtb:-optional-missing}",
-  "dtb_sha256": "$(if [ -n "${linux_dtb:-}" ] && [ -f "$linux_dtb" ]; then sha256_file "$linux_dtb"; else printf 'optional-missing'; fi)",
-  "transcript": "${os_attempt_log#"$repo_dir"/}"
+    qemu_path=$(command -v qemu-system-riscv64 2>/dev/null || printf 'missing')
+    qemu_version=$(qemu-system-riscv64 --version 2>/dev/null | head -n 1 || printf 'unavailable')
+    kernel_sha=$(if [ -n "${linux_kernel:-}" ] && [ -f "$linux_kernel" ]; then sha256_file "$linux_kernel"; else printf 'missing'; fi)
+    initrd_sha=$(if [ -n "${linux_initrd:-}" ] && [ -f "$linux_initrd" ]; then sha256_file "$linux_initrd"; else printf 'missing'; fi)
+    dtb_sha=$(if [ -n "${linux_dtb:-}" ] && [ -f "$linux_dtb" ]; then sha256_file "$linux_dtb"; else printf 'optional-missing'; fi)
+    OS_ATTEMPT_MANIFEST=$os_attempt_manifest \
+    OS_ATTEMPT_STATE=$state \
+    OS_ATTEMPT_DETAIL=$detail \
+    OS_ATTEMPT_QEMU=$qemu_path \
+    OS_ATTEMPT_QEMU_VERSION=$qemu_version \
+    OS_ATTEMPT_KERNEL=${linux_kernel:-missing} \
+    OS_ATTEMPT_KERNEL_SHA=$kernel_sha \
+    OS_ATTEMPT_INITRD=${linux_initrd:-missing} \
+    OS_ATTEMPT_INITRD_SHA=$initrd_sha \
+    OS_ATTEMPT_DTB=${linux_dtb:-optional-missing} \
+    OS_ATTEMPT_DTB_SHA=$dtb_sha \
+    OS_ATTEMPT_TRANSCRIPT=${os_attempt_log#"$repo_dir"/} \
+    python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+payload = {
+    "schema": "openphone.qemu_virt_os_boot_attempt.v1",
+    "claim_boundary": "qemu_virt_reference_only_not_hello_chip_rtl",
+    "status": os.environ["OS_ATTEMPT_STATE"],
+    "check": "qemu.os_boot",
+    "detail": os.environ["OS_ATTEMPT_DETAIL"],
+    "qemu": os.environ["OS_ATTEMPT_QEMU"],
+    "qemu_version": os.environ["OS_ATTEMPT_QEMU_VERSION"],
+    "kernel": os.environ["OS_ATTEMPT_KERNEL"],
+    "kernel_sha256": os.environ["OS_ATTEMPT_KERNEL_SHA"],
+    "initrd": os.environ["OS_ATTEMPT_INITRD"],
+    "initrd_sha256": os.environ["OS_ATTEMPT_INITRD_SHA"],
+    "dtb": os.environ["OS_ATTEMPT_DTB"],
+    "dtb_sha256": os.environ["OS_ATTEMPT_DTB_SHA"],
+    "transcript": os.environ["OS_ATTEMPT_TRANSCRIPT"],
 }
-EOF
+Path(os.environ["OS_ATTEMPT_MANIFEST"]).write_text(
+    json.dumps(payload, indent=2, sort_keys=True) + "\n"
+)
+PY
 }
 
 write_os_attempt_log() {
@@ -375,7 +400,7 @@ check_os_boot() {
     fi
 
     log=$(mktemp "${TMPDIR:-/tmp}/openphone-qemu-os.XXXXXX")
-    set -- qemu-system-riscv64 -machine virt -nographic -no-reboot \
+    set -- qemu-system-riscv64 -machine virt -m "${QEMU_OS_MEMORY:-2G}" -nographic -no-reboot \
         -kernel "$linux_kernel" \
         -initrd "$linux_initrd" \
         -append "console=ttyS0 earlycon"
@@ -395,7 +420,13 @@ check_os_boot() {
     cp "$log" "$os_attempt_log"
     rm -f "$log"
 
-    if grep -Eq "Freeing unused kernel memory|Run /init as init process|Welcome to|login:|Debian GNU/Linux installer|Starting system log daemon" "$os_attempt_log"; then
+    if grep -Eiq "Kernel panic|No working init found|Oops:|Unable to mount root fs" "$os_attempt_log"; then
+        write_os_attempt_manifest "FAIL" "bounded QEMU OS boot hit a kernel panic or fatal init/rootfs error; transcript archived"
+        status_line "FAIL" "qemu.os_boot" "bounded QEMU OS boot hit a kernel panic or fatal init/rootfs error; archived ${os_attempt_log#"$repo_dir"/}"
+        return 1
+    fi
+
+    if grep -Eq "Welcome to|login:|Debian GNU/Linux installer|Starting system log daemon|Reached target|sysinit.target" "$os_attempt_log"; then
         write_os_attempt_manifest "PASS" "bounded QEMU OS boot reached an init/login marker; transcript archived"
         status_line "PASS" "qemu.os_boot" "bounded QEMU OS boot reached an init/login marker; archived ${os_attempt_log#"$repo_dir"/}"
         return 0

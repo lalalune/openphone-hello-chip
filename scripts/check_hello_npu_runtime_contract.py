@@ -11,6 +11,7 @@ RUNTIME = ROOT / "compiler/runtime/hello_npu_runtime.py"
 RUNTIME_SIM_TEST = ROOT / "compiler/runtime/test_hello_npu_runtime_sim.py"
 ARCH_DOC = ROOT / "docs/arch/npu.md"
 BSP_HEADER = ROOT / "sw/linux/drivers/hello/hello_platform_contract.h"
+GENERATED_PLATFORM_HEADER = ROOT / "sw/platform/generated/hello_platform.h"
 VERILATOR_GEMM = ROOT / "verify/verilator/test_npu_gemm.cpp"
 NNAPI_PROOF = ROOT / "benchmarks/capabilities/hello_npu_nnapi.proof.json"
 
@@ -20,6 +21,7 @@ def load_runtime_class():
     if spec is None or spec.loader is None:
         raise RuntimeError(f"could not load {RUNTIME}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module.HelloNpuRuntime
 
@@ -30,7 +32,15 @@ def hex_to_int(value: str) -> int:
 
 def main() -> int:
     errors: list[str] = []
-    for path in (CONTRACT, RUNTIME, RUNTIME_SIM_TEST, ARCH_DOC, BSP_HEADER, VERILATOR_GEMM):
+    for path in (
+        CONTRACT,
+        RUNTIME,
+        RUNTIME_SIM_TEST,
+        ARCH_DOC,
+        BSP_HEADER,
+        GENERATED_PLATFORM_HEADER,
+        VERILATOR_GEMM,
+    ):
         if not path.is_file():
             errors.append(f"missing required artifact: {path.relative_to(ROOT)}")
     if errors:
@@ -51,7 +61,7 @@ def main() -> int:
         "Android NNAPI acceleration",
         "phone-class TOPS",
         "model compiler backend",
-        "DMA-backed tensor execution",
+        "production DMA-backed tensor execution",
         "sustained power or thermal performance",
     ):
         if required not in not_claimed:
@@ -103,9 +113,21 @@ def main() -> int:
     instance.dot8_s4(0, 0)
     if (runtime.OPCODE, runtime.OP_DOT8_S4) not in probe_writes:
         errors.append("runtime dot8_s4 must submit opcode 7")
+    if not hasattr(runtime, "submit_descriptors"):
+        errors.append("runtime must expose submit_descriptors for reserved descriptor queue status")
+    precision = {entry["precision"]: entry["state"] for entry in instance.precision_matrix()}
+    for required in ("INT4", "INT8", "FP16", "BF16", "FP8"):
+        if required not in precision:
+            errors.append(f"runtime precision matrix missing {required}")
+    for blocked in ("FP16", "BF16", "FP8"):
+        if precision.get(blocked) != "blocked":
+            errors.append(
+                f"runtime must report {blocked} as blocked, got {precision.get(blocked)!r}"
+            )
 
     arch_text = ARCH_DOC.read_text()
     header_text = BSP_HEADER.read_text()
+    generated_header_text = GENERATED_PLATFORM_HEADER.read_text()
     verilator_text = VERILATOR_GEMM.read_text().lower()
     header_offsets = {
         name: int(value, 16)
@@ -127,6 +149,27 @@ def main() -> int:
             errors.append(
                 f"BSP header HELLO_NPU_{header_name}_OFFSET {actual_offset!r} != {offset}"
             )
+        generated_token = f"#define HELLO_NPU_{header_name}_OFFSET 0x{hex_to_int(offset):02X}UL"
+        if generated_token not in generated_header_text:
+            errors.append(f"generated platform header missing {generated_token}")
+
+    for name in ("DESC_BASE", "DESC_HEAD", "DESC_TAIL", "DESC_STATUS", "CMD_PARAM"):
+        token = f"HELLO_NPU_{name}_OFFSET"
+        if token not in header_text or token not in generated_header_text:
+            errors.append(f"descriptor queue register {token} missing from platform headers")
+
+    for name, expected in (
+        ("DESC_RING_ENTRIES", 8),
+        ("DESC_STATUS_EMPTY", 0x1),
+        ("DESC_STATUS_DONE", 0x2),
+        ("DESC_STATUS_ERROR", 0x4),
+        ("DESC_STATUS_TIMEOUT", 0x8),
+        ("DESC_STATUS_MEM_ERROR", 0x10),
+        ("DESC_STATUS_STREAM_ERROR", 0x20),
+        ("DESC_FLAG_STREAM_TO_SCRATCH", 1 << 8),
+    ):
+        if getattr(runtime, name, None) != expected:
+            errors.append(f"runtime {name}={getattr(runtime, name, None)!r} != {expected!r}")
 
     for absolute in (
         runtime.PERF_UNSUPPORTED_OPS,
@@ -160,6 +203,30 @@ def main() -> int:
         errors.append(
             "unexpected NNAPI proof exists; benchmark acceleration claims need separate evidence review"
         )
+
+    contract_precision = {
+        entry.get("precision"): entry.get("state")
+        for entry in contract.get("precision_matrix", [])
+        if isinstance(entry, dict)
+    }
+    for blocked in ("FP16", "BF16", "FP8"):
+        if contract_precision.get(blocked) != "blocked":
+            errors.append(f"contract precision matrix must keep {blocked} blocked")
+    descriptor_queue = contract.get("descriptor_queue_submission", {})
+    if descriptor_queue.get("state") != "rtl_local_descriptor_ring":
+        errors.append(
+            "contract descriptor queue submission must describe rtl_local_descriptor_ring"
+        )
+    for token in (
+        "timeout_polls",
+        "ctrl_status",
+        "desc_status",
+        "perf_counters",
+        "desc_timeout_count",
+        "desc_bytes_read",
+    ):
+        if token not in descriptor_queue.get("required_error_reporting", []):
+            errors.append(f"descriptor queue error reporting missing {token}")
 
     runtime_sim_text = RUNTIME_SIM_TEST.read_text()
     for token in (

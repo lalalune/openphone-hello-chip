@@ -17,6 +17,12 @@ CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
 RUNTIME = ROOT / "compiler/runtime/hello_npu_runtime.py"
 BENCH_CONFIG = ROOT / "benchmarks/configs/benchmark_plan.json"
 PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json"
+ANDROID_PROOF_TEMPLATE = (
+    ROOT / "docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json"
+)
+POWER_THERMAL_TEMPLATE = (
+    ROOT / "docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json"
+)
 CAPABILITY_README = ROOT / "docs/benchmarks/capabilities/README.md"
 REPORT_SCHEMA = ROOT / "docs/benchmarks/report-schema.yaml"
 
@@ -44,10 +50,15 @@ RUNTIME_REGISTER_ALIASES = {
 REQUIRED_NPU_PROOF_FIELDS = {
     "capability.claim_level",
     "capability.precision",
+    "capture.commands.adb_devices",
+    "capture.commands.nnapi_accelerator_query",
+    "capture.commands.benchmark_model_nnapi",
+    "capture.commands.dma_trace",
     "dataflow.name",
     "dma.path",
     "dma.bytes_read",
     "dma.bytes_written",
+    "dma.trace_bytes",
     "measurements.macs_per_inference",
     "measurements.npu_cycles",
     "measurements.npu_hz",
@@ -60,6 +71,46 @@ REQUIRED_NPU_PROOF_TRANSCRIPTS = {
     "nnapi_accelerator_query",
     "benchmark_model_nnapi",
     "dma_trace",
+}
+
+SHA256_PLACEHOLDER = "64-character lowercase sha256"
+
+REQUIRED_ANDROID_PROOF_STATUSES = {
+    "aidl_or_hidl_hal_declared",
+    "hal_binary_in_vendorimage",
+    "vintf_check",
+    "selinux_policy_build",
+    "selinux_neverallow",
+    "vts_hello_npu",
+    "cts_nnapi_smoke",
+    "nnapi_accelerator_query",
+    "fail_closed_absent_device",
+}
+
+REQUIRED_ANDROID_PROOF_ARTIFACTS = {
+    "vts_result",
+    "cts_result",
+    "selinux_policy_build_log",
+    "selinux_neverallow_log",
+    "vintf_check_log",
+    "nnapi_query_log",
+    "absent_device_probe_log",
+}
+
+REQUIRED_POWER_THERMAL_STATUSES = {
+    "power_meter_calibrated",
+    "thermal_sensor_calibrated",
+    "npu_frequency_locked_or_recorded",
+    "sustained_workload_trace",
+    "throttle_state_recorded",
+    "perf_per_watt_computed_from_trace",
+}
+
+REQUIRED_POWER_THERMAL_ARTIFACTS = {
+    "power_trace",
+    "thermal_trace",
+    "frequency_trace",
+    "calibration_record",
 }
 
 
@@ -88,6 +139,49 @@ def find_benchmark(config: dict, name: str) -> dict | None:
         if bench.get("name") == name:
             return bench
     return None
+
+
+def check_template_statuses(
+    errors: list[str],
+    name: str,
+    template: dict,
+    required_statuses: set[str],
+    required_artifacts: set[str],
+) -> None:
+    if template.get("status") != "blocked":
+        errors.append(f"{name} template status must remain blocked")
+    boundary = template.get("claim_boundary", "")
+    if "template_only" not in boundary or "evidence" not in boundary:
+        errors.append(f"{name} template must state a template-only evidence boundary")
+
+    statuses = template.get("required_statuses", {})
+    if not isinstance(statuses, dict):
+        errors.append(f"{name} template required_statuses must be an object")
+        statuses = {}
+    missing_statuses = sorted(required_statuses - set(statuses))
+    if missing_statuses:
+        errors.append(f"{name} template missing status gate(s): " + ", ".join(missing_statuses))
+    for key, status in statuses.items():
+        if status != "blocked":
+            errors.append(f"{name} template status {key} must remain blocked")
+
+    artifacts = template.get("artifacts", {})
+    if not isinstance(artifacts, dict):
+        errors.append(f"{name} template artifacts must be an object")
+        artifacts = {}
+    missing_artifacts = sorted(required_artifacts - set(artifacts))
+    if missing_artifacts:
+        errors.append(f"{name} template missing artifact gate(s): " + ", ".join(missing_artifacts))
+    for key, artifact in artifacts.items():
+        if not isinstance(artifact, dict):
+            errors.append(f"{name} template artifact {key} must be an object")
+            continue
+        path = artifact.get("path")
+        if not isinstance(path, str) or path.startswith("/") or not path:
+            errors.append(f"{name} template artifact {key}.path must be repo-relative")
+        sha = artifact.get("sha256")
+        if not isinstance(sha, str) or SHA256_PLACEHOLDER not in sha:
+            errors.append(f"{name} template artifact {key}.sha256 must require a lowercase sha256")
 
 
 def check_runtime_contract(errors: list[str]) -> None:
@@ -159,15 +253,80 @@ def check_benchmark_evidence_gates(errors: list[str]) -> None:
         errors.append(
             "proof template missing transcript(s): " + ", ".join(missing_template_transcripts)
         )
+    for transcript_name in REQUIRED_NPU_PROOF_TRANSCRIPTS & transcripts:
+        entry = template.get("transcripts", {}).get(transcript_name)
+        if not isinstance(entry, dict):
+            errors.append(f"proof template transcript {transcript_name} must be an object")
+            continue
+        if not isinstance(entry.get("path"), str) or not entry["path"]:
+            errors.append(f"proof template transcript {transcript_name}.path must be non-empty")
+        if SHA256_PLACEHOLDER not in str(entry.get("sha256", "")):
+            errors.append(
+                f"proof template transcript {transcript_name}.sha256 must require lowercase sha256"
+            )
+        if not isinstance(entry.get("bytes"), int) or entry.get("bytes", 0) <= 0:
+            errors.append(f"proof template transcript {transcript_name}.bytes must be positive")
 
     for token, path in (
         ("observed_tops", CAPABILITY_README),
         ("macs_per_inference", CAPABILITY_README),
         ("dma_trace", CAPABILITY_README),
+        ("hello_npu_android_proof_manifest", CAPABILITY_README),
+        ("hello_npu_power_thermal_manifest", CAPABILITY_README),
         ("MAC/cycle", REPORT_SCHEMA),
     ):
         if token not in path.read_text():
             errors.append(f"{path.relative_to(ROOT)} missing NPU evidence token {token!r}")
+
+    android_template = json.loads(ANDROID_PROOF_TEMPLATE.read_text())
+    if android_template.get("schema") != "openphone.hello_npu_android_proof_manifest.v1":
+        errors.append("Android proof manifest template has unexpected schema")
+    gate = android_template.get("proof_gate", {})
+    if gate.get("android_boot_claim") != "none" or gate.get("compatibility_claim") != "none":
+        errors.append("Android proof manifest template must not claim boot or compatibility")
+    if "none_without_all_required_artifacts_passed" not in gate.get("nnapi_acceleration_claim", ""):
+        errors.append("Android proof manifest template must gate NNAPI acceleration claims")
+    check_template_statuses(
+        errors,
+        "Android proof manifest",
+        android_template,
+        REQUIRED_ANDROID_PROOF_STATUSES,
+        REQUIRED_ANDROID_PROOF_ARTIFACTS,
+    )
+
+    power_template = json.loads(POWER_THERMAL_TEMPLATE.read_text())
+    if power_template.get("schema") != "openphone.hello_npu_power_thermal_manifest.v1":
+        errors.append("power/thermal manifest template has unexpected schema")
+    check_template_statuses(
+        errors,
+        "power/thermal manifest",
+        power_template,
+        REQUIRED_POWER_THERMAL_STATUSES,
+        REQUIRED_POWER_THERMAL_ARTIFACTS,
+    )
+    metrics = power_template.get("computed_metrics", {})
+    for metric in (
+        "sustained_int8_tops",
+        "average_watts",
+        "sustained_perf_per_w_int8_tops",
+        "max_die_c",
+        "throttle_state",
+    ):
+        if metric not in metrics:
+            errors.append(f"power/thermal manifest missing computed metric {metric}")
+    power_artifacts = power_template.get("artifacts", {})
+    for trace_name in ("power_trace", "thermal_trace", "frequency_trace"):
+        trace = power_artifacts.get(trace_name, {})
+        if not isinstance(trace.get("required_columns"), list) or not trace["required_columns"]:
+            errors.append(f"power/thermal manifest {trace_name} must define required_columns")
+        if not isinstance(trace.get("min_samples"), int) or trace.get("min_samples", 0) <= 0:
+            errors.append(f"power/thermal manifest {trace_name} must define positive min_samples")
+    calibration = power_artifacts.get("calibration_record", {})
+    if (
+        not isinstance(calibration.get("required_fields"), list)
+        or not calibration["required_fields"]
+    ):
+        errors.append("power/thermal manifest calibration_record must define required_fields")
 
 
 REQUIRED_PRECISIONS = {
@@ -203,6 +362,8 @@ def main() -> int:
         RUNTIME,
         BENCH_CONFIG,
         PROOF_TEMPLATE,
+        ANDROID_PROOF_TEMPLATE,
+        POWER_THERMAL_TEMPLATE,
         CAPABILITY_README,
         REPORT_SCHEMA,
     ):

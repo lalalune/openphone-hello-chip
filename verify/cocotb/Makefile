@@ -14,6 +14,8 @@ VERILOG_SOURCES := \
 	$(REPO)/rtl/dma/hello_dma.sv \
 	$(REPO)/rtl/npu/hello_npu.sv \
 	$(REPO)/rtl/display/hello_display.sv \
+	$(REPO)/rtl/cpu/hello_cva6_wrapper.sv \
+	$(REPO)/rtl/cpu/hello_cpu_axi_bridge.sv \
 	$(REPO)/rtl/cpu/hello_cpu_subsystem_stub.sv \
 	$(REPO)/rtl/interconnect/hello_axi_lite_interconnect.sv \
 	$(REPO)/rtl/memory/hello_axi_lite_dram.sv \

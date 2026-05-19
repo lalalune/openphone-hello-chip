@@ -37,6 +37,29 @@ def main() -> int:
         MIN_REAL_V1.dma_queue_depth >= 8, "minimum real v1 needs a real DMA command queue", errors
     )
     require(MIN_REAL_V1.supports_int4, "minimum real v1 must model INT4 support", errors)
+    min_precision = {entry["precision"]: entry["state"] for entry in MIN_REAL_V1.precision_matrix()}
+    require(
+        min_precision.get("INT8") == "modeled", "scale model must report INT8 as modeled", errors
+    )
+    require(
+        min_precision.get("FP8") == "blocked",
+        "scale model must keep FP8 blocked without hardware/compiler evidence",
+        errors,
+    )
+    first_precision = {
+        entry["precision"]: entry["state"] for entry in OPEN_2028_FIRST.precision_matrix()
+    }
+    for projected in ("FP16", "BF16"):
+        require(
+            first_precision.get(projected) == "projected",
+            f"2028 target may only project {projected}, not claim measured support",
+            errors,
+        )
+    require(
+        first_precision.get("FP8") == "blocked",
+        "2028 first open target must keep FP8 blocked until evidence exists",
+        errors,
+    )
 
     require(
         10.0 <= OPEN_2028_FIRST.dense_int8_peak_tops <= 50.0,

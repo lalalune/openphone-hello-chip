@@ -6,6 +6,8 @@ ignore: |
   external/
   tools/
   .claude/
+  pd/openlane/runs/
+  pd/signoff/reports/
 
 rules:
   document-start: disable

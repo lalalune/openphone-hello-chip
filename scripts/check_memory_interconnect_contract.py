@@ -14,6 +14,7 @@ MEMORY_MAP = ROOT / "docs/arch/memory-map.md"
 MEMORY_SUBSYSTEM = ROOT / "docs/arch/memory-subsystem.md"
 INTERCONNECT = ROOT / "docs/arch/interconnect.md"
 UMA = ROOT / "docs/project/uma-coherency-validation-strategy.yaml"
+GATE = ROOT / "docs/evidence/memory/uma-dram-evidence-gate.yaml"
 
 INTERCONNECT_RTL = ROOT / "rtl/interconnect/hello_axi_lite_interconnect.sv"
 CONTRACT_RTL = ROOT / "rtl/interconnect/hello_linux_soc_contract.sv"
@@ -33,6 +34,11 @@ REQUIRED_UMA_ARTIFACTS = {
     "docs/evidence/android/android_shared_buffer_report.json",
 }
 
+EXPECTED_HELLO_CHIP_DRAM_BASE = 0x80000000
+EXPECTED_HELLO_CHIP_DRAM_BYTES = 0x1000
+EXPECTED_LINUX_DRAM_BYTES = 0x10000000
+EXPECTED_AXI_LITE_WORD_BYTES = 4
+
 
 def read(path: Path) -> str:
     return path.read_text(errors="ignore")
@@ -40,6 +46,58 @@ def read(path: Path) -> str:
 
 def h(value: str) -> int:
     return int(value.replace("_", "").replace("0x", ""), 16)
+
+
+def parse_doc_hex(value: str) -> int:
+    return h(value.strip().strip("`"))
+
+
+def parse_doc_size(value: str) -> int:
+    size = value.strip().strip("`")
+    match = re.fullmatch(r"(\d+)\s+(KiB|MiB|GiB)", size)
+    if not match:
+        raise ValueError(size)
+    amount = int(match.group(1))
+    scale = {"KiB": 1024, "MiB": 1024**2, "GiB": 1024**3}[match.group(2)]
+    return amount * scale
+
+
+def markdown_rows(text: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    headers: list[str] | None = None
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            headers = None
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if not cells:
+            continue
+        if all(set(cell.replace(":", "").strip()) <= {"-"} for cell in cells):
+            continue
+        if headers is None:
+            headers = cells
+            continue
+        if len(cells) == len(headers):
+            rows.append(dict(zip(headers, cells, strict=True)))
+    return rows
+
+
+def rtl_localparam(text: str, name: str) -> int | None:
+    match = re.search(rf"\b{name}\s*=\s*32'h([0-9A-Fa-f_]+)", text)
+    if not match:
+        return None
+    return int(match.group(1).replace("_", ""), 16)
+
+
+def dram_depth_words(text: str) -> int | None:
+    match = re.search(r"parameter\s+int\s+unsigned\s+DEPTH_WORDS\s*=\s*(\d+)", text)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def ranges_overlap(first_base: int, first_size: int, second_base: int, second_size: int) -> bool:
+    return first_base < second_base + second_size and second_base < first_base + first_size
 
 
 def fail_unless(condition: bool, message: str, errors: list[str]) -> None:
@@ -123,17 +181,132 @@ def check_docs(errors: list[str]) -> None:
     )
 
 
+def check_memory_map_consistency(contract: dict, errors: list[str]) -> None:
+    memory_map = read(MEMORY_MAP)
+    interconnect_rtl = read(INTERCONNECT_RTL)
+    dram_rtl = read(DRAM_RTL)
+    gate = yaml.safe_load(GATE.read_text())
+
+    rows = markdown_rows(memory_map)
+    dram_rows = [row for row in rows if row.get("Region") == "DRAM aperture"]
+    normalized_dram_rows: list[tuple[int, int, str]] = []
+    for row in dram_rows:
+        try:
+            normalized_dram_rows.append(
+                (parse_doc_hex(row["Base"]), parse_doc_size(row["Size"]), row.get("Purpose", ""))
+            )
+        except (KeyError, ValueError) as exc:
+            errors.append(f"malformed DRAM aperture row in memory map: {exc}")
+
+    fail_unless(
+        (
+            EXPECTED_HELLO_CHIP_DRAM_BASE,
+            EXPECTED_HELLO_CHIP_DRAM_BYTES,
+            "SRAM-backed test DRAM visible to debug MMIO and DMA",
+        )
+        in normalized_dram_rows,
+        "memory map must keep the hello-chip DRAM row at 0x8000_0000 / 4 KiB",
+        errors,
+    )
+    fail_unless(
+        any(
+            base == EXPECTED_HELLO_CHIP_DRAM_BASE
+            and size == EXPECTED_LINUX_DRAM_BYTES
+            and "External DRAM controller/PHY boundary" in purpose
+            for base, size, purpose in normalized_dram_rows
+        ),
+        "memory map must keep the Linux scaffold DRAM aperture at 0x8000_0000 / 256 MiB",
+        errors,
+    )
+
+    dram_contract = region(contract, "dram")
+    fail_unless(
+        h(dram_contract["base"]) == EXPECTED_HELLO_CHIP_DRAM_BASE
+        and h(dram_contract["size"]) == EXPECTED_HELLO_CHIP_DRAM_BYTES,
+        "platform contract DRAM row must match the debug-visible 4 KiB memory-map row",
+        errors,
+    )
+
+    rtl_regions = {
+        "DRAM": (
+            rtl_localparam(interconnect_rtl, "DRAM_BASE"),
+            rtl_localparam(interconnect_rtl, "DRAM_MASK"),
+        ),
+        "INTC": (
+            rtl_localparam(interconnect_rtl, "INTC_BASE"),
+            rtl_localparam(interconnect_rtl, "INTC_MASK"),
+        ),
+        "DMA": (
+            rtl_localparam(interconnect_rtl, "DMA_BASE"),
+            rtl_localparam(interconnect_rtl, "DMA_MASK"),
+        ),
+    }
+    for name, (base, mask) in rtl_regions.items():
+        fail_unless(base is not None and mask is not None, f"missing RTL decode for {name}", errors)
+    if all(base is not None and mask is not None for base, mask in rtl_regions.values()):
+        dram_base, dram_mask = rtl_regions["DRAM"]
+        assert dram_base is not None and dram_mask is not None
+        fail_unless(
+            dram_base == EXPECTED_HELLO_CHIP_DRAM_BASE
+            and dram_mask + 1 == EXPECTED_LINUX_DRAM_BYTES,
+            "interconnect DRAM decode must match the 0x8000_0000 / 256 MiB scaffold aperture",
+            errors,
+        )
+
+        spans = [
+            (name, base, mask + 1)
+            for name, (base, mask) in rtl_regions.items()
+            if base is not None and mask is not None
+        ]
+        for index, (name, base, size) in enumerate(spans):
+            for other_name, other_base, other_size in spans[index + 1 :]:
+                fail_unless(
+                    not ranges_overlap(base, size, other_base, other_size),
+                    f"RTL decode windows overlap: {name} and {other_name}",
+                    errors,
+                )
+
+    dma_contract = region(contract, "dma")
+    dma_base, dma_mask = rtl_regions["DMA"]
+    if dma_base is not None and dma_mask is not None:
+        fail_unless(
+            h(dma_contract["base"]) == dma_base and h(dma_contract["size"]) == dma_mask + 1,
+            "platform DMA MMIO row must match the AXI-Lite DMA-control decode",
+            errors,
+        )
+
+    depth = dram_depth_words(dram_rtl)
+    fail_unless(depth is not None, "DRAM model missing DEPTH_WORDS parameter", errors)
+    if depth is not None:
+        implemented_bytes = depth * EXPECTED_AXI_LITE_WORD_BYTES
+        actual = gate.get("current_actual_capability") if isinstance(gate, dict) else {}
+        fail_unless(
+            implemented_bytes == EXPECTED_HELLO_CHIP_DRAM_BYTES,
+            "DRAM model implemented bytes must remain 4 KiB until gate/docs change",
+            errors,
+        )
+        fail_unless(
+            isinstance(actual, dict)
+            and actual.get("usable_rtl_capacity_bytes") == implemented_bytes,
+            "UMA gate usable_rtl_capacity_bytes must match hello_axi_lite_dram DEPTH_WORDS",
+            errors,
+        )
+
+
 def check_rtl_decode(errors: list[str]) -> None:
     rtl = read(INTERCONNECT_RTL)
     contract_rtl = read(CONTRACT_RTL)
     dram_rtl = read(DRAM_RTL)
 
     required_patterns = {
-        "DRAM high-nibble decode": r"wr_addr_q\[31:28\]\s*==\s*4'h8",
-        "DRAM read high-nibble decode": r"m_axil_araddr\[31:28\]\s*==\s*4'h8",
-        "INTC decode": r"20'h0C00_0",
-        "DMA decode": r"20'h1001_0",
-        "DECERR response": r"m_axil_[br]resp\s*=\s*2'b11",
+        "DRAM base constant": r"DRAM_BASE\s*=\s*32'h8000_0000",
+        "DRAM 256 MiB mask": r"DRAM_MASK\s*=\s*32'h0FFF_FFFF",
+        "DRAM decode": r"\(addr\s*&\s*~DRAM_MASK\)\s*==\s*DRAM_BASE",
+        "INTC base constant": r"INTC_BASE\s*=\s*32'h0C00_0000",
+        "INTC decode": r"\(addr\s*&\s*~INTC_MASK\)\s*==\s*INTC_BASE",
+        "DMA base constant": r"DMA_BASE\s*=\s*32'h1001_0000",
+        "DMA decode": r"\(addr\s*&\s*~DMA_MASK\)\s*==\s*DMA_BASE",
+        "DECERR/SLVERR response": r"RESP_SLVERR\s*=\s*2'b10",
         "unmapped read value": r"32'hDEAD_BEEF",
     }
     for name, pattern in required_patterns.items():
@@ -238,6 +411,7 @@ def main() -> int:
     contract = json.loads(PLATFORM.read_text())
     check_hello_chip_dram_contract(contract, errors)
     check_docs(errors)
+    check_memory_map_consistency(contract, errors)
     check_rtl_decode(errors)
     check_uma_strategy(errors)
     check_no_claim_leak(errors)

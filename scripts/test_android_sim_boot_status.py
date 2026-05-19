@@ -5,12 +5,15 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BOOT = ROOT / "scripts/boot_android_simulator.sh"
 CHECK = ROOT / "scripts/check_android_sim_boot.py"
+PREFLIGHT = ROOT / "scripts/check_aosp_linux_preflight.py"
 REPORT = ROOT / "build/reports/android_sim_boot.json"
+PREFLIGHT_REPORT = ROOT / "build/reports/aosp_linux_preflight.json"
 
 
 def assert_contains(text: str, expected: str) -> None:
@@ -18,9 +21,13 @@ def assert_contains(text: str, expected: str) -> None:
         raise AssertionError(f"missing {expected!r} in output:\n{text}")
 
 
-def run(command: list[str]) -> subprocess.CompletedProcess[str]:
+def run(
+    command: list[str], env_overrides: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env.pop("AOSP_DIR", None)
+    if env_overrides:
+        env.update(env_overrides)
     return subprocess.run(
         command,
         cwd=ROOT,
@@ -30,6 +37,15 @@ def run(command: list[str]) -> subprocess.CompletedProcess[str]:
         stderr=subprocess.STDOUT,
         check=False,
     )
+
+
+def fake_repo_path(tmp: Path) -> str:
+    repo = tmp / "repo"
+    repo.write_text(
+        "#!/bin/sh\necho '<repo not installed>'\necho 'repo launcher version 2.54'\nexit 0\n"
+    )
+    repo.chmod(0o755)
+    return f"{tmp}{os.pathsep}{os.environ.get('PATH', '')}"
 
 
 def test_boot_script_blocks_without_aosp_dir() -> None:
@@ -46,9 +62,37 @@ def test_boot_script_blocks_without_aosp_dir() -> None:
         raise AssertionError("android sim report must be blocked without AOSP_DIR")
     if "not hello-chip hardware ABI proof" not in data.get("claim_boundary", ""):
         raise AssertionError("android sim report must keep the hello-chip ABI boundary explicit")
+    missing_requirements = data.get("host_requirements", {}).get("missing", [])
+    for requirement in (
+        "AOSP_DIR is not set",
+        "/dev/kvm is missing",
+        "Cuttlefish launcher not found",
+    ):
+        if not any(requirement in item for item in missing_requirements):
+            raise AssertionError(
+                f"android sim report missing host requirement {requirement!r}: "
+                f"{missing_requirements}"
+            )
     for key in ("run_qemu", "run_renode"):
         if not isinstance(data.get(key), bool):
             raise AssertionError(f"android sim report must include boolean {key}")
+    linux_requirements = data.get("linux_requirements", [])
+    for requirement in ("AOSP_DIR", "/dev/kvm", "launch_cvd"):
+        if not any(requirement in item for item in linux_requirements):
+            raise AssertionError(
+                f"android sim report missing Linux requirement {requirement!r}: "
+                f"{linux_requirements}"
+            )
+    handoff_commands = data.get("handoff_commands", [])
+    for command in (
+        "scripts/check_aosp_linux_preflight.py --write-report",
+        "scripts/boot_android_simulator.sh --run-cuttlefish",
+        "scripts/check_software_bsp.py aosp --require-evidence",
+    ):
+        if not any(command in item for item in handoff_commands):
+            raise AssertionError(
+                f"android sim report missing handoff command {command!r}: {handoff_commands}"
+            )
     if data.get("evidence_manifest") != "docs/android/bsp-log-evidence-manifest.json":
         raise AssertionError("android sim report must reference the BSP log evidence manifest")
     required = data.get("required_evidence", [])
@@ -72,6 +116,8 @@ def test_checker_reports_blocked_report() -> None:
         )
     assert_contains(result.stdout, "Android simulator boot blocked")
     assert_contains(result.stdout, "AOSP_DIR")
+    assert_contains(result.stdout, "/dev/kvm")
+    assert_contains(result.stdout, "Cuttlefish launcher")
 
 
 def test_checker_rejects_pass_without_required_aosp_evidence() -> None:
@@ -92,6 +138,99 @@ def test_checker_rejects_pass_without_required_aosp_evidence() -> None:
     assert_contains(result.stdout, "pass report")
 
 
+def test_boot_script_reports_uninstalled_repo_launcher() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        result = run([str(BOOT)], {"PATH": fake_repo_path(Path(td))})
+    if result.returncode != 2:
+        raise AssertionError(
+            f"expected boot script to block, got {result.returncode}\n{result.stdout}"
+        )
+    data = json.loads(REPORT.read_text())
+    missing_requirements = data.get("host_requirements", {}).get("missing", [])
+    if not any("repo is not installed" in item for item in missing_requirements):
+        raise AssertionError(
+            f"android sim report must identify an uninstalled repo launcher: {missing_requirements}"
+        )
+
+
+def test_aosp_linux_preflight_blocks_without_aosp_dir() -> None:
+    saved = PREFLIGHT_REPORT.read_bytes() if PREFLIGHT_REPORT.is_file() else None
+    try:
+        result = run([sys.executable, str(PREFLIGHT), "--json", "--write-report"])
+        if result.returncode != 2:
+            raise AssertionError(
+                f"expected preflight to block, got {result.returncode}\n{result.stdout}"
+            )
+        data = json.loads(result.stdout)
+        if data.get("schema") != "openphone.aosp_linux_preflight.v1":
+            raise AssertionError("AOSP Linux preflight schema mismatch")
+        if data.get("status") != "blocked":
+            raise AssertionError("AOSP Linux preflight must block without AOSP_DIR")
+        if "AOSP_DIR is not set" not in data.get("blockers", []):
+            raise AssertionError("AOSP Linux preflight must report missing AOSP_DIR")
+        if data.get("claim_boundary") != (
+            "host_preflight_only_not_aosp_build_boot_cuttlefish_or_hello_chip_hardware_evidence"
+        ):
+            raise AssertionError("AOSP Linux preflight claim boundary changed")
+        if "does not create docs/evidence/android logs" not in data.get("evidence_policy", ""):
+            raise AssertionError("AOSP Linux preflight must not fabricate evidence logs")
+        linux_requirements = data.get("linux_requirements", [])
+        for requirement in ("AOSP_DIR", "/dev/kvm", "launch_cvd"):
+            if not any(requirement in item for item in linux_requirements):
+                raise AssertionError(
+                    f"AOSP Linux preflight missing Linux requirement {requirement!r}: "
+                    f"{linux_requirements}"
+                )
+        handoff_commands = data.get("handoff_commands", [])
+        for command in (
+            "scripts/check_aosp_linux_preflight.py --write-report",
+            "scripts/boot_android_simulator.sh --run-cuttlefish",
+            "scripts/check_software_bsp.py aosp --require-evidence",
+        ):
+            if not any(command in item for item in handoff_commands):
+                raise AssertionError(
+                    f"AOSP Linux preflight missing handoff command {command!r}: {handoff_commands}"
+                )
+    finally:
+        if saved is None:
+            PREFLIGHT_REPORT.unlink(missing_ok=True)
+        else:
+            PREFLIGHT_REPORT.parent.mkdir(parents=True, exist_ok=True)
+            PREFLIGHT_REPORT.write_bytes(saved)
+
+
+def test_aosp_linux_preflight_reports_uninstalled_repo_launcher() -> None:
+    saved = PREFLIGHT_REPORT.read_bytes() if PREFLIGHT_REPORT.is_file() else None
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            result = run(
+                [sys.executable, str(PREFLIGHT), "--json", "--write-report"],
+                {"PATH": fake_repo_path(Path(td))},
+            )
+        if result.returncode != 2:
+            raise AssertionError(
+                f"expected preflight to block, got {result.returncode}\n{result.stdout}"
+            )
+        data = json.loads(result.stdout)
+        blockers = data.get("blockers", [])
+        if not any("repo is not installed" in item for item in blockers):
+            raise AssertionError(
+                f"AOSP Linux preflight must identify an uninstalled repo launcher: {blockers}"
+            )
+        import_blockers = data.get("execution_tracks", {}).get("import", {}).get("blockers", [])
+        if not any("repo is not installed" in item for item in import_blockers):
+            raise AssertionError(
+                "AOSP Linux preflight import track must identify an uninstalled repo launcher: "
+                f"{import_blockers}"
+            )
+    finally:
+        if saved is None:
+            PREFLIGHT_REPORT.unlink(missing_ok=True)
+        else:
+            PREFLIGHT_REPORT.parent.mkdir(parents=True, exist_ok=True)
+            PREFLIGHT_REPORT.write_bytes(saved)
+
+
 def main() -> int:
     saved = REPORT.read_bytes() if REPORT.is_file() else None
     try:
@@ -99,6 +238,9 @@ def main() -> int:
             test_boot_script_blocks_without_aosp_dir,
             test_checker_reports_blocked_report,
             test_checker_rejects_pass_without_required_aosp_evidence,
+            test_boot_script_reports_uninstalled_repo_launcher,
+            test_aosp_linux_preflight_blocks_without_aosp_dir,
+            test_aosp_linux_preflight_reports_uninstalled_repo_launcher,
         ):
             test()
             print(f"PASS {test.__name__}")

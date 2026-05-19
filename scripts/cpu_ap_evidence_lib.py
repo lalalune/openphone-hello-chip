@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SELECTED_MANIFEST = ROOT / "generators/chipyard/openphone-rocket-manifest.json"
-IMPORT_TEMPLATE = ROOT / "generators/chipyard/import-manifest.template.json"
+SELECTED_MANIFEST = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
+IMPORT_TEMPLATE = ROOT / "docs/generators/chipyard/import-manifest.template.json"
 GENERATED_MANIFEST = ROOT / "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/cpu-ap-evidence-manifest.json"
 PLATFORM_CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
@@ -32,6 +32,9 @@ DEFAULT_FORBIDDEN_EVIDENCE_TERMS = [
     "openphone-evidence: status=BLOCKED",
     "qemu-virt software reference",
     "Renode software reference",
+    "/path/to/",
+    "/exact/external/",
+    "'/exact/",
 ]
 
 
@@ -44,6 +47,33 @@ def rel(path: Path) -> str:
 
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def reject_duplicate_json_keys(path: Path, errors: list[str]) -> None:
+    duplicates: list[str] = []
+
+    def reject_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        seen: set[str] = set()
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in seen:
+                duplicates.append(key)
+            seen.add(key)
+            result[key] = value
+        return result
+
+    try:
+        json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=reject_duplicates)
+    except FileNotFoundError:
+        errors.append(f"missing JSON manifest: {rel(path)}")
+        return
+    except json.JSONDecodeError as exc:
+        errors.append(f"{rel(path)} is invalid JSON: {exc}")
+        return
+    if duplicates:
+        errors.append(
+            f"{rel(path)} contains duplicate JSON keys: " + ", ".join(sorted(set(duplicates)))
+        )
 
 
 def require(condition: bool, message: str, errors: list[str]) -> None:
@@ -122,7 +152,11 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
         errors,
     )
     require(
-        manifest.get("selected_manifest") == rel(SELECTED_MANIFEST),
+        manifest.get("selected_manifest")
+        in {
+            rel(SELECTED_MANIFEST),
+            "generators/chipyard/openphone-rocket-manifest.json",
+        },
         "CPU/AP evidence manifest selected_manifest path drifted",
         errors,
     )

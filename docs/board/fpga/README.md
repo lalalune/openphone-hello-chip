@@ -49,4 +49,3 @@ checked in:
 - The clock constraint matches the physical oscillator.
 - Reset polarity is verified on hardware.
 - The debug bridge firmware or MCU host is identified.
-- `nextpnr-ecp5` timing evidence and an `ecppack` bitstream are archived from the exact board revision and final LPF.

@@ -36,6 +36,20 @@ adb version
 repo version
 ```
 
+Repo preflight and handoff:
+
+```sh
+cd /path/to/OpenPhone-AI-SoC
+export AOSP_DIR=/path/to/aosp
+python3 scripts/check_aosp_linux_preflight.py --write-report
+sw/aosp-device/import-aosp-device.sh --check "$AOSP_DIR"
+make aosp-bsp-check
+AOSP_DIR="$AOSP_DIR" scripts/boot_android_simulator.sh \
+  --run-cuttlefish --run-cts --run-vts --run-qemu --run-renode
+python3 scripts/check_android_sim_boot.py
+python3 scripts/check_software_bsp.py aosp --require-evidence
+```
+
 Expected results:
 
 - `/dev/kvm` exists and the user is in `kvm`, `cvdnetwork`, and `render`.

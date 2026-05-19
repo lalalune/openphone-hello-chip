@@ -132,9 +132,10 @@
       "model_artifacts": [
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
-          "sha256": "669fcdfaf0569b368000832a2794abe9689ce9b3a90f52ce992ee5d29ab9055a",
+          "sha256": "6bb01f97e01d782b139eecf32fecada42c08a8edc8d2148da4dcf63b22dd972a",
           "placeholder_allowed": false,
-          "min_size_bytes": 4096,
+          "min_size_bytes": 6144,
+          "sha256_pin_note": "Architecture is conv+relu+fc+softmax; pinned from deterministic generation on TF 2.21.0 + tf-keras 2.21.0 (Python 3.12.11, macOS arm64).",
           "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
           "pipeline_visible": true,
           "release_blocking": true,
@@ -192,11 +193,16 @@
               "dma.path",
               "dma.bytes_read",
               "dma.bytes_written",
+              "dma.trace_bytes",
               "measurements.macs_per_inference",
               "measurements.npu_cycles",
               "measurements.npu_hz",
               "measurements.observed_tops",
-              "measurements.tops_formula"
+              "measurements.tops_formula",
+              "capture.commands.adb_devices",
+              "capture.commands.nnapi_accelerator_query",
+              "capture.commands.benchmark_model_nnapi",
+              "capture.commands.dma_trace"
             ],
             "required_model_artifacts": [
               "benchmarks/models/mobile_smoke.tflite"
@@ -223,9 +229,10 @@
       "model_artifacts": [
         {
           "path": "benchmarks/models/mobile_smoke.tflite",
-          "sha256": "669fcdfaf0569b368000832a2794abe9689ce9b3a90f52ce992ee5d29ab9055a",
+          "sha256": "6bb01f97e01d782b139eecf32fecada42c08a8edc8d2148da4dcf63b22dd972a",
           "placeholder_allowed": false,
-          "min_size_bytes": 4096,
+          "min_size_bytes": 6144,
+          "sha256_pin_note": "Architecture is conv+relu+fc+softmax; pinned from deterministic generation on TF 2.21.0 + tf-keras 2.21.0 (Python 3.12.11, macOS arm64).",
           "blocker_id": "TFLITE_SMOKE_MODEL_MISSING",
           "pipeline_visible": true,
           "release_blocking": true,

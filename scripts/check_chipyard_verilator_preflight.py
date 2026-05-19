@@ -11,8 +11,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "generators/chipyard/openphone-rocket-manifest.json"
-CHECKOUT = ROOT / "external/chipyard"
+MANIFEST = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
+checkout_env = os.environ.get("CHIPYARD_CHECKOUT")
+CHECKOUT = (
+    Path(checkout_env).resolve()
+    if checkout_env and Path(checkout_env).is_absolute()
+    else (ROOT / (checkout_env or "external/chipyard")).resolve()
+)
 REPORT = ROOT / "build/chipyard/openphone_rocket/verilator-preflight.json"
 CONFIG = "OpenPhoneRocketConfig"
 CONFIG_PACKAGE = "openphone"
@@ -20,12 +25,12 @@ SIM_DIR = CHECKOUT / "sims/verilator"
 REQUIRED_RECURSIVE_SUBMODULE_ROOTS = ("generators/rocket-chip",)
 
 BUILD_COMMAND = [
-    "cd external/chipyard/sims/verilator",
+    f"cd {CHECKOUT.relative_to(ROOT) if CHECKOUT.is_relative_to(ROOT) else CHECKOUT}/sims/verilator",
     "source ../../env.sh",
     "make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone",
 ]
 VERILOG_COMMAND = [
-    "cd external/chipyard/sims/verilator",
+    f"cd {CHECKOUT.relative_to(ROOT) if CHECKOUT.is_relative_to(ROOT) else CHECKOUT}/sims/verilator",
     "source ../../env.sh",
     "make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone verilog",
 ]

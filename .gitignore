@@ -1,4 +1,4 @@
-build/
+/build/
 .venv/
 .claude/
 sim_build/
@@ -16,6 +16,7 @@ __pycache__/
 *.vcd
 *.fst
 *.log
+*.kicad_prl
 external/
 tools/bin/
 pd/reports/*

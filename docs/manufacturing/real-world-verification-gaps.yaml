@@ -1,6 +1,7 @@
 verification_scope: pd_package_si_pi_board_manufacturing
 status: release_blocked
 owner: product_physical_closure
+last_updated: 2026-05-17
 evidence_root: docs/manufacturing/evidence
 release_gates:
   pd_release:
@@ -57,6 +58,7 @@ gaps:
       - Final routed GDS or OASIS from the selected PDK flow.
       - Final DEF, gate netlist, and SDC for the same run.
       - Clean or waived DRC, LVS, antenna, and STA reports from one run directory.
+
   - id: selected_pdk_corner_record
     category: physical_design
     release_gate: pd_release
@@ -66,6 +68,7 @@ gaps:
     required_evidence:
       - Selected PDK, standard-cell library, RC corner, voltage, temperature, and timing mode record.
       - Tool version record for OpenLane/OpenROAD, Magic/KLayout, Netgen, and STA.
+
   - id: foundry_io_padframe_release
     category: padframe
     release_gate: tapeout_release
@@ -76,6 +79,7 @@ gaps:
       - Foundry IO, power, ground, corner, and ESD cell list.
       - Padframe-inclusive DRC and LVS reports.
       - Approved pad-ring placement and power-domain strategy.
+
   - id: package_vendor_drawing
     category: package
     release_gate: tapeout_release
@@ -85,6 +89,7 @@ gaps:
     required_evidence:
       - Package vendor drawing with dimensions, tolerances, exposed pad data, and pin-1 orientation.
       - Package material and assembly constraints.
+
   - id: bond_diagram_release
     category: package
     release_gate: tapeout_release
@@ -94,6 +99,7 @@ gaps:
     required_evidence:
       - Bond diagram mapping die pads to package pins.
       - Cross-probe report proving package, padframe, RTL, and board net names agree.
+
   - id: package_electrical_model
     category: signal_integrity
     release_gate: tapeout_release
@@ -103,6 +109,7 @@ gaps:
     required_evidence:
       - IBIS, SPICE, S-parameter, or package parasitic model for clock, reset, debug, GPIO, and supplies.
       - Model provenance and version record.
+
   - id: board_stackup_and_return_paths
     category: signal_integrity
     release_gate: board_fabrication_release
@@ -110,8 +117,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_kicad_artifacts.py
     required_evidence:
-      - Released PCB stackup with impedance targets.
+      - Released PCB stackup with impedance targets (50Ω single-ended on L1/L4 over 0.2mm dielectric to L2 GND).
       - Return-path and reference-plane review for clock, reset, debug, GPIO, IRQ, and JTAG nets.
+
   - id: board_signal_integrity_report
     category: signal_integrity
     release_gate: board_fabrication_release
@@ -121,6 +129,7 @@ gaps:
     required_evidence:
       - Board-level SI simulation or review for clock, reset, debug nibble, GPIO, IRQ, and JTAG nets.
       - Accepted overshoot, undershoot, ringing, setup, and hold margins.
+
   - id: power_integrity_report
     category: power_integrity
     release_gate: board_fabrication_release
@@ -128,8 +137,9 @@ gaps:
     evidence_manifest: pd/signoff/manifest.yaml
     local_check: scripts/check_pd_signoff.py
     required_evidence:
-      - Rail impedance and decoupling review for VDDCORE and VDDIO.
+      - Rail impedance and decoupling review for VDDCORE (TPS62150, 0.8V) and VDDIO (TLV74033/TLV74018, 3.3V/1.8V).
       - Return-current and plane-continuity review.
+
   - id: post_route_power_budget
     category: pdn_current_budget
     release_gate: tapeout_release
@@ -139,6 +149,7 @@ gaps:
     required_evidence:
       - Post-route power report for selected workloads and clocks.
       - VDDCORE and VDDIO static, dynamic, peak, and margin current budget.
+
   - id: ir_drop_em_report
     category: pdn_current_budget
     release_gate: tapeout_release
@@ -146,8 +157,9 @@ gaps:
     evidence_manifest: pd/signoff/manifest.yaml
     local_check: scripts/check_pd_signoff.py
     required_evidence:
-      - IR-drop and EM reports for selected corners.
-      - Waivers or redesign actions for any exceeded limits.
+      - IR-drop and EM reports for selected corners (TT 25°C, SS 125°C).
+      - Waivers or redesign actions for any exceeded limits (IR drop >5% VDD, EM >foundry limit).
+
   - id: board_current_limit_plan
     category: pdn_current_budget
     release_gate: board_fabrication_release
@@ -173,8 +185,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_package_cross_probe.py
     required_evidence:
-      - PCB symbol and footprint generated from the package vendor drawing.
+      - PCB symbol and footprint generated from the package vendor drawing (not placeholder QFN64 assumptions).
       - Pin-1, courtyard, paste, solder mask, and assembly-layer review.
+
   - id: kicad_project_release
     category: board_fabrication
     release_gate: board_fabrication_release
@@ -182,8 +195,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_kicad_artifacts.py
     required_evidence:
-      - KiCad project, schematic, and PCB files checked in under board/kicad/hello-demo.
+      - KiCad project, schematic (5-page hierarchy), and PCB files checked in under board/kicad/hello-demo.
       - Headless ERC, DRC, plot, Gerber, drill, BOM, and position export transcripts.
+
   - id: footprint_source_checksum
     category: board_fabrication
     release_gate: board_fabrication_release
@@ -191,8 +205,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - Checksum or immutable revision for the package-vendor drawing used to generate the footprint.
+      - SHA-256 checksum or immutable revision for the package-vendor drawing used to generate the footprint.
       - Cross-probe report proving package pin numbers, KiCad symbol pins, footprint pads, and board nets match.
+
   - id: assembly_dfm_review
     category: board_fabrication
     release_gate: board_fabrication_release
@@ -200,8 +215,9 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_real_world_gates.py
     required_evidence:
-      - Assembly-house DFM review for package, stencil, reflow, inspection, and rework constraints.
-      - Fabrication notes approved by the board vendor.
+      - Assembly-house DFM review for QFN package, 0.15mm stencil, SAC305 reflow (peak 245°C), inspection (AOI + X-ray), and rework constraints.
+      - Fabrication notes approved by the board vendor (IPC Class 2, ENIG surface finish).
+
   - id: first_article_smoke_limits
     category: manufacturing_test
     release_gate: board_fabrication_release

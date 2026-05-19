@@ -25,12 +25,20 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
 
     def test_android_manifest_does_not_claim_compatibility(self) -> None:
         manifest = json.loads(check_software_bsp.AOSP_EVIDENCE_MANIFEST.read_text())
-        self.assertEqual(manifest["claim_boundary"], "android_external_logs_only")
-        self.assertEqual(manifest["compatibility_claim"], "none_without_cts_vts_logs")
+        self.assertEqual(
+            manifest["claim_boundary"],
+            "android_external_logs_only_not_boot_or_compatibility_evidence",
+        )
+        self.assertEqual(
+            manifest["compatibility_claim"],
+            "none_without_full_external_compatibility_evidence",
+        )
 
         paths = {item["path"] for item in manifest["evidence"]}
-        self.assertIn("docs/evidence/android/cts_virtual_device_subset.log", paths)
-        self.assertIn("docs/evidence/android/vts_virtual_device_subset.log", paths)
+        self.assertIn("docs/evidence/android/openphone_ai_soc_cts_vts_plan.log", paths)
+        self.assertIn("docs/evidence/android/cuttlefish_riscv64_smoke.log", paths)
+        self.assertIn("docs/evidence/android/qemu_riscv64_smoke.log", paths)
+        self.assertIn("docs/evidence/android/renode_hello_soc_smoke.log", paths)
         claims = "\n".join(item["claim"] for item in manifest["evidence"])
         self.assertNotIn("CDD compliant", claims)
         self.assertNotIn("full CTS pass", claims)
@@ -40,9 +48,51 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         for path in check_software_bsp.AOSP_REFERENCE_ONLY_PATHS:
             self.assertEqual(
                 by_path[path]["claim_boundary"],
-                check_software_bsp.AOSP_REFERENCE_ONLY_BOUNDARY,
+                check_software_bsp.AOSP_VIRTUAL_DEVICE_BOUNDARY,
             )
             self.assertIn("reference", by_path[path]["claim"].lower())
+
+    def test_nnapi_proof_template_matches_fail_closed_harness_contract(self) -> None:
+        template = json.loads(check_software_bsp.NNAPI_PROOF_TEMPLATE.read_text())
+        self.assertEqual(template["schema"], "openphone.hello_npu_nnapi_capability.v1")
+        self.assertIn("trace_bytes", template["dma"])
+
+        transcripts = template["transcripts"]
+        self.assertEqual(set(transcripts), check_software_bsp.REQUIRED_NNAPI_TRANSCRIPTS)
+        for name, entry in transcripts.items():
+            with self.subTest(transcript=name):
+                self.assertIsInstance(entry, dict)
+                self.assertFalse(Path(entry["path"]).is_absolute())
+                self.assertTrue(entry["path"].startswith("docs/evidence/android/hello-npu/"))
+                self.assertIn("64-character lowercase sha256", entry["sha256"])
+                self.assertIsInstance(entry["bytes"], int)
+
+    def test_android_proof_manifest_template_is_blocked_and_path_pinned(self) -> None:
+        template = json.loads(check_software_bsp.ANDROID_PROOF_TEMPLATE.read_text())
+        self.assertEqual(
+            template["claim_boundary"],
+            check_software_bsp.ANDROID_PROOF_TEMPLATE_BOUNDARY,
+        )
+        self.assertEqual(template["status"], "blocked")
+        self.assertEqual(template["proof_gate"]["android_boot_claim"], "none")
+        self.assertEqual(template["proof_gate"]["compatibility_claim"], "none")
+        self.assertEqual(
+            template["proof_gate"]["nnapi_acceleration_claim"],
+            "none_without_all_required_artifacts_passed",
+        )
+
+        self.assertEqual(
+            set(template["required_statuses"]),
+            check_software_bsp.REQUIRED_ANDROID_PROOF_STATUSES,
+        )
+        self.assertTrue(
+            all(status == "blocked" for status in template["required_statuses"].values())
+        )
+        for name, expected_path in check_software_bsp.REQUIRED_ANDROID_PROOF_ARTIFACTS.items():
+            with self.subTest(artifact=name):
+                artifact = template["artifacts"][name]
+                self.assertEqual(artifact["path"], expected_path)
+                self.assertIn("64-character lowercase sha256", artifact["sha256"])
 
     def test_scaffold_only_passes_while_listing_missing_external_logs(self) -> None:
         result = subprocess.run(
@@ -56,10 +106,13 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         self.assertIn(
             "missing docs/evidence/buildroot/openphone_hello_defconfig.log", result.stdout
         )
-        self.assertIn("missing docs/evidence/linux/opensbi_openphone_build.log", result.stdout)
-        self.assertIn("missing docs/evidence/linux/u_boot_openphone_build.log", result.stdout)
-        self.assertIn("missing docs/evidence/android/cts_virtual_device_subset.log", result.stdout)
-        self.assertIn("missing docs/evidence/android/vts_virtual_device_subset.log", result.stdout)
+        self.assertIn(
+            "missing docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
+            result.stdout,
+        )
+        self.assertIn("missing docs/evidence/android/qemu_riscv64_smoke.log", result.stdout)
+        self.assertNotIn("missing docs/evidence/linux/opensbi_openphone_build.log", result.stdout)
+        self.assertNotIn("missing docs/evidence/linux/u_boot_openphone_build.log", result.stdout)
 
     def test_require_evidence_fails_closed_on_missing_external_logs(self) -> None:
         result = subprocess.run(
@@ -72,9 +125,9 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("buildroot BSP check failed", result.stdout)
         self.assertIn("linux BSP check failed", result.stdout)
-        self.assertIn("opensbi BSP check failed", result.stdout)
-        self.assertIn("u-boot BSP check failed", result.stdout)
         self.assertIn("aosp BSP check failed", result.stdout)
+        self.assertNotIn("opensbi BSP check failed", result.stdout)
+        self.assertNotIn("u-boot BSP check failed", result.stdout)
 
     def test_status_helper_reports_missing_external_logs(self) -> None:
         result = subprocess.run(

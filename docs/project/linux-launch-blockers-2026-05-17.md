@@ -18,11 +18,23 @@ The repo can execute bounded firmware smoke paths, but it cannot boot Linux yet.
   firmware banner smoke with Renode 1.16.1.
 - `scripts/run_qemu.sh --check-os` blocks before launch because no Linux kernel
   `Image` or initrd/rootfs image is available locally.
+- `python3 scripts/locate_chipyard_linux_payload.py --require` is the payload
+  locator for the generated AP `run-binary` path. It must find a RISC-V ELF
+  payload with an OpenSBI marker before `make chipyard-generated-ap-boot` can
+  attempt the generated AP simulator.
+- `make chipyard-generated-ap-boot` is the only repo-local wrapper that may
+  produce `build/chipyard/openphone_rocket/verilator-linux-smoke.log` for a
+  generated OpenPhoneRocketConfig Linux smoke. The log is still only proof after
+  `scripts/check_chipyard_verilator_linux_smoke.py` finds real OpenSBI and Linux
+  markers in that generated-AP transcript.
 
-The Renode and QEMU passes are useful simulator plumbing evidence. They are not
-AP Linux boot, OpenSBI handoff, Android boot, FPGA, board, or silicon evidence.
-The MVP simulator report is blocked until the generated AP path and real boot
-payload/evidence paths pass.
+The Renode and QEMU passes are useful simulator plumbing evidence. QEMU `virt`
+is a software-reference boot path, and the current Renode smoke is a Renode
+reference-model path; neither closes AP Linux boot, OpenSBI handoff, Android
+boot, FPGA, board, or silicon evidence. The MVP simulator report now keeps
+reference evidence in `best_reference_evidence`; `best_executable_evidence`
+cannot name QEMU, Renode, or Android reference-only results. The report remains
+blocked until the generated AP path and real boot payload/evidence paths pass.
 
 ## Launch blockers
 
@@ -73,6 +85,21 @@ boot transcript exists for this AP path.
 Required fix:
 
 - Build the generated `OpenPhoneRocketConfig` Verilator simulator.
+- Locate or build a single-ELF Chipyard Linux payload:
+
+```sh
+python3 scripts/locate_chipyard_linux_payload.py --require
+cd external/chipyard/software/firemarshal && ./marshal -v -d build example-workloads/linux-poweroff.json
+```
+
+- Run the generated AP smoke only through the bounded wrapper:
+
+```sh
+export CHIPYARD_LINUX_BINARY=/abs/path/to/linux-poweroff-bin-nodisk
+make chipyard-generated-ap-boot
+python3 scripts/check_chipyard_verilator_linux_smoke.py
+```
+
 - Archive all generated paths, tool versions, commands, recursive submodule
   state, and SHA-256 values in the generated manifest.
 - Bind OpenSBI, Linux Image, initrd, and DTB placement to the `0x80000000`

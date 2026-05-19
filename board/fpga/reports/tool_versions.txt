@@ -1,0 +1,6 @@
+git_rev: f0128417f3c07f14d7d9bfda8985dd84d53a898e
+git_branch: develop
+host: Darwin Shaws-MacBook-Pro.local 25.2.0 Darwin Kernel Version 25.2.0: Tue Nov 18 21:09:56 PST 2025; root:xnu-12377.61.12~1/RELEASE_ARM64_T6041 arm64
+yosys: Yosys 0.65+37 (git sha1 e87a9bd9a-dirty, aarch64-apple-darwin23.5-clang++ 18.1.8 -fPIC -O3)
+nextpnr: "nextpnr-ecp5" -- Next Generation Place and Route (Version nextpnr-0.10-71-g2894e539)
+ecppack: Project Trellis ecppack Version 1.4-79-g56bb170

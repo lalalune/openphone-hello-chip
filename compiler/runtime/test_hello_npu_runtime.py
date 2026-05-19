@@ -1,5 +1,11 @@
 import pytest
-from hello_npu_runtime import HelloNpuRuntime, golden_gemm_s8
+from hello_npu_runtime import (
+    HelloNpuRuntime,
+    NpuDescriptorSubmission,
+    NpuRuntimeError,
+    NpuTimeoutError,
+    golden_gemm_s8,
+)
 
 
 class FakeMmio:
@@ -124,6 +130,23 @@ class RejectingMmio(FakeMmio):
             self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x4
 
 
+class DescriptorDoneWithoutProofMmio(FakeMmio):
+    def write32(self, addr, value):
+        super().write32(addr, value)
+        if addr == HelloNpuRuntime.CTRL_STATUS and (value & 0x1):
+            self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x2
+            self.regs[HelloNpuRuntime.DESC_STATUS] = 0
+
+
+class DescriptorCompletingMmio(FakeMmio):
+    def write32(self, addr, value):
+        super().write32(addr, value)
+        if addr == HelloNpuRuntime.CTRL_STATUS and (value & 0x1):
+            self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x2
+            self.regs[HelloNpuRuntime.DESC_STATUS] = HelloNpuRuntime.DESC_STATUS_DONE
+            self.regs[HelloNpuRuntime.DESC_TAIL] = self.regs.get(HelloNpuRuntime.DESC_HEAD, 0)
+
+
 def make_runtime():
     mmio = FakeMmio()
     return HelloNpuRuntime(mmio.read32, mmio.write32), mmio
@@ -208,12 +231,85 @@ def test_scalar_commands_program_mmio_and_return_completed_results():
 def test_scalar_command_reject_and_timeout_paths_fail_closed():
     mmio = RejectingMmio()
     runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
-    with pytest.raises(RuntimeError, match="rejected command"):
+    with pytest.raises(NpuRuntimeError, match="rejected"):
         runtime.add(1, 2)
 
     runtime, mmio = make_runtime()
-    with pytest.raises(TimeoutError, match="did not complete"):
-        runtime.add(1, 2)
+    with pytest.raises(NpuTimeoutError, match="did not complete") as exc_info:
+        runtime.run(runtime.OP_ADD, 1, 2, timeout_polls=3)
+    assert exc_info.value.status.error == "timeout"
+    assert exc_info.value.status.polls == 3
+
+
+def test_descriptor_submission_programs_queue_registers_and_reports_reject_status():
+    mmio = RejectingMmio()
+    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+
+    with pytest.raises(NpuRuntimeError, match="descriptor submission rejected") as exc_info:
+        runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=1))
+
+    assert (runtime.DESC_BASE, 0x2000) in mmio.writes
+    assert (runtime.DESC_HEAD, 0) in mmio.writes
+    assert (runtime.DESC_TAIL, 1) in mmio.writes
+    assert (runtime.CMD_PARAM, 1) in mmio.writes
+    assert exc_info.value.status.error == "rejected"
+    assert exc_info.value.status.desc_status == 0
+
+
+def test_descriptor_submission_rejects_invalid_requests_before_mmio():
+    runtime, mmio = make_runtime()
+
+    with pytest.raises(ValueError, match="32-bit aligned"):
+        runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2002, head=0, tail=1))
+    with pytest.raises(ValueError, match="at least one"):
+        runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=2, tail=2))
+    with pytest.raises(ValueError, match="3-bit queue window"):
+        runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=8))
+
+    assert mmio.writes == []
+
+
+def test_descriptor_submission_accepts_hardware_completion_proof():
+    mmio = DescriptorCompletingMmio()
+    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+
+    status = runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=3, tail=1))
+
+    assert status.ok
+    assert status.desc_status == runtime.DESC_STATUS_DONE
+    assert mmio.regs[runtime.DESC_TAIL] == 3
+
+
+def test_descriptor_submission_requires_descriptor_completion_proof():
+    mmio = DescriptorDoneWithoutProofMmio()
+    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+
+    with pytest.raises(NpuRuntimeError, match="descriptor submission failed") as exc_info:
+        runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=1))
+
+    assert exc_info.value.status.status == 0x2
+    assert exc_info.value.status.desc_status == 0
+
+
+def test_stream_descriptor_word0_packing_and_validation():
+    word0 = HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 12)
+
+    assert word0 == HelloNpuRuntime.OP_GEMM_S8 | (1 << 8) | (12 << 24)
+    with pytest.raises(ValueError, match="scratch offset"):
+        HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 2, 12)
+    with pytest.raises(ValueError, match="byte count"):
+        HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 13)
+
+
+def test_precision_matrix_reports_supported_and_blocked_states_without_overclaiming():
+    runtime, _ = make_runtime()
+    matrix = {entry["precision"]: entry for entry in runtime.precision_matrix()}
+
+    assert matrix["INT8"]["state"] == "supported"
+    assert matrix["INT4"]["state"] == "supported"
+    for precision in ("FP16", "BF16", "FP8"):
+        assert matrix[precision]["state"] == "blocked"
+        assert "no opcode" in matrix[precision]["path"]
 
 
 def test_gemm_s8_programs_scratchpad_and_matches_golden_model():

@@ -86,7 +86,7 @@ def main() -> int:
             expected_codes={1},
             required_tokens=(
                 "aosp BSP BLOCKED",
-                "cuttlefish_riscv64_boot.log",
+                "cuttlefish_riscv64_smoke.log",
                 "linux BSP BLOCKED",
             ),
         ),
@@ -100,8 +100,8 @@ def main() -> int:
             name="renode strict blocks when renode is unavailable",
             command=["scripts/run_renode.sh", "--check"],
             expected_codes={2},
-            required_tokens=("STATUS: BLOCKED renode.check", "Renode missing"),
-            env={"REQUIRE_RENODE": "1"},
+            required_tokens=("STATUS: BLOCKED renode.check", "Renode executable missing"),
+            env={"PATH": "/usr/bin:/bin", "REQUIRE_RENODE": "1"},
         ),
         Check(
             name="benchmark strict blocks missing calibrated assets",

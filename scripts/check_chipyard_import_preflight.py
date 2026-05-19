@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "generators/chipyard/openphone-rocket-manifest.json"
+MANIFEST = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
 DEFAULT_CHECKOUT = ROOT / "external/chipyard"
 DEFAULT_REPORT = ROOT / "build/chipyard/openphone_rocket/bootstrap-preflight.json"
 

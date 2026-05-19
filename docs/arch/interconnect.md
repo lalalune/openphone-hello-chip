@@ -1,7 +1,6 @@
 # Interconnect contract
 
 `rtl/interconnect/hello_axi_lite_interconnect.sv` is the first synthesizable interconnect scaffold for the Linux-capable SoC contract. It connects one CPU-side AXI-Lite manager port to DRAM, interrupt-controller, and DMA-control target ports. `rtl/interconnect/hello_linux_soc_contract.sv` also arbitrates the prototype DMA AXI-Lite master onto the same DRAM model used by CPU-side traffic.
-`rtl/interconnect/hello_axi_lite_interconnect.sv` is the first synthesizable interconnect scaffold for the Linux-capable SoC contract. It connects one CPU-side AXI-Lite manager port to DRAM and interrupt-controller target ports.
 
 ## Decode map
 
