@@ -1,5 +1,5 @@
 interface: wifi_external_module
-status: product_scaffold_not_bonded_in_hello_chip
+status: product_scaffold_not_bonded_in_e1_chip
 io_voltage: 1.8V
 module_boundary: external_wifi_bluetooth_combo
 regulatory_boundary: module_and_board
@@ -38,7 +38,7 @@ integration_state:
   gpio_controller: not_implemented
   pinctrl: not_implemented
   regulator_control: not_implemented
-  padframe_bonding: not_bonded_in_hello_chip
+  padframe_bonding: not_bonded_in_e1_chip
   firmware_driver: not_implemented
   android_wifi_framework: not_enabled
   rf_certification: module_and_board_responsibility

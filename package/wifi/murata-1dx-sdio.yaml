@@ -10,7 +10,7 @@ selected_for:
   - Linux-supported SDIO WiFi path.
   - UART Bluetooth HCI path.
   - Small external module boundary that keeps RF silicon, matching network,
-    antenna, shielding, and certification outside hello-chip.
+    antenna, shielding, and certification outside e1-chip.
 host_interfaces:
   sdio_wifi:
     bus_width: 4
@@ -55,12 +55,12 @@ power_sequence:
     - Validate WIFI_HOST_WAKE and WIFI_IRQ polarity before suspend/resume claims.
 board_requirements:
   power_rails:
-    - Module-specific VBAT/VDDIO rails are supplied by the board, not hello-chip.
+    - Module-specific VBAT/VDDIO rails are supplied by the board, not e1-chip.
     - VDDIO must match the selected 1.8 V host IO bank or use level translation.
   rf:
     - Use the module vendor reference layout for antenna, keepout, ground, shield,
       crystal, and matching network requirements.
-    - Do not describe this integration as RF silicon in hello-chip.
+    - Do not describe this integration as RF silicon in e1-chip.
   bringup:
     - Hold WIFI_EN and WIFI_RST_N low until the SDIO host, UART, clocks, and rails
       are sequenced by board firmware or Linux.

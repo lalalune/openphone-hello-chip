@@ -1,4 +1,4 @@
-schema: openphone.wifi_bluetooth_evidence_gates.v1
+schema: openagent.wifi_bluetooth_evidence_gates.v1
 manifest: wifi_bluetooth_evidence_gates
 status: blocked_no_host_controller_or_module
 claim_policy: interface_only_no_wifi_implementation_claim

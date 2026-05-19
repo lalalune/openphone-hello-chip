@@ -1,12 +1,12 @@
 /*
- * Tier 0 bare-metal "HELLO" for QEMU virt.
+ * Tier 0 bare-metal "E1" for QEMU virt.
  *
  * QEMU virt 16550A UART base = 0x10000000. We poll LSR (offset 5) bit 5
  * (THR empty) before writing each byte to THR (offset 0). After printing
  * we wfi-loop forever.
  *
  * NOTE: QEMU virt UART lives at 0x10000000. Our project platform contract
- * (sw/platform/hello_platform_contract.json) puts the UART at 0x10001000.
+ * (sw/platform/e1_platform_contract.json) puts the UART at 0x10001000.
  * Tier 0 deliberately targets stock QEMU virt so we can validate boot
  * without a custom machine; later tiers will switch to 0x10001000.
  */
@@ -36,7 +36,7 @@ static void uart_puts(const char *s) {
 }
 
 void main(void) {
-    uart_puts("HELLO\n");
+    uart_puts("E1\n");
     for (;;) {
         __asm__ volatile ("wfi");
     }

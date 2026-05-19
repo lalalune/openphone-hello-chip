@@ -25,9 +25,9 @@ def parse_pinout(path: Path) -> set[str]:
 
 def parse_ports(path: Path) -> set[str]:
     text = path.read_text()
-    module = re.search(r"module\s+hello_chip_top\s*\((.*?)\);", text, re.S)
+    module = re.search(r"module\s+e1_chip_top\s*\((.*?)\);", text, re.S)
     if not module:
-        raise SystemExit("hello_chip_top module header not found")
+        raise SystemExit("e1_chip_top module header not found")
     ports: set[str] = set()
     for raw in module.group(1).splitlines():
         raw = raw.split("//", 1)[0].strip().rstrip(",")
@@ -41,24 +41,24 @@ def parse_ports(path: Path) -> set[str]:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[2]
-    pinout = parse_pinout(root / "package/hello-demo-pinout.yaml")
-    ports = parse_ports(root / "rtl/top/hello_chip_top.sv")
+    pinout = parse_pinout(root / "package/e1-demo-pinout.yaml")
+    ports = parse_ports(root / "rtl/top/e1_chip_top.sv")
 
     missing_ports = sorted(pinout - ports)
     extra_ports = sorted(ports - pinout)
 
     if missing_ports or extra_ports:
         if missing_ports:
-            print("Pinout names missing from hello_chip_top:")
+            print("Pinout names missing from e1_chip_top:")
             for name in missing_ports:
                 print(f"  - {name}")
         if extra_ports:
-            print("hello_chip_top ports missing from pinout:")
+            print("e1_chip_top ports missing from pinout:")
             for name in extra_ports:
                 print(f"  - {name}")
         return 1
 
-    print("pinout matches hello_chip_top ports")
+    print("pinout matches e1_chip_top ports")
     return 0
 
 

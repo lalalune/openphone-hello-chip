@@ -12,10 +12,10 @@ ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "fw/boot-rom/reset.S"
 LINKER = ROOT / "fw/boot-rom/linker.ld"
 BUILD = ROOT / "fw/boot-rom/build.sh"
-ELF = ROOT / "build/boot-rom/hello_reset_rom.elf"
-BIN = ROOT / "build/boot-rom/hello_reset_rom.bin"
-HEX = ROOT / "build/boot-rom/hello_reset_rom.hex"
-RTL = ROOT / "rtl/bootrom/hello_bootrom.sv"
+ELF = ROOT / "build/boot-rom/e1_reset_rom.elf"
+BIN = ROOT / "build/boot-rom/e1_reset_rom.bin"
+HEX = ROOT / "build/boot-rom/e1_reset_rom.hex"
+RTL = ROOT / "rtl/bootrom/e1_bootrom.sv"
 
 
 def status(state: str, check: str, detail: str) -> None:
@@ -42,7 +42,7 @@ def semantic_errors() -> list[str]:
     require("csrw    mtvec" in src, "reset.S must initialize mtvec", errors)
     require("csrci   mstatus" in src, "reset.S must clear MIE before handoff", errors)
     require(
-        "hello_bootrom_trap:" in src and re.search(r"\bwfi\b", src) is not None,
+        "e1_bootrom_trap:" in src and re.search(r"\bwfi\b", src) is not None,
         "reset.S must include a local WFI trap loop",
         errors,
     )

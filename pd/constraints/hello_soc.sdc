@@ -1,6 +1,6 @@
-# hello_soc timing constraints
+# e1_soc timing constraints
 # Target: 10 MHz OpenLane trial on SKY130A (100 ns period)
-# Top-level: hello_chip_top
+# Top-level: e1_chip_top
 # Clock port: CLK_IN   Reset port: RST_N
 
 set_units -time ns -resistance kOhm -capacitance pF -voltage V -current mA
@@ -39,7 +39,7 @@ set_load 0.05 [all_outputs]
 # ---------------------------------------------------------------------------
 # False paths
 # ---------------------------------------------------------------------------
-# Asynchronous reset — async assert, synchronised deassert inside hello_reset_sync
+# Asynchronous reset — async assert, synchronised deassert inside e1_reset_sync
 set_false_path -from [get_ports RST_N]
 
 # Static test/JTAG ports — not in the synchronous data path

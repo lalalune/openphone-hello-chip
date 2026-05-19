@@ -1,8 +1,8 @@
     .option norvc
     .section .text.reset, "ax", @progbits
     .globl _start
-    .globl hello_bootrom_trap
-    .globl hello_bootrom_handoff
+    .globl e1_bootrom_trap
+    .globl e1_bootrom_handoff
 
 /*
  * Minimal RV64 reset ROM scaffold.
@@ -12,20 +12,20 @@
  * provide SBI services, or prove an OpenSBI/Linux handoff.
  */
 _start:
-    la      t0, hello_bootrom_trap
+    la      t0, e1_bootrom_trap
     csrw    mtvec, t0
     csrci   mstatus, 0x8
     la      sp, __bootrom_stack_top
 
-    ld      t1, hello_bootrom_handoff
-    beqz    t1, hello_bootrom_trap
+    ld      t1, e1_bootrom_handoff
+    beqz    t1, e1_bootrom_trap
     jr      t1
 
-hello_bootrom_trap:
+e1_bootrom_trap:
     wfi
-    j       hello_bootrom_trap
+    j       e1_bootrom_trap
 
     .section .rodata.handoff, "a", @progbits
     .balign 8
-hello_bootrom_handoff:
+e1_bootrom_handoff:
     .dword  0x0000000080000000

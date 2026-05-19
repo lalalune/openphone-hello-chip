@@ -1,4 +1,4 @@
-# hello_demo bonding map rev 0.1 - generated from package/hello-demo-pinout.yaml
+# e1_demo bonding map rev 0.1 - generated from package/e1-demo-pinout.yaml
 # Columns: die_pad, package_pin, board_net, type, notes
 die_pad,package_pin,board_net,type,notes
 VDDIO0,1,+3V3,PWR,IO 3.3V domain

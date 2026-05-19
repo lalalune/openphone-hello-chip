@@ -78,24 +78,24 @@ artifact_groups:
       - name: demo_qfn64_planning_pinout
         status: draft
         metadata:
-          package: hello_demo_qfn64_planning_r0
+          package: e1_demo_qfn64_planning_r0
           planning_revision: 2026-05-17-r0
           release_use: prohibited
         globs:
-          - package/hello-demo-pinout.yaml
+          - package/e1-demo-pinout.yaml
       - name: demo_qfn64_package_contract
         status: draft
         metadata:
-          package: hello_demo_qfn64_planning_r0
+          package: e1_demo_qfn64_planning_r0
           planning_revision: 2026-05-17-r0
           release_use: prohibited
         globs:
-          - docs/package/hello-demo-package.md
+          - docs/package/e1-demo-package.md
       - name: demo_qfn64_pad_ring_contract
         status: draft
         metadata:
-          package: hello_demo_qfn64_planning_r0
+          package: e1_demo_qfn64_planning_r0
           planning_revision: 2026-05-17-r0
           release_use: prohibited
         globs:
-          - docs/package/hello-demo-pad-ring.md
+          - docs/package/e1-demo-pad-ring.md

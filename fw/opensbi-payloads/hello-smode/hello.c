@@ -1,5 +1,5 @@
 /*
- * Tier 1 S-mode payload "HELLO from S-mode" via direct UART MMIO.
+ * Tier 1 S-mode payload "E1 from S-mode" via direct UART MMIO.
  *
  * We deliberately bypass SBI console calls and poke the 16550 at
  * 0x10000000 directly so the test does not depend on SBI extension
@@ -31,7 +31,7 @@ static void uart_puts(const char *s) {
 }
 
 void main(void) {
-    uart_puts("HELLO from S-mode\n");
+    uart_puts("E1 from S-mode\n");
     for (;;) {
         __asm__ volatile ("wfi");
     }

@@ -1,4 +1,4 @@
-# Tier 0 bare-metal hello for QEMU virt.
+# Tier 0 bare-metal e1 for QEMU virt.
 #
 # Requires a riscv64 bare-metal toolchain. Override CROSS if you use
 # riscv64-linux-gnu- or riscv64-elf- instead of riscv64-elf-.
@@ -12,8 +12,8 @@ CFLAGS   := -nostdlib -nostartfiles -ffreestanding -fno-pic \
             -O2 -Wall -Wextra -g
 LDFLAGS  := -Wl,-T,linker.ld -Wl,--no-warn-rwx-segments
 
-OBJS := reset.o hello.o
-TARGET := hello
+OBJS := reset.o e1.o
+TARGET := e1
 
 .PHONY: all clean
 all: $(TARGET).elf $(TARGET).bin

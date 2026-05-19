@@ -1,12 +1,12 @@
-# pd/openlane/Makefile — OpenLane 2 flow targets for hello chip
+# pd/openlane/Makefile — OpenLane 2 flow targets for e1 chip
 #
 # Prerequisites:
 #   pip3 install openlane volare
 #   volare enable --pdk sky130 latest
 #
 # Usage:
-#   make pd           — full hello_chip_top run (4–8 h)
-#   make pd-smoke     — small hello_pd_smoke_top run (~2 min)
+#   make pd           — full e1_chip_top run (4–8 h)
+#   make pd-smoke     — small e1_pd_smoke_top run (~2 min)
 #   make pd-check     — check prerequisites only, do not run
 #   make pd-synth-only — synthesis step only (fast sanity check)
 #   make clean-pd     — delete all run directories

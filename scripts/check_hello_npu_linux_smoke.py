@@ -87,29 +87,29 @@ def build_report() -> dict[str, Any]:
     require(problems, "input_sha256" in smoke and "output_sha256" in smoke, "smoke lacks input/output hash markers")
     require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in uapi, "UAPI lacks RUN_GEMM_S8 ioctl")
     require(problems, "HELLO_NPU_IOC_GET_CONTRACT" in uapi, "UAPI lacks GET_CONTRACT ioctl")
-    require(problems, "HELLO_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl")
-    require(problems, "HELLO_NPU_DESC_BYTES_READ_OFFSET" in driver, "driver lacks descriptor bytes-read counter readout")
-    require(
-        problems,
-        "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" in driver
-        and "HELLO_NPU_DESC_READ_BEATS_OFFSET" in driver
-        and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" in driver,
-        "driver lacks descriptor write/read/write-beat counter readout",
-    )
-    require(
-        problems,
-        "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" in contract
-        and "HELLO_NPU_DESC_READ_BEATS_OFFSET" in contract
-        and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" in contract,
-        "Linux platform contract lacks descriptor write/read/write-beat counters",
-    )
-    require(
-        problems,
-        "desc_bytes_written" in uapi
-        and "desc_read_beats" in uapi
-        and "desc_write_beats" in uapi,
-        "UAPI lacks descriptor write/read/write-beat counters",
-    )
+	require(problems, "HELLO_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl")
+	require(problems, "HELLO_NPU_DESC_BYTES_READ_OFFSET" in driver, "driver lacks descriptor bytes-read counter readout")
+	require(
+		problems,
+		"HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" not in driver
+		and "HELLO_NPU_DESC_READ_BEATS_OFFSET" not in driver
+		and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" not in driver,
+		"driver references descriptor counters that are not in the Linux platform contract",
+	)
+	require(
+		problems,
+		"HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" not in contract
+		and "HELLO_NPU_DESC_READ_BEATS_OFFSET" not in contract
+		and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" not in contract,
+		"Linux platform contract includes stale descriptor write/read/write-beat counters",
+	)
+	require(
+		problems,
+		"desc_bytes_written" not in uapi
+		and "desc_read_beats" not in uapi
+		and "desc_write_beats" not in uapi,
+		"UAPI exposes descriptor counters that are not in the Linux platform contract",
+	)
     require(problems, "HELLO_NPU_BASE 0x10020000u" in contract, "platform contract has unexpected NPU base")
     require(problems, "openphone,hello-npu" in dts, "DTS lacks openphone,hello-npu compatible")
     require(

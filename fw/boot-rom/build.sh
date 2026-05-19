@@ -5,9 +5,9 @@ repo_dir=$(CDPATH=; cd -- "$(dirname -- "$0")/../.." && pwd)
 src="$repo_dir/fw/boot-rom/reset.S"
 linker="$repo_dir/fw/boot-rom/linker.ld"
 out_dir="$repo_dir/build/boot-rom"
-elf="$out_dir/hello_reset_rom.elf"
-bin="$out_dir/hello_reset_rom.bin"
-hex="$out_dir/hello_reset_rom.hex"
+elf="$out_dir/e1_reset_rom.elf"
+bin="$out_dir/e1_reset_rom.bin"
+hex="$out_dir/e1_reset_rom.hex"
 
 status_line() {
     state=$1
@@ -31,12 +31,12 @@ find_cc() {
         else
             set -- "$cc"
         fi
-        if "$@" -x assembler -c /dev/null -o "${TMPDIR:-/tmp}/hello-bootrom-toolchain.o" >/dev/null 2>&1; then
-            rm -f "${TMPDIR:-/tmp}/hello-bootrom-toolchain.o"
+        if "$@" -x assembler -c /dev/null -o "${TMPDIR:-/tmp}/e1-bootrom-toolchain.o" >/dev/null 2>&1; then
+            rm -f "${TMPDIR:-/tmp}/e1-bootrom-toolchain.o"
             printf '%s\n' "$cc"
             return 0
         fi
-        rm -f "${TMPDIR:-/tmp}/hello-bootrom-toolchain.o"
+        rm -f "${TMPDIR:-/tmp}/e1-bootrom-toolchain.o"
     done
     return 1
 }

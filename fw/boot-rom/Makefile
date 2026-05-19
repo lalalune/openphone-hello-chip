@@ -1,6 +1,6 @@
 # fw/boot-rom/Makefile
 #
-# Build the v0 OpenPhone boot ROM stub.
+# Build the v0 OpenAgent boot ROM stub.
 # This Makefile is intentionally standalone: it does NOT run any simulation.
 # It only assembles, links, and emits the binary + hex artefacts that the
 # generated CPU wrapper (docs/rtl/cpu-config-selection.md) and any future
@@ -23,10 +23,10 @@ CFLAGS  := $(ARCH_FLAGS) -nostdlib -nostartfiles -fno-pic -ffreestanding -Wall -
 LDFLAGS := -nostdlib -nostartfiles -Wl,-T,linker.ld -Wl,--no-relax
 
 OBJS    := reset.o
-ELF     := hello_boot_rom.elf
-BIN     := hello_boot_rom.bin
-HEX     := hello_boot_rom.hex
-DUMP    := hello_boot_rom.dump
+ELF     := e1_boot_rom.elf
+BIN     := e1_boot_rom.bin
+HEX     := e1_boot_rom.hex
+DUMP    := e1_boot_rom.dump
 
 .PHONY: all clean tools-check
 all: $(BIN) $(HEX) $(DUMP)

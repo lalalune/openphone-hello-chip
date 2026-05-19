@@ -9,8 +9,8 @@ CFLAGS   := -nostdlib -nostartfiles -ffreestanding -fno-pic \
             -O2 -Wall -Wextra -g
 LDFLAGS  := -Wl,-T,linker.ld -Wl,--no-warn-rwx-segments
 
-OBJS := reset.o hello.o
-TARGET := hello
+OBJS := reset.o e1.o
+TARGET := e1
 
 .PHONY: all clean
 all: $(TARGET).elf $(TARGET).bin

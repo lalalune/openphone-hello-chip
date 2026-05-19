@@ -1,4 +1,4 @@
-# hello chip custom floorplan hooks
+# e1 chip custom floorplan hooks
 # Sourced by OpenLane 2 after the initial floorplan step when
 # EXTRA_LEFS / EXTRA_MACROS are configured.
 #
@@ -35,6 +35,6 @@ add_global_connection -net VSS -pin_pattern {^VGND$} -ground
 # IO placement notes
 # ---------------------------------------------------------------------------
 # Pin order is controlled by pd/pin_order.cfg.
-# The padframe contract is in pd/padframe/hello_demo_padframe.yaml.
-# When IO ring cells are added, instantiate them in hello_chip_top and
+# The padframe contract is in pd/padframe/e1_demo_padframe.yaml.
+# When IO ring cells are added, instantiate them in e1_chip_top and
 # update this file with place_cell directives for corner cells.

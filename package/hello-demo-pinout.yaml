@@ -1,5 +1,5 @@
-chip: openphone_hello_demo
-package: hello_demo_qfn64_planning_r0
+chip: openagent_e1_demo
+package: e1_demo_qfn64_planning_r0
 status: local_planning_contract
 evidence_class: non_release_demo_planning
 release_use: prohibited
@@ -8,7 +8,7 @@ io_voltage: 3.3V
 core_voltage: 1.8V
 notes:
   - Non-release demo package contract for KiCad symbol, FPGA harness, and board bring-up planning only.
-  - Pin names are aligned to rtl/top/hello_chip_top.sv and pd/padframe/hello_demo_padframe.yaml.
+  - Pin names are aligned to rtl/top/e1_chip_top.sv and pd/padframe/e1_demo_padframe.yaml.
   - This file is not vendor package data, not a bond map, and not a fabrication footprint source.
   - Real foundry pad cells, ESD rules, package drawing, package-vendor footprint evidence, and bond diagram must replace this before fabrication.
 release_blockers:
@@ -103,7 +103,7 @@ board_interface_groups:
     pins: [40, 41, 42, 51, 52, 53, 54, 59, 60, 61, 62]
     policy: leave_unconnected_until_vendor_bond_diagram_assigns_disposition
 fpga_planning:
-  target_manifest: board/fpga/hello_demo_fpga.yaml
+  target_manifest: board/fpga/e1_demo_fpga.yaml
   target_clock_hz: 25000000
   io_standard: LVCMOS33_planning
   release_blocked_until:
