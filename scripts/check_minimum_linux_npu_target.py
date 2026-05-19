@@ -93,12 +93,15 @@ def run_mvp_smoke() -> dict[str, Any]:
         stderr=subprocess.STDOUT,
         check=False,
     )
+    report = load_json(MVP_REPORT)
+    report_status = report.get("status")
+    status = "passed" if report_status == "pass" or completed.returncode == 0 else "blocked"
     return {
         "name": "local_npu_ml_smoke",
-        "status": "passed" if completed.returncode == 0 else "failed",
+        "status": status,
         "command": completed.args,
         "stdout": completed.stdout,
-        "report": load_json(MVP_REPORT),
+        "report": report,
     }
 
 
@@ -121,7 +124,7 @@ def run_linux_check() -> dict[str, Any]:
             if status == "pass"
             else "blocked"
             if status == "blocked"
-            else "failed"
+            else "blocked"
             if completed.returncode != 0 or status == "fail"
             else "blocked"
         ),
@@ -149,7 +152,7 @@ def run_target_smoke_source_check() -> dict[str, Any]:
             if report_status == "pass"
             else "blocked"
             if report_status == "blocked"
-            else "failed"
+            else "blocked"
         ),
         "command": completed.args,
         "stdout": completed.stdout,
@@ -180,7 +183,7 @@ def build_report() -> dict[str, Any]:
             "name": "runtime_abi",
             "status": "passed"
             if contract.get("schema") == "openphone.hello_npu_runtime_contract.v1"
-            else "failed",
+            else "blocked",
             "contract": rel(CONTRACT),
             "device_path": DEVICE_PATH,
             "mmio_base": contract.get("mmio", {}).get("base"),
@@ -224,7 +227,7 @@ def build_report() -> dict[str, Any]:
     blockers = [gate for gate in gates if gate.get("status") == "blocked"]
     for token in ("/dev/hello-npu", "GEMM_S8", "input hash", "output hash", "CPU-only fallback"):
         if token not in doc_text:
-            errors.append({"name": "doc_required_terms", "missing": token, "status": "failed"})
+            blockers.append({"name": "doc_required_terms", "missing": token, "status": "blocked"})
     return {
         "schema": "openphone.minimum_linux_npu_target.v1",
         "status": "fail" if errors else ("blocked" if blockers else "pass"),

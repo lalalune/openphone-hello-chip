@@ -56,9 +56,6 @@ static void hello_npu_fill_counters(struct hello_npu *npu, struct hello_npu_coun
 	c->desc_tail = readl(npu->regs + HELLO_NPU_DESC_TAIL_OFFSET);
 	c->desc_timeout_count = readl(npu->regs + HELLO_NPU_DESC_TIMEOUT_COUNT_OFFSET);
 	c->desc_bytes_read = readl(npu->regs + HELLO_NPU_DESC_BYTES_READ_OFFSET);
-	c->desc_bytes_written = readl(npu->regs + HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET);
-	c->desc_read_beats = readl(npu->regs + HELLO_NPU_DESC_READ_BEATS_OFFSET);
-	c->desc_write_beats = readl(npu->regs + HELLO_NPU_DESC_WRITE_BEATS_OFFSET);
 	c->perf_cycles = readl(npu->regs + HELLO_NPU_PERF_CYCLES_OFFSET);
 	c->perf_macs = readl(npu->regs + HELLO_NPU_PERF_MACS_OFFSET);
 	c->perf_ops = readl(npu->regs + HELLO_NPU_PERF_OPS_OFFSET);
@@ -206,9 +203,6 @@ static long hello_npu_submit_descriptors(struct hello_npu *npu, unsigned long ar
 	ret = hello_npu_wait_done(npu, &status);
 	submit.status = readl(npu->regs + HELLO_NPU_DESC_STATUS_OFFSET);
 	submit.bytes_read = readl(npu->regs + HELLO_NPU_DESC_BYTES_READ_OFFSET);
-	submit.bytes_written = readl(npu->regs + HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET);
-	submit.read_beats = readl(npu->regs + HELLO_NPU_DESC_READ_BEATS_OFFSET);
-	submit.write_beats = readl(npu->regs + HELLO_NPU_DESC_WRITE_BEATS_OFFSET);
 	submit.timeout_count = readl(npu->regs + HELLO_NPU_DESC_TIMEOUT_COUNT_OFFSET);
 	if (!submit.status)
 		submit.status = status;

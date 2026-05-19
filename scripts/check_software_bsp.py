@@ -1317,8 +1317,7 @@ def main() -> int:
             if any(
                 report["errors"]
                 or (
-                    evidence_required
-                    and (report["missing_evidence"] or report["invalid_evidence"])
+                    evidence_required and (report["missing_evidence"] or report["invalid_evidence"])
                 )
                 for report in reports
             )

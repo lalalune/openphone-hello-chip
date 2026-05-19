@@ -1,6 +1,10 @@
 {
   "blockers": [
     {
+      "detail": "run import command before kernel-build or dtb-check evidence capture",
+      "id": "external_linux_bsp_not_imported"
+    },
+    {
       "detail": "set CROSS_COMPILE=... or install a riscv64 Linux compiler",
       "id": "riscv_cross_compiler_missing"
     },
@@ -99,11 +103,11 @@
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/hello_platform_contract.h"
       }
     },
-    "status": "imported",
+    "status": "not_imported",
     "text_checks": {
-      "drivers_misc_kconfig_sources_openphone": true,
-      "drivers_misc_makefile_links_openphone": true,
-      "riscv_dts_makefile_links_openphone": true
+      "drivers_misc_kconfig_sources_openphone": false,
+      "drivers_misc_makefile_links_openphone": false,
+      "riscv_dts_makefile_links_openphone": false
     }
   },
   "linux_tree": "/Users/shawwalters/Desktop/npu_experiment/external/linux",

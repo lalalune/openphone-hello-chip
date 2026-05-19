@@ -423,3 +423,6 @@ def golden_gemm_s8(a, b):
     k = len(a[0]) if m else 0
     n = len(b[0]) if b else 0
     return [[sum(a[i][kk] * b[kk][j] for kk in range(k)) for j in range(n)] for i in range(m)]
+
+
+HelloNpuRuntime = E1NpuRuntime
