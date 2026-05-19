@@ -6,9 +6,9 @@ depth 8
 smtbmc z3
 
 [script]
-read -formal hello_npu.sv hello_npu_formal.sv
-prep -top hello_npu_formal
+read -formal e1_npu.sv e1_npu_formal.sv
+prep -top e1_npu_formal
 
 [files]
-rtl/npu/hello_npu.sv
-verify/formal/hello_npu_formal.sv
+rtl/npu/e1_npu.sv
+verify/formal/e1_npu_formal.sv

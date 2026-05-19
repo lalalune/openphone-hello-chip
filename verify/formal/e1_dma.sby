@@ -6,9 +6,9 @@ depth 12
 smtbmc z3
 
 [script]
-read -formal hello_dma.sv hello_dma_formal.sv
-prep -top hello_dma_formal
+read -formal e1_dma.sv e1_dma_formal.sv
+prep -top e1_dma_formal
 
 [files]
-rtl/dma/hello_dma.sv
-verify/formal/hello_dma_formal.sv
+rtl/dma/e1_dma.sv
+verify/formal/e1_dma_formal.sv

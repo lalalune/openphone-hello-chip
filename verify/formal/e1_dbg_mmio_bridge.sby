@@ -6,9 +6,9 @@ depth 16
 smtbmc z3
 
 [script]
-read -formal -sv hello_dbg_mmio_bridge.sv hello_dbg_mmio_bridge_formal.sv
-prep -top hello_dbg_mmio_bridge_formal
+read -formal -sv e1_dbg_mmio_bridge.sv e1_dbg_mmio_bridge_formal.sv
+prep -top e1_dbg_mmio_bridge_formal
 
 [files]
-rtl/debug/hello_dbg_mmio_bridge.sv
-verify/formal/hello_dbg_mmio_bridge_formal.sv
+rtl/debug/e1_dbg_mmio_bridge.sv
+verify/formal/e1_dbg_mmio_bridge_formal.sv

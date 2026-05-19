@@ -6,20 +6,20 @@ depth 4
 smtbmc z3
 
 [script]
-read -formal hello_bootrom.sv
-read -formal hello_peripherals.sv
-read -formal hello_dma.sv
-read -formal hello_npu.sv
-read -formal hello_display.sv
-read -formal hello_soc_top.sv
-read -formal hello_soc_top_formal.sv
-prep -top hello_soc_top_formal
+read -formal e1_bootrom.sv
+read -formal e1_peripherals.sv
+read -formal e1_dma.sv
+read -formal e1_npu.sv
+read -formal e1_display.sv
+read -formal e1_soc_top.sv
+read -formal e1_soc_top_formal.sv
+prep -top e1_soc_top_formal
 
 [files]
-rtl/bootrom/hello_bootrom.sv
-rtl/peripherals/hello_peripherals.sv
-rtl/dma/hello_dma.sv
-rtl/npu/hello_npu.sv
-rtl/display/hello_display.sv
-rtl/top/hello_soc_top.sv
-verify/formal/hello_soc_top_formal.sv
+rtl/bootrom/e1_bootrom.sv
+rtl/peripherals/e1_peripherals.sv
+rtl/dma/e1_dma.sv
+rtl/npu/e1_npu.sv
+rtl/display/e1_display.sv
+rtl/top/e1_soc_top.sv
+verify/formal/e1_soc_top_formal.sv

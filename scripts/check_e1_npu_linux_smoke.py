@@ -25,8 +25,8 @@ LINUX_EVIDENCE = ROOT / "docs/evidence/linux/openagent_e1_npu_ml_smoke.log"
 CAPTURE_COMMANDS = {
     "buildroot": "make BR2_EXTERNAL=$PWD/sw/buildroot openagent_e1_defconfig && make BR2_EXTERNAL=$PWD/sw/buildroot",
     "kernel_import": "sw/linux/scripts/import-linux-bsp.sh /path/to/linux",
-    "target_smoke": "ssh root@TARGET /usr/bin/e1-npu-ml-smoke",
-    "capture_wrapper": "E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-npu-ml-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
+    "target_smoke": "ssh root@TARGET /usr/bin/e1-npu-ml-smoke --device /dev/e1-npu",
+    "capture_wrapper": "E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-npu-ml-smoke --device /dev/e1-npu' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
 }
 
 
@@ -115,7 +115,7 @@ def build_report() -> dict[str, Any]:
     require(
         problems,
         "package/e1-npu-ml-smoke/Config.in" in buildroot_config
-        and ("BR2_PACKAGE_E1_NPU_ML_SMOKE" in package_config or "BR2_PACKAGE_HELLO_NPU_ML_SMOKE" in package_config),
+        and "BR2_PACKAGE_E1_NPU_ML_SMOKE" in package_config,
         "Buildroot package is not sourced or lacks BR2 symbol",
     )
     require(
@@ -139,6 +139,9 @@ def build_report() -> dict[str, Any]:
             "workload=gemm_s8_int8_2x2x3",
             "contract_version=1",
             "desc_bytes_read=",
+            "desc_bytes_written=",
+            "desc_read_beats=",
+            "desc_write_beats=",
             "desc_timeout_count=",
             "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
             "openagent-evidence: status=PASS",
