@@ -29,6 +29,7 @@ int main(int argc, char **argv)
 {
 	static const int32_t expected[] = { -44, 8, 139, -54 };
 	const char *device = HELLO_NPU_DEV;
+	struct hello_npu_contract contract;
 	struct hello_npu_gemm_s8 gemm;
 	struct hello_npu_counters counters;
 	unsigned int i;
@@ -43,6 +44,7 @@ int main(int argc, char **argv)
 
 	memset(&gemm, 0, sizeof(gemm));
 	memset(&counters, 0, sizeof(counters));
+	memset(&contract, 0, sizeof(contract));
 	gemm.m = 2;
 	gemm.n = 2;
 	gemm.k = 3;
@@ -66,10 +68,24 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
+	if (ioctl(fd, HELLO_NPU_IOC_GET_CONTRACT, &contract) < 0) {
+		fprintf(stderr, "HELLO_NPU_IOC_GET_CONTRACT: %s\n", strerror(errno));
+		close(fd);
+		return 3;
+	}
+	if (contract.version != 1 || contract.npu_base != 0x10020000 ||
+	    contract.scratch_bytes != HELLO_NPU_SCRATCH_BYTES) {
+		fprintf(stderr,
+			"unexpected NPU contract: version=%u base=0x%08x scratch=%u\n",
+			contract.version, contract.npu_base, contract.scratch_bytes);
+		close(fd);
+		return 3;
+	}
+
 	if (ioctl(fd, HELLO_NPU_IOC_RUN_GEMM_S8, &gemm) < 0) {
 		fprintf(stderr, "HELLO_NPU_IOC_RUN_GEMM_S8: %s\n", strerror(errno));
 		close(fd);
-		return 3;
+		return 4;
 	}
 
 	for (i = 0; i < 4; i++) {
@@ -77,7 +93,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "GEMM_S8 mismatch at C[%u]: got=%d expected=%d\n",
 				i, gemm.c[i], expected[i]);
 			close(fd);
-			return 4;
+			return 5;
 		}
 	}
 
@@ -86,6 +102,8 @@ int main(int argc, char **argv)
 
 	printf("openphone-evidence: target=linux artifact=hello_npu_ml_smoke\n");
 	printf("openphone-evidence: device=%s\n", device);
+	printf("openphone-evidence: contract_version=%u npu_base=0x%08x scratch_bytes=%u\n",
+	       contract.version, contract.npu_base, contract.scratch_bytes);
 	printf("openphone-evidence: workload=gemm_s8_int8_2x2x3\n");
 	printf("openphone-evidence: input_sha256=860fe3aa9f5e4b5515d4a0a671db874748650cc4fdae1548dc7ee4f0a057a8ed\n");
 	printf("openphone-evidence: output_sha256=d70386994e16722852e1149ff822f99cb1bc13cf4ebdeceaa5aa8b2eedf5e386\n");
@@ -94,9 +112,8 @@ int main(int argc, char **argv)
 	printf(" cycles=%u macs=%u ops=%u errors=%u unsupported_ops=%u ",
 	       counters.perf_cycles, counters.perf_macs, counters.perf_ops,
 	       counters.perf_errors, counters.perf_unsupported_ops);
-	printf("desc_bytes_read=%u desc_bytes_written=%u desc_read_beats=%u desc_write_beats=%u ",
-	       counters.desc_bytes_read, counters.desc_bytes_written,
-	       counters.desc_read_beats, counters.desc_write_beats);
+	printf("desc_bytes_read=%u desc_timeout_count=%u ",
+	       counters.desc_bytes_read, counters.desc_timeout_count);
 	printf("status=0x%08x claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark\n",
 	       gemm.status);
 	printf("openphone-evidence: status=PASS\n");

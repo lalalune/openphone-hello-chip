@@ -231,6 +231,29 @@ def cocotb_status() -> Status:
         "hello_npu_test_hello_npu",
         "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
     ]
+    manifest = ROOT / "build/reports/cocotb/manifest.json"
+    if manifest.is_file():
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return Status(
+                "cocotb",
+                FAIL,
+                f"{rel(manifest)} is invalid JSON",
+                "make cocotb cocotb-npu cocotb-contract cocotb-cpu",
+                "schema_fail",
+            )
+        targets = data.get("targets")
+        if isinstance(targets, dict):
+            missing_manifest = sorted(set(target_names) - set(targets))
+            if missing_manifest:
+                return Status(
+                    "cocotb",
+                    BLOCK,
+                    "cocotb manifest missing target(s): " + ", ".join(missing_manifest),
+                    "make cocotb cocotb-npu cocotb-contract cocotb-cpu",
+                    "regen_required",
+                )
     results = []
     missing_names = []
     for name in target_names:

@@ -17,6 +17,7 @@ PACKAGE_CONFIG = ROOT / "sw/buildroot/package/hello-npu-ml-smoke/Config.in"
 DRIVER = ROOT / "sw/linux/drivers/hello/hello-npu.c"
 UAPI = ROOT / "sw/linux/drivers/hello/hello-npu-uapi.h"
 DTS = ROOT / "sw/linux/dts/openphone-hello.dts"
+CONTRACT = ROOT / "sw/linux/drivers/hello/hello_platform_contract.h"
 BUILDROOT_CONFIG = ROOT / "sw/buildroot/Config.in"
 BUILDROOT_DEFCONFIG = ROOT / "sw/buildroot/configs/openphone_hello_defconfig"
 LINUX_EVIDENCE = ROOT / "docs/evidence/linux/openphone_hello_npu_ml_smoke.log"
@@ -58,6 +59,7 @@ def build_report() -> dict[str, Any]:
     driver = read(DRIVER)
     uapi = read(UAPI)
     dts = read(DTS)
+    contract = read(CONTRACT)
     buildroot_config = read(BUILDROOT_CONFIG)
     package_config = read(PACKAGE_CONFIG)
     buildroot_defconfig = read(BUILDROOT_DEFCONFIG)
@@ -65,17 +67,34 @@ def build_report() -> dict[str, Any]:
     blockers: list[str] = []
     evidence: dict[str, Any] = {"path": rel(LINUX_EVIDENCE), "present": LINUX_EVIDENCE.is_file()}
 
-    for path in (SMOKE, PACKAGE_CONFIG, DRIVER, UAPI, DTS, BUILDROOT_CONFIG, BUILDROOT_DEFCONFIG):
+    for path in (SMOKE, PACKAGE_CONFIG, DRIVER, UAPI, DTS, CONTRACT, BUILDROOT_CONFIG, BUILDROOT_DEFCONFIG):
         require(problems, path.is_file(), f"missing required source: {rel(path)}")
 
     require(problems, "hello-npu-ml-smoke" in smoke, "smoke source lacks command identity")
     require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in smoke, "smoke does not use RUN_GEMM_S8")
+    require(problems, "HELLO_NPU_IOC_GET_CONTRACT" in smoke, "smoke does not validate the runtime contract")
     require(problems, "HELLO_NPU_IOC_GET_COUNTERS" in smoke, "smoke does not read counters")
     require(problems, "CPU-only" in smoke or "cpu-only" in smoke.lower(), "smoke must reject CPU-only fallback")
     require(problems, "input_sha256" in smoke and "output_sha256" in smoke, "smoke lacks input/output hash markers")
     require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in uapi, "UAPI lacks RUN_GEMM_S8 ioctl")
+    require(problems, "HELLO_NPU_IOC_GET_CONTRACT" in uapi, "UAPI lacks GET_CONTRACT ioctl")
     require(problems, "HELLO_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl")
-    require(problems, "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" in driver, "driver lacks writeback counter readout")
+    require(problems, "HELLO_NPU_DESC_BYTES_READ_OFFSET" in driver, "driver lacks descriptor bytes-read counter readout")
+    require(
+        problems,
+        "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" not in driver
+        and "HELLO_NPU_DESC_READ_BEATS_OFFSET" not in driver
+        and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" not in driver,
+        "driver references descriptor counters that are not in the Linux platform contract",
+    )
+    require(
+        problems,
+        "desc_bytes_written" not in uapi
+        and "desc_read_beats" not in uapi
+        and "desc_write_beats" not in uapi,
+        "UAPI exposes descriptor counters that are not in the Linux platform contract",
+    )
+    require(problems, "HELLO_NPU_BASE 0x10020000u" in contract, "platform contract has unexpected NPU base")
     require(problems, "openphone,hello-npu" in dts, "DTS lacks openphone,hello-npu compatible")
     require(
         problems,
@@ -102,7 +121,9 @@ def build_report() -> dict[str, Any]:
             "/usr/bin/hello-npu-ml-smoke",
             "hello-npu-ml-smoke: PASS",
             "workload=gemm_s8_int8_2x2x3",
-            "desc_bytes_written=0",
+            "contract_version=1",
+            "desc_bytes_read=",
+            "desc_timeout_count=",
             "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
             "openphone-evidence: status=PASS",
         ):
@@ -120,6 +141,7 @@ def build_report() -> dict[str, Any]:
             "driver": rel(DRIVER),
             "uapi": rel(UAPI),
             "dts": rel(DTS),
+            "contract": rel(CONTRACT),
             "buildroot_config": rel(BUILDROOT_CONFIG),
             "package_config": rel(PACKAGE_CONFIG),
             "buildroot_defconfig": rel(BUILDROOT_DEFCONFIG),

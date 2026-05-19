@@ -15,7 +15,7 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 | real-world-release-gates | `PASS` | `command_pass` | `none` |
 | rtl-source | `PASS` | `source_present` | `none` |
 | synthesis | `PASS` | `generated_artifact` | `none` |
-| cocotb | `BLOCK` | `regen_required` | `make cocotb cocotb-npu cocotb-contract cocotb-cpu` |
+| cocotb | `PASS` | `generated_artifact` | `none` |
 | verilator | `PASS` | `generated_artifact` | `none` |
 | formal | `PASS` | `generated_artifact` | `none` |
 | qemu | `PASS` | `generated_artifact` | `none` |
