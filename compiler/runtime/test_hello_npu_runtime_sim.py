@@ -150,7 +150,9 @@ class HelloNpuRuntimeSimTest(unittest.TestCase):
     def test_runtime_descriptor_submission_updates_descriptor_counters(self):
         sim = HelloNpuMmioSim()
 
-        status = sim.runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=1))
+        status = sim.runtime.submit_descriptors(
+            NpuDescriptorSubmission(base=0x2000, head=0, tail=1)
+        )
         counters = sim.runtime.descriptor_counters()
 
         self.assertTrue(status.ok)

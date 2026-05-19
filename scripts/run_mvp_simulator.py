@@ -282,9 +282,8 @@ def wrapped_command(step: dict[str, Any]) -> list[str]:
 
 def skip_reason(step: dict[str, Any]) -> str | None:
     name = str(step["name"]).upper()
-    raw = (
-        os.environ.get(f"MVP_SIMULATOR_SKIP_{name}")
-        or os.environ.get("MVP_SIMULATOR_SKIP_LONG_STEPS")
+    raw = os.environ.get(f"MVP_SIMULATOR_SKIP_{name}") or os.environ.get(
+        "MVP_SIMULATOR_SKIP_LONG_STEPS"
     )
     if raw not in {"1", "true", "TRUE", "yes", "YES"}:
         return None
