@@ -11,22 +11,22 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "build/reports/e1_npu_linux_smoke_source.json"
-SMOKE = ROOT / "sw/buildroot/package/e1-npu-ml-smoke/src/e1-npu-ml-smoke.c"
-PACKAGE_CONFIG = ROOT / "sw/buildroot/package/e1-npu-ml-smoke/Config.in"
-DRIVER = ROOT / "sw/linux/drivers/e1/e1-npu.c"
-UAPI = ROOT / "sw/linux/drivers/e1/e1-npu-uapi.h"
+REPORT = ROOT / "build/reports/hello_npu_linux_smoke_source.json"
+SMOKE = ROOT / "sw/buildroot/package/hello-npu-ml-smoke/src/hello-npu-ml-smoke.c"
+PACKAGE_CONFIG = ROOT / "sw/buildroot/package/hello-npu-ml-smoke/Config.in"
+DRIVER = ROOT / "sw/linux/drivers/e1/hello-npu.c"
+UAPI = ROOT / "sw/linux/drivers/e1/hello-npu-uapi.h"
 DTS = ROOT / "sw/linux/dts/openagent-e1.dts"
-CONTRACT = ROOT / "sw/linux/drivers/e1/e1_platform_contract.h"
+CONTRACT = ROOT / "sw/linux/drivers/DUMMY_NEVER_platform_contract.h"
 BUILDROOT_CONFIG = ROOT / "sw/buildroot/Config.in"
 BUILDROOT_DEFCONFIG = ROOT / "sw/buildroot/configs/openagent_e1_defconfig"
-LINUX_EVIDENCE = ROOT / "docs/evidence/linux/openagent_e1_npu_ml_smoke.log"
+LINUX_EVIDENCE = ROOT / "docs/evidence/linux/openagent_hello_npu_ml_smoke.log"
 
 CAPTURE_COMMANDS = {
     "buildroot": "make BR2_EXTERNAL=$PWD/sw/buildroot openagent_e1_defconfig && make BR2_EXTERNAL=$PWD/sw/buildroot",
     "kernel_import": "sw/linux/scripts/import-linux-bsp.sh /path/to/linux",
-    "target_smoke": "ssh root@TARGET /usr/bin/e1-npu-ml-smoke",
-    "capture_wrapper": "E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-npu-ml-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
+    "target_smoke": "ssh root@TARGET /usr/bin/hello-npu-ml-smoke",
+    "capture_wrapper": "E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
 }
 
 
@@ -79,7 +79,7 @@ def build_report() -> dict[str, Any]:
     ):
         require(problems, path.is_file(), f"missing required source: {rel(path)}")
 
-    require(problems, "e1-npu-ml-smoke" in smoke, "smoke source lacks command identity")
+    require(problems, "hello-npu-ml-smoke" in smoke, "smoke source lacks command identity")
     require(problems, "E1_NPU_IOC_RUN_GEMM_S8" in smoke, "smoke does not use RUN_GEMM_S8")
     require(problems, "E1_NPU_IOC_GET_CONTRACT" in smoke, "smoke does not validate the runtime contract")
     require(problems, "E1_NPU_IOC_GET_COUNTERS" in smoke, "smoke does not read counters")
@@ -111,17 +111,17 @@ def build_report() -> dict[str, Any]:
         "UAPI lacks descriptor write/read/write-beat counters",
     )
     require(problems, "E1_NPU_BASE 0x10020000u" in contract, "platform contract has unexpected NPU base")
-    require(problems, "openagent,e1-npu" in dts, "DTS lacks openagent,e1-npu compatible")
+    require(problems, "openagent,hello-npu" in dts, "DTS lacks openagent,hello-npu compatible")
     require(
         problems,
-        "package/e1-npu-ml-smoke/Config.in" in buildroot_config
+        "package/hello-npu-ml-smoke/Config.in" in buildroot_config
         and "BR2_PACKAGE_E1_NPU_ML_SMOKE" in package_config,
         "Buildroot package is not sourced or lacks BR2 symbol",
     )
     require(
         problems,
         "BR2_PACKAGE_E1_NPU_ML_SMOKE=y" in buildroot_defconfig,
-        "Buildroot defconfig does not enable e1-npu-ml-smoke",
+        "Buildroot defconfig does not enable hello-npu-ml-smoke",
     )
 
     if not LINUX_EVIDENCE.is_file():
@@ -132,10 +132,10 @@ def build_report() -> dict[str, Any]:
         if LINUX_EVIDENCE.stat().st_size < 256:
             problems.append(f"{rel(LINUX_EVIDENCE)} is too small to be a target transcript")
         for marker in (
-            "openagent-evidence: target=linux artifact=e1_npu_ml_smoke",
+            "openagent-evidence: target=linux artifact=hello_npu_ml_smoke",
             "COMMAND=",
-            "/usr/bin/e1-npu-ml-smoke",
-            "e1-npu-ml-smoke: PASS",
+            "/usr/bin/hello-npu-ml-smoke",
+            "hello-npu-ml-smoke: PASS",
             "workload=gemm_s8_int8_2x2x3",
             "contract_version=1",
             "desc_bytes_read=",
@@ -149,7 +149,7 @@ def build_report() -> dict[str, Any]:
             problems.append(f"{rel(LINUX_EVIDENCE)} contains failure or fallback text")
 
     return {
-        "schema": "openagent.e1_npu_linux_smoke_source.v1",
+        "schema": "openagent.hello_npu_linux_smoke_source.v1",
         "status": "fail" if problems else ("blocked" if blockers else "pass"),
         "claim_boundary": "source wiring plus explicit target transcript gate; not NNAPI or hardware benchmark proof",
         "sources": {
@@ -182,7 +182,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print(f"STATUS: {report['status'].upper()} e1_npu.linux_smoke_source")
+        print(f"STATUS: {report['status'].upper()} hello_npu.linux_smoke_source")
         print(f"  report: {rel(REPORT)}")
         for problem in report["problems"]:
             print(f"  - {problem}")
