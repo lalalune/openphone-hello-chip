@@ -494,3 +494,68 @@ archive-check:
 
 clean:
 	rm -rf $(BUILD) sim_build sim_build_* results reports verify/formal/work verify/cocotb/sim_build verify/cocotb/sim_build_* verify/cocotb/results.xml verify/formal/hello_dbg_mmio_bridge verify/formal/hello_npu verify/formal/hello_dma verify/formal/hello_soc_top
+
+# ---------------------------------------------------------------------------
+# Boot pipeline tiers (QEMU virt)
+#   tier0        bare-metal HELLO
+#   tier1        OpenSBI + S-mode payload (BLOCKED on macOS)
+#   tier2-build  build kernel Image + busybox initramfs via docker
+#   tier2-boot   boot Linux + initramfs under qemu-system-riscv64
+#   tier2        tier2-build && tier2-boot
+# ---------------------------------------------------------------------------
+.PHONY: tier0 tier1 tier2 tier2-build tier2-boot boot-pipeline-status
+
+TIER0_ELF    := fw/bare-metal/hello/hello.elf
+TIER1_FW     := external/opensbi/build/platform/generic/firmware/fw_payload.elf
+TIER2_KERNEL := build/sim/tier2/Image
+TIER2_INITRD := build/initramfs/openphone_tier2.cpio.gz
+
+tier0:
+	@$(MAKE) -C fw/bare-metal/hello
+	@scripts/sim/run_qemu_baremetal.sh
+
+tier1:
+	@if [ "$$(uname -s)" = "Darwin" ]; then \
+		echo "[tier1] BLOCKED on macOS: OpenSBI fw_payload link requires GNU binutils -pie."; \
+		echo "[tier1] See docs/sim/tier1-opensbi-macos-blocker.md"; \
+		exit 2; \
+	fi
+	@scripts/build/build_opensbi_qemu.sh
+	@scripts/sim/run_qemu_opensbi.sh
+
+tier2-build:
+	@if ! command -v docker >/dev/null 2>&1; then \
+		echo "[tier2-build] ERROR: docker not on PATH"; exit 2; \
+	fi
+	@if ! docker info >/dev/null 2>&1; then \
+		echo "[tier2-build] ERROR: docker daemon not running"; exit 2; \
+	fi
+	@scripts/build/docker_build_tier2.sh
+
+tier2-boot:
+	@if [ ! -f "$(TIER2_KERNEL)" ] || [ ! -f "$(TIER2_INITRD)" ]; then \
+		echo "[tier2-boot] MISSING: $(TIER2_KERNEL) and/or $(TIER2_INITRD) -- run 'make tier2-build' first"; \
+		exit 2; \
+	fi
+	@KERNEL=$(TIER2_KERNEL) INITRD=$(TIER2_INITRD) $(PYTHON) scripts/sim/run_qemu_tier2_check.py
+
+tier2: tier2-build tier2-boot
+
+boot-pipeline-status:
+	@if [ -f "$(TIER0_ELF)" ]; then \
+		echo "tier0:       READY    artifact=$(TIER0_ELF)"; \
+	else \
+		echo "tier0:       MISSING  artifact=$(TIER0_ELF) (run 'make tier0')"; \
+	fi
+	@if [ "$$(uname -s)" = "Darwin" ]; then \
+		echo "tier1:       BLOCKED  macOS binutils -pie (see docs/sim/tier1-opensbi-macos-blocker.md)"; \
+	elif [ -f "$(TIER1_FW)" ]; then \
+		echo "tier1:       READY    artifact=$(TIER1_FW)"; \
+	else \
+		echo "tier1:       MISSING  artifact=$(TIER1_FW) (run 'make tier1')"; \
+	fi
+	@if [ -f "$(TIER2_KERNEL)" ] && [ -f "$(TIER2_INITRD)" ]; then \
+		echo "tier2:       READY    kernel+initrd present under build/sim/tier2"; \
+	else \
+		echo "tier2:       MISSING  kernel=$(TIER2_KERNEL) initrd=$(TIER2_INITRD) (run 'make tier2-build')"; \
+	fi
