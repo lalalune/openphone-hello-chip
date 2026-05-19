@@ -65,6 +65,15 @@ if [ -d "$repo_dir/external/riscv-tools-linux-x64/bin" ]; then
 	export PATH
 fi
 
+generated_dir="$sim_dir/generated-src/chipyard.harness.TestHarness.$config"
+bootrom_src="$checkout/generators/testchipip/src/main/resources/testchipip/bootrom"
+mkdir -p "$generated_dir"
+for bootrom_img in bootrom.rv64.img bootrom.rv32.img; do
+	if [ -f "$bootrom_src/$bootrom_img" ]; then
+		cp -f "$bootrom_src/$bootrom_img" "$generated_dir/$bootrom_img"
+	fi
+done
+
 command_text="make CONFIG=$config CONFIG_PACKAGE=$config_package BINARY=$binary LOADMEM=1 run-binary"
 {
 	printf 'openphone-evidence: target=generated_chipyard_ap\n'

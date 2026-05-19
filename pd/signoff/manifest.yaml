@@ -223,8 +223,15 @@ required_artifacts:
       - "pd/openlane/runs/*/reports/signoff/*drc*.rpt"
       - "runs/*/final/drc/*.rpt"
       - "runs/*/reports/signoff/*drc*.rpt"
-    fail_regex: "(?i)(\\bfail\\b|violations?\\s*[:=]\\s*[1-9][0-9]*)"
-    pass_regex: "(?i)(\\b0\\s+(drc\\s+)?violations?\\b|violations?\\s*[:=]\\s*0|\\bclean\\b|\\bpass(?:ed)?\\b)"
+    fail_regex: "(?i)(\\bfail\\b|violations?\\s*[:=]\\s*[1-9][0-9]*|<item>)"
+    pass_regex: "(?i)(\\b0\\s+(drc\\s+)?violations?\\b|violations?\\s*[:=]\\s*0|count\\s*[:=]\\s*0|\\bclean\\b|\\bpass(?:ed)?\\b|</report-database>)"
+  klayout_drc_report:
+    min_bytes: 1024
+    globs:
+      - "pd/openlane/runs/*/reports/signoff/*klayout*.rpt"
+      - "runs/*/reports/signoff/*klayout*.rpt"
+    fail_regex: "(?i)(\\bfail\\b|violations?\\s*[:=]\\s*[1-9][0-9]*|<item>)"
+    pass_regex: "(?i)</report-database>"
   lvs_report:
     min_bytes: 32
     globs:

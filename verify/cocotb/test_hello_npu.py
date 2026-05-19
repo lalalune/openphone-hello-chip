@@ -373,7 +373,9 @@ async def npu_descriptor_fetch_launches_scalar_op_and_advances_tail(dut):
     await write_reg(dut, 0x0C, 1)
     await write_reg(dut, 0x03, 1)
 
-    assert await poll_done(dut, cycles=64) == 0x2
+    done_status = await poll_done(dut, cycles=64)
+    desc_status = await read_reg(dut, 0x13)
+    assert done_status == 0x2, f"status=0x{done_status:08x} desc_status=0x{desc_status:08x}"
     reader.kill()
     assert await read_reg(dut, 0x02) == 18
     assert await read_reg(dut, 0x11) == 1
@@ -415,7 +417,9 @@ async def npu_descriptor_streams_tensor_tile_into_scratchpad_and_runs_gemm(dut):
     await write_reg(dut, 0x0C, 1)
     await write_reg(dut, 0x03, 1)
 
-    assert await poll_done(dut, cycles=128) == 0x2
+    done_status = await poll_done(dut, cycles=128)
+    desc_status = await read_reg(dut, 0x13)
+    assert done_status == 0x2, f"status=0x{done_status:08x} desc_status=0x{desc_status:08x}"
     reader.kill()
     assert await read_reg(dut, 0x12) == 1
     assert await read_reg(dut, 0x13) == 0x2

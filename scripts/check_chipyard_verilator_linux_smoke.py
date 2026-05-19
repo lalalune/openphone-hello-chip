@@ -11,6 +11,8 @@ import platform
 import re
 import shutil
 import stat
+import subprocess
+import time
 from pathlib import Path
 
 import locate_chipyard_linux_payload
@@ -155,18 +157,72 @@ def generated_path_blockers() -> list[str]:
 
 
 def remove_path(path: Path) -> None:
-    def onerror(function, path_value, _exc_info):
+    def fix_permissions_and_retry(function, path_value) -> None:
         try:
             os.chmod(path_value, stat.S_IRWXU)
             function(path_value)
         except FileNotFoundError:
             pass
 
+    def onerror(function, path_value, _exc_info):
+        fix_permissions_and_retry(function, path_value)
+
     if path.is_dir():
-        shutil.rmtree(path, onerror=onerror)
+        # Docker/QEMU-backed Chipyard runs can still be tearing down object files
+        # when a local repair is requested. Retry briefly, then leave the gate
+        # blocked instead of raising a Python traceback.
+        last_error: OSError | None = None
+        for _attempt in range(3):
+            try:
+                shutil.rmtree(path, onerror=onerror)
+                return
+            except OSError as exc:
+                last_error = exc
+                time.sleep(0.25)
+        raise RuntimeError(
+            f"could not remove {rel(path)} after retries; generated files are likely "
+            "being created by an active Chipyard smoke/generation job"
+        ) from last_error
     else:
         with contextlib.suppress(FileNotFoundError):
             path.unlink()
+
+
+def active_chipyard_containers() -> list[dict[str, str]]:
+    if not shutil.which("docker"):
+        return []
+    completed = subprocess.run(
+        [
+            "docker",
+            "ps",
+            "--format",
+            "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}\t{{.Command}}",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    containers: list[dict[str, str]] = []
+    for line in completed.stdout.splitlines():
+        parts = line.split("\t", 4)
+        if len(parts) != 5:
+            continue
+        container_id, image, status, name, command = parts
+        haystack = f"{image} {command}".lower()
+        if "chipyard" not in haystack and "openphone" not in haystack:
+            continue
+        containers.append(
+            {
+                "id": container_id,
+                "image": image,
+                "status": status,
+                "name": name,
+                "command": command,
+            }
+        )
+    return containers
 
 
 def repair_stale_generated_paths() -> int:
@@ -209,9 +265,23 @@ def repair_stale_generated_paths() -> int:
     for blocker in repairable:
         print(f"  - {blocker}")
     print(f"  removing: {rel(GENERATED_CONFIG_DIR)}")
-    remove_path(GENERATED_CONFIG_DIR)
+    try:
+        remove_path(GENERATED_CONFIG_DIR)
+    except RuntimeError as exc:
+        print("STATUS: BLOCKED chipyard.verilator_generated_paths")
+        print(f"  - {exc}")
+        print("  next: wait for active Chipyard Docker/simulator jobs to finish, then rerun")
+        print("    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated")
+        return 2
     print(f"  removing: {rel(GENERATED_SIMULATOR)}")
-    remove_path(GENERATED_SIMULATOR)
+    try:
+        remove_path(GENERATED_SIMULATOR)
+    except RuntimeError as exc:
+        print("STATUS: BLOCKED chipyard.verilator_generated_paths")
+        print(f"  - {exc}")
+        print("  next: wait for active Chipyard Docker/simulator jobs to finish, then rerun")
+        print("    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated")
+        return 2
     print("  next: rerun the Chipyard make target so VTestDriver.mk is regenerated on this host")
     return 0
 
@@ -428,6 +498,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
             "system": platform.system(),
             "machine": platform.machine(),
         },
+        "active_chipyard_containers": active_chipyard_containers(),
         "allow_container_generated_paths": allow_container_paths,
         "generated_driver_makefile": rel(GENERATED_DRIVER_MAKEFILE),
         "required_log_markers": list(REQUIRED_LOG_MARKERS),

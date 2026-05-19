@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,7 +21,9 @@ KNOWN_FILES = (
     GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.all.f",
     GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig" / "VTestDriver.mk",
 )
-DEFAULT_STALE_ROOTS = ("/work",)
+DEFAULT_STALE_ROOTS = ("/work", "/workspace", "/__w")
+HOST_REPO_ENV = "OPENPHONE_HOST_REPO_DIR"
+GENERATED_METADATA_PATTERNS = ("*.f", "*.mk", "*.d")
 
 
 def rel(path: Path) -> str:
@@ -32,31 +36,31 @@ def rel(path: Path) -> str:
 def rewrite_text(text: str, stale_root: str, replacement_root: Path) -> tuple[str, int]:
     normalized = stale_root.rstrip("/")
     replacement = str(replacement_root).rstrip("/")
-    patterns = (
-        (f"{normalized}/", f"{replacement}/"),
-        (f"{normalized} ", f"{replacement} "),
-        (f"{normalized}\n", f"{replacement}\n"),
-        (f"{normalized}:", f"{replacement}:"),
-        (f'{normalized}"', f'{replacement}"'),
-        (f"{normalized}'", f"{replacement}'"),
-    )
-    rewritten = text
-    replacements = 0
-    for old, new in patterns:
-        count = rewritten.count(old)
-        if count:
-            rewritten = rewritten.replace(old, new)
-            replacements += count
+    pattern = re.compile(rf"(?<![A-Za-z0-9_.-]){re.escape(normalized)}(?=(/|[\s:,'\")]|$))")
+    rewritten, replacements = pattern.subn(replacement, text)
     if rewritten == normalized:
         rewritten = replacement
         replacements += 1
     return rewritten, replacements
 
 
+def default_stale_roots(replacement_root: Path) -> list[str]:
+    roots = [root.rstrip("/") for root in DEFAULT_STALE_ROOTS]
+    host_repo = os.environ.get(HOST_REPO_ENV)
+    if host_repo:
+        roots.append(host_repo.rstrip("/"))
+    if replacement_root == Path("/work"):
+        roots.append(str(ROOT).rstrip("/"))
+    return sorted(set(root for root in roots if root and root != str(replacement_root).rstrip("/")))
+
+
 def generated_files(extra_files: list[str]) -> list[Path]:
     files = list(KNOWN_FILES)
+    if GENERATED_CONFIG_DIR.exists():
+        for pattern in GENERATED_METADATA_PATTERNS:
+            files.extend(GENERATED_CONFIG_DIR.rglob(pattern))
     files.extend(Path(path) if Path(path).is_absolute() else ROOT / path for path in extra_files)
-    return files
+    return sorted(set(files))
 
 
 def inspect_or_rewrite(
@@ -117,8 +121,8 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="print machine-readable results")
     args = parser.parse_args()
 
-    stale_roots = args.stale_root or list(DEFAULT_STALE_ROOTS)
     replacement_root = Path(args.replacement_root).resolve()
+    stale_roots = args.stale_root or default_stale_roots(replacement_root)
     results, total_replacements = inspect_or_rewrite(
         generated_files(args.file), stale_roots, replacement_root, rewrite=args.rewrite
     )

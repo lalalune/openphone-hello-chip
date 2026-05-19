@@ -6,4 +6,7 @@ config BR2_PACKAGE_OPENPHONE_HELLO_BSP
 	  Import metadata for the OpenPhone hello software BSP. The hardware
 	  register contract is owned by sw/platform/hello_platform_contract.json.
 
+source "$BR2_EXTERNAL_OPENPHONE_HELLO_PATH/package/hello-mmio-smoke/Config.in"
+source "$BR2_EXTERNAL_OPENPHONE_HELLO_PATH/package/hello-npu-ml-smoke/Config.in"
+
 endmenu

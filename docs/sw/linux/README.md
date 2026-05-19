@@ -8,15 +8,18 @@ Linux BSP artifacts must consume `sw/platform/hello_platform_contract.json` or g
 sw/linux/drivers/hello/Kconfig
 sw/linux/drivers/hello/Makefile
 sw/linux/scripts/import-linux-bsp.sh
+sw/linux/configs/openphone_hello.fragment
 sw/linux/dts/openphone-hello.dts
+sw/linux/dts/Makefile
+sw/platform/generated/hello-platform.dtsi
+sw/linux/Documentation/devicetree/bindings/openphone/openphone,hello-*.yaml
 sw/linux/drivers/hello/hello_platform_contract.h
+sw/linux/drivers/hello/hello-npu-uapi.h
 sw/linux/drivers/hello/hello-npu.c
 sw/linux/drivers/hello/hello-dma.c
 sw/linux/tests/hello-mmio-smoke.c
-device tree binding for hello MMIO blocks
-timer/GPIO smoke driver
+sw/linux/tests/hello-npu-smoke.c
 NPU char driver
-simple framebuffer or DRM/KMS display driver
 DMA test driver
 ```
 
@@ -50,8 +53,10 @@ linux BSP check failed:
 Dependency blocker: a real Linux boot/image check requires an external kernel
 checkout with `sw/linux/drivers/hello` imported under
 `drivers/misc/openphone-hello`, `sw/linux/dts/openphone-hello.dts` copied into
-`arch/riscv/boot/dts/openphone`, and board-owned Kconfig/Makefile fragments
-that select `CONFIG_OPENPHONE_HELLO_NPU` and `CONFIG_OPENPHONE_HELLO_DMA`.
+`arch/riscv/boot/dts/openphone`, the OpenPhone DT bindings copied under
+`Documentation/devicetree/bindings/openphone`, and board-owned
+Kconfig/Makefile fragments that select `CONFIG_OPENPHONE_HELLO_NPU` and
+`CONFIG_OPENPHONE_HELLO_DMA`.
 
 Evidence intake is defined by
 `docs/evidence/software-bsp-evidence-manifest.json` and validated by
@@ -68,8 +73,14 @@ The checked-in driver directory is ready to copy into an external Linux tree:
 sw/linux/scripts/import-linux-bsp.sh /path/to/linux
 mkdir -p /path/to/linux/drivers/misc/openphone-hello
 rsync -a sw/linux/drivers/hello/ /path/to/linux/drivers/misc/openphone-hello/
-cp sw/linux/dts/openphone-hello.dts /path/to/linux/arch/riscv/boot/dts/openphone/
+cp sw/linux/dts/openphone-hello.dts sw/linux/dts/Makefile \
+  /path/to/linux/arch/riscv/boot/dts/openphone/
+cp sw/platform/generated/hello-platform.dtsi \
+  /path/to/linux/arch/riscv/boot/dts/openphone/
+cp sw/linux/Documentation/devicetree/bindings/openphone/*.yaml \
+  /path/to/linux/Documentation/devicetree/bindings/openphone/
 cp sw/platform/generated/hello_platform_contract.h /path/to/linux/drivers/misc/openphone-hello/hello_platform_contract.h
+cp sw/linux/configs/openphone_hello.fragment /path/to/linux/kernel/configs/openphone_hello.config
 ```
 
 Then add these external-tree fragments:
@@ -82,6 +93,11 @@ obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-hello/
 ```text
 # drivers/misc/Kconfig
 source "drivers/misc/openphone-hello/Kconfig"
+```
+
+```make
+# arch/riscv/boot/dts/Makefile
+subdir-y += openphone
 ```
 
 The repo-local helper validates that the destination looks like a kernel tree
@@ -101,7 +117,7 @@ From this repository, with `/path/to/linux` already imported and configured:
 ```sh
 sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux kernel-build
 sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux dtb-check
-HELLO_SMOKE_CMD='ssh root@TARGET /tmp/hello-mmio-smoke' \
+HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-smoke --device /dev/hello-npu' \
   sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke
 make software-bsp-evidence-check
 ```
@@ -110,3 +126,88 @@ Set `CROSS_COMPILE=riscv64-linux-gnu-` and `JOBS=<n>` if the external kernel
 tree needs a specific toolchain or parallelism. `dtb-check` intentionally uses
 `dtbs_check`; missing schemas or DTS integration remain blockers, not local
 passes.
+
+## Linux boot artifact gate
+
+`make linux-boot-artifacts-check` is the fail-closed gate for the first basic
+kernel/rootfs/OpenSBI boot path. It does not build anything by itself and it
+does not promote `.BLOCKED` notes into evidence. It checks host preflight,
+required external tree environment variables, the Chipyard Linux payload
+locator, and the required kernel, DTB, OpenSBI, rootfs/initramfs, boot log, and
+smoke transcripts named in
+`docs/evidence/linux/openphone-linux-boot-artifacts.json`.
+
+Set these paths before capture:
+
+```sh
+export OPENPHONE_LINUX_TREE=/path/to/linux
+export OPENPHONE_BUILDROOT_TREE=/path/to/buildroot
+export OPENPHONE_OPENSBI_TREE=/path/to/opensbi
+```
+
+Exact command plan for a Linux host or CI worker:
+
+```sh
+sw/linux/scripts/import-linux-bsp.sh "$OPENPHONE_LINUX_TREE"
+sw/buildroot/scripts/import-buildroot-external.sh "$OPENPHONE_BUILDROOT_TREE"
+
+sw/buildroot/scripts/capture-buildroot-evidence.sh "$OPENPHONE_BUILDROOT_TREE" defconfig
+make -C "$OPENPHONE_BUILDROOT_TREE" BR2_EXTERNAL="$PWD/sw/buildroot"
+sw/buildroot/scripts/capture-buildroot-evidence.sh "$OPENPHONE_BUILDROOT_TREE" image-manifest
+
+cd "$OPENPHONE_LINUX_TREE"
+make ARCH=riscv openphone_hello.config olddefconfig
+cd -
+sw/linux/scripts/capture-linux-bsp-evidence.sh "$OPENPHONE_LINUX_TREE" kernel-build
+sw/linux/scripts/capture-linux-bsp-evidence.sh "$OPENPHONE_LINUX_TREE" dtb-check
+
+python3 scripts/locate_chipyard_linux_payload.py --require
+CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openphone_linux_smoke.sh
+
+OPENPHONE_OPENSBI_HANDOFF_CMD='<exact boot command>' \
+  docs/sw/opensbi/capture-opensbi-evidence.sh "$OPENPHONE_OPENSBI_TREE" handoff
+
+HELLO_SMOKE_CMD='<target command for /usr/bin/hello-mmio-smoke>' \
+  sw/linux/scripts/capture-linux-bsp-evidence.sh "$OPENPHONE_LINUX_TREE" smoke
+
+make linux-boot-artifacts-check
+```
+
+Current expected local status is `BLOCKED` until the external kernel checkout,
+Buildroot images, OpenSBI handoff transcript, selected Chipyard payload, serial
+boot transcript, and target smoke log exist with PASS evidence markers.
+
+## /dev/hello-npu ABI
+
+The `openphone,hello-npu` driver registers `/dev/hello-npu`. `read(2)` returns
+the current scalar `RESULT` register as text for legacy MMIO smoke scripts.
+New Linux smoke code uses the ioctl UAPI in
+`sw/linux/drivers/hello/hello-npu-uapi.h`:
+
+```c
+HELLO_NPU_IOC_RUN_CMD       /* scalar opcode, including DOT4_S8 */
+HELLO_NPU_IOC_RUN_GEMM_S8   /* bounded INT8 GEMM tile: 1 <= M,N <= 3, 1 <= K <= 7 */
+HELLO_NPU_IOC_GET_COUNTERS  /* control, descriptor, and perf registers */
+```
+
+`HELLO_NPU_IOC_RUN_CMD` writes `OP_A`, `OP_B`, `ACC`, and `OPCODE`, starts the
+block, waits for `DONE`, and returns `RESULT` plus `CTRL_STATUS`.
+`HELLO_NPU_IOC_RUN_GEMM_S8` copies A and B into the 64-byte MMIO scratchpad,
+programs the GEMM config/base/stride registers, starts opcode `GEMM_S8`, and
+returns C as signed int32 values. Oversized dimensions fail with `-EINVAL`
+before hardware launch.
+
+## Target-side NPU smoke
+
+`sw/linux/tests/hello-npu-smoke.c` is source for an external target rootfs.
+Build it with the imported UAPI header, install it on the target, then run:
+
+```sh
+/usr/bin/hello-npu-smoke --device /dev/hello-npu
+```
+
+The smoke runs one `DOT4_S8` scalar command and one fixed 2x2x3 signed INT8
+GEMM workload. It prints `openphone-evidence` markers and a PASS line when the
+driver returns the expected results. This is driver ioctl smoke only; it is not
+NNAPI/TFLite acceleration, descriptor DMA proof, or hardware benchmark
+evidence.

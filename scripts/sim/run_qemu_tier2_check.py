@@ -9,6 +9,7 @@ Asserts within 30 seconds:
 Log: build/sim/qemu/tier2_linux.log
 Exit 0 on success, nonzero on failure.
 """
+
 from __future__ import annotations
 
 import os
@@ -17,6 +18,7 @@ import select
 import signal
 import sys
 import time
+from contextlib import suppress
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -39,14 +41,23 @@ def main() -> int:
 
     cmd = [
         "qemu-system-riscv64",
-        "-machine", "virt",
+        "-machine",
+        "virt",
         "-nographic",
-        "-m", "256M", "-smp", "1",
-        "-bios", "default",
-        "-kernel", str(KERNEL),
-        "-initrd", str(INITRD),
-        "-append", "console=ttyS0 earlycon=sbi panic=10",
-        "-serial", "mon:stdio",
+        "-m",
+        "256M",
+        "-smp",
+        "1",
+        "-bios",
+        "default",
+        "-kernel",
+        str(KERNEL),
+        "-initrd",
+        str(INITRD),
+        "-append",
+        "console=ttyS0 earlycon=sbi panic=10",
+        "-serial",
+        "mon:stdio",
     ]
 
     pid, fd = pty.fork()
@@ -78,14 +89,10 @@ def main() -> int:
                 if WANT_PROMPT in text:
                     saw_prompt = True
         finally:
-            try:
+            with suppress(ProcessLookupError):
                 os.kill(pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            try:
+            with suppress(ChildProcessError):
                 os.waitpid(pid, 0)
-            except ChildProcessError:
-                pass
 
     print(f"banner={saw_banner} prompt={saw_prompt} log={LOG}")
     if saw_banner and saw_prompt:

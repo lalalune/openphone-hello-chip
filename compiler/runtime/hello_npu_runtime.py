@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 Read32 = Callable[[int], int]
 Write32 = Callable[[int, int], None]
 
 
-class NpuPrecisionState(str, Enum):
+class NpuPrecisionState(StrEnum):
     SUPPORTED = "supported"
     RESERVED = "reserved"
     BLOCKED = "blocked"
