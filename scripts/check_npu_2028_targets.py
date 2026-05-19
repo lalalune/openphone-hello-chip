@@ -9,19 +9,19 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "docs/spec-db/npu-2028-target.yaml"
 DOC = ROOT / "docs/npu/2028-targets.md"
-RTL = ROOT / "rtl/npu/hello_npu.sv"
-COCOTB = ROOT / "verify/cocotb/test_hello_npu.py"
+RTL = ROOT / "rtl/npu/e1_npu.sv"
+COCOTB = ROOT / "verify/cocotb/test_e1_npu.py"
 ARCH = ROOT / "docs/arch/npu.md"
 MEMORY_MAP = ROOT / "docs/arch/memory-map.md"
-CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
-RUNTIME = ROOT / "compiler/runtime/hello_npu_runtime.py"
+CONTRACT = ROOT / "sw/platform/e1_platform_contract.json"
+RUNTIME = ROOT / "compiler/runtime/e1_npu_runtime.py"
 BENCH_CONFIG = ROOT / "benchmarks/configs/benchmark_plan.json"
-PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json"
+PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/e1_npu_nnapi.proof.template.json"
 ANDROID_PROOF_TEMPLATE = (
-    ROOT / "docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json"
+    ROOT / "docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json"
 )
 POWER_THERMAL_TEMPLATE = (
-    ROOT / "docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json"
+    ROOT / "docs/benchmarks/capabilities/e1_npu_power_thermal_manifest.template.json"
 )
 CAPABILITY_README = ROOT / "docs/benchmarks/capabilities/README.md"
 REPORT_SCHEMA = ROOT / "docs/benchmarks/report-schema.yaml"
@@ -81,7 +81,7 @@ REQUIRED_ANDROID_PROOF_STATUSES = {
     "vintf_check",
     "selinux_policy_build",
     "selinux_neverallow",
-    "vts_hello_npu",
+    "vts_e1_npu",
     "cts_nnapi_smoke",
     "nnapi_accelerator_query",
     "fail_closed_absent_device",
@@ -186,7 +186,7 @@ def check_template_statuses(
 
 def check_runtime_contract(errors: list[str]) -> None:
     contract = json.loads(CONTRACT.read_text())
-    regions = {region["name"]: region for region in contract["hello_chip"]["regions"]}
+    regions = {region["name"]: region for region in contract["e1_chip"]["regions"]}
     npu = regions["npu"]
     npu_base = h(npu["base"])
     constants = parse_runtime_constants(RUNTIME.read_text())
@@ -200,48 +200,48 @@ def check_runtime_contract(errors: list[str]) -> None:
         actual = constants.get(runtime_name)
         if actual != expected:
             errors.append(
-                f"compiler/runtime/hello_npu_runtime.py constant {runtime_name} "
+                f"compiler/runtime/e1_npu_runtime.py constant {runtime_name} "
                 f"must be 0x{expected:08X}; got {actual!r}"
             )
 
     if constants.get("SCRATCH") != npu_base + 0x80:
-        errors.append("compiler/runtime/hello_npu_runtime.py SCRATCH must point to NPU offset 0x80")
+        errors.append("compiler/runtime/e1_npu_runtime.py SCRATCH must point to NPU offset 0x80")
     if constants.get("SCRATCH_BYTES") != 64:
-        errors.append("compiler/runtime/hello_npu_runtime.py SCRATCH_BYTES must remain 64")
+        errors.append("compiler/runtime/e1_npu_runtime.py SCRATCH_BYTES must remain 64")
     if constants.get("OP_DOT8_S4") != 7:
-        errors.append("compiler/runtime/hello_npu_runtime.py must expose OP_DOT8_S4 = 7")
+        errors.append("compiler/runtime/e1_npu_runtime.py must expose OP_DOT8_S4 = 7")
 
 
 def check_benchmark_evidence_gates(errors: list[str]) -> None:
     config = json.loads(BENCH_CONFIG.read_text())
-    bench = find_benchmark(config, "tflite_hello_npu")
+    bench = find_benchmark(config, "tflite_e1_npu")
     if bench is None:
-        errors.append("benchmark plan missing tflite_hello_npu")
+        errors.append("benchmark plan missing tflite_e1_npu")
         return
     artifacts = bench.get("capability_artifacts", [])
     if len(artifacts) != 1:
-        errors.append("tflite_hello_npu must have exactly one capability_artifact")
+        errors.append("tflite_e1_npu must have exactly one capability_artifact")
         return
     proof = artifacts[0].get("proof", {})
     required_fields = set(proof.get("required_json_fields", []))
     missing_fields = sorted(REQUIRED_NPU_PROOF_FIELDS - required_fields)
     if missing_fields:
         errors.append(
-            "tflite_hello_npu proof missing required_json_fields: " + ", ".join(missing_fields)
+            "tflite_e1_npu proof missing required_json_fields: " + ", ".join(missing_fields)
         )
     required_files = set(proof.get("required_files", []))
     missing_files = sorted(REQUIRED_NPU_PROOF_TRANSCRIPTS - required_files)
     if missing_files:
         errors.append(
-            "tflite_hello_npu proof missing required transcript(s): " + ", ".join(missing_files)
+            "tflite_e1_npu proof missing required transcript(s): " + ", ".join(missing_files)
         )
     markers = proof.get("required_transcript_markers", {})
     for transcript in REQUIRED_NPU_PROOF_TRANSCRIPTS:
         if transcript not in markers:
-            errors.append(f"tflite_hello_npu proof missing markers for {transcript}")
-    for token in ("bytes_read", "bytes_written", "hello-npu", "DMA"):
+            errors.append(f"tflite_e1_npu proof missing markers for {transcript}")
+    for token in ("bytes_read", "bytes_written", "e1-npu", "DMA"):
         if token not in markers.get("dma_trace", []):
-            errors.append(f"tflite_hello_npu dma_trace markers must include {token!r}")
+            errors.append(f"tflite_e1_npu dma_trace markers must include {token!r}")
 
     template = json.loads(PROOF_TEMPLATE.read_text())
     for field in REQUIRED_NPU_PROOF_FIELDS:
@@ -271,15 +271,15 @@ def check_benchmark_evidence_gates(errors: list[str]) -> None:
         ("observed_tops", CAPABILITY_README),
         ("macs_per_inference", CAPABILITY_README),
         ("dma_trace", CAPABILITY_README),
-        ("hello_npu_android_proof_manifest", CAPABILITY_README),
-        ("hello_npu_power_thermal_manifest", CAPABILITY_README),
+        ("e1_npu_android_proof_manifest", CAPABILITY_README),
+        ("e1_npu_power_thermal_manifest", CAPABILITY_README),
         ("MAC/cycle", REPORT_SCHEMA),
     ):
         if token not in path.read_text():
             errors.append(f"{path.relative_to(ROOT)} missing NPU evidence token {token!r}")
 
     android_template = json.loads(ANDROID_PROOF_TEMPLATE.read_text())
-    if android_template.get("schema") != "openphone.hello_npu_android_proof_manifest.v1":
+    if android_template.get("schema") != "openagent.e1_npu_android_proof_manifest.v1":
         errors.append("Android proof manifest template has unexpected schema")
     gate = android_template.get("proof_gate", {})
     if gate.get("android_boot_claim") != "none" or gate.get("compatibility_claim") != "none":
@@ -295,7 +295,7 @@ def check_benchmark_evidence_gates(errors: list[str]) -> None:
     )
 
     power_template = json.loads(POWER_THERMAL_TEMPLATE.read_text())
-    if power_template.get("schema") != "openphone.hello_npu_power_thermal_manifest.v1":
+    if power_template.get("schema") != "openagent.e1_npu_power_thermal_manifest.v1":
         errors.append("power/thermal manifest template has unexpected schema")
     check_template_statuses(
         errors,
@@ -373,7 +373,7 @@ def main() -> int:
         return report(errors)
 
     spec = yaml.safe_load(SPEC.read_text())
-    if spec.get("schema") != "openphone.npu_2028_target.v1":
+    if spec.get("schema") != "openagent.npu_2028_target.v1":
         errors.append("unexpected NPU target schema")
     if spec.get("target_year") != 2028:
         errors.append("NPU target_year must remain 2028")

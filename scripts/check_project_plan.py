@@ -38,8 +38,8 @@ REQUIRED = [
     "docs/rtl/open_rtl_prototype_path.md",
     "docs/board/README.md",
     "docs/board/fpga/README.md",
-    "board/fpga/hello_demo_fpga.yaml",
-    "board/fpga/constraints/hello_demo_ulx3s.lpf",
+    "board/fpga/e1_demo_fpga.yaml",
+    "board/fpga/constraints/e1_demo_ulx3s.lpf",
     "docs/fw/board-smoke/tests/smoke_plan.md",
     "docs/toolchain/headless-cli-audit.md",
 ]
@@ -51,7 +51,7 @@ REQUIRED_TERMS = {
         "explicit_non_goals",
     ],
     "docs/spec-db/npu-2028-target.yaml": [
-        "openphone.npu_2028_target.v1",
+        "openagent.npu_2028_target.v1",
         "dense_int8_peak_tops_min",
         "sparse_int4_peak_tops_min",
         "current_repo_classification",
@@ -85,13 +85,13 @@ REQUIRED_TERMS = {
         "Gap Review",
     ],
     "docs/project/no-hardware-action-matrix-2026-05-17.yaml": [
-        "openphone.no_hardware_action_matrix.v1",
+        "openagent.no_hardware_action_matrix.v1",
         "doable_now",
         "No Android support is claimed",
         "make evidence-regression-test",
     ],
     "docs/project/cpu-ap-integration-work-order-2026-05-17.yaml": [
-        "openphone.cpu_ap_integration_work_order.v1",
+        "openagent.cpu_ap_integration_work_order.v1",
         "cva6",
         "chipyard_rocket",
         "make cpu-ap-evidence-check",
@@ -104,28 +104,28 @@ REQUIRED_TERMS = {
         "Scaffold checks may pass while these claims remain blocked.",
     ],
     "docs/project/phone-soc-minimum-blocks.yaml": [
-        "openphone.phone_soc_minimum_blocks.v1",
+        "openagent.phone_soc_minimum_blocks.v1",
         "application_cpu_cluster",
         "unified_memory_subsystem",
         "ai_throughput_claim_requires",
         "wireless_connectivity",
     ],
     "docs/project/uma-coherency-validation-strategy.yaml": [
-        "openphone.uma_coherency_validation_strategy.v1",
+        "openagent.uma_coherency_validation_strategy.v1",
         "coherency_policy",
         "iommu_isolation",
         "memory_qos",
         "android_buffer_lifecycle",
     ],
     "docs/project/ai-accelerator-options.yaml": [
-        "openphone.ai_accelerator_options.v1",
+        "openagent.ai_accelerator_options.v1",
         "integrate_open_npu_ip",
         "vector_cpu_baseline",
         "gpu_compute_or_2d_first",
         "CPU fallback percentage",
     ],
     "docs/project/spec-rtl-sw-pd-handoff-work-order.yaml": [
-        "openphone.pipeline_handoff_work_order.v1",
+        "openagent.pipeline_handoff_work_order.v1",
         "spec_to_contract",
         "rtl_to_software",
         "software_to_benchmarks",
@@ -231,7 +231,7 @@ REQUIRED_TERMS = {
         "v0 Non-Goals",
     ],
     "docs/benchmarks/report-schema.yaml": [
-        "openphone.benchmark_report.v1",
+        "openagent.benchmark_report.v1",
         "claim_level",
         "Simulator wall-clock time",
     ],
@@ -246,11 +246,11 @@ REQUIRED_TERMS = {
         "must not be released for fabrication",
     ],
     "docs/board/fpga/README.md": [
-        "hello_demo_fpga",
+        "e1_demo_fpga",
         "make fpga-check",
         "Bitstream generation must remain blocked",
     ],
-    "board/fpga/constraints/hello_demo_ulx3s.lpf": [
+    "board/fpga/constraints/e1_demo_ulx3s.lpf": [
         "CLK_IN",
         "RST_N",
         "DBG_VALID",
@@ -277,7 +277,7 @@ def check_benchmark_schema(root: Path) -> list[str]:
     data = yaml.safe_load(schema_path.read_text())
     matrix = matrix_path.read_text()
 
-    if data.get("schema") != "openphone.benchmark_report.v1":
+    if data.get("schema") != "openagent.benchmark_report.v1":
         errors.append("docs/benchmarks/report-schema.yaml has an unexpected schema id")
 
     claim_levels = data.get("required_fields", {}).get("claim_level", {}).get("enum", [])
@@ -335,24 +335,24 @@ def check_android_plan(root: Path) -> list[str]:
     errors: list[str] = []
     text = (root / "docs/android/riscv-bringup.md").read_text()
     required = [
-        "sw/platform/hello_platform_contract.json",
+        "sw/platform/e1_platform_contract.json",
         "make aosp-bsp-check",
         "CTS/VTS",
         "SELinux denials",
         "command transcript",
         "QEMU/Renode software-reference smoke checks",
-        "not hello-chip hardware boot proof",
+        "not e1-chip hardware boot proof",
     ]
     for term in required:
         if term not in text:
             errors.append(f"docs/android/riscv-bringup.md missing Android evidence term: {term}")
 
     aosp_artifacts = [
-        "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk",
-        "sw/aosp-device/device/openphone/openphone_ai_soc/device.mk",
-        "sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc",
-        "sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml",
-        "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
+        "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk",
+        "sw/aosp-device/device/openagent/openagent_ai_soc/device.mk",
+        "sw/aosp-device/device/openagent/openagent_ai_soc/init.openagent.rc",
+        "sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml",
+        "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/file_contexts",
     ]
     missing = [path for path in aosp_artifacts if not (root / path).is_file()]
     if missing:
@@ -365,15 +365,15 @@ def check_android_plan(root: Path) -> list[str]:
 
 def check_board_plan(root: Path) -> list[str]:
     errors: list[str] = []
-    cfg_path = root / "board/fpga/hello_demo_fpga.yaml"
+    cfg_path = root / "board/fpga/e1_demo_fpga.yaml"
     cfg = yaml.safe_load(cfg_path.read_text())
 
-    if cfg.get("target") != "hello_demo_fpga":
-        errors.append("board/fpga/hello_demo_fpga.yaml must target hello_demo_fpga")
+    if cfg.get("target") != "e1_demo_fpga":
+        errors.append("board/fpga/e1_demo_fpga.yaml must target e1_demo_fpga")
     if cfg.get("status") != "scaffold":
-        errors.append("board/fpga/hello_demo_fpga.yaml must remain status: scaffold")
-    if cfg.get("rtl_top") != "hello_chip_top":
-        errors.append("board/fpga/hello_demo_fpga.yaml must point at hello_chip_top")
+        errors.append("board/fpga/e1_demo_fpga.yaml must remain status: scaffold")
+    if cfg.get("rtl_top") != "e1_chip_top":
+        errors.append("board/fpga/e1_demo_fpga.yaml must point at e1_chip_top")
     if cfg.get("constraints", {}).get("bitstream_release_blocked_until_pins_assigned") is not True:
         errors.append("FPGA plan must block bitstream release until pins are assigned")
     if cfg.get("board", {}).get("exact_revision") != "unassigned":

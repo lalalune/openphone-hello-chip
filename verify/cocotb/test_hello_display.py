@@ -54,11 +54,11 @@ async def advance(dut, cycles):
 
 def write_coverage_artifact(extra):
     coverage = {
-        "schema": "hello-chip.display_cocotb_coverage.v1",
-        "source": "verify/cocotb/test_hello_display.py",
+        "schema": "e1-chip.display_cocotb_coverage.v1",
+        "source": "verify/cocotb/test_e1_display.py",
         "covered_contracts": sorted(extra),
         "pixel_format": "XR24 only",
-        "boundary": "Directed hello_display MMIO, XR24 scanout, underflow, and timing checks only; no DRM/KMS, HDMI/MIPI, compositor, or display PHY coverage.",
+        "boundary": "Directed e1_display MMIO, XR24 scanout, underflow, and timing checks only; no DRM/KMS, HDMI/MIPI, compositor, or display PHY coverage.",
     }
     out = REPO_ROOT / "build/reports/display_cocotb_coverage.json"
     out.parent.mkdir(parents=True, exist_ok=True)

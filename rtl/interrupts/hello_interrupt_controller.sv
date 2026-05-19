@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_interrupt_controller #(
+module e1_interrupt_controller #(
     parameter int unsigned NUM_SOURCES = 4
 ) (
     input  logic        clk,

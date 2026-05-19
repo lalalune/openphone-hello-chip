@@ -36,65 +36,65 @@ ensure_line() {
 }
 
 printf 'Import commands:\n'
-printf '  mkdir -p %s/drivers/misc/openphone-hello %s/arch/riscv/boot/dts/openphone %s/Documentation/devicetree/bindings/openphone %s/kernel/configs\n' "$linux" "$linux" "$linux" "$linux"
-printf '  rsync -a %s/drivers/hello/ %s/drivers/misc/openphone-hello/\n' "$bsp" "$linux"
-printf '  cp %s/dts/openphone-hello.dts %s/dts/Makefile %s/arch/riscv/boot/dts/openphone/\n' "$bsp" "$bsp" "$linux"
-printf '  cp %s/hello-platform.dtsi %s/arch/riscv/boot/dts/openphone/\n' "$generated" "$linux"
-printf '  cp %s/Documentation/devicetree/bindings/openphone/*.yaml %s/Documentation/devicetree/bindings/openphone/\n' "$bsp" "$linux"
-printf '  cp %s/hello_platform_contract.h %s/drivers/misc/openphone-hello/hello_platform_contract.h\n' "$generated" "$linux"
-printf '  cp %s/configs/openphone_hello.fragment %s/kernel/configs/openphone_hello.config\n' "$bsp" "$linux"
+printf '  mkdir -p %s/drivers/misc/openagent-e1 %s/arch/riscv/boot/dts/openagent %s/Documentation/devicetree/bindings/openagent %s/kernel/configs\n' "$linux" "$linux" "$linux" "$linux"
+printf '  rsync -a %s/drivers/e1/ %s/drivers/misc/openagent-e1/\n' "$bsp" "$linux"
+printf '  cp %s/dts/openagent-e1.dts %s/dts/Makefile %s/arch/riscv/boot/dts/openagent/\n' "$bsp" "$bsp" "$linux"
+printf '  cp %s/e1-platform.dtsi %s/arch/riscv/boot/dts/openagent/\n' "$generated" "$linux"
+printf '  cp %s/Documentation/devicetree/bindings/openagent/*.yaml %s/Documentation/devicetree/bindings/openagent/\n' "$bsp" "$linux"
+printf '  cp %s/e1_platform_contract.h %s/drivers/misc/openagent-e1/e1_platform_contract.h\n' "$generated" "$linux"
+printf '  cp %s/configs/openagent_e1.fragment %s/kernel/configs/openagent_e1.config\n' "$bsp" "$linux"
 printf 'Then add these fragments in the external Linux tree:\n'
-printf '  drivers/misc/Kconfig: source "drivers/misc/openphone-hello/Kconfig"\n'
+printf '  drivers/misc/Kconfig: source "drivers/misc/openagent-e1/Kconfig"\n'
 # shellcheck disable=SC2016
-printf '  drivers/misc/Makefile: obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-hello/\n'
-printf '  arch/riscv/boot/dts/Makefile: subdir-y += openphone\n'
+printf '  drivers/misc/Makefile: obj-$(CONFIG_OPENAGENT_E1_BSP) += openagent-e1/\n'
+printf '  arch/riscv/boot/dts/Makefile: subdir-y += openagent\n'
 printf 'Capture real evidence back in this repository:\n'
-printf '  (cd %s && make ARCH=riscv openphone_hello.config olddefconfig)\n' "$linux"
+printf '  (cd %s && make ARCH=riscv openagent_e1.config olddefconfig)\n' "$linux"
 printf '  python3 %s/scripts/check_linux_external_bsp.py %s\n' "$repo_root" "$linux"
 printf '  %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s kernel-build\n' "$repo_root" "$linux"
 printf '  %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s dtb-check\n' "$repo_root" "$linux"
-printf '  HELLO_SMOKE_CMD='\''ssh root@TARGET /usr/bin/hello-mmio-smoke'\'' %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s smoke\n' "$repo_root" "$linux"
+printf '  E1_SMOKE_CMD='\''ssh root@TARGET /usr/bin/e1-mmio-smoke'\'' %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s smoke\n' "$repo_root" "$linux"
 
 if [ "$check_only" -eq 0 ]; then
 	mkdir -p \
-		"$linux/drivers/misc/openphone-hello" \
-		"$linux/arch/riscv/boot/dts/openphone" \
-		"$linux/Documentation/devicetree/bindings/openphone" \
+		"$linux/drivers/misc/openagent-e1" \
+		"$linux/arch/riscv/boot/dts/openagent" \
+		"$linux/Documentation/devicetree/bindings/openagent" \
 		"$linux/kernel/configs"
-	rsync -a "$bsp/drivers/hello/" "$linux/drivers/misc/openphone-hello/"
-	cp "$bsp/dts/openphone-hello.dts" "$bsp/dts/Makefile" "$linux/arch/riscv/boot/dts/openphone/"
-	cp "$generated/hello-platform.dtsi" "$linux/arch/riscv/boot/dts/openphone/"
-	cp "$bsp"/Documentation/devicetree/bindings/openphone/*.yaml \
-		"$linux/Documentation/devicetree/bindings/openphone/"
-	cp "$generated/hello_platform_contract.h" "$linux/drivers/misc/openphone-hello/hello_platform_contract.h"
-	cp "$bsp/configs/openphone_hello.fragment" "$linux/kernel/configs/openphone_hello.config"
-	ensure_line "$linux/drivers/misc/Kconfig" 'source "drivers/misc/openphone-hello/Kconfig"'
-	ensure_line "$linux/drivers/misc/Makefile" 'obj-$'"(CONFIG_OPENPHONE_HELLO_BSP)"' += openphone-hello/'
-	ensure_line "$linux/arch/riscv/boot/dts/Makefile" 'subdir-y += openphone'
-	printf 'Imported OpenPhone Linux BSP files into the external kernel tree.\n'
+	rsync -a "$bsp/drivers/e1/" "$linux/drivers/misc/openagent-e1/"
+	cp "$bsp/dts/openagent-e1.dts" "$bsp/dts/Makefile" "$linux/arch/riscv/boot/dts/openagent/"
+	cp "$generated/e1-platform.dtsi" "$linux/arch/riscv/boot/dts/openagent/"
+	cp "$bsp"/Documentation/devicetree/bindings/openagent/*.yaml \
+		"$linux/Documentation/devicetree/bindings/openagent/"
+	cp "$generated/e1_platform_contract.h" "$linux/drivers/misc/openagent-e1/e1_platform_contract.h"
+	cp "$bsp/configs/openagent_e1.fragment" "$linux/kernel/configs/openagent_e1.config"
+	ensure_line "$linux/drivers/misc/Kconfig" 'source "drivers/misc/openagent-e1/Kconfig"'
+	ensure_line "$linux/drivers/misc/Makefile" 'obj-$'"(CONFIG_OPENAGENT_E1_BSP)"' += openagent-e1/'
+	ensure_line "$linux/arch/riscv/boot/dts/Makefile" 'subdir-y += openagent'
+	printf 'Imported OpenAgent Linux BSP files into the external kernel tree.\n'
 fi
 
 if [ "$check_only" -eq 1 ]; then
 	missing=0
 	for path in \
-		"$bsp/drivers/hello/Kconfig" \
-		"$bsp/drivers/hello/Makefile" \
-		"$bsp/drivers/hello/hello-npu-uapi.h" \
-		"$bsp/drivers/hello/hello-npu.c" \
-		"$bsp/drivers/hello/hello-dma.c" \
-		"$bsp/tests/hello-npu-smoke.c" \
-		"$bsp/dts/openphone-hello.dts" \
+		"$bsp/drivers/e1/Kconfig" \
+		"$bsp/drivers/e1/Makefile" \
+		"$bsp/drivers/e1/e1-npu-uapi.h" \
+		"$bsp/drivers/e1/e1-npu.c" \
+		"$bsp/drivers/e1/e1-dma.c" \
+		"$bsp/tests/e1-npu-smoke.c" \
+		"$bsp/dts/openagent-e1.dts" \
 		"$bsp/dts/Makefile" \
-		"$generated/hello-platform.dtsi" \
-		"$bsp/configs/openphone_hello.fragment" \
-		"$generated/hello_platform_contract.h"; do
+		"$generated/e1-platform.dtsi" \
+		"$bsp/configs/openagent_e1.fragment" \
+		"$generated/e1_platform_contract.h"; do
 		if [ ! -f "$path" ]; then
 			echo "FAIL: missing repo artifact ${path#"$repo_root"/}" >&2
 			missing=1
 		fi
 	done
-	if ! ls "$bsp"/Documentation/devicetree/bindings/openphone/*.yaml >/dev/null 2>&1; then
-		echo "FAIL: missing repo artifact sw/linux/Documentation/devicetree/bindings/openphone/*.yaml" >&2
+	if ! ls "$bsp"/Documentation/devicetree/bindings/openagent/*.yaml >/dev/null 2>&1; then
+		echo "FAIL: missing repo artifact sw/linux/Documentation/devicetree/bindings/openagent/*.yaml" >&2
 		missing=1
 	fi
 	if [ "$missing" -ne 0 ]; then

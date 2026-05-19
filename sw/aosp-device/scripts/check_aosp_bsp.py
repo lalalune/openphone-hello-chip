@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AOSP BSP evidence asserter for openphone_ai_soc.
+"""AOSP BSP evidence asserter for openagent_ai_soc.
 
 This script is the local gate for the AOSP device tree. It asserts that
 the evidence files listed in docs/android/bsp-critical-gap-audit-2026-05-17.md
@@ -22,33 +22,33 @@ ROOT = Path(__file__).resolve().parents[3]
 
 # Required AOSP scaffold sources. Must all be present in this repo.
 SCAFFOLD_FILES = [
-    "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/device.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu/Android.bp",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu/HelloNpu.cpp",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu/HelloNpu.h",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu/service.cpp",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu/IHelloNpu.hal",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hwcomposer/Android.bp",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hwcomposer/hwcomposer.cpp",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/hal/hwcomposer/service.cpp",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/README.md",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/AndroidProducts.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/openagent_ai_soc.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/device.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/init.openagent.rc",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/fstab.openagent",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/file_contexts",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/e1_npu.te",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/kernel/openagent_ai_soc.fragment",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/e1_npu/Android.bp",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/e1_npu/E1Npu.cpp",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/e1_npu/E1Npu.h",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/e1_npu/service.cpp",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/e1_npu/IE1Npu.hal",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/hwcomposer/Android.bp",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/hwcomposer/hwcomposer.cpp",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/hal/hwcomposer/service.cpp",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/README.md",
 ]
 
 # Evidence files required by docs/android/bsp-critical-gap-audit-2026-05-17.md.
 # Absent => BLOCKED with the named reason.
 EVIDENCE_FILES = {
-    "external AOSP lunch transcript": "docs/evidence/android/openphone_ai_soc_lunch.log",
-    "external AOSP vendorimage build log": "docs/evidence/android/openphone_ai_soc_vendorimage.log",
-    "external AOSP check_vintf log": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+    "external AOSP lunch transcript": "docs/evidence/android/openagent_ai_soc_lunch.log",
+    "external AOSP vendorimage build log": "docs/evidence/android/openagent_ai_soc_vendorimage.log",
+    "external AOSP check_vintf log": "docs/evidence/android/openagent_ai_soc_checkvintf.log",
     "Cuttlefish riscv64 boot transcript": "docs/evidence/android/cuttlefish_riscv64_boot.log",
 }
 

@@ -1,11 +1,11 @@
-# Minimal Buildroot defconfig for the OpenPhone hello software BSP.
+# Minimal Buildroot defconfig for the OpenAgent e1 software BSP.
 #
 # This file is meant to be copied into an external Buildroot tree as:
-#   configs/openphone_hello_defconfig
+#   configs/openagent_e1_defconfig
 #
 # It is not a checked-in Buildroot release. The checked-in source contract is
-# sw/platform/hello_platform_contract.json, with generated constants such as
-# HELLO_NPU_BASE, HELLO_DMA_BASE, and HELLO_DISPLAY_BASE.
+# sw/platform/e1_platform_contract.json, with generated constants such as
+# E1_NPU_BASE, E1_DMA_BASE, and E1_DISPLAY_BASE.
 BR2_riscv=y
 BR2_RISCV_64=y
 BR2_RISCV_ISA_RVA=y
@@ -16,18 +16,18 @@ BR2_RISCV_ABI_LP64D=y
 BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_INIT_BUSYBOX=y
 BR2_SYSTEM_DHCP="eth0"
-BR2_TARGET_GENERIC_HOSTNAME="openphone-hello"
-BR2_TARGET_GENERIC_ISSUE="OpenPhone hello BSP"
-BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_OPENPHONE_HELLO_PATH)/board/openphone/hello/rootfs_overlay"
+BR2_TARGET_GENERIC_HOSTNAME="openagent-e1"
+BR2_TARGET_GENERIC_ISSUE="OpenAgent e1 BSP"
+BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_OPENAGENT_E1_PATH)/board/openagent/e1/rootfs_overlay"
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_TARBALL=y
-BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(BR2_EXTERNAL_OPENPHONE_HELLO_PATH)/../linux-external.tar.xz"
+BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(BR2_EXTERNAL_OPENAGENT_E1_PATH)/../linux-external.tar.xz"
 BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
-BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_OPENPHONE_HELLO_PATH)/board/openphone/hello/linux.fragment"
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_OPENAGENT_E1_PATH)/board/openagent/e1/linux.fragment"
 BR2_LINUX_KERNEL_DTS_SUPPORT=y
-BR2_LINUX_KERNEL_INTREE_DTS_NAME="openphone-hello"
+BR2_LINUX_KERNEL_INTREE_DTS_NAME="openagent-e1"
 BR2_TARGET_ROOTFS_CPIO=y
 BR2_TARGET_ROOTFS_CPIO_GZIP=y
-BR2_PACKAGE_OPENPHONE_HELLO_BSP=y
-BR2_PACKAGE_HELLO_MMIO_SMOKE=y
-BR2_PACKAGE_HELLO_NPU_ML_SMOKE=y
+BR2_PACKAGE_OPENAGENT_E1_BSP=y
+BR2_PACKAGE_E1_MMIO_SMOKE=y
+BR2_PACKAGE_E1_NPU_ML_SMOKE=y

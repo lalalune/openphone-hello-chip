@@ -40,12 +40,12 @@ def check_scaffold(errors: list[str]) -> None:
         errors,
     )
 
-    cpu = read("rtl/cpu/hello_cpu_subsystem_stub.sv")
+    cpu = read("rtl/cpu/e1_cpu_subsystem_stub.sv")
     test = read("verify/cocotb/test_tiny_cpu_execution.py")
-    tb = read("verify/cocotb/hello_tiny_cpu_contract_tb.sv")
+    tb = read("verify/cocotb/e1_tiny_cpu_contract_tb.sv")
     linux_contract = read("docs/arch/linux-capable-cpu-contract.md")
     blocker = read("docs/project/cpu-ap-blocker-status-2026-05-17.md")
-    contract = json.loads(read("sw/platform/hello_platform_contract.json"))
+    contract = json.loads(read("sw/platform/e1_platform_contract.json"))
     manifest = load_json(SELECTED_MANIFEST)
     chipyard = manifest.get("chipyard", {})
     selected = manifest.get("selected_path", {})
@@ -85,7 +85,7 @@ def check_scaffold(errors: list[str]) -> None:
         errors,
     )
     require(
-        contract["hello_chip"].get("has_cpu") is False,
+        contract["e1_chip"].get("has_cpu") is False,
         "platform contract must remain has_cpu=false until package top integrates a production CPU",
         errors,
     )
@@ -115,7 +115,7 @@ def check_scaffold(errors: list[str]) -> None:
         errors,
     )
     require(
-        selected.get("config_name") == "OpenPhoneRocketConfig",
+        selected.get("config_name") == "OpenAgentRocketConfig",
         "AP config name drifted",
         errors,
     )
@@ -199,11 +199,11 @@ def check_scaffold(errors: list[str]) -> None:
         )
     for token in (
         "No generated Chipyard/Rocket RTL",
-        "OpenPhoneRocketConfig",
+        "OpenAgentRocketConfig",
         "has_cpu=false",
         "single Rocket RV64GC hart is not a 2028 phone-class AP",
-        "openphone_hello_isa_cache_mmu.log",
-        "openphone_hello_ap_benchmarks.log",
+        "openagent_e1_isa_cache_mmu.log",
+        "openagent_e1_ap_benchmarks.log",
     ):
         require(
             token in blocker, f"CPU/AP blocker status lacks required blocker token: {token}", errors

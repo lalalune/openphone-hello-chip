@@ -9,16 +9,16 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-PLATFORM = ROOT / "sw/platform/hello_platform_contract.json"
+PLATFORM = ROOT / "sw/platform/e1_platform_contract.json"
 MEMORY_MAP = ROOT / "docs/arch/memory-map.md"
 MEMORY_SUBSYSTEM = ROOT / "docs/arch/memory-subsystem.md"
 INTERCONNECT = ROOT / "docs/arch/interconnect.md"
 UMA = ROOT / "docs/project/uma-coherency-validation-strategy.yaml"
 GATE = ROOT / "docs/evidence/memory/uma-dram-evidence-gate.yaml"
 
-INTERCONNECT_RTL = ROOT / "rtl/interconnect/hello_axi_lite_interconnect.sv"
-CONTRACT_RTL = ROOT / "rtl/interconnect/hello_linux_soc_contract.sv"
-DRAM_RTL = ROOT / "rtl/memory/hello_axi_lite_dram.sv"
+INTERCONNECT_RTL = ROOT / "rtl/interconnect/e1_axi_lite_interconnect.sv"
+CONTRACT_RTL = ROOT / "rtl/interconnect/e1_linux_soc_contract.sv"
+DRAM_RTL = ROOT / "rtl/memory/e1_axi_lite_dram.sv"
 
 REQUIRED_UMA_AXES = {
     "coherency_policy": "uma_coherency_report",
@@ -34,8 +34,8 @@ REQUIRED_UMA_ARTIFACTS = {
     "docs/evidence/android/android_shared_buffer_report.json",
 }
 
-EXPECTED_HELLO_CHIP_DRAM_BASE = 0x80000000
-EXPECTED_HELLO_CHIP_DRAM_BYTES = 0x1000
+EXPECTED_E1_CHIP_DRAM_BASE = 0x80000000
+EXPECTED_E1_CHIP_DRAM_BYTES = 0x1000
 EXPECTED_LINUX_DRAM_BYTES = 0x10000000
 EXPECTED_AXI_LITE_WORD_BYTES = 4
 
@@ -106,30 +106,30 @@ def fail_unless(condition: bool, message: str, errors: list[str]) -> None:
 
 
 def region(contract: dict, name: str) -> dict:
-    for item in contract["hello_chip"]["regions"]:
+    for item in contract["e1_chip"]["regions"]:
         if item["name"] == name:
             return item
     raise KeyError(name)
 
 
-def check_hello_chip_dram_contract(contract: dict, errors: list[str]) -> None:
+def check_e1_chip_dram_contract(contract: dict, errors: list[str]) -> None:
     dram = region(contract, "dram")
     fail_unless(
-        dram["base"] == "0x80000000", "hello-chip DRAM aperture base must remain 0x80000000", errors
+        dram["base"] == "0x80000000", "e1-chip DRAM aperture base must remain 0x80000000", errors
     )
     fail_unless(
         dram["size"] == "0x00001000",
-        "hello-chip debug DRAM aperture must remain documented as 4 KiB",
+        "e1-chip debug DRAM aperture must remain documented as 4 KiB",
         errors,
     )
     fail_unless(
         "Small debug-visible SRAM-backed DRAM aperture" in dram.get("description", ""),
-        "hello-chip DRAM contract must say it is a small SRAM-backed aperture",
+        "e1-chip DRAM contract must say it is a small SRAM-backed aperture",
         errors,
     )
     fail_unless(
-        contract["hello_chip"]["has_cpu"] is False,
-        "hello-chip platform contract must not imply a production CPU/UMA path",
+        contract["e1_chip"]["has_cpu"] is False,
+        "e1-chip platform contract must not imply a production CPU/UMA path",
         errors,
     )
 
@@ -159,7 +159,7 @@ def check_docs(errors: list[str]) -> None:
 
     fail_unless(
         "`0x8000_0000` | `4 KiB`" in memory_map,
-        "docs/arch/memory-map.md must keep the hello-chip debug DRAM aperture at 4 KiB",
+        "docs/arch/memory-map.md must keep the e1-chip debug DRAM aperture at 4 KiB",
         errors,
     )
     fail_unless(
@@ -200,17 +200,17 @@ def check_memory_map_consistency(contract: dict, errors: list[str]) -> None:
 
     fail_unless(
         (
-            EXPECTED_HELLO_CHIP_DRAM_BASE,
-            EXPECTED_HELLO_CHIP_DRAM_BYTES,
+            EXPECTED_E1_CHIP_DRAM_BASE,
+            EXPECTED_E1_CHIP_DRAM_BYTES,
             "SRAM-backed test DRAM visible to debug MMIO and DMA",
         )
         in normalized_dram_rows,
-        "memory map must keep the hello-chip DRAM row at 0x8000_0000 / 4 KiB",
+        "memory map must keep the e1-chip DRAM row at 0x8000_0000 / 4 KiB",
         errors,
     )
     fail_unless(
         any(
-            base == EXPECTED_HELLO_CHIP_DRAM_BASE
+            base == EXPECTED_E1_CHIP_DRAM_BASE
             and size == EXPECTED_LINUX_DRAM_BYTES
             and "External DRAM controller/PHY boundary" in purpose
             for base, size, purpose in normalized_dram_rows
@@ -221,8 +221,8 @@ def check_memory_map_consistency(contract: dict, errors: list[str]) -> None:
 
     dram_contract = region(contract, "dram")
     fail_unless(
-        h(dram_contract["base"]) == EXPECTED_HELLO_CHIP_DRAM_BASE
-        and h(dram_contract["size"]) == EXPECTED_HELLO_CHIP_DRAM_BYTES,
+        h(dram_contract["base"]) == EXPECTED_E1_CHIP_DRAM_BASE
+        and h(dram_contract["size"]) == EXPECTED_E1_CHIP_DRAM_BYTES,
         "platform contract DRAM row must match the debug-visible 4 KiB memory-map row",
         errors,
     )
@@ -247,7 +247,7 @@ def check_memory_map_consistency(contract: dict, errors: list[str]) -> None:
         dram_base, dram_mask = rtl_regions["DRAM"]
         assert dram_base is not None and dram_mask is not None
         fail_unless(
-            dram_base == EXPECTED_HELLO_CHIP_DRAM_BASE
+            dram_base == EXPECTED_E1_CHIP_DRAM_BASE
             and dram_mask + 1 == EXPECTED_LINUX_DRAM_BYTES,
             "interconnect DRAM decode must match the 0x8000_0000 / 256 MiB scaffold aperture",
             errors,
@@ -281,14 +281,14 @@ def check_memory_map_consistency(contract: dict, errors: list[str]) -> None:
         implemented_bytes = depth * EXPECTED_AXI_LITE_WORD_BYTES
         actual = gate.get("current_actual_capability") if isinstance(gate, dict) else {}
         fail_unless(
-            implemented_bytes == EXPECTED_HELLO_CHIP_DRAM_BYTES,
+            implemented_bytes == EXPECTED_E1_CHIP_DRAM_BYTES,
             "DRAM model implemented bytes must remain 4 KiB until gate/docs change",
             errors,
         )
         fail_unless(
             isinstance(actual, dict)
             and actual.get("usable_rtl_capacity_bytes") == implemented_bytes,
-            "UMA gate usable_rtl_capacity_bytes must match hello_axi_lite_dram DEPTH_WORDS",
+            "UMA gate usable_rtl_capacity_bytes must match e1_axi_lite_dram DEPTH_WORDS",
             errors,
         )
 
@@ -341,7 +341,7 @@ def check_uma_strategy(errors: list[str]) -> None:
         return
 
     fail_unless(
-        data.get("schema") == "openphone.uma_coherency_validation_strategy.v1",
+        data.get("schema") == "openagent.uma_coherency_validation_strategy.v1",
         "UMA strategy schema drifted",
         errors,
     )
@@ -409,7 +409,7 @@ def check_no_claim_leak(errors: list[str]) -> None:
 def main() -> int:
     errors: list[str] = []
     contract = json.loads(PLATFORM.read_text())
-    check_hello_chip_dram_contract(contract, errors)
+    check_e1_chip_dram_contract(contract, errors)
     check_docs(errors)
     check_memory_map_consistency(contract, errors)
     check_rtl_decode(errors)

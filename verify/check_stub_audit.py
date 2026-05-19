@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OWNED_ROOTS = (ROOT / "rtl", ROOT / "sim", ROOT / "verify")
 SKIP_PARTS = {
     "__pycache__",
-    "sim_build_hello_chip_top_test_hello_chip.EkHwvK",
+    "sim_build_e1_chip_top_test_e1_chip.EkHwvK",
     "sim_build",
     "model",
     "engine_0",
@@ -57,18 +57,18 @@ class AllowedFinding:
 
 ALLOWLIST = (
     AllowedFinding(
-        "rtl/cpu/hello_cpu_subsystem_stub.sv",
-        "hello_cpu_subsystem_stub",
+        "rtl/cpu/e1_cpu_subsystem_stub.sv",
+        "e1_cpu_subsystem_stub",
         "Executable tiny CPU model; covered by verify/cocotb/test_tiny_cpu_execution.py.",
     ),
     AllowedFinding(
         "verify/cocotb/Makefile",
-        "hello_cpu_subsystem_stub",
+        "e1_cpu_subsystem_stub",
         "Builds the executable tiny CPU model into cocotb simulations.",
     ),
     AllowedFinding(
-        "verify/cocotb/hello_tiny_cpu_contract_tb.sv",
-        "hello_cpu_subsystem_stub",
+        "verify/cocotb/e1_tiny_cpu_contract_tb.sv",
+        "e1_cpu_subsystem_stub",
         "Testbench instantiates the executable tiny CPU model.",
     ),
     AllowedFinding(
@@ -87,37 +87,37 @@ ALLOWLIST = (
         "Executable PLIC contract test plus documented future threshold extension.",
     ),
     AllowedFinding(
-        "rtl/cpu/hello_cva6_wrapper.sv",
+        "rtl/cpu/e1_cva6_wrapper.sv",
         "same external port list as the stub",
         "CVA6 wrapper documents compatibility with the executable tiny CPU model.",
     ),
     AllowedFinding(
-        "rtl/cpu/hello_cva6_wrapper.sv",
+        "rtl/cpu/e1_cva6_wrapper.sv",
         "Stub: safe idle outputs",
         "Fail-closed CVA6-disabled mode ties CPU master outputs idle.",
     ),
     AllowedFinding(
-        "rtl/security/hello_lifecycle.sv",
+        "rtl/security/e1_lifecycle.sv",
         "Placeholder device key",
         "Lifecycle model uses a fixed non-secret debug-auth key until OTP provisioning exists.",
     ),
     AllowedFinding(
-        "rtl/top/hello_soc_top.sv",
+        "rtl/top/e1_soc_top.sv",
         "a stub with all AXI master outputs tied to idle",
         "Top-level CPU integration documents CVA6-disabled fail-closed behavior.",
     ),
     AllowedFinding(
-        "rtl/top/hello_soc_top.sv",
+        "rtl/top/e1_soc_top.sv",
         "AXI-Lite scaffold exposes",
         "Interrupt wiring documents the current executable PLIC-lite contract.",
     ),
     AllowedFinding(
-        "rtl/top/hello_soc_top.sv",
+        "rtl/top/e1_soc_top.sv",
         "This is a placeholder",
         "Interrupt-complete path is tracked as a known PLIC integration gap.",
     ),
     AllowedFinding(
-        "rtl/top/hello_soc_top.sv",
+        "rtl/top/e1_soc_top.sv",
         "replace the stub AXI-Lite mux",
         "CPU/DMA arbitration is tracked as a known interconnect integration gap.",
     ),
@@ -187,8 +187,8 @@ def require(condition: bool, message: str, errors: list[str]) -> None:
 def check_renode_scaffold() -> list[str]:
     errors: list[str] = []
     readme = (ROOT / "docs/sim/renode/README.md").read_text(encoding="utf-8").lower()
-    repl = (ROOT / "sim/renode/openphone_hello.repl").read_text(encoding="utf-8").lower()
-    resc = (ROOT / "sim/renode/openphone_hello.resc").read_text(encoding="utf-8").lower()
+    repl = (ROOT / "sim/renode/openagent_e1.repl").read_text(encoding="utf-8").lower()
+    resc = (ROOT / "sim/renode/openagent_e1.resc").read_text(encoding="utf-8").lower()
 
     require(
         "qemu-virt reference target" in readme,
@@ -196,8 +196,8 @@ def check_renode_scaffold() -> list[str]:
         errors,
     )
     require(
-        "not the hello-chip hardware abi" in readme,
-        "Renode README must state this is not the hello-chip hardware ABI.",
+        "not the e1-chip hardware abi" in readme,
+        "Renode README must state this is not the e1-chip hardware ABI.",
         errors,
     )
     require(
@@ -211,7 +211,7 @@ def check_renode_scaffold() -> list[str]:
         errors,
     )
     require(
-        "loadplatformdescription" in resc and "openphone_hello.repl" in resc,
+        "loadplatformdescription" in resc and "openagent_e1.repl" in resc,
         "Renode RESC must load the checked-in REPL.",
         errors,
     )

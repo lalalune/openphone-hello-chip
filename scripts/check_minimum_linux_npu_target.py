@@ -11,19 +11,19 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "build/reports/minimum_linux_npu_target.json"
 DOC = ROOT / "docs/project/minimum-linux-npu-target.md"
-CONTRACT = ROOT / "docs/spec-db/hello-npu-runtime-contract.json"
-RUNTIME = ROOT / "compiler/runtime/hello_npu_runtime.py"
-COCOTB_XML = ROOT / "verify/cocotb/results/hello_npu_test_hello_npu.xml"
-LINUX_DTS = ROOT / "sw/linux/dts/openphone-hello.dts"
-LINUX_DRIVER = ROOT / "sw/linux/drivers/hello/hello-npu.c"
+CONTRACT = ROOT / "docs/spec-db/e1-npu-runtime-contract.json"
+RUNTIME = ROOT / "compiler/runtime/e1_npu_runtime.py"
+COCOTB_XML = ROOT / "verify/cocotb/results/e1_npu_test_e1_npu.xml"
+LINUX_DTS = ROOT / "sw/linux/dts/openagent-e1.dts"
+LINUX_DRIVER = ROOT / "sw/linux/drivers/e1/e1-npu.c"
 MVP_REPORT = ROOT / "build/reports/mvp_npu_ml_smoke.json"
-BOOT_LOG = ROOT / "build/chipyard/openphone_rocket/verilator-linux-smoke.log"
-NNAPI_PROOF = ROOT / "benchmarks/capabilities/hello_npu_nnapi.proof.json"
+BOOT_LOG = ROOT / "build/chipyard/openagent_rocket/verilator-linux-smoke.log"
+NNAPI_PROOF = ROOT / "benchmarks/capabilities/e1_npu_nnapi.proof.json"
 
-DEVICE_PATH = "/dev/hello-npu"
+DEVICE_PATH = "/dev/e1-npu"
 WORKLOAD = "gemm_s8_int8_2x2x3"
 BENCHMARK_COMMAND = [
-    "hello-npu-ml-smoke",
+    "e1-npu-ml-smoke",
     "--device",
     DEVICE_PATH,
     "--workload",
@@ -136,14 +136,14 @@ def run_linux_check() -> dict[str, Any]:
 
 def run_target_smoke_source_check() -> dict[str, Any]:
     completed = subprocess.run(
-        [sys.executable, "scripts/check_hello_npu_linux_smoke.py"],
+        [sys.executable, "scripts/check_e1_npu_linux_smoke.py"],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         check=False,
     )
-    report = load_json(ROOT / "build/reports/hello_npu_linux_smoke_source.json")
+    report = load_json(ROOT / "build/reports/e1_npu_linux_smoke_source.json")
     report_status = report.get("status")
     return {
         "name": "target_side_npu_ml_smoke",
@@ -182,7 +182,7 @@ def build_report() -> dict[str, Any]:
         {
             "name": "runtime_abi",
             "status": "passed"
-            if contract.get("schema") == "openphone.hello_npu_runtime_contract.v1"
+            if contract.get("schema") == "openagent.e1_npu_runtime_contract.v1"
             else "blocked",
             "contract": rel(CONTRACT),
             "device_path": DEVICE_PATH,
@@ -192,8 +192,8 @@ def build_report() -> dict[str, Any]:
         {
             "name": "linux_device_path",
             "status": "passed"
-            if 'miscdev.name = "hello-npu"' in driver_text
-            and "openphone,hello-npu" in driver_text
+            if 'miscdev.name = "e1-npu"' in driver_text
+            and "openagent,e1-npu" in driver_text
             and "npu@10020000" in dts_text
             else "blocked",
             "device_path": DEVICE_PATH,
@@ -205,7 +205,7 @@ def build_report() -> dict[str, Any]:
             "name": "benchmark_command",
             "status": "blocked",
             "command": BENCHMARK_COMMAND,
-            "blocker": "target-side hello-npu-ml-smoke transcript has not been captured on generated-AP Linux",
+            "blocker": "target-side e1-npu-ml-smoke transcript has not been captured on generated-AP Linux",
         },
         {
             "name": "tflite_nnapi_proof_gate",
@@ -225,11 +225,11 @@ def build_report() -> dict[str, Any]:
     ]
     errors = [gate for gate in gates if gate.get("status") == "failed"]
     blockers = [gate for gate in gates if gate.get("status") == "blocked"]
-    for token in ("/dev/hello-npu", "GEMM_S8", "input hash", "output hash", "CPU-only fallback"):
+    for token in ("/dev/e1-npu", "GEMM_S8", "input hash", "output hash", "CPU-only fallback"):
         if token not in doc_text:
             blockers.append({"name": "doc_required_terms", "missing": token, "status": "blocked"})
     return {
-        "schema": "openphone.minimum_linux_npu_target.v1",
+        "schema": "openagent.minimum_linux_npu_target.v1",
         "status": "fail" if errors else ("blocked" if blockers else "pass"),
         "claim_boundary": "minimum Linux basic ML only; not Android NNAPI or phone-class performance",
         "integrated_linux_npu_ml_claim": not errors and not blockers,

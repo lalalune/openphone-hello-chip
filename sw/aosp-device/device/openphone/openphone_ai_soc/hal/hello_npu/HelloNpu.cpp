@@ -1,11 +1,11 @@
-// HelloNpu.cpp - v0 stub implementation.
+// E1Npu.cpp - v0 stub implementation.
 //
-// Fail-closed: if /dev/hello-npu cannot be opened, every RPC returns
+// Fail-closed: if /dev/e1-npu cannot be opened, every RPC returns
 // Status::NOT_SUPPORTED. No fake data is ever returned to the caller.
 
-#define LOG_TAG "vendor.openphone.hello_npu@1.0-service"
+#define LOG_TAG "vendor.openagent.e1_npu@1.0-service"
 
-#include "HelloNpu.h"
+#include "E1Npu.h"
 
 #include <cerrno>
 #include <cstring>
@@ -18,25 +18,25 @@
 #include <android-base/unique_fd.h>
 
 namespace vendor {
-namespace openphone {
-namespace hello_npu {
+namespace openagent {
+namespace e1_npu {
 namespace V1_0 {
 namespace implementation {
 
 using ::android::base::unique_fd;
 
-HelloNpu::HelloNpu() {
+E1Npu::E1Npu() {
     struct stat st;
     if (::stat(kDevicePath, &st) != 0) {
-        LOG(WARNING) << "hello_npu HAL starting without backing device "
+        LOG(WARNING) << "e1_npu HAL starting without backing device "
                      << kDevicePath
                      << " (fail-closed: smoke() will return NOT_SUPPORTED)";
     } else {
-        LOG(INFO) << "hello_npu HAL backing device present: " << kDevicePath;
+        LOG(INFO) << "e1_npu HAL backing device present: " << kDevicePath;
     }
 }
 
-::android::hardware::Return<void> HelloNpu::smoke(smoke_cb _hidl_cb) {
+::android::hardware::Return<void> E1Npu::smoke(smoke_cb _hidl_cb) {
     unique_fd fd(::open(kDevicePath, O_RDWR | O_CLOEXEC));
     if (fd.get() < 0) {
         LOG(WARNING) << "open(" << kDevicePath
@@ -67,6 +67,6 @@ HelloNpu::HelloNpu() {
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace hello_npu
-}  // namespace openphone
+}  // namespace e1_npu
+}  // namespace openagent
 }  // namespace vendor

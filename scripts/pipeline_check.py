@@ -7,26 +7,26 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 REQUIRED = [
-    "build/netlist/hello_chip_synth.v",
-    "build/reports/hello_soc_yosys.log",
+    "build/netlist/e1_chip_synth.v",
+    "build/reports/e1_soc_yosys.log",
     "build/reports/tool_versions.txt",
     "build/reports/cocotb/manifest.json",
     "build/reports/formal_manifest.json",
-    "build/verilator/Vhello_chip_top",
+    "build/verilator/Ve1_chip_top",
 ]
 
 COCOTB_TARGETS = {
-    "hello_chip_top_test_hello_chip",
-    "hello_linux_soc_contract_test_cpu_mem_intc_contract",
-    "hello_npu_test_hello_npu",
-    "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
+    "e1_chip_top_test_e1_chip",
+    "e1_linux_soc_contract_test_cpu_mem_intc_contract",
+    "e1_npu_test_e1_npu",
+    "e1_tiny_cpu_contract_tb_test_tiny_cpu_execution",
 }
 
 FORMAL_TARGETS = {
-    "hello_dbg_mmio_bridge",
-    "hello_npu",
-    "hello_dma",
-    "hello_soc_top",
+    "e1_dbg_mmio_bridge",
+    "e1_npu",
+    "e1_dma",
+    "e1_soc_top",
 }
 
 REQUIRED_SOURCE = [
@@ -73,41 +73,41 @@ REQUIRED_SOURCE = [
     "scripts/test_benchmark_calibration.py",
     "scripts/test_benchmark_parsers.py",
     "scripts/test_simulator_arch_metrics.py",
-    "sw/platform/hello_platform_contract.json",
-    "sw/platform/generated/hello_platform_contract.h",
-    "sw/bootrom/hello_qemu_firmware.S",
+    "sw/platform/e1_platform_contract.json",
+    "sw/platform/generated/e1_platform_contract.h",
+    "sw/bootrom/e1_qemu_firmware.S",
     "sw/bootrom/linker.ld",
     "docs/sw/buildroot/README.md",
     "sw/buildroot/external.desc",
     "sw/buildroot/Config.in",
     "sw/buildroot/external.mk",
     "sw/buildroot/scripts/import-buildroot-external.sh",
-    "sw/buildroot/configs/openphone_hello_defconfig",
-    "sw/buildroot/board/openphone/hello/linux.fragment",
-    "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke",
+    "sw/buildroot/configs/openagent_e1_defconfig",
+    "sw/buildroot/board/openagent/e1/linux.fragment",
+    "sw/buildroot/board/openagent/e1/rootfs_overlay/usr/bin/e1-mmio-smoke",
     "docs/sw/linux/README.md",
     "sw/linux/scripts/import-linux-bsp.sh",
-    "sw/linux/dts/openphone-hello.dts",
-    "sw/linux/drivers/hello/hello_platform_contract.h",
-    "sw/linux/drivers/hello/Kconfig",
-    "sw/linux/drivers/hello/Makefile",
-    "sw/linux/drivers/hello/hello-npu.c",
-    "sw/linux/drivers/hello/hello-dma.c",
-    "sw/linux/tests/hello-mmio-smoke.c",
+    "sw/linux/dts/openagent-e1.dts",
+    "sw/linux/drivers/e1/e1_platform_contract.h",
+    "sw/linux/drivers/e1/Kconfig",
+    "sw/linux/drivers/e1/Makefile",
+    "sw/linux/drivers/e1/e1-npu.c",
+    "sw/linux/drivers/e1/e1-dma.c",
+    "sw/linux/tests/e1-mmio-smoke.c",
     "docs/sw/aosp-device/README.md",
     "sw/aosp-device/import-aosp-device.sh",
-    "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/device.mk",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
-    "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te",
+    "sw/aosp-device/manifests/openagent-ai-soc-local.xml",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/AndroidProducts.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/openagent_ai_soc.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/device.mk",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/init.openagent.rc",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/fstab.openagent",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/kernel/openagent_ai_soc.fragment",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/dts/openagent-e1-android.dts",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/file_contexts",
+    "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/e1_npu.te",
     "docs/sw/opensbi/README.md",
     "docs/sw/u-boot/README.md",
     "sw/check_bsp_scaffolds.py",
@@ -143,7 +143,7 @@ def sha256(path: Path) -> str:
 def validate_cocotb_manifest(root: Path) -> list[str]:
     data = json.loads((root / "build/reports/cocotb/manifest.json").read_text())
     errors: list[str] = []
-    if data.get("schema") != "hello-chip-cocotb-evidence-v1":
+    if data.get("schema") != "e1-chip-cocotb-evidence-v1":
         errors.append("cocotb manifest has unexpected schema")
     targets = data.get("targets")
     if not isinstance(targets, dict):
@@ -177,7 +177,7 @@ def validate_cocotb_manifest(root: Path) -> list[str]:
 def validate_formal_manifest(root: Path, strict: bool) -> list[str]:
     data = json.loads((root / "build/reports/formal_manifest.json").read_text())
     errors: list[str] = []
-    if data.get("schema") != "hello-chip-formal-evidence-v1":
+    if data.get("schema") != "e1-chip-formal-evidence-v1":
         errors.append("formal manifest has unexpected schema")
     entries = data.get("entries")
     if not isinstance(entries, dict):
@@ -256,7 +256,7 @@ def check_benchmark_report(root: Path) -> list[str]:
         if status == "planned_missing_deps" and not result.get("missing_dependencies"):
             errors.append(f"benchmark dry-run result missing dependency list: {name}")
 
-    for name in ("tflite_cpu", "tflite_hello_npu"):
+    for name in ("tflite_cpu", "tflite_e1_npu"):
         result = result_by_name.get(name)
         if not result:
             continue
@@ -394,19 +394,19 @@ def main() -> int:
             print(f"  - {path}")
         return 1
 
-    yosys_log = (root / "build/reports/hello_soc_yosys.log").read_text(errors="ignore")
-    has_completion_marker = "OPENPHONE_YOSYS_SYNTHESIS_COMPLETE" in yosys_log
+    yosys_log = (root / "build/reports/e1_soc_yosys.log").read_text(errors="ignore")
+    has_completion_marker = "OPENAGENT_YOSYS_SYNTHESIS_COMPLETE" in yosys_log
     has_yosys_summary = "Number of cells:" in yosys_log or "=== design hierarchy ===" in yosys_log
     has_legacy_completion = (
-        "End of script." in yosys_log and "Dumping module `\\hello_chip_top'." in yosys_log
+        "End of script." in yosys_log and "Dumping module `\\e1_chip_top'." in yosys_log
     )
     if not (has_completion_marker or has_yosys_summary or has_legacy_completion):
         print("Yosys report does not look like a completed synthesis log.")
         return 1
 
-    netlist = (root / "build/netlist/hello_chip_synth.v").read_text(errors="ignore")
-    if "module hello_chip_top" not in netlist:
-        print("Synthesized netlist does not contain hello_chip_top.")
+    netlist = (root / "build/netlist/e1_chip_synth.v").read_text(errors="ignore")
+    if "module e1_chip_top" not in netlist:
+        print("Synthesized netlist does not contain e1_chip_top.")
         return 1
 
     evidence_errors = []

@@ -22,31 +22,31 @@
       "const": 1
     },
     "target": {
-      "const": "openphone-hello"
+      "const": "openagent-e1"
     },
     "model_kind": {
       "const": "qemu_virt_reference",
-      "description": "This is qemu-virt software-reference evidence, not hello-chip hardware ABI evidence."
+      "description": "This is qemu-virt software-reference evidence, not e1-chip hardware ABI evidence."
     },
     "command": {
       "type": "string",
       "minLength": 1
     },
     "firmware": {
-      "const": "build/qemu/hello_qemu_firmware.elf"
+      "const": "build/qemu/e1_qemu_firmware.elf"
     },
     "transcript": {
-      "const": "build/renode/openphone_hello_uart.transcript"
+      "const": "build/renode/openagent_e1_uart.transcript"
     },
     "qemu_reference_transcript": {
       "const": "build/reports/qemu_smoke.log",
       "description": "QEMU qemu-virt transcript that the Renode smoke must match at the banner/firmware-contract level."
     },
     "expected_banner": {
-      "const": "openphone hello qemu"
+      "const": "openagent e1 qemu"
     },
     "observed_banner": {
-      "const": "openphone hello qemu"
+      "const": "openagent e1 qemu"
     },
     "renode_version": {
       "type": "string",

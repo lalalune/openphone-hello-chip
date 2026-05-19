@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-CFG = ROOT / "board/fpga/hello_demo_fpga.yaml"
+CFG = ROOT / "board/fpga/e1_demo_fpga.yaml"
 MANIFEST = ROOT / "board/fpga/artifact-manifest.yaml"
 
 REQUIRED_RELEASE_EVIDENCE = {
@@ -97,7 +97,7 @@ def validate_manifest(blockers: list[str], failures: list[str]) -> None:
     if not isinstance(manifest, dict):
         failures.append("board/fpga/artifact-manifest.yaml must be a YAML mapping")
         return
-    if manifest.get("manifest") != "hello_demo_fpga_bitstream_evidence":
+    if manifest.get("manifest") != "e1_demo_fpga_bitstream_evidence":
         failures.append("FPGA artifact manifest has unexpected manifest name")
     if manifest.get("release_gate") != "board_fabrication_release":
         failures.append("FPGA artifact manifest must gate board_fabrication_release")
@@ -152,7 +152,7 @@ def main() -> int:
         blockers.append("FPGA bitstream release is explicitly blocked until pins are assigned")
 
     constraint = ROOT / cfg["constraints"]["skeleton_lpf"]
-    widths = vector_widths_from_pinout(ROOT / "package/hello-demo-pinout.yaml")
+    widths = vector_widths_from_pinout(ROOT / "package/e1-demo-pinout.yaml")
     required_ports = expand_required(cfg, widths)
     located, iobuf, has_frequency = assigned_lpf_ports(constraint)
     missing_locate = sorted(required_ports - located)

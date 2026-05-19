@@ -16,9 +16,9 @@ VALID_STATUSES = {"pass", "blocked", "failed"}
 VIRTUAL_SMOKE_EVIDENCE = {
     "docs/evidence/android/cuttlefish_riscv64_smoke.log",
     "docs/evidence/android/qemu_riscv64_smoke.log",
-    "docs/evidence/android/renode_hello_soc_smoke.log",
+    "docs/evidence/android/renode_e1_soc_smoke.log",
 }
-CTS_VTS_PLAN_EVIDENCE = "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log"
+CTS_VTS_PLAN_EVIDENCE = "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log"
 REQUIRED_REPORT_FIELDS = {
     "schema": str,
     "status": str,
@@ -51,10 +51,10 @@ def main() -> int:
         for path in required_evidence
         if path
         not in {
-            "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+            "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log",
             "docs/evidence/android/cuttlefish_riscv64_smoke.log",
             "docs/evidence/android/qemu_riscv64_smoke.log",
-            "docs/evidence/android/renode_hello_soc_smoke.log",
+            "docs/evidence/android/renode_e1_soc_smoke.log",
         }
     ]
     if not LOG_EVIDENCE_MANIFEST.is_file():
@@ -142,7 +142,7 @@ def main() -> int:
         if not isinstance(value, expected_type):
             errors.append(f"android sim report {field} must be {expected_type.__name__}")
 
-    if data.get("schema") != "openphone.android_sim_boot.v1":
+    if data.get("schema") != "openagent.android_sim_boot.v1":
         errors.append("android sim report schema mismatch")
     status = data.get("status")
     if status not in VALID_STATUSES:
@@ -163,9 +163,9 @@ def main() -> int:
             "build-only android sim report must stop before virtual-device smoke and compatibility evidence"
         )
     boundary = data.get("claim_boundary", "")
-    if "not hello-chip hardware ABI proof" not in boundary:
+    if "not e1-chip hardware ABI proof" not in boundary:
         errors.append(
-            "android sim report must separate Android virtual-device evidence from hello-chip ABI proof"
+            "android sim report must separate Android virtual-device evidence from e1-chip ABI proof"
         )
     if "compatibility claim" not in boundary:
         errors.append("android sim report must avoid full Android compatibility claims")

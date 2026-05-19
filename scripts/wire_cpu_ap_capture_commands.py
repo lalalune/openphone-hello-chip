@@ -15,8 +15,8 @@ from typing import cast
 from capture_cpu_ap_evidence import MODE_ENV, MODE_TO_TRANSCRIPT
 from cpu_ap_evidence_lib import GENERATED_MANIFEST, ROOT, rel
 
-SMOKE_LOG = Path("build/chipyard/openphone_rocket/verilator-linux-smoke.log")
-SMOKE_RUNNER = Path("scripts/run_chipyard_openphone_linux_smoke.sh")
+SMOKE_LOG = Path("build/chipyard/openagent_rocket/verilator-linux-smoke.log")
+SMOKE_RUNNER = Path("scripts/run_chipyard_openagent_linux_smoke.sh")
 PAYLOAD_LOCATOR = Path("scripts/locate_chipyard_linux_payload.py")
 DERIVED_SMOKE_MODES = ("opensbi-boot", "linux-boot")
 UNWIRED_MODES = ("trap-timer-irq", "isa-cache-mmu", "ap-benchmarks")
@@ -109,7 +109,7 @@ def build_entries(args: argparse.Namespace) -> list[dict[str, object]]:
 def print_shell(entries: list[dict[str, object]]) -> None:
     print("# Source this on the Linux host before scripts/capture_chipyard_linux_evidence.sh.")
     print("# Only real generated-AP runner commands are exported; missing lanes stay blocked.")
-    print(f"export OPENPHONE_GENERATED_MANIFEST={quote(rel(GENERATED_MANIFEST))}")
+    print(f"export OPENAGENT_GENERATED_MANIFEST={quote(rel(GENERATED_MANIFEST))}")
     for entry in entries:
         env_name = str(entry["command_env"])
         command = str(entry.get("command") or "")
@@ -149,7 +149,7 @@ def main(argv: list[str]) -> int:
         print(
             json.dumps(
                 {
-                    "schema": "openphone.cpu_ap_capture_command_wiring.v1",
+                    "schema": "openagent.cpu_ap_capture_command_wiring.v1",
                     "generated_manifest": rel(GENERATED_MANIFEST),
                     "claim_boundary": "command_wiring_only_no_evidence_created",
                     "entries": entries,

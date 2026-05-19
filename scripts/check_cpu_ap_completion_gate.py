@@ -29,7 +29,7 @@ def completion_claimed() -> bool:
             selected.get("status") in {"generated", "complete", "linux_complete"},
             claim_policy.get("linux_capable_cpu_claim") is True,
             claim_policy.get("platform_contract_has_cpu_may_flip_to_true") is True,
-            platform.get("hello_chip", {}).get("has_cpu") is True,
+            platform.get("e1_chip", {}).get("has_cpu") is True,
         )
     )
 

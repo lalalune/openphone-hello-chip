@@ -10,12 +10,12 @@ BUILDROOT_IMPORT = ROOT / "sw/buildroot/scripts/import-buildroot-external.sh"
 
 
 LOCAL_PREREQS = (
-    ROOT / "sw/linux/drivers/hello/Kconfig",
-    ROOT / "sw/linux/drivers/hello/Makefile",
-    ROOT / "sw/linux/drivers/hello/hello-npu.c",
-    ROOT / "sw/linux/drivers/hello/hello-dma.c",
-    ROOT / "sw/linux/dts/openphone-hello.dts",
-    ROOT / "sw/platform/generated/hello_platform_contract.h",
+    ROOT / "sw/linux/drivers/e1/Kconfig",
+    ROOT / "sw/linux/drivers/e1/Makefile",
+    ROOT / "sw/linux/drivers/e1/e1-npu.c",
+    ROOT / "sw/linux/drivers/e1/e1-dma.c",
+    ROOT / "sw/linux/dts/openagent-e1.dts",
+    ROOT / "sw/platform/generated/e1_platform_contract.h",
     LINUX_IMPORT,
     BUILDROOT_IMPORT,
 )

@@ -49,7 +49,7 @@ def main() -> int:
     except json.JSONDecodeError as exc:
         return report([f"scale simulator emitted invalid JSON: {exc}"])
 
-    if data.get("schema") != "openphone.npu_scale_sim.v1":
+    if data.get("schema") != "openagent.npu_scale_sim.v1":
         errors.append("scale simulator schema mismatch")
     config = data.get("config", {})
     if not isinstance(config, dict):

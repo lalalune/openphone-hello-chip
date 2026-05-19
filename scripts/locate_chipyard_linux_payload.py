@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "build/chipyard/openphone_rocket/chipyard-linux-payload.json"
+REPORT = ROOT / "build/chipyard/openagent_rocket/chipyard-linux-payload.json"
 PAYLOAD_ENV = "CHIPYARD_LINUX_BINARY"
 FIREMARSHAL = ROOT / "external/chipyard/software/firemarshal"
 DEFAULT_WORKLOAD = FIREMARSHAL / "example-workloads/linux-poweroff.json"
@@ -135,7 +135,7 @@ def manifest_for(
     errors: list[str],
 ) -> dict[str, object]:
     return {
-        "schema": "openphone.chipyard_linux_payload.v1",
+        "schema": "openagent.chipyard_linux_payload.v1",
         "status": "pass" if selected else "blocked",
         "payload_env": PAYLOAD_ENV,
         "selected_payload": rel(selected.path) if selected else "",
@@ -144,11 +144,11 @@ def manifest_for(
         "selected_payload_size_bytes": selected.size if selected else 0,
         "claim_boundary": (
             "Payload locator only. A valid payload allows Chipyard run-binary "
-            "to be attempted; it is not OpenPhone AP boot evidence until the "
+            "to be attempted; it is not OpenAgent AP boot evidence until the "
             "generated simulator produces verified OpenSBI/Linux transcripts."
         ),
         "expected_chipyard_command": (
-            "CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openphone_linux_smoke.sh"
+            "CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openagent_linux_smoke.sh"
         ),
         "firemarshal_build_command": firemarshal_build_command(),
         "firemarshal_output": rel(DEFAULT_OUTPUT),

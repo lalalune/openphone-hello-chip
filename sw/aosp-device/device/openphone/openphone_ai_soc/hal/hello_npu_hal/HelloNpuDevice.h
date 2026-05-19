@@ -1,7 +1,7 @@
-// HelloNpuDevice.h — HIDL 1.3 IDevice implementation for the hello NPU.
+// E1NpuDevice.h — HIDL 1.3 IDevice implementation for the e1 NPU.
 //
 // Register layout source of truth:
-//   sw/platform/hello_platform_contract.json  (npu region, base 0x10020000)
+//   sw/platform/e1_platform_contract.json  (npu region, base 0x10020000)
 // Opcode table source of truth:
 //   docs/arch/npu.md
 
@@ -16,7 +16,7 @@ namespace android {
 namespace hardware {
 namespace neuralnetworks {
 namespace V1_3 {
-namespace hello_npu {
+namespace e1_npu {
 
 using ::android::hardware::neuralnetworks::V1_0::DeviceStatus;
 using ::android::hardware::neuralnetworks::V1_0::ErrorStatus;
@@ -37,7 +37,7 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::sp;
 
-// Set of NNAPI operation types dispatched to the hello NPU hardware path.
+// Set of NNAPI operation types dispatched to the e1 NPU hardware path.
 // All others fall back to CPU execution. Sourced from docs/arch/npu.md:
 // the NPU implements ADD, MUL_LO, MAC_S16, DOT4_S8, MAX_U32, MIN_U32, GEMM_S8.
 // The NNAPI operations listed here map onto those primitives.
@@ -55,10 +55,10 @@ static constexpr V1_3::OperationType kNpuSupportedOps[] = {
     V1_3::OperationType::SOFTMAX,
 };
 
-class HelloNpuDevice : public IDevice {
+class E1NpuDevice : public IDevice {
 public:
-    HelloNpuDevice() = default;
-    ~HelloNpuDevice() override = default;
+    E1NpuDevice() = default;
+    ~E1NpuDevice() override = default;
 
     // IDevice 1.0
     Return<ErrorStatus> prepareModel(
@@ -132,7 +132,7 @@ private:
     static ::android::hardware::neuralnetworks::V1_0::PerformanceInfo floatPerf();
 };
 
-} // namespace hello_npu
+} // namespace e1_npu
 } // namespace V1_3
 } // namespace neuralnetworks
 } // namespace hardware

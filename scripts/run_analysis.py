@@ -41,8 +41,8 @@ def main() -> int:
             "-O",
             "dtb",
             "-o",
-            "/tmp/openphone-hello.dtb",
-            "sw/linux/dts/openphone-hello.dts",
+            "/tmp/openagent-e1.dtb",
+            "sw/linux/dts/openagent-e1.dts",
         ],
         optional=True,
     )

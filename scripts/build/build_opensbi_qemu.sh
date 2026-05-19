@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Build OpenSBI generic for QEMU virt with our hello S-mode payload.
+# Build OpenSBI generic for QEMU virt with our e1 S-mode payload.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 EXT_DIR="$ROOT/external"
 OPENSBI_DIR="$EXT_DIR/opensbi"
 OPENSBI_TAG="${OPENSBI_TAG:-v1.4}"
-PAYLOAD_DIR="$ROOT/fw/opensbi-payloads/hello-smode"
-PAYLOAD_BIN="$PAYLOAD_DIR/hello.bin"
+PAYLOAD_DIR="$ROOT/fw/opensbi-payloads/e1-smode"
+PAYLOAD_BIN="$PAYLOAD_DIR/e1.bin"
 CROSS_COMPILE="${CROSS_COMPILE:-riscv64-unknown-elf-}"
 
 mkdir -p "$EXT_DIR"

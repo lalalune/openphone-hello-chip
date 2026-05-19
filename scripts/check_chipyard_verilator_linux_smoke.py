@@ -22,19 +22,19 @@ import repair_chipyard_generated_paths
 ROOT = Path(__file__).resolve().parents[1]
 CHECKOUT = ROOT / "external/chipyard"
 SIM_DIR = CHECKOUT / "sims/verilator"
-OUT_DIR = ROOT / "build/chipyard/openphone_rocket"
+OUT_DIR = ROOT / "build/chipyard/openagent_rocket"
 REPORT = OUT_DIR / "verilator-linux-smoke.json"
 LOG = OUT_DIR / "verilator-linux-smoke.log"
 LOCK_DIR = OUT_DIR / "verilator-linux-smoke.lock"
-CONFIG = "OpenPhoneRocketConfig"
-CONFIG_PACKAGE = "openphone"
+CONFIG = "OpenAgentRocketConfig"
+CONFIG_PACKAGE = "openagent"
 PAYLOAD_ENV = "CHIPYARD_LINUX_BINARY"
 
 REQUIRED_GENERATED_ARTIFACTS = (
-    OUT_DIR / "openphone_rocket_ap.v",
-    OUT_DIR / "generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.fir",
-    OUT_DIR / "generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts",
-    OUT_DIR / "OpenPhoneRocketConfig.manifest.json",
+    OUT_DIR / "openagent_rocket_ap.v",
+    OUT_DIR / "generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.fir",
+    OUT_DIR / "generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.dts",
+    OUT_DIR / "OpenAgentRocketConfig.manifest.json",
 )
 REQUIRED_LOG_MARKERS = ("OpenSBI", "Linux version")
 OPENSBI_MARKERS = ("OpenSBI", "SBI specification", "Domain0 Next Address", "Boot HART ID")
@@ -56,14 +56,14 @@ PROGRESS_MARKERS = (
     "SimDRAM loaded ELF entry=",
     "SimDRAM loading ELF ",
     "[UART] UART0 is here",
-    "openphone-evidence: command=",
-    "openphone-evidence: timeout_after_seconds=",
-    "openphone-evidence: exit_code=",
+    "openagent-evidence: command=",
+    "openagent-evidence: timeout_after_seconds=",
+    "openagent-evidence: exit_code=",
 )
 CONTAINER_PATH_ENV = "CHIPYARD_ALLOW_CONTAINER_GENERATED_PATHS"
-GENERATED_CONFIG_DIR = SIM_DIR / "generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+GENERATED_CONFIG_DIR = SIM_DIR / "generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig"
 GENERATED_DRIVER_MAKEFILE = (
-    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig" / "VTestDriver.mk"
+    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenAgentRocketConfig" / "VTestDriver.mk"
 )
 GENERATED_DRIVER_DIR = GENERATED_DRIVER_MAKEFILE.parent
 GENERATED_FILELISTS = (
@@ -89,7 +89,7 @@ def rel(path: Path) -> str:
 
 
 def next_command(payload: str = f"${PAYLOAD_ENV}") -> str:
-    return f"{PAYLOAD_ENV}={payload} scripts/run_chipyard_openphone_linux_smoke.sh"
+    return f"{PAYLOAD_ENV}={payload} scripts/run_chipyard_openagent_linux_smoke.sh"
 
 
 def host_path_from_log(path_text: str | None) -> Path | None:
@@ -150,14 +150,14 @@ def generated_path_blockers() -> list[str]:
             f"({', '.join(roots)}): {sample}{extra}; run "
             "`python3 scripts/repair_chipyard_generated_paths.py --rewrite`, regenerate the "
             "full generated-src config directory on this host, or run "
-            "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh` "
+            "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openagent_linux_smoke.sh` "
             "inside the /work-mounted container path"
         )
     elif GENERATED_CONFIG_DIR.exists() or GENERATED_SIMULATOR.exists():
         blockers.append(
             "partial generated Verilator output is missing the driver makefile after generation: "
             f"{rel(GENERATED_DRIVER_MAKEFILE)}; remove the generated config directory and rerun "
-            "`scripts/run_chipyard_openphone_linux_smoke.sh` so Chipyard regenerates the model"
+            "`scripts/run_chipyard_openagent_linux_smoke.sh` so Chipyard regenerates the model"
         )
     if GENERATED_DRIVER_DIR.is_dir():
         zero_outputs = sorted(
@@ -171,7 +171,7 @@ def generated_path_blockers() -> list[str]:
                 "partial generated Verilator output contains zero-byte model artifacts: "
                 + ", ".join(rel(path) for path in zero_outputs[:5])
                 + "; remove the generated config directory and rerun "
-                "`scripts/run_chipyard_openphone_linux_smoke.sh`"
+                "`scripts/run_chipyard_openagent_linux_smoke.sh`"
             )
     if partial_generated:
         blockers.append(
@@ -324,7 +324,7 @@ def repair_incomplete_attempt() -> int:
         return 0
     log_metadata = parse_log_metadata()
     log_text = LOG.read_text(encoding="utf-8", errors="replace")
-    if "openphone-evidence: raw_transcript_begin" not in log_text or log_metadata.get(
+    if "openagent-evidence: raw_transcript_begin" not in log_text or log_metadata.get(
         "raw_transcript_closed"
     ):
         print("STATUS: PASS chipyard.verilator_linux_smoke.incomplete_attempt - log is complete")
@@ -339,7 +339,7 @@ def repair_incomplete_attempt() -> int:
     LOG.replace(archived)
     print("STATUS: REPAIR chipyard.verilator_linux_smoke.incomplete_attempt")
     print(f"  archived: {rel(archived)}")
-    print("  next: rerun scripts/run_chipyard_openphone_linux_smoke.sh for a complete transcript")
+    print("  next: rerun scripts/run_chipyard_openagent_linux_smoke.sh for a complete transcript")
     return 0
 
 
@@ -366,7 +366,7 @@ def active_chipyard_containers() -> list[dict[str, str]]:
             continue
         container_id, image, status, name, command = parts
         haystack = f"{image} {command}".lower()
-        if "chipyard" not in haystack and "openphone" not in haystack:
+        if "chipyard" not in haystack and "openagent" not in haystack:
             continue
         containers.append(
             {
@@ -473,33 +473,33 @@ def parse_log_metadata() -> dict[str, object]:
     raw_transcript_closed = False
     lines_after_raw_transcript_end = 0
     for line in LOG.read_text(encoding="utf-8", errors="replace").splitlines():
-        if raw_transcript_closed and line.strip() and not line.startswith("openphone-evidence:"):
+        if raw_transcript_closed and line.strip() and not line.startswith("openagent-evidence:"):
             lines_after_raw_transcript_end += 1
-        if line.startswith("openphone-evidence: attempt="):
+        if line.startswith("openagent-evidence: attempt="):
             metadata["attempt"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: clean_generated="):
+        elif line.startswith("openagent-evidence: clean_generated="):
             metadata["clean_generated"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: exit_code="):
+        elif line.startswith("openagent-evidence: exit_code="):
             metadata["exit_code"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: payload="):
+        elif line.startswith("openagent-evidence: payload="):
             metadata["payload"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: binary_arg="):
+        elif line.startswith("openagent-evidence: binary_arg="):
             metadata["binary_arg"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: command="):
+        elif line.startswith("openagent-evidence: command="):
             metadata["command"] = line.split("=", 1)[1].strip()
             last_progress = line
-        elif line.startswith("openphone-evidence: timeout_after_seconds="):
+        elif line.startswith("openagent-evidence: timeout_after_seconds="):
             metadata["timeout_after_seconds"] = line.split("=", 1)[1].strip()
             last_progress = line
-        elif line.startswith("openphone-evidence: timeout_cycles="):
+        elif line.startswith("openagent-evidence: timeout_cycles="):
             metadata["timeout_cycles"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: core_timeout_cycles="):
+        elif line.startswith("openagent-evidence: core_timeout_cycles="):
             metadata["core_timeout_cycles"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: tilelink_timeout_cycles="):
+        elif line.startswith("openagent-evidence: tilelink_timeout_cycles="):
             metadata["tilelink_timeout_cycles"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: run_target="):
+        elif line.startswith("openagent-evidence: run_target="):
             metadata["run_target"] = line.split("=", 1)[1].strip()
-        elif line.startswith("openphone-evidence: raw_transcript_end"):
+        elif line.startswith("openagent-evidence: raw_transcript_end"):
             metadata["raw_transcript_closed"] = True
             raw_transcript_closed = True
         elif line.startswith("SimDRAM loading ELF "):
@@ -603,7 +603,7 @@ def classify_smoke_progress(
     if not log_text:
         return {
             "stage": "no_run",
-            "next_step": "run scripts/run_chipyard_openphone_linux_smoke.sh with a real OpenSBI/Linux payload",
+            "next_step": "run scripts/run_chipyard_openagent_linux_smoke.sh with a real OpenSBI/Linux payload",
         }
     if has_accepted_linux_markers(log_text):
         return {
@@ -647,7 +647,7 @@ def classify_smoke_progress(
         }
     return {
         "stage": "no_run",
-        "next_step": "run scripts/run_chipyard_openphone_linux_smoke.sh with a real OpenSBI/Linux payload",
+        "next_step": "run scripts/run_chipyard_openagent_linux_smoke.sh with a real OpenSBI/Linux payload",
     }
 
 
@@ -660,7 +660,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
     progress = classify_smoke_progress(log_text, instruction_trace, log_metadata)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     report = {
-        "schema": "openphone.chipyard_verilator_linux_smoke.v1",
+        "schema": "openagent.chipyard_verilator_linux_smoke.v1",
         "status": status,
         "simulator_path": "external/chipyard/sims/verilator",
         "config": CONFIG,
@@ -684,7 +684,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
         "blockers": blockers,
         "claim_boundary": (
             "This gate only passes after a real Chipyard Verilator run-binary log "
-            "contains OpenSBI and Linux markers from the generated OpenPhoneRocketConfig. "
+            "contains OpenSBI and Linux markers from the generated OpenAgentRocketConfig. "
             "It does not create or substitute boot evidence."
         ),
     }
@@ -761,7 +761,7 @@ def main() -> int:
         blockers.append(f"missing Verilator OpenSBI/Linux smoke log: {rel(LOG)}")
     else:
         log_text = LOG.read_text(encoding="utf-8", errors="replace")
-        if "openphone-evidence: raw_transcript_begin" in log_text and not log_metadata.get(
+        if "openagent-evidence: raw_transcript_begin" in log_text and not log_metadata.get(
             "raw_transcript_closed"
         ):
             blockers.append(

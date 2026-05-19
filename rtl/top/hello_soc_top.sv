@@ -1,30 +1,30 @@
-// hello_soc_top.sv
+// e1_soc_top.sv
 //
 // CPU wiring notes:
-//   • hello_cpu_subsystem (rtl/cpu/hello_cva6_wrapper.sv) replaces the old
-//     hello_cpu_subsystem_stub.  It presents a 64-bit AXI4 master port.
-//   • hello_cpu_axi_bridge (rtl/cpu/hello_cpu_axi_bridge.sv) converts that
-//     AXI4 master to the 32-bit AXI-Lite interface consumed by the hello-chip
+//   • e1_cpu_subsystem (rtl/cpu/e1_cva6_wrapper.sv) replaces the old
+//     e1_cpu_subsystem_stub.  It presents a 64-bit AXI4 master port.
+//   • e1_cpu_axi_bridge (rtl/cpu/e1_cpu_axi_bridge.sv) converts that
+//     AXI4 master to the 32-bit AXI-Lite interface consumed by the e1-chip
 //     interconnect.
 //   • ipi_i  ← CLINT msip_o (software interrupt)
 //   • time_irq_i ← CLINT mtip_o (timer interrupt)
 //   • irq_i[0] ← external interrupt controller claim output
 //   • debug_req_i tied to 0 until JTAG bring-up
 //
-// To use real CVA6: compile with +define+HELLO_HAVE_CVA6 and include
+// To use real CVA6: compile with +define+E1_HAVE_CVA6 and include
 //   external/cva6/ in your search path (see scripts/clone_cva6.sh).
 //
 // synthesis translate_off
-// WARNING: HELLO_HAVE_CVA6 not defined.  hello_cpu_subsystem will compile as
+// WARNING: E1_HAVE_CVA6 not defined.  e1_cpu_subsystem will compile as
 // a stub with all AXI master outputs tied to idle.  The SoC will simulate
 // correctly but the CPU will not execute instructions.  To enable the real
-// CVA6 core, define HELLO_HAVE_CVA6 and add external/cva6/ to the include
+// CVA6 core, define E1_HAVE_CVA6 and add external/cva6/ to the include
 // path per the instructions in scripts/clone_cva6.sh.
 // synthesis translate_on
 
 `timescale 1ns/1ps
 
-module hello_soc_top (
+module e1_soc_top (
     input  logic        clk,
     input  logic        rst_n,
     input  logic        mmio_valid,
@@ -41,7 +41,7 @@ module hello_soc_top (
     output logic        mtip_o,
     output logic [7:0]  gpio_out
 );
-`ifdef HELLO_PD_SMALL_DRAM
+`ifdef E1_PD_SMALL_DRAM
     localparam int unsigned DRAM_WORDS = 64;
 `else
     localparam int unsigned DRAM_WORDS = 1024;
@@ -322,7 +322,7 @@ module hello_soc_top (
     /* verilator lint_on UNUSEDSIGNAL */
 
     // ── External interrupt from PLIC/interrupt controller ─────────────────
-    // Wire to the hello_interrupt_controller claim output when the PLIC is
+    // Wire to the e1_interrupt_controller claim output when the PLIC is
     // fully integrated.  For now the interrupt controller drives irq_npu and
     // irq_dma; the external IRQ line to the CPU carries the combined OR of all
     // enabled pending sources (same signal that the AXI-Lite scaffold exposes).
@@ -332,9 +332,9 @@ module hello_soc_top (
     assign cpu_ext_irq = irq_timer | irq_dma | irq_npu | irq_vsync;
 
     // ── CPU subsystem ──────────────────────────────────────────────────────
-    hello_cpu_subsystem #(
-        // Boot vector matches hello_chip_cpu_variant.boot.reset_vector in
-        // sw/platform/hello_platform_contract.json (0x0000_1000).
+    e1_cpu_subsystem #(
+        // Boot vector matches e1_chip_cpu_variant.boot.reset_vector in
+        // sw/platform/e1_platform_contract.json (0x0000_1000).
         .BOOT_ADDR (64'h0000_0000_0000_1000)
     ) u_cpu (
         .clk_i          (clk),
@@ -394,7 +394,7 @@ module hello_soc_top (
     // ── AXI4→AXI-Lite bridge ───────────────────────────────────────────────
     // Converts the 64-bit AXI4 CPU master to the 32-bit AXI-Lite interconnect.
     // The bridge output (cpu_axil_*) feeds the SoC decode logic below.
-    hello_cpu_axi_bridge u_cpu_bridge (
+    e1_cpu_axi_bridge u_cpu_bridge (
         .clk_i          (clk),
         .rst_ni         (rst_n),
         // AXI4 slave side (from CPU)
@@ -467,7 +467,7 @@ module hello_soc_top (
     //
     // cpu_axil_* signals are currently wired but the decode mux below still
     // uses the debug-bridge mmio_* signals as the primary master.  When the CPU
-    // is active (HELLO_HAVE_CVA6 defined) and debug bridge is quiescent, the
+    // is active (E1_HAVE_CVA6 defined) and debug bridge is quiescent, the
     // CPU can drive the bus.  A full arbitration layer is a follow-on task.
     /* verilator lint_off UNUSEDSIGNAL */
     logic unused_cpu_axil;
@@ -492,12 +492,12 @@ module hello_soc_top (
     // access.  The crossbar should priority-arbitrate with the CPU as the
     // lower-priority master during debug sessions.
 
-    hello_bootrom u_bootrom (
+    e1_bootrom u_bootrom (
         .addr(mmio_addr[7:2]),
         .rdata(bootrom_rdata)
     );
 
-    hello_peripherals u_peripherals (
+    e1_peripherals u_peripherals (
         .clk(clk),
         .rst_n(rst_n),
         .valid(mmio_valid && periph_sel),
@@ -509,7 +509,7 @@ module hello_soc_top (
         .gpio_out(gpio_out)
     );
 
-    hello_dma u_dma (
+    e1_dma u_dma (
         .clk(clk),
         .rst_n(rst_n),
         .valid(mmio_valid && dma_sel),
@@ -537,7 +537,7 @@ module hello_soc_top (
         .m_axil_rresp(dma_m_rresp)
     );
 
-    hello_npu u_npu (
+    e1_npu u_npu (
         .clk(clk),
         .rst_n(rst_n),
         .valid(mmio_valid && npu_sel),
@@ -555,7 +555,7 @@ module hello_soc_top (
         .m_axil_rresp(npu_m_rresp)
     );
 
-    hello_display u_display (
+    e1_display u_display (
         .clk(clk),
         .rst_n(rst_n),
         .valid(mmio_valid && display_sel),

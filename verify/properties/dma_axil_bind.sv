@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // SymbiYosys harness binding the AXI-Lite property pack to the
-// hello_dma master interface. Drive with verify/properties/dma_axil.sby.
+// e1_dma master interface. Drive with verify/properties/dma_axil.sby.
 
 `default_nettype none
 
@@ -35,9 +35,9 @@ module dma_axil_props_top (
     input  logic [1:0]  m_axil_rresp
 );
 
-    hello_dma u_dma (.*);
+    e1_dma u_dma (.*);
 
-    bind hello_dma axi_lite_props #(.ADDR_W(32), .DATA_W(32), .MAX_STALL(64))
+    bind e1_dma axi_lite_props #(.ADDR_W(32), .DATA_W(32), .MAX_STALL(64))
         u_axil_props (
             .clk      (clk),
             .rst_n    (rst_n),

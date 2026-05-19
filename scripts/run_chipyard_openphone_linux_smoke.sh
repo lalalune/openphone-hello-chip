@@ -4,10 +4,10 @@ set -eu
 repo_dir="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 checkout="${CHIPYARD_CHECKOUT:-$repo_dir/external/chipyard}"
 sim_dir="$checkout/sims/verilator"
-out_dir="$repo_dir/build/chipyard/openphone_rocket"
+out_dir="$repo_dir/build/chipyard/openagent_rocket"
 log="$out_dir/verilator-linux-smoke.log"
-config="${CHIPYARD_CONFIG:-OpenPhoneRocketConfig}"
-config_package="${CHIPYARD_CONFIG_PACKAGE:-openphone}"
+config="${CHIPYARD_CONFIG:-OpenAgentRocketConfig}"
+config_package="${CHIPYARD_CONFIG_PACKAGE:-openagent}"
 binary="${CHIPYARD_LINUX_BINARY:-}"
 timeout_seconds="${CHIPYARD_LINUX_SMOKE_SECONDS:-180}"
 use_docker="${CHIPYARD_LINUX_SMOKE_USE_DOCKER:-auto}"
@@ -25,11 +25,11 @@ if [ -z "$binary" ]; then
 	esac
 fi
 
-if [ "$use_docker" != "0" ] && [ -x "$repo_dir/scripts/run_chipyard_openphone_linux_smoke_docker.sh" ]; then
+if [ "$use_docker" != "0" ] && [ -x "$repo_dir/scripts/run_chipyard_openagent_linux_smoke_docker.sh" ]; then
 	host_system="$(uname -s 2>/dev/null || printf unknown)"
 	host_machine="$(uname -m 2>/dev/null || printf unknown)"
 	if [ "$use_docker" = "1" ] || [ "$host_system" = "Darwin" ] || [ "$host_machine" = "arm64" ] || [ "$host_machine" = "aarch64" ]; then
-		exec "$repo_dir/scripts/run_chipyard_openphone_linux_smoke_docker.sh"
+		exec "$repo_dir/scripts/run_chipyard_openagent_linux_smoke_docker.sh"
 	fi
 fi
 
@@ -76,14 +76,14 @@ done
 
 command_text="make CONFIG=$config CONFIG_PACKAGE=$config_package BINARY=$binary LOADMEM=1 run-binary"
 {
-	printf 'openphone-evidence: target=generated_chipyard_ap\n'
-	printf 'openphone-evidence: wrapper=scripts/run_chipyard_openphone_linux_smoke.sh\n'
-	printf 'openphone-evidence: attempt=%s\n' "$attempt"
-	printf 'openphone-evidence: command=%s\n' "$command_text"
-	printf 'openphone-evidence: payload=%s\n' "$binary"
-	printf 'openphone-evidence: timeout_after_seconds=%s\n' "$timeout_seconds"
-	printf 'openphone-evidence: note=qemu-virt and Renode reference transcripts do not satisfy this generated AP Linux smoke\n'
-	printf 'openphone-evidence: raw_transcript_begin\n'
+	printf 'openagent-evidence: target=generated_chipyard_ap\n'
+	printf 'openagent-evidence: wrapper=scripts/run_chipyard_openagent_linux_smoke.sh\n'
+	printf 'openagent-evidence: attempt=%s\n' "$attempt"
+	printf 'openagent-evidence: command=%s\n' "$command_text"
+	printf 'openagent-evidence: payload=%s\n' "$binary"
+	printf 'openagent-evidence: timeout_after_seconds=%s\n' "$timeout_seconds"
+	printf 'openagent-evidence: note=qemu-virt and Renode reference transcripts do not satisfy this generated AP Linux smoke\n'
+	printf 'openagent-evidence: raw_transcript_begin\n'
 } >"$log"
 
 set +e
@@ -95,12 +95,12 @@ status=$?
 set -e
 
 {
-	printf 'openphone-evidence: raw_transcript_end\n'
-	printf 'openphone-evidence: exit_code=%s\n' "$status"
+	printf 'openagent-evidence: raw_transcript_end\n'
+	printf 'openagent-evidence: exit_code=%s\n' "$status"
 	if [ "$status" -eq 0 ]; then
-		printf 'openphone-evidence: status=PASS\n'
+		printf 'openagent-evidence: status=PASS\n'
 	else
-		printf 'openphone-evidence: status=BLOCKED\n'
+		printf 'openagent-evidence: status=BLOCKED\n'
 	fi
 } >>"$log"
 
@@ -113,11 +113,11 @@ if [ "$status" -ne 0 ]; then
 		printf '  reason: generated Verilator model artifact failure in %s\n' "${log#"$repo_dir"/}"
 		printf '  action: remove stale/partial generated simulator outputs and retry once\n'
 		python3 "$repo_dir/scripts/check_chipyard_verilator_linux_smoke.py" --repair-stale-generated >/dev/null
-		CHIPYARD_LINUX_SMOKE_ATTEMPT=2 CHIPYARD_LINUX_SMOKE_RETRY_GENERATED=0 exec "$repo_dir/scripts/run_chipyard_openphone_linux_smoke.sh"
+		CHIPYARD_LINUX_SMOKE_ATTEMPT=2 CHIPYARD_LINUX_SMOKE_RETRY_GENERATED=0 exec "$repo_dir/scripts/run_chipyard_openagent_linux_smoke.sh"
 	fi
 	printf 'STATUS: BLOCKED chipyard.verilator_linux_smoke\n'
 	printf '  simulator_path: external/chipyard/sims/verilator\n'
-	printf '  log: build/chipyard/openphone_rocket/verilator-linux-smoke.log\n'
+	printf '  log: build/chipyard/openagent_rocket/verilator-linux-smoke.log\n'
 	printf '  next_command: CHIPYARD_LINUX_SMOKE_RETRY_GENERATED=1 %s\n' "${0#"$repo_dir"/}"
 	printf '  - generated AP run-binary exited with status %s\n' "$status"
 	exit 2

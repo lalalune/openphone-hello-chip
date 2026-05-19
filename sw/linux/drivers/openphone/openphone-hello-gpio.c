@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * OpenPhone hello GPIO: minimal gpio-mmio driver.
+ * OpenAgent e1 GPIO: minimal gpio-mmio driver.
  *
  * Wraps the single GPIO_OUT 32-bit register inside the peripheral-control
- * window (HELLO_PERIPH_GPIO_OUT_OFFSET) as a 32-line output-only gpiochip
+ * window (E1_PERIPH_GPIO_OUT_OFFSET) as a 32-line output-only gpiochip
  * via bgpio_init().
  */
 
@@ -13,18 +13,18 @@
 #include <linux/of.h>
 #include <linux/platform_device.h>
 
-#include "hello_platform_contract.h"
+#include "e1_platform_contract.h"
 
-#define HELLO_GPIO_NGPIO 32
+#define E1_GPIO_NGPIO 32
 
-struct openphone_hello_gpio {
+struct openagent_e1_gpio {
 	struct gpio_chip gc;
 	void __iomem *regs;
 };
 
-static int openphone_hello_gpio_probe(struct platform_device *pdev)
+static int openagent_e1_gpio_probe(struct platform_device *pdev)
 {
-	struct openphone_hello_gpio *g;
+	struct openagent_e1_gpio *g;
 	struct resource *res;
 	void __iomem *gpio_out;
 	int ret;
@@ -38,7 +38,7 @@ static int openphone_hello_gpio_probe(struct platform_device *pdev)
 	if (IS_ERR(g->regs))
 		return PTR_ERR(g->regs);
 
-	gpio_out = g->regs + HELLO_PERIPH_GPIO_OUT_OFFSET;
+	gpio_out = g->regs + E1_PERIPH_GPIO_OUT_OFFSET;
 
 	ret = bgpio_init(&g->gc, &pdev->dev, 4,
 			 gpio_out, gpio_out, NULL, NULL, NULL,
@@ -49,7 +49,7 @@ static int openphone_hello_gpio_probe(struct platform_device *pdev)
 	g->gc.label = dev_name(&pdev->dev);
 	g->gc.parent = &pdev->dev;
 	g->gc.owner = THIS_MODULE;
-	g->gc.ngpio = HELLO_GPIO_NGPIO;
+	g->gc.ngpio = E1_GPIO_NGPIO;
 	g->gc.base = -1;
 	g->gc.of_node = pdev->dev.of_node;
 
@@ -57,21 +57,21 @@ static int openphone_hello_gpio_probe(struct platform_device *pdev)
 	return devm_gpiochip_add_data(&pdev->dev, &g->gc, g);
 }
 
-static const struct of_device_id openphone_hello_gpio_of_match[] = {
-	{ .compatible = "openphone,hello-gpio" },
+static const struct of_device_id openagent_e1_gpio_of_match[] = {
+	{ .compatible = "openagent,e1-gpio" },
 	{ }
 };
-MODULE_DEVICE_TABLE(of, openphone_hello_gpio_of_match);
+MODULE_DEVICE_TABLE(of, openagent_e1_gpio_of_match);
 
-static struct platform_driver openphone_hello_gpio_driver = {
-	.probe = openphone_hello_gpio_probe,
+static struct platform_driver openagent_e1_gpio_driver = {
+	.probe = openagent_e1_gpio_probe,
 	.driver = {
-		.name = "openphone-hello-gpio",
-		.of_match_table = openphone_hello_gpio_of_match,
+		.name = "openagent-e1-gpio",
+		.of_match_table = openagent_e1_gpio_of_match,
 	},
 };
-module_platform_driver(openphone_hello_gpio_driver);
+module_platform_driver(openagent_e1_gpio_driver);
 
-MODULE_DESCRIPTION("OpenPhone hello GPIO (gpio-mmio backed)");
-MODULE_AUTHOR("OpenPhone hello BSP");
+MODULE_DESCRIPTION("OpenAgent e1 GPIO (gpio-mmio backed)");
+MODULE_AUTHOR("OpenAgent e1 BSP");
 MODULE_LICENSE("GPL");

@@ -36,7 +36,7 @@ def test_reference_simulators_do_not_satisfy_generated_ap_boot() -> None:
 
 def test_report_schema_and_next_commands_are_machine_readable() -> None:
     report = readiness.build_report()
-    if report["schema"] != "openphone.cpu_ap_boot_readiness.v1":
+    if report["schema"] != "openagent.cpu_ap_boot_readiness.v1":
         raise AssertionError("schema drifted")
     if report["claim_boundary"] != "readiness_gate_only_no_boot_evidence_created":
         raise AssertionError("claim boundary drifted")
@@ -47,7 +47,7 @@ def test_report_schema_and_next_commands_are_machine_readable() -> None:
     for token in (
         "check_chipyard_generated_linux_contract.py",
         "locate_chipyard_linux_payload.py",
-        "run_chipyard_openphone_linux_smoke.sh",
+        "run_chipyard_openagent_linux_smoke.sh",
         "capture_chipyard_linux_evidence.sh",
     ):
         assert_contains(commands, token)

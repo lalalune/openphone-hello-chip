@@ -7,7 +7,7 @@ report="$repo_root/build/reports/android_sim_boot.json"
 evidence_dir="$repo_root/docs/evidence/android"
 aosp_dir=${AOSP_DIR:-}
 aosp_shell=${AOSP_SHELL:-bash}
-aosp_product=${AOSP_PRODUCT:-openphone_ai_soc-userdebug}
+aosp_product=${AOSP_PRODUCT:-openagent_ai_soc-userdebug}
 aosp_cuttlefish_args=${AOSP_CUTTLEFISH_ARGS:---cpus=4 --memory_mb=8192 --gpu_mode=none}
 aosp_cuttlefish_launcher=${AOSP_CUTTLEFISH_LAUNCHER:-}
 aosp_adb_timeout_seconds=${AOSP_ADB_TIMEOUT_SECONDS:-180}
@@ -25,7 +25,7 @@ usage() {
 	cat >&2 <<'EOF'
 usage: AOSP_DIR=/path/to/aosp scripts/boot_android_simulator.sh [--run-cuttlefish] [--run-cts] [--run-vts] [--run-qemu] [--run-renode] [--build-only]
 
-Runs the OpenPhone Android simulator evidence sequence against an external AOSP
+Runs the OpenAgent Android simulator evidence sequence against an external AOSP
 checkout. By default the final gate attempts every AOSP evidence category
 tracked by docs/android/bsp-log-evidence-manifest.json and
 scripts/check_software_bsp.py: lunch, vendorimage, VINTF, SELinux policy,
@@ -217,17 +217,17 @@ import sys
 
 mode = sys.argv[1]
 build = [
-    "docs/evidence/android/openphone_ai_soc_lunch.log",
-    "docs/evidence/android/openphone_ai_soc_vendorimage.log",
-    "docs/evidence/android/openphone_ai_soc_checkvintf.log",
-    "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
-    "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
+    "docs/evidence/android/openagent_ai_soc_lunch.log",
+    "docs/evidence/android/openagent_ai_soc_vendorimage.log",
+    "docs/evidence/android/openagent_ai_soc_checkvintf.log",
+    "docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
+    "docs/evidence/android/openagent_ai_soc_selinux_neverallow.log",
 ]
 full = build + [
-    "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+    "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log",
     "docs/evidence/android/cuttlefish_riscv64_smoke.log",
     "docs/evidence/android/qemu_riscv64_smoke.log",
-    "docs/evidence/android/renode_hello_soc_smoke.log",
+    "docs/evidence/android/renode_e1_soc_smoke.log",
 ]
 print(json.dumps(build if mode == "build" else full, indent=2))
 PY
@@ -248,7 +248,7 @@ write_report() {
 	tmp="$report.$$.$(date +%s).tmp"
 	cat > "$tmp" <<EOF
 {
-  "schema": "openphone.android_sim_boot.v1",
+  "schema": "openagent.android_sim_boot.v1",
   "status": $(json_escape "$status"),
   "reason": $(json_escape "$reason"),
   "next_step": $(json_escape "$next"),
@@ -267,7 +267,7 @@ write_report() {
   "host_requirements": $host_requirements,
   "linux_requirements": $linux_requirements,
   "handoff_commands": $handoff_commands,
-  "claim_boundary": "Android virtual-device evidence is software/reference evidence only; it is not hello-chip hardware ABI proof, CDD compliance, GMS certification, or a full Android compatibility claim."
+  "claim_boundary": "Android virtual-device evidence is software/reference evidence only; it is not e1-chip hardware ABI proof, CDD compliance, GMS certification, or a full Android compatibility claim."
 }
 EOF
 	mv "$tmp" "$report"
@@ -275,7 +275,7 @@ EOF
 
 stage_passed() {
 	path=$1
-	grep -q 'RESULT=0' "$path" 2>/dev/null && grep -q 'openphone-evidence: status=PASS' "$path" 2>/dev/null
+	grep -q 'RESULT=0' "$path" 2>/dev/null && grep -q 'openagent-evidence: status=PASS' "$path" 2>/dev/null
 }
 
 record_stage_result() {
@@ -312,9 +312,9 @@ capture_aosp_shell() {
 	status=FAIL
 	rm -f "$rcfile"
 	{
-		echo "openphone-evidence: target=aosp artifact=$artifact"
-		echo "openphone-evidence: external_tree=$aosp_dir"
-		echo "openphone-evidence: command=$command_label"
+		echo "openagent-evidence: target=aosp artifact=$artifact"
+		echo "openagent-evidence: external_tree=$aosp_dir"
+		echo "openagent-evidence: command=$command_label"
 		echo "EXTERNAL_TREE=$aosp_dir"
 		echo "COMMAND=$command_label"
 		echo "START_UTC=$start_utc"
@@ -323,7 +323,7 @@ capture_aosp_shell() {
 			echo "BOOT_CLAIM=none"
 			echo "SCHEMA=docs/android/boot-transcript.schema.json"
 		fi
-		echo "openphone-evidence: started_utc=$start_utc"
+		echo "openagent-evidence: started_utc=$start_utc"
 		cd "$aosp_dir"
 		set +e
 		env AOSP_PRODUCT="$aosp_product" \
@@ -337,8 +337,8 @@ capture_aosp_shell() {
 		if [ "$rc" -eq 0 ]; then
 			status=PASS
 		fi
-		echo "openphone-evidence: ended_utc=$end_utc"
-		echo "openphone-evidence: status=$status"
+		echo "openagent-evidence: ended_utc=$end_utc"
+		echo "openagent-evidence: status=$status"
 		echo "END_UTC=$end_utc"
 		echo "RESULT=$rc"
 		printf '%s' "$rc" > "$rcfile"
@@ -382,28 +382,28 @@ fi
 
 "$repo_root/sw/aosp-device/import-aosp-device.sh" "$aosp_dir"
 
-run_helper_stage lunch "$evidence_dir/openphone_ai_soc_lunch.log" || true
-run_helper_stage vendorimage "$evidence_dir/openphone_ai_soc_vendorimage.log" || true
-run_helper_stage checkvintf "$evidence_dir/openphone_ai_soc_checkvintf.log" || true
+run_helper_stage lunch "$evidence_dir/openagent_ai_soc_lunch.log" || true
+run_helper_stage vendorimage "$evidence_dir/openagent_ai_soc_vendorimage.log" || true
+run_helper_stage checkvintf "$evidence_dir/openagent_ai_soc_checkvintf.log" || true
 
 capture_aosp_shell \
-	openphone_ai_soc_sepolicy_build \
-	"$evidence_dir/openphone_ai_soc_sepolicy_build.log" \
+	openagent_ai_soc_sepolicy_build \
+	"$evidence_dir/openagent_ai_soc_sepolicy_build.log" \
 	"m vendor_sepolicy.cil selinux_policy" \
 	'source build/envsetup.sh &&
 		lunch "$AOSP_PRODUCT" >/dev/null &&
 		m vendor_sepolicy.cil selinux_policy &&
-		grep -R -n "hello_npu_device\|hal_hello_npu_default" out/target/product/openphone_ai_soc/obj/ETC out/target/product/openphone_ai_soc/vendor 2>/dev/null' \
+		grep -R -n "e1_npu_device\|hal_e1_npu_default" out/target/product/openagent_ai_soc/obj/ETC out/target/product/openagent_ai_soc/vendor 2>/dev/null' \
 	build || true
 
 capture_aosp_shell \
-	openphone_ai_soc_selinux_neverallow \
-	"$evidence_dir/openphone_ai_soc_selinux_neverallow.log" \
+	openagent_ai_soc_selinux_neverallow \
+	"$evidence_dir/openagent_ai_soc_selinux_neverallow.log" \
 	"m sepolicy_neverallows" \
 	'source build/envsetup.sh &&
 		lunch "$AOSP_PRODUCT" >/dev/null &&
 		m sepolicy_neverallows &&
-		grep -R -n "hello_npu" out/target/product/openphone_ai_soc/obj/ETC out/target/product/openphone_ai_soc/vendor 2>/dev/null' \
+		grep -R -n "e1_npu" out/target/product/openagent_ai_soc/obj/ETC out/target/product/openagent_ai_soc/vendor 2>/dev/null' \
 	build || true
 
 if [ "$require_full_evidence" -eq 0 ]; then
@@ -418,8 +418,8 @@ fi
 
 if [ "$run_cts" -eq 1 ] || [ "$run_vts" -eq 1 ]; then
 	capture_aosp_shell \
-		openphone_ai_soc_cts_vts_plan \
-		"$evidence_dir/openphone_ai_soc_cts_vts_plan.log" \
+		openagent_ai_soc_cts_vts_plan \
+		"$evidence_dir/openagent_ai_soc_cts_vts_plan.log" \
 		"m cts vts && cts-tradefed list modules && vts-tradefed list modules" \
 		'source build/envsetup.sh &&
 			lunch "$AOSP_PRODUCT" >/dev/null &&
@@ -440,7 +440,7 @@ if [ "$run_cuttlefish" -eq 1 ]; then
 		"launch_cvd or cvd start followed by adb shell getprop smoke checks" \
 		'source build/envsetup.sh &&
 			lunch "$AOSP_PRODUCT" >/dev/null &&
-			echo "openphone_ai_soc" &&
+			echo "openagent_ai_soc" &&
 			cleanup() { stop_cvd >/dev/null 2>&1 || cvd stop >/dev/null 2>&1 || true; } &&
 			trap cleanup EXIT INT TERM &&
 			if [ -n "$AOSP_CUTTLEFISH_LAUNCHER" ]; then
@@ -488,9 +488,9 @@ if [ "$run_qemu" -eq 1 ]; then
 		"qemu-system-riscv64 with AOSP-built artifacts followed by console or adb smoke checks" \
 		'source build/envsetup.sh &&
 			lunch "$AOSP_PRODUCT" >/dev/null &&
-			echo "openphone_ai_soc" &&
+			echo "openagent_ai_soc" &&
 			command -v qemu-system-riscv64 &&
-			test -f out/target/product/openphone_ai_soc/vendor.img &&
+			test -f out/target/product/openagent_ai_soc/vendor.img &&
 			echo "qemu-system-riscv64 AOSP riscv64 smoke requires kernel/system image wiring for this product" &&
 			qemu-system-riscv64 --version' \
 		virtual || true
@@ -498,14 +498,14 @@ fi
 
 if [ "$run_renode" -eq 1 ]; then
 	capture_aosp_shell \
-		renode_hello_soc_smoke \
-		"$evidence_dir/renode_hello_soc_smoke.log" \
-		"renode sim/renode/openphone_hello.resc with Android-capable firmware/kernel handoff when available" \
+		renode_e1_soc_smoke \
+		"$evidence_dir/renode_e1_soc_smoke.log" \
+		"renode sim/renode/openagent_e1.resc with Android-capable firmware/kernel handoff when available" \
 		'source build/envsetup.sh &&
 			lunch "$AOSP_PRODUCT" >/dev/null &&
-			echo "openphone_ai_soc" &&
+			echo "openagent_ai_soc" &&
 			command -v renode &&
-			echo "renode Android-capable firmware/kernel handoff smoke requires a real Renode hello SoC Android boot script" &&
+			echo "renode Android-capable firmware/kernel handoff smoke requires a real Renode e1 SoC Android boot script" &&
 			renode --version' \
 		virtual || true
 fi

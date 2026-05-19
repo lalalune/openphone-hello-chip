@@ -12,24 +12,24 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
+CONTRACT = ROOT / "sw/platform/e1_platform_contract.json"
 ARTIFACT_MANIFEST = ROOT / "docs/android/bsp-artifact-manifest.json"
 LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
 BOOT_TRANSCRIPT_SCHEMA = ROOT / "docs/android/boot-transcript.schema.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/software-bsp-evidence-manifest.json"
 LOCAL_EXTERNAL_PREFLIGHT_REPORT = ROOT / "docs/evidence/software-bsp-external-preflight-status.json"
 AOSP_EVIDENCE_MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
-NNAPI_PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json"
+NNAPI_PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/e1_npu_nnapi.proof.template.json"
 ANDROID_PROOF_TEMPLATE = (
-    ROOT / "docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json"
+    ROOT / "docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json"
 )
-AOSP_REFERENCE_ONLY_BOUNDARY = "reference_only_not_hello_chip_ap_evidence"
+AOSP_REFERENCE_ONLY_BOUNDARY = "reference_only_not_e1_chip_ap_evidence"
 AOSP_VIRTUAL_DEVICE_BOUNDARY = "virtual_device_smoke_only_not_boot_or_compatibility_evidence"
 ANDROID_PROOF_TEMPLATE_BOUNDARY = "template_only_not_android_boot_cts_vts_or_nnapi_evidence"
 AOSP_REFERENCE_ONLY_PATHS = [
     "docs/evidence/android/cuttlefish_riscv64_smoke.log",
     "docs/evidence/android/qemu_riscv64_smoke.log",
-    "docs/evidence/android/renode_hello_soc_smoke.log",
+    "docs/evidence/android/renode_e1_soc_smoke.log",
 ]
 DEFAULT_EVIDENCE_METADATA = ["EXTERNAL_TREE=", "COMMAND=", "START_UTC=", "END_UTC=", "RESULT="]
 ANDROID_COMPAT_METADATA = [
@@ -52,19 +52,19 @@ REQUIRED_ANDROID_PROOF_STATUSES = {
     "vintf_check",
     "selinux_policy_build",
     "selinux_neverallow",
-    "vts_hello_npu",
+    "vts_e1_npu",
     "cts_nnapi_smoke",
     "nnapi_accelerator_query",
     "fail_closed_absent_device",
 }
 REQUIRED_ANDROID_PROOF_ARTIFACTS = {
-    "vts_result": "docs/evidence/android/hello-npu/vts-result.json",
-    "cts_result": "docs/evidence/android/hello-npu/cts-result.json",
-    "selinux_policy_build_log": "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
-    "selinux_neverallow_log": "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
-    "vintf_check_log": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
-    "nnapi_query_log": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
-    "absent_device_probe_log": "docs/evidence/android/hello-npu/absent-device-probe.log",
+    "vts_result": "docs/evidence/android/e1-npu/vts-result.json",
+    "cts_result": "docs/evidence/android/e1-npu/cts-result.json",
+    "selinux_policy_build_log": "docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
+    "selinux_neverallow_log": "docs/evidence/android/openagent_ai_soc_selinux_neverallow.log",
+    "vintf_check_log": "docs/evidence/android/openagent_ai_soc_checkvintf.log",
+    "nnapi_query_log": "docs/evidence/android/e1-npu/nnapi-accelerator-query.log",
+    "absent_device_probe_log": "docs/evidence/android/e1-npu/absent-device-probe.log",
 }
 
 TARGETS: dict[str, dict[str, Any]] = {
@@ -77,56 +77,56 @@ TARGETS: dict[str, dict[str, Any]] = {
             "sw/buildroot/Config.in",
             "sw/buildroot/external.mk",
             "sw/buildroot/scripts/import-buildroot-external.sh",
-            "sw/buildroot/configs/openphone_hello_defconfig",
-            "sw/buildroot/board/openphone/hello/linux.fragment",
-            "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke",
-            "sw/buildroot/package/hello-mmio-smoke/Config.in",
-            "sw/buildroot/package/hello-mmio-smoke/hello-mmio-smoke.mk",
-            "sw/buildroot/package/hello-mmio-smoke/src/hello-mmio-smoke.c",
-            "sw/buildroot/package/hello-npu-ml-smoke/Config.in",
-            "sw/buildroot/package/hello-npu-ml-smoke/hello-npu-ml-smoke.mk",
-            "sw/buildroot/package/hello-npu-ml-smoke/src/hello-npu-ml-smoke.c",
+            "sw/buildroot/configs/openagent_e1_defconfig",
+            "sw/buildroot/board/openagent/e1/linux.fragment",
+            "sw/buildroot/board/openagent/e1/rootfs_overlay/usr/bin/e1-mmio-smoke",
+            "sw/buildroot/package/e1-mmio-smoke/Config.in",
+            "sw/buildroot/package/e1-mmio-smoke/e1-mmio-smoke.mk",
+            "sw/buildroot/package/e1-mmio-smoke/src/e1-mmio-smoke.c",
+            "sw/buildroot/package/e1-npu-ml-smoke/Config.in",
+            "sw/buildroot/package/e1-npu-ml-smoke/e1-npu-ml-smoke.mk",
+            "sw/buildroot/package/e1-npu-ml-smoke/src/e1-npu-ml-smoke.c",
         ],
         "contract_terms": [
-            "BR2_EXTERNAL_OPENPHONE_HELLO_PATH",
-            "HELLO_NPU_BASE",
-            "HELLO_DISPLAY_BASE",
-            "HELLO_DMA_BASE",
+            "BR2_EXTERNAL_OPENAGENT_E1_PATH",
+            "E1_NPU_BASE",
+            "E1_DISPLAY_BASE",
+            "E1_DMA_BASE",
         ],
         "evidence": [
-            "docs/evidence/buildroot/openphone_hello_defconfig.log",
-            "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
-            "docs/evidence/buildroot/hello-mmio-smoke.log",
-            "docs/evidence/buildroot/hello-npu-ml-smoke.log",
+            "docs/evidence/buildroot/openagent_e1_defconfig.log",
+            "docs/evidence/buildroot/openagent_e1_image_manifest.txt",
+            "docs/evidence/buildroot/e1-mmio-smoke.log",
+            "docs/evidence/buildroot/e1-npu-ml-smoke.log",
         ],
-        "evidence_note": "external Buildroot image build plus hello MMIO and hello NPU ML smoke transcripts",
+        "evidence_note": "external Buildroot image build plus e1 MMIO and e1 NPU ML smoke transcripts",
     },
     "linux": {
         "readme": ROOT / "docs/sw/linux/README.md",
         "required": [
             "docs/android/bsp-artifact-manifest.json",
             "docs/android/bsp-log-evidence-manifest.json",
-            "sw/linux/drivers/hello/Kconfig",
-            "sw/linux/drivers/hello/Makefile",
+            "sw/linux/drivers/e1/Kconfig",
+            "sw/linux/drivers/e1/Makefile",
             "sw/linux/scripts/import-linux-bsp.sh",
-            "sw/linux/dts/openphone-hello.dts",
-            "sw/linux/drivers/hello/hello_platform_contract.h",
-            "sw/linux/drivers/hello/hello-npu.c",
-            "sw/linux/drivers/hello/hello-dma.c",
-            "sw/linux/tests/hello-mmio-smoke.c",
+            "sw/linux/dts/openagent-e1.dts",
+            "sw/linux/drivers/e1/e1_platform_contract.h",
+            "sw/linux/drivers/e1/e1-npu.c",
+            "sw/linux/drivers/e1/e1-dma.c",
+            "sw/linux/tests/e1-mmio-smoke.c",
         ],
         "contract_terms": [
-            "CONFIG_OPENPHONE_HELLO_NPU",
-            "CONFIG_OPENPHONE_HELLO_DMA",
-            "openphone,hello-npu",
-            "openphone,hello-dma",
-            "openphone,hello-display",
-            '#include "hello_platform_contract.h"',
+            "CONFIG_OPENAGENT_E1_NPU",
+            "CONFIG_OPENAGENT_E1_DMA",
+            "openagent,e1-npu",
+            "openagent,e1-dma",
+            "openagent,e1-display",
+            '#include "e1_platform_contract.h"',
         ],
         "evidence": [
-            "docs/evidence/linux/openphone_hello_kernel_build.log",
-            "docs/evidence/linux/openphone_hello_dtb_check.log",
-            "docs/evidence/linux/hello-mmio-smoke.log",
+            "docs/evidence/linux/openagent_e1_kernel_build.log",
+            "docs/evidence/linux/openagent_e1_dtb_check.log",
+            "docs/evidence/linux/e1-mmio-smoke.log",
         ],
         "evidence_note": "external Linux kernel build, DTB validation, and runtime driver smoke transcript",
     },
@@ -136,20 +136,20 @@ TARGETS: dict[str, dict[str, Any]] = {
             "docs/sw/opensbi/README.md",
             "docs/sw/opensbi/capture-opensbi-evidence.sh",
             "sw/opensbi/scripts/import-opensbi-platform.sh",
-            "sw/opensbi/platform/openphone/README.md",
-            "sw/opensbi/platform/openphone/config.mk",
-            "sw/opensbi/platform/openphone/objects.mk",
-            "sw/opensbi/platform/openphone/platform.c",
+            "sw/opensbi/platform/openagent/README.md",
+            "sw/opensbi/platform/openagent/config.mk",
+            "sw/opensbi/platform/openagent/objects.mk",
+            "sw/opensbi/platform/openagent/platform.c",
         ],
         "contract_terms": [
-            "sw/platform/hello_platform_contract.json",
+            "sw/platform/e1_platform_contract.json",
             "OpenSBI",
             "fw_dynamic",
-            "PLATFORM=openphone",
+            "PLATFORM=openagent",
             "FW_PAYLOAD",
         ],
         "evidence": [
-            "docs/evidence/linux/opensbi_openphone_build.log",
+            "docs/evidence/linux/opensbi_openagent_build.log",
             "docs/evidence/linux/opensbi_fw_dynamic_handoff.log",
         ],
         "evidence_note": "external OpenSBI build and fw_dynamic handoff transcript",
@@ -160,28 +160,28 @@ TARGETS: dict[str, dict[str, Any]] = {
             "docs/android/bsp-artifact-manifest.json",
             "docs/android/bsp-log-evidence-manifest.json",
             "sw/aosp-device/import-aosp-device.sh",
-            "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
-            "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
-            "sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk",
-            "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk",
-            "sw/aosp-device/device/openphone/openphone_ai_soc/device.mk",
-            "sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc",
-            "sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml",
-            "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
-            "docs/sw/aosp-device/device/openphone/openphone_ai_soc/hal/README.md",
+            "sw/aosp-device/manifests/openagent-ai-soc-local.xml",
+            "sw/aosp-device/device/openagent/openagent_ai_soc/AndroidProducts.mk",
+            "sw/aosp-device/device/openagent/openagent_ai_soc/openagent_ai_soc.mk",
+            "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk",
+            "sw/aosp-device/device/openagent/openagent_ai_soc/device.mk",
+            "sw/aosp-device/device/openagent/openagent_ai_soc/init.openagent.rc",
+            "sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml",
+            "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/file_contexts",
+            "docs/sw/aosp-device/device/openagent/openagent_ai_soc/hal/README.md",
             "docs/android/boot-transcript.schema.json",
         ],
-        "contract_terms": ["openphone_ai_soc", "hello_npu", "hwcomposer"],
+        "contract_terms": ["openagent_ai_soc", "e1_npu", "hwcomposer"],
         "evidence": [
-            "docs/evidence/android/openphone_ai_soc_lunch.log",
-            "docs/evidence/android/openphone_ai_soc_vendorimage.log",
-            "docs/evidence/android/openphone_ai_soc_checkvintf.log",
-            "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
-            "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
-            "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+            "docs/evidence/android/openagent_ai_soc_lunch.log",
+            "docs/evidence/android/openagent_ai_soc_vendorimage.log",
+            "docs/evidence/android/openagent_ai_soc_checkvintf.log",
+            "docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
+            "docs/evidence/android/openagent_ai_soc_selinux_neverallow.log",
+            "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log",
             "docs/evidence/android/cuttlefish_riscv64_smoke.log",
             "docs/evidence/android/qemu_riscv64_smoke.log",
-            "docs/evidence/android/renode_hello_soc_smoke.log",
+            "docs/evidence/android/renode_e1_soc_smoke.log",
         ],
         "evidence_note": "external AOSP lunch/vendorimage/VINTF/SELinux/CTS-VTS intake logs plus virtual-device smoke transcripts",
     },
@@ -194,7 +194,7 @@ FORBIDDEN_TRANSCRIPT_MARKERS = [
     "not run",
     "status=FAIL",
     "status: FAIL",
-    "openphone-evidence: status=FAIL",
+    "openagent-evidence: status=FAIL",
 ]
 
 
@@ -267,15 +267,15 @@ def validate_evidence_file(item: dict[str, Any]) -> list[str]:
             + ", ".join(dict.fromkeys(forbidden))
         )
 
-    status_match = re.search(r"openphone-evidence:\s*status=([A-Z]+)", text)
+    status_match = re.search(r"openagent-evidence:\s*status=([A-Z]+)", text)
     if not status_match:
-        problems.append(f"{item['path']} missing openphone-evidence PASS status marker")
+        problems.append(f"{item['path']} missing openagent-evidence PASS status marker")
     elif status_match.group(1) != "PASS":
         problems.append(f"{item['path']} reports non-PASS evidence status: {status_match.group(1)}")
 
     claim_boundary = item.get("claim_boundary", "")
     if claim_boundary in {AOSP_REFERENCE_ONLY_BOUNDARY, AOSP_VIRTUAL_DEVICE_BOUNDARY}:
-        marker = f"openphone-evidence: claim_boundary={claim_boundary}"
+        marker = f"openagent-evidence: claim_boundary={claim_boundary}"
         if marker not in text:
             problems.append(f"{item['path']} missing reference-only claim boundary marker")
 
@@ -303,12 +303,12 @@ def existing_repo_path(path: str) -> Path | None:
 
 def check_contract(errors: list[str]) -> None:
     if not CONTRACT.is_file():
-        errors.append("sw/platform/hello_platform_contract.json is missing")
+        errors.append("sw/platform/e1_platform_contract.json is missing")
         return
     data = json.loads(CONTRACT.read_text())
-    if data.get("hello_chip", {}).get("has_cpu") is not False:
+    if data.get("e1_chip", {}).get("has_cpu") is not False:
         errors.append(
-            "hello platform contract must keep hello_chip.has_cpu=false until a CPU exists"
+            "e1 platform contract must keep e1_chip.has_cpu=false until a CPU exists"
         )
     if data.get("qemu_virt", {}).get("target_kind") != "software_reference_only":
         errors.append("qemu_virt must be marked software_reference_only")
@@ -410,11 +410,11 @@ def check_boot_transcript_schema(errors: list[str]) -> None:
     schema = load_json(BOOT_TRANSCRIPT_SCHEMA, errors)
     if not schema:
         return
-    if schema.get("$id") != "openphone.android_virtual_device_smoke.schema.v1":
+    if schema.get("$id") != "openagent.android_virtual_device_smoke.schema.v1":
         errors.append("docs/android/boot-transcript.schema.json has unexpected $id")
     properties = schema.get("properties", {})
     environment = properties.get("environment", {})
-    expected_envs = {"cuttlefish_riscv64", "qemu_riscv64", "renode_hello_soc"}
+    expected_envs = {"cuttlefish_riscv64", "qemu_riscv64", "renode_e1_soc"}
     if set(environment.get("enum", [])) != expected_envs:
         errors.append(
             "virtual-device smoke schema must enumerate Cuttlefish, QEMU, and Renode evidence environments"
@@ -431,24 +431,24 @@ def check_boot_transcript_schema(errors: list[str]) -> None:
 
 
 def check_aosp_product_glue(errors: list[str]) -> None:
-    product = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk"
-    board = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk"
-    manifest = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml"
+    product = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/AndroidProducts.mk"
+    board = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk"
+    manifest = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml"
     text = product.read_text(errors="ignore") if product.is_file() else ""
-    if "COMMON_LUNCH_CHOICES" not in text or "openphone_ai_soc-userdebug" not in text:
-        errors.append("AOSP AndroidProducts.mk must expose openphone_ai_soc-userdebug lunch")
+    if "COMMON_LUNCH_CHOICES" not in text or "openagent_ai_soc-userdebug" not in text:
+        errors.append("AOSP AndroidProducts.mk must expose openagent_ai_soc-userdebug lunch")
     board_text = board.read_text(errors="ignore") if board.is_file() else ""
     for term in [
         "TARGET_ARCH := riscv64",
         "BOARD_VENDOR_SEPOLICY_DIRS",
-        "OPENPHONE_KERNEL_CONFIG_FRAGMENT",
-        "OPENPHONE_DTS",
+        "OPENAGENT_KERNEL_CONFIG_FRAGMENT",
+        "OPENAGENT_DTS",
     ]:
         if term not in board_text:
             errors.append(f"AOSP BoardConfig.mk missing {term}")
     if manifest.is_file():
         manifest_text = manifest.read_text(errors="ignore")
-        for term in ["<manifest", "hello_npu", "hwcomposer.openphone_ai_soc"]:
+        for term in ["<manifest", "e1_npu", "hwcomposer.openagent_ai_soc"]:
             if term not in manifest_text:
                 errors.append(f"AOSP VINTF manifest missing XML marker {term}")
         if "</manifest>" not in manifest_text and "/>" not in manifest_text:
@@ -458,10 +458,10 @@ def check_aosp_product_glue(errors: list[str]) -> None:
             errors.append(
                 "AOSP VINTF manifest must not declare active HAL entries until source or prebuilts exist"
             )
-    device = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/device.mk"
+    device = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/device.mk"
     device_text = device.read_text(errors="ignore") if device.is_file() else ""
     if "PRODUCT_PACKAGES +=" in device_text and (
-        "hello_npu.default" in device_text or "hwcomposer.openphone_ai_soc" in device_text
+        "e1_npu.default" in device_text or "hwcomposer.openagent_ai_soc" in device_text
     ):
         errors.append("AOSP device.mk must not list HAL packages until source or prebuilts exist")
     forbidden_feature_terms = [
@@ -487,7 +487,7 @@ def check_aosp_product_glue(errors: list[str]) -> None:
 def check_android_proof_templates(errors: list[str]) -> None:
     nnapi_template = load_json(NNAPI_PROOF_TEMPLATE, errors)
     if nnapi_template:
-        if nnapi_template.get("schema") != "openphone.hello_npu_nnapi_capability.v1":
+        if nnapi_template.get("schema") != "openagent.e1_npu_nnapi_capability.v1":
             errors.append("NNAPI proof template has unexpected schema")
         dma = nnapi_template.get("dma", {})
         if not isinstance(dma, dict) or "trace_bytes" not in dma:
@@ -522,7 +522,7 @@ def check_android_proof_templates(errors: list[str]) -> None:
     android_template = load_json(ANDROID_PROOF_TEMPLATE, errors)
     if not android_template:
         return
-    if android_template.get("schema") != "openphone.hello_npu_android_proof_manifest.v1":
+    if android_template.get("schema") != "openagent.e1_npu_android_proof_manifest.v1":
         errors.append("Android proof manifest template has unexpected schema")
     if android_template.get("claim_boundary") != ANDROID_PROOF_TEMPLATE_BOUNDARY:
         errors.append(
@@ -599,7 +599,7 @@ def check_target(name: str) -> tuple[list[str], list[str]]:
     text = readme.read_text(errors="ignore")
     if "placeholder" in text.lower():
         errors.append(f"{readme.relative_to(ROOT)} still describes a placeholder-only target")
-    if "sw/platform/hello_platform_contract.json" not in text:
+    if "sw/platform/e1_platform_contract.json" not in text:
         errors.append(
             f"{readme.relative_to(ROOT)} does not reference the central platform contract"
         )
@@ -739,13 +739,13 @@ def capture_plan_commands(
             f"sw/buildroot/scripts/import-buildroot-external.sh --check {tree}",
             f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} defconfig",
             f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} image-manifest",
-            "HELLO_SMOKE_CMD='ssh "
+            "E1_SMOKE_CMD='ssh "
             + target
-            + " /usr/bin/hello-mmio-smoke' "
+            + " /usr/bin/e1-mmio-smoke' "
             + f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} smoke",
-            "HELLO_NPU_ML_SMOKE_CMD='ssh "
+            "E1_NPU_ML_SMOKE_CMD='ssh "
             + target
-            + " /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' "
+            + " /usr/bin/e1-npu-ml-smoke --device /dev/e1-npu' "
             + f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} ml-smoke",
             "python3 scripts/check_software_bsp.py buildroot --require-evidence",
         ]
@@ -755,9 +755,9 @@ def capture_plan_commands(
             f"sw/linux/scripts/import-linux-bsp.sh --check {tree}",
             f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} kernel-build",
             f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} dtb-check",
-            "HELLO_SMOKE_CMD='ssh "
+            "E1_SMOKE_CMD='ssh "
             + target
-            + " /tmp/hello-mmio-smoke' "
+            + " /tmp/e1-mmio-smoke' "
             + f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} smoke",
             "python3 scripts/check_software_bsp.py linux --require-evidence",
         ]
@@ -766,8 +766,8 @@ def capture_plan_commands(
         handoff = opensbi_handoff_cmd or "/exact/qemu-or-renode fw_dynamic handoff command"
         return [
             f"sw/opensbi/scripts/import-opensbi-platform.sh --check {tree}",
-            f"OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh {tree} build",
-            f"OPENPHONE_OPENSBI_HANDOFF_CMD={handoff!r} docs/sw/opensbi/capture-opensbi-evidence.sh {tree} handoff",
+            f"OPENAGENT_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh {tree} build",
+            f"OPENAGENT_OPENSBI_HANDOFF_CMD={handoff!r} docs/sw/opensbi/capture-opensbi-evidence.sh {tree} handoff",
             "python3 scripts/check_software_bsp.py opensbi --require-evidence",
         ]
     if name == "aosp":
@@ -925,24 +925,24 @@ def linux_preflight(tree: Path | None, target_host: str | None) -> dict[str, Any
         check(tree / "drivers", "Linux drivers directory")
         check(tree / "arch", "Linux arch directory")
         check(
-            tree / "drivers/misc/openphone-hello/Kconfig", "imported OpenPhone Linux driver Kconfig"
+            tree / "drivers/misc/openagent-e1/Kconfig", "imported OpenAgent Linux driver Kconfig"
         )
-        check(tree / "arch/riscv/boot/dts/openphone/openphone-hello.dts", "imported OpenPhone DTS")
+        check(tree / "arch/riscv/boot/dts/openagent/openagent-e1.dts", "imported OpenAgent DTS")
         check(
-            tree / "Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml",
-            "imported OpenPhone DT schema",
+            tree / "Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml",
+            "imported OpenAgent DT schema",
         )
         check(tree / ".config", "external Linux .config")
         if (tree / ".config").is_file():
             config_text = (tree / ".config").read_text(errors="ignore")
-            for symbol in ["CONFIG_OPENPHONE_HELLO_NPU", "CONFIG_OPENPHONE_HELLO_DMA"]:
+            for symbol in ["CONFIG_OPENAGENT_E1_NPU", "CONFIG_OPENAGENT_E1_DMA"]:
                 ok = symbol in config_text
                 checks.append(
                     {"name": f"{symbol} configured", "status": "PASS" if ok else "BLOCKED"}
                 )
                 if not ok:
                     blockers.append(
-                        f"external Linux .config missing {symbol}; run openphone_hello.config olddefconfig after import"
+                        f"external Linux .config missing {symbol}; run openagent_e1.config olddefconfig after import"
                     )
 
     cross_compile = os.environ.get("CROSS_COMPILE", "riscv64-linux-gnu-")
@@ -1089,17 +1089,17 @@ def opensbi_preflight(tree: Path | None, handoff_cmd: str | None) -> dict[str, A
             )
             if not ok:
                 blockers.append(f"missing {description}: {path}")
-        imported_platform = tree / "platform/openphone/config.mk"
+        imported_platform = tree / "platform/openagent/config.mk"
         checks.append(
             {
-                "name": "optional imported OpenPhone OpenSBI platform",
+                "name": "optional imported OpenAgent OpenSBI platform",
                 "path": str(imported_platform),
                 "status": "PASS" if imported_platform.is_file() else "BLOCKED",
             }
         )
         if not imported_platform.is_file():
             blockers.append(
-                "OpenPhone OpenSBI platform is not imported; copy sw/opensbi/platform/openphone to platform/openphone if building PLATFORM=openphone"
+                "OpenAgent OpenSBI platform is not imported; copy sw/opensbi/platform/openagent to platform/openagent if building PLATFORM=openagent"
             )
 
     compiler_ok = any_command_exists(["riscv64-unknown-elf-gcc", "riscv64-linux-gnu-gcc"])
@@ -1123,7 +1123,7 @@ def opensbi_preflight(tree: Path | None, handoff_cmd: str | None) -> dict[str, A
         blockers.append(f"{make_detail}; OpenSBI requires GNU Make >= 3.82")
     if not handoff_cmd:
         blockers.append(
-            "OPENPHONE_OPENSBI_HANDOFF_CMD is not supplied; handoff capture needs the exact QEMU/Renode/board command"
+            "OPENAGENT_OPENSBI_HANDOFF_CMD is not supplied; handoff capture needs the exact QEMU/Renode/board command"
         )
 
     return {
@@ -1184,7 +1184,7 @@ def external_preflight_report(args: argparse.Namespace) -> dict[str, Any]:
         "READY_TO_CAPTURE" if all(t["status"] == "READY_TO_CAPTURE" for t in targets) else "BLOCKED"
     )
     return {
-        "schema": "openphone.software_bsp_external_preflight.v1",
+        "schema": "openagent.software_bsp_external_preflight.v1",
         "generated_utc": utc_now(),
         "claim_boundary": "environment_preflight_only_not_external_build_boot_or_runtime_evidence",
         "status": status,
@@ -1252,7 +1252,7 @@ def main() -> int:
             reports = [target_report(name) for name in names]
             print(
                 json.dumps(
-                    {"schema": "openphone.software_bsp_status.v1", "targets": reports},
+                    {"schema": "openagent.software_bsp_status.v1", "targets": reports},
                     indent=2,
                     sort_keys=True,
                 )
@@ -1306,7 +1306,7 @@ def main() -> int:
         reports = [target_report(name) for name in names]
         print(
             json.dumps(
-                {"schema": "openphone.software_bsp_status.v1", "targets": reports},
+                {"schema": "openagent.software_bsp_status.v1", "targets": reports},
                 indent=2,
                 sort_keys=True,
             )

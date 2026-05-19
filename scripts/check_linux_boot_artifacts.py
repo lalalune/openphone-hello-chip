@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "docs/evidence/linux/openphone-linux-boot-artifacts.json"
+MANIFEST = ROOT / "docs/evidence/linux/openagent-linux-boot-artifacts.json"
 LOCATOR = ROOT / "scripts/locate_chipyard_linux_payload.py"
 REPORT = ROOT / "build/reports/linux_boot_artifacts.json"
 
@@ -63,7 +63,7 @@ def payload_locator_status() -> dict[str, Any]:
         "id": "chipyard_linux_payload_locator",
         "state": "blocked",
         "selected_payload": "",
-        "report": "build/chipyard/openphone_rocket/chipyard-linux-payload.json",
+        "report": "build/chipyard/openagent_rocket/chipyard-linux-payload.json",
         "problems": [],
         "candidates": [],
     }
@@ -171,7 +171,7 @@ def build_report() -> dict[str, Any]:
     else:
         state = "PASS"
     return {
-        "schema": "openphone.linux_boot_artifacts.status.v1",
+        "schema": "openagent.linux_boot_artifacts.status.v1",
         "manifest": rel(MANIFEST),
         "claim_boundary": manifest.get("claim_boundary"),
         "status": state,

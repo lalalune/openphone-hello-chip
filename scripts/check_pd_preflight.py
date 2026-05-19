@@ -24,12 +24,12 @@ REQUIRED_KEYS = {
     "CLOCK_PORT",
     "CLOCK_PERIOD",
 }
-OPENROAD_TCL = ROOT / "pd/openroad/hello_soc.tcl"
+OPENROAD_TCL = ROOT / "pd/openroad/e1_soc.tcl"
 PD_INPUTS = [
     OPENROAD_TCL,
-    ROOT / "pd/constraints/hello_soc.sdc",
-    ROOT / "pd/constraints/hello_soc_gf180.sdc",
-    ROOT / "pd/constraints/hello_pd_smoke.sdc",
+    ROOT / "pd/constraints/e1_soc.sdc",
+    ROOT / "pd/constraints/e1_soc_gf180.sdc",
+    ROOT / "pd/constraints/e1_pd_smoke.sdc",
     ROOT / "pd/pin_order.cfg",
     ROOT / "pd/pin_order_smoke.cfg",
 ]
@@ -68,7 +68,7 @@ def check_config(config_path: Path, failures: list[str]) -> dict | None:
     if missing_keys:
         failures.append(f"{display_path(config_path)}: missing keys: {', '.join(missing_keys)}")
 
-    valid_design_names = {"hello_chip_top", "hello_pd_smoke_top"}
+    valid_design_names = {"e1_chip_top", "e1_pd_smoke_top"}
     if config.get("DESIGN_NAME") not in valid_design_names:
         failures.append(
             f"{display_path(config_path)}: DESIGN_NAME must be one of "
@@ -155,9 +155,9 @@ def openlane_command(config_path: Path) -> tuple[str, list[str]]:
         "-w",
         "/work",
         "--label",
-        "openphone.openlane=1",
+        "openagent.openlane=1",
         "--label",
-        f"openphone.repo={ROOT}",
+        f"openagent.repo={ROOT}",
         OPENLANE_IMAGE,
         "openlane",
         rel_config,

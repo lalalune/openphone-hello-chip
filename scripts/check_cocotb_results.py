@@ -14,10 +14,10 @@ DEFAULT_RESULT = ROOT / "verify/cocotb/results.xml"
 REPORT_DIR = ROOT / "build/reports/cocotb"
 MANIFEST = REPORT_DIR / "manifest.json"
 PIPELINE_TARGETS = {
-    "hello_chip_top_test_hello_chip",
-    "hello_linux_soc_contract_test_cpu_mem_intc_contract",
-    "hello_npu_test_hello_npu",
-    "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
+    "e1_chip_top_test_e1_chip",
+    "e1_linux_soc_contract_test_cpu_mem_intc_contract",
+    "e1_npu_test_e1_npu",
+    "e1_tiny_cpu_contract_tb_test_tiny_cpu_execution",
 }
 
 
@@ -59,10 +59,10 @@ def source_hashes(module: str, top: str) -> dict[str, str]:
         ROOT / f"verify/cocotb/{module}.py",
         ROOT / "scripts/run_cocotb.sh",
         ROOT / "scripts/check_cocotb_results.py",
-        ROOT / "compiler/runtime/hello_npu_runtime.py",
+        ROOT / "compiler/runtime/e1_npu_runtime.py",
     ]
-    if top == "hello_tiny_cpu_contract_tb":
-        candidates.append(ROOT / "verify/cocotb/hello_tiny_cpu_contract_tb.sv")
+    if top == "e1_tiny_cpu_contract_tb":
+        candidates.append(ROOT / "verify/cocotb/e1_tiny_cpu_contract_tb.sv")
     candidates.extend(sorted((ROOT / "rtl").rglob("*.sv")))
     return {str(path.relative_to(ROOT)): sha256(path) for path in candidates if path.is_file()}
 
@@ -85,16 +85,16 @@ def coverage_artifacts(module: str, top: str) -> dict:
 
 
 def contract_boundary(module: str, top: str) -> str:
-    if module == "test_hello_npu":
-        return "Directed scalar/GEMM scratchpad ABI checks for hello_npu only; no NNAPI, DMA-fed accelerator, model compiler, or performance closure."
-    if module == "test_hello_dma":
-        return "Directed byte-copy, AXI-Lite backpressure, partial-strobe, and error-path checks for hello_dma only; no coherent DMA or IOMMU coverage."
-    if module == "test_hello_display":
-        return "Directed XR24 scanout timing/MMIO checks for hello_display only; no DRM/KMS, HDMI/MIPI, compositor, or display PHY coverage."
+    if module == "test_e1_npu":
+        return "Directed scalar/GEMM scratchpad ABI checks for e1_npu only; no NNAPI, DMA-fed accelerator, model compiler, or performance closure."
+    if module == "test_e1_dma":
+        return "Directed byte-copy, AXI-Lite backpressure, partial-strobe, and error-path checks for e1_dma only; no coherent DMA or IOMMU coverage."
+    if module == "test_e1_display":
+        return "Directed XR24 scanout timing/MMIO checks for e1_display only; no DRM/KMS, HDMI/MIPI, compositor, or display PHY coverage."
     if module == "test_cpu_mem_intc_contract":
         return "Directed CPU memory/interrupt-controller contract checks around the tiny stub harness; not evidence for an application-class CPU subsystem."
-    if top == "hello_soc_top" or top == "hello_chip_top":
-        return "Directed hello-chip scaffold integration smoke only; not phone-class AP, OS boot, cache coherency, or silicon signoff evidence."
+    if top == "e1_soc_top" or top == "e1_chip_top":
+        return "Directed e1-chip scaffold integration smoke only; not phone-class AP, OS boot, cache coherency, or silicon signoff evidence."
     return "Directed cocotb smoke only; not coverage closure or product-class signoff evidence."
 
 
@@ -109,7 +109,7 @@ def load_manifest() -> dict:
                 }
             return data
     return {
-        "schema": "hello-chip-cocotb-evidence-v1",
+        "schema": "e1-chip-cocotb-evidence-v1",
         "generated_at_utc": None,
         "targets": {},
     }

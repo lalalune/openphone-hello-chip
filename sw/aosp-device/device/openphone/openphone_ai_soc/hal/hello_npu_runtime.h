@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-#ifndef OPENPHONE_HELLO_NPU_RUNTIME_H_
-#define OPENPHONE_HELLO_NPU_RUNTIME_H_
+#ifndef OPENAGENT_E1_NPU_RUNTIME_H_
+#define OPENAGENT_E1_NPU_RUNTIME_H_
 
 #include <string>
 
-namespace openphone {
-namespace hello_npu {
+namespace openagent {
+namespace e1_npu {
 
 struct ProbeResult {
 	bool device_node_present;
@@ -19,7 +19,7 @@ struct ProbeResult {
 ProbeResult ProbeDevice(const std::string &device_path);
 std::string FormatProbeResult(const std::string &device_path, const ProbeResult &result);
 
-}  // namespace hello_npu
-}  // namespace openphone
+}  // namespace e1_npu
+}  // namespace openagent
 
-#endif  // OPENPHONE_HELLO_NPU_RUNTIME_H_
+#endif  // OPENAGENT_E1_NPU_RUNTIME_H_

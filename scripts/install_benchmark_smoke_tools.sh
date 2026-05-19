@@ -4,7 +4,7 @@ set -eu
 repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
 prefix="$repo_dir/.venv/bin"
 lmbench_bin_dir=""
-host_smoke_marker="openphone-host-smoke"
+host_smoke_marker="openagent-host-smoke"
 
 usage() {
     cat <<'USAGE'

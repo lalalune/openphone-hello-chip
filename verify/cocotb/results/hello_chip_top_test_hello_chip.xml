@@ -1,8 +1,8 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
     <property name="random_seed" value="1779157695" />
-    <testcase name="chip_debug_bridge_bootrom_gpio_npu" classname="test_hello_chip" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_chip.py" lineno="72" time="0.12982606887817383" sim_time_ns="12320.001" ratio_time="94896.20310047931" />
-    <testcase name="chip_interrupt_smoke" classname="test_hello_chip" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_chip.py" lineno="123" time="0.3282039165496826" sim_time_ns="45340.001000000004" ratio_time="138145.82554847896" />
-    <testcase name="chip_rejects_unimplemented_alias_offsets" classname="test_hello_chip" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_chip.py" lineno="185" time="0.023024797439575195" sim_time_ns="2120.0009999999966" ratio_time="92074.68624050185" />
+    <testcase name="chip_debug_bridge_bootrom_gpio_npu" classname="test_e1_chip" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_e1_chip.py" lineno="72" time="0.12982606887817383" sim_time_ns="12320.001" ratio_time="94896.20310047931" />
+    <testcase name="chip_interrupt_smoke" classname="test_e1_chip" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_e1_chip.py" lineno="123" time="0.3282039165496826" sim_time_ns="45340.001000000004" ratio_time="138145.82554847896" />
+    <testcase name="chip_rejects_unimplemented_alias_offsets" classname="test_e1_chip" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_e1_chip.py" lineno="185" time="0.023024797439575195" sim_time_ns="2120.0009999999966" ratio_time="92074.68624050185" />
   </testsuite>
 </testsuites>

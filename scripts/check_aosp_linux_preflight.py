@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "build/reports/aosp_linux_preflight.json"
 CLAIM_BOUNDARY = (
-    "host_preflight_only_not_aosp_build_boot_cuttlefish_or_hello_chip_hardware_evidence"
+    "host_preflight_only_not_aosp_build_boot_cuttlefish_or_e1_chip_hardware_evidence"
 )
 
 LINUX_REQUIREMENTS = [
@@ -28,12 +28,12 @@ EXECUTION_TRACKS = {
     "import": [
         "AOSP checkout shape is valid",
         "repo-local sw/aosp-device inputs are present",
-        "device/openphone/openphone_ai_soc can be copied into the external tree",
+        "device/openagent/openagent_ai_soc can be copied into the external tree",
     ],
     "build": [
-        "lunch openphone_ai_soc-userdebug",
+        "lunch openagent_ai_soc-userdebug",
         "m vendorimage",
-        "checkvintf against out/target/product/openphone_ai_soc/vendor",
+        "checkvintf against out/target/product/openagent_ai_soc/vendor",
         "m vendor_sepolicy.cil selinux_policy",
         "m sepolicy_neverallows",
     ],
@@ -139,16 +139,16 @@ def repo_input_state() -> dict:
     required = [
         ROOT / "sw/aosp-device/import-aosp-device.sh",
         ROOT / "sw/aosp-device/capture-aosp-evidence.sh",
-        ROOT / "sw/aosp-device/manifests/openphone-ai-soc-local.xml",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/device.mk",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts",
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te",
+        ROOT / "sw/aosp-device/manifests/openagent-ai-soc-local.xml",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/AndroidProducts.mk",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/device.mk",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/openagent_ai_soc.mk",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/init.openagent.rc",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/fstab.openagent",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/file_contexts",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/e1_npu.te",
     ]
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
     return {
@@ -245,7 +245,7 @@ def build_report(args: argparse.Namespace) -> tuple[int, dict]:
         blockers.append("repo-local AOSP device inputs are incomplete")
         track_blockers["import"].extend(repo_inputs["missing"])
 
-    imported_tree = aosp_dir / "device/openphone/openphone_ai_soc" if aosp_dir is not None else None
+    imported_tree = aosp_dir / "device/openagent/openagent_ai_soc" if aosp_dir is not None else None
     import_status = {
         "repo_inputs": repo_inputs,
         "external_tree": path_state(imported_tree) if imported_tree else None,
@@ -263,7 +263,7 @@ def build_report(args: argparse.Namespace) -> tuple[int, dict]:
     }
 
     report = {
-        "schema": "openphone.aosp_linux_preflight.v1",
+        "schema": "openagent.aosp_linux_preflight.v1",
         "status": "blocked" if blockers else "pass",
         "claim_boundary": CLAIM_BOUNDARY,
         "aosp_dir": str(aosp_dir) if aosp_dir else "",
@@ -296,7 +296,7 @@ def build_report(args: argparse.Namespace) -> tuple[int, dict]:
         ),
         "evidence_policy": (
             "This preflight does not create docs/evidence/android logs and must not be "
-            "used as AOSP build, boot, CTS, VTS, or hello-chip hardware evidence."
+            "used as AOSP build, boot, CTS, VTS, or e1-chip hardware evidence."
         ),
     }
     return (2 if blockers else 0), report

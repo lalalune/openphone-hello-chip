@@ -1,7 +1,7 @@
-"""Long-transfer cocotb coverage for hello_dma.
+"""Long-transfer cocotb coverage for e1_dma.
 
-Scaffolds targeting the DMA RTL ports declared in ``rtl/dma/hello_dma.sv``,
-following the handshake style of ``verify/cocotb/test_hello_dma.py``.
+Scaffolds targeting the DMA RTL ports declared in ``rtl/dma/e1_dma.sv``,
+following the handshake style of ``verify/cocotb/test_e1_dma.py``.
 
 Not yet wired into ``verify/cocotb/Makefile``; the parent directory is
 intentionally separate so the top-level cocotb suite stays untouched while

@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_soc_top_formal(input logic clk);
+module e1_soc_top_formal(input logic clk);
     logic rst_n = 1'b0;
     (* anyseq *) logic mmio_valid;
     (* anyseq *) logic mmio_write;
@@ -16,7 +16,7 @@ module hello_soc_top_formal(input logic clk);
     logic mtip_o;
     logic [7:0] gpio_out;
 
-    hello_soc_top dut (
+    e1_soc_top dut (
         .clk(clk),
         .rst_n(rst_n),
         .mmio_valid(mmio_valid),

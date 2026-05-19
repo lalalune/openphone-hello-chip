@@ -1,6 +1,6 @@
 """CLINT timer interrupt entry contract scaffold.
 
-The v0 contract fabric (hello_linux_soc_contract) does not yet instantiate
+The v0 contract fabric (e1_linux_soc_contract) does not yet instantiate
 a CLINT. This file pins the future contract so the test lights up when the
 Chipyard Rocket wrapper drops in (docs/rtl/cpu-config-selection.md).
 
@@ -26,14 +26,14 @@ CLINT_MTIME = CLINT_BASE + 0xBFF8
 async def clint_timer_irq_fires_when_mtime_ge_mtimecmp(dut):
     """Set mtimecmp = mtime + N, wait, assert mtip rises on cpu_timer_irq."""
     raise NotImplementedError(
-        "Wire after CLINT lands in hello_linux_soc_contract via Rocket wrapper."
+        "Wire after CLINT lands in e1_linux_soc_contract via Rocket wrapper."
     )
 
 
 @cocotb.test(skip=True)
 async def clint_msip_software_interrupt(dut):
     """Write 1 to msip[0], assert cpu_software_irq rises within one cycle."""
-    raise NotImplementedError("Wire after CLINT msip port appears on hello_linux_soc_contract.")
+    raise NotImplementedError("Wire after CLINT msip port appears on e1_linux_soc_contract.")
 
 
 @cocotb.test(skip=True)

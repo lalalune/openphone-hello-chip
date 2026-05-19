@@ -6,32 +6,32 @@
     this repository before use. For a plain local checkout, prefer
     sw/aosp-device/import-aosp-device.sh.
   -->
-  <remote name="openphone-local" fetch="file:///REPLACE_WITH_OPENPHONE_REPO_PARENT" />
-  <project name="openphone-hello-chip"
-           path="external/openphone-ai-soc"
-           remote="openphone-local"
+  <remote name="openagent-local" fetch="file:///REPLACE_WITH_OPENAGENT_REPO_PARENT" />
+  <project name="openagent-e1-chip"
+           path="external/openagent-ai-soc"
+           remote="openagent-local"
            revision="HEAD">
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/AndroidProducts.mk"
-              dest="device/openphone/openphone_ai_soc/AndroidProducts.mk" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk"
-              dest="device/openphone/openphone_ai_soc/BoardConfig.mk" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/device.mk"
-              dest="device/openphone/openphone_ai_soc/device.mk" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/openphone_ai_soc.mk"
-              dest="device/openphone/openphone_ai_soc/openphone_ai_soc.mk" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/init.openphone.rc"
-              dest="device/openphone/openphone_ai_soc/init.openphone.rc" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone"
-              dest="device/openphone/openphone_ai_soc/fstab.openphone" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml"
-              dest="device/openphone/openphone_ai_soc/manifest.xml" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment"
-              dest="device/openphone/openphone_ai_soc/kernel/openphone_ai_soc.fragment" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts"
-              dest="device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/file_contexts"
-              dest="device/openphone/openphone_ai_soc/sepolicy/file_contexts" />
-    <linkfile src="sw/aosp-device/device/openphone/openphone_ai_soc/sepolicy/hello_npu.te"
-              dest="device/openphone/openphone_ai_soc/sepolicy/hello_npu.te" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/AndroidProducts.mk"
+              dest="device/openagent/openagent_ai_soc/AndroidProducts.mk" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk"
+              dest="device/openagent/openagent_ai_soc/BoardConfig.mk" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/device.mk"
+              dest="device/openagent/openagent_ai_soc/device.mk" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/openagent_ai_soc.mk"
+              dest="device/openagent/openagent_ai_soc/openagent_ai_soc.mk" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/init.openagent.rc"
+              dest="device/openagent/openagent_ai_soc/init.openagent.rc" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/fstab.openagent"
+              dest="device/openagent/openagent_ai_soc/fstab.openagent" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml"
+              dest="device/openagent/openagent_ai_soc/manifest.xml" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/kernel/openagent_ai_soc.fragment"
+              dest="device/openagent/openagent_ai_soc/kernel/openagent_ai_soc.fragment" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/dts/openagent-e1-android.dts"
+              dest="device/openagent/openagent_ai_soc/dts/openagent-e1-android.dts" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/file_contexts"
+              dest="device/openagent/openagent_ai_soc/sepolicy/file_contexts" />
+    <linkfile src="sw/aosp-device/device/openagent/openagent_ai_soc/sepolicy/e1_npu.te"
+              dest="device/openagent/openagent_ai_soc/sepolicy/e1_npu.te" />
   </project>
 </manifest>

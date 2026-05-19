@@ -7,7 +7,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 KERNEL="${KERNEL:-${REPO_ROOT}/external/linux/arch/riscv/boot/Image}"
-INITRD="${INITRD:-${REPO_ROOT}/build/initramfs/openphone_tier2.cpio.gz}"
+INITRD="${INITRD:-${REPO_ROOT}/build/initramfs/openagent_tier2.cpio.gz}"
 LOG_DIR="${REPO_ROOT}/build/sim/qemu"
 LOG="${LOG_DIR}/tier2_linux.log"
 

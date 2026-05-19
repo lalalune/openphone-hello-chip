@@ -18,9 +18,9 @@ from cpu_ap_evidence_lib import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-SELECTED = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
+SELECTED = ROOT / "docs/generators/chipyard/openagent-rocket-manifest.json"
 TEMPLATE = ROOT / "docs/generators/chipyard/import-manifest.template.json"
-BUILD_MANIFEST = ROOT / "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json"
+BUILD_MANIFEST = ROOT / "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json"
 
 
 def require(condition: bool, message: str, errors: list[str]) -> None:
@@ -35,7 +35,7 @@ def check_import_template(errors: list[str]) -> None:
     manifest = load_json(TEMPLATE)
     chipyard = manifest.get("chipyard", {})
     require(
-        manifest.get("schema") == "openphone.cpu_ap_import_manifest.v1",
+        manifest.get("schema") == "openagent.cpu_ap_import_manifest.v1",
         "unexpected import manifest template schema",
         errors,
     )
@@ -66,7 +66,7 @@ def check_selected_manifest(errors: list[str]) -> None:
     policy = manifest.get("claim_policy", {})
 
     require(
-        manifest.get("schema") == "openphone.cpu_ap_generator_manifest.v1",
+        manifest.get("schema") == "openagent.cpu_ap_generator_manifest.v1",
         "unexpected selected manifest schema",
         errors,
     )
@@ -90,8 +90,8 @@ def check_selected_manifest(errors: list[str]) -> None:
         errors,
     )
     require(
-        selected.get("config_name") == "OpenPhoneRocketConfig",
-        "config name must be OpenPhoneRocketConfig",
+        selected.get("config_name") == "OpenAgentRocketConfig",
+        "config name must be OpenAgentRocketConfig",
         errors,
     )
     require(
@@ -106,10 +106,10 @@ def check_selected_manifest(errors: list[str]) -> None:
     )
 
     for path in (
-        "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
-        "build/chipyard/openphone_rocket/openphone-hello.dts",
-        "build/chipyard/openphone_rocket/openphone_rocket_ap.v",
-        "build/chipyard/openphone_rocket/simulator",
+        "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json",
+        "build/chipyard/openagent_rocket/openagent-e1.dts",
+        "build/chipyard/openagent_rocket/openagent_rocket_ap.v",
+        "build/chipyard/openagent_rocket/simulator",
     ):
         require(
             path in manifest.get("expected_generated_artifacts", []),
@@ -152,7 +152,7 @@ def check_generated_import_manifest(errors: list[str]) -> None:
     evidence_hashes = manifest.get("evidence_sha256", {})
 
     require(
-        manifest.get("schema") == "openphone.cpu_ap_import_manifest.v1",
+        manifest.get("schema") == "openagent.cpu_ap_import_manifest.v1",
         "unexpected generated manifest schema",
         errors,
     )
@@ -176,8 +176,8 @@ def check_generated_import_manifest(errors: list[str]) -> None:
         bool(chipyard.get("submodules")), "generated manifest must include submodule SHAs", errors
     )
     require(
-        generation.get("config") == "OpenPhoneRocketConfig",
-        "generated manifest must use OpenPhoneRocketConfig",
+        generation.get("config") == "OpenAgentRocketConfig",
+        "generated manifest must use OpenAgentRocketConfig",
         errors,
     )
     require(isinstance(artifacts, dict), "generated manifest artifacts must be an object", errors)

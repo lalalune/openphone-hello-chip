@@ -4,8 +4,8 @@ set -eu
 repo_dir="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 checkout="${CHIPYARD_CHECKOUT:-$repo_dir/external/chipyard}"
 sim_dir="$checkout/sims/verilator"
-config="${CHIPYARD_CONFIG:-OpenPhoneRocketConfig}"
-config_package="${CHIPYARD_CONFIG_PACKAGE:-openphone}"
+config="${CHIPYARD_CONFIG:-OpenAgentRocketConfig}"
+config_package="${CHIPYARD_CONFIG_PACKAGE:-openagent}"
 
 cd "$repo_dir"
 CHIPYARD_CHECKOUT="$checkout" python3 scripts/check_chipyard_verilator_preflight.py

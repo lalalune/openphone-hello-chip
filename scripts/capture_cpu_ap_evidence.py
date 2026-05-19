@@ -29,19 +29,19 @@ from cpu_ap_evidence_lib import (
 )
 
 MODE_TO_TRANSCRIPT = {
-    "ap-benchmarks": ("ap_benchmark_log", "openphone_hello_ap_benchmarks"),
-    "isa-cache-mmu": ("isa_cache_mmu_log", "openphone_hello_isa_cache_mmu"),
-    "opensbi-boot": ("opensbi_boot_log", "openphone_hello_opensbi_boot"),
-    "linux-boot": ("linux_boot_log", "openphone_hello_linux_boot"),
-    "trap-timer-irq": ("trap_timer_irq_log", "openphone_hello_trap_timer_irq"),
+    "ap-benchmarks": ("ap_benchmark_log", "openagent_e1_ap_benchmarks"),
+    "isa-cache-mmu": ("isa_cache_mmu_log", "openagent_e1_isa_cache_mmu"),
+    "opensbi-boot": ("opensbi_boot_log", "openagent_e1_opensbi_boot"),
+    "linux-boot": ("linux_boot_log", "openagent_e1_linux_boot"),
+    "trap-timer-irq": ("trap_timer_irq_log", "openagent_e1_trap_timer_irq"),
 }
 
 MODE_ENV = {
-    "ap-benchmarks": "OPENPHONE_AP_BENCHMARKS_CMD",
-    "isa-cache-mmu": "OPENPHONE_ISA_CACHE_MMU_CMD",
-    "opensbi-boot": "OPENPHONE_OPENSBI_BOOT_CMD",
-    "linux-boot": "OPENPHONE_LINUX_BOOT_CMD",
-    "trap-timer-irq": "OPENPHONE_TRAP_TIMER_IRQ_CMD",
+    "ap-benchmarks": "OPENAGENT_AP_BENCHMARKS_CMD",
+    "isa-cache-mmu": "OPENAGENT_ISA_CACHE_MMU_CMD",
+    "opensbi-boot": "OPENAGENT_OPENSBI_BOOT_CMD",
+    "linux-boot": "OPENAGENT_LINUX_BOOT_CMD",
+    "trap-timer-irq": "OPENAGENT_TRAP_TIMER_IRQ_CMD",
 }
 
 DTS_BOOT_REQUIREMENTS = {
@@ -53,10 +53,10 @@ DTS_BOOT_REQUIREMENTS = {
     "chosen stdout": [r"stdout-path", r"bootargs\s*=.*console="],
 }
 
-HELLO_PERIPHERAL_REQUIREMENTS = {
-    "hello npu mmio": [r"openphone,hello-npu"],
-    "hello dma mmio": [r"openphone,hello-dma"],
-    "hello display mmio": [r"openphone,hello-display"],
+E1_PERIPHERAL_REQUIREMENTS = {
+    "e1 npu mmio": [r"openagent,e1-npu"],
+    "e1 dma mmio": [r"openagent,e1-dma"],
+    "e1 display mmio": [r"openagent,e1-display"],
 }
 
 
@@ -93,12 +93,12 @@ def dts_audit(args: argparse.Namespace) -> int:
     for label, patterns in DTS_BOOT_REQUIREMENTS.items():
         if not any(re.search(pattern, uncommented, flags=re.I | re.S) for pattern in patterns):
             missing.append(label)
-    missing_hello: list[str] = []
-    for label, patterns in HELLO_PERIPHERAL_REQUIREMENTS.items():
+    missing_e1: list[str] = []
+    for label, patterns in E1_PERIPHERAL_REQUIREMENTS.items():
         if not any(re.search(pattern, uncommented, flags=re.I | re.S) for pattern in patterns):
-            missing_hello.append(label)
-    if args.require_hello_peripherals:
-        missing.extend(missing_hello)
+            missing_e1.append(label)
+    if args.require_e1_peripherals:
+        missing.extend(missing_e1)
     serial_blocks = re.findall(
         r"serial@[0-9a-fA-F]+\s*\{.*?\n\s*\};", uncommented, flags=re.I | re.S
     )
@@ -135,13 +135,13 @@ def dts_audit(args: argparse.Namespace) -> int:
         return 1 if args.require_bootable else 0
 
     print(f"STATUS: PASS cpu_ap.dts_boot_audit - {rel(path)} has AP boot DTB markers")
-    if missing_hello:
+    if missing_e1:
         print(
-            "  note: generated DTS lacks hello peripheral smoke markers: "
-            + ", ".join(missing_hello)
+            "  note: generated DTS lacks e1 peripheral smoke markers: "
+            + ", ".join(missing_e1)
         )
         print(
-            "  note: linux-boot evidence still needs a real hello MMIO smoke result "
+            "  note: linux-boot evidence still needs a real e1 MMIO smoke result "
             "from the selected AP/software integration"
         )
     if args.run_dtc:
@@ -162,7 +162,7 @@ def intake(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         print(
-            "STATUS: BLOCKED cpu_ap.transcript_intake - generate/import OpenPhoneRocketConfig before archiving boot evidence"
+            "STATUS: BLOCKED cpu_ap.transcript_intake - generate/import OpenAgentRocketConfig before archiving boot evidence"
         )
         return 2
     source = Path(args.source).expanduser()
@@ -189,16 +189,16 @@ def intake(args: argparse.Namespace) -> int:
     destination.parent.mkdir(parents=True, exist_ok=True)
     captured = "\n".join(
         [
-            f"openphone-evidence: target=cpu_ap artifact={artifact_name}",
-            f"openphone-evidence: source={source}",
-            f"openphone-evidence: command={args.command}",
-            f"openphone-evidence: generated_manifest={generated_manifest_rel}",
-            f"openphone-evidence: generated_manifest_sha256={generated_manifest_sha}",
-            f"openphone-evidence: intake_utc={utc_now()}",
-            "openphone-evidence: raw_transcript_begin",
+            f"openagent-evidence: target=cpu_ap artifact={artifact_name}",
+            f"openagent-evidence: source={source}",
+            f"openagent-evidence: command={args.command}",
+            f"openagent-evidence: generated_manifest={generated_manifest_rel}",
+            f"openagent-evidence: generated_manifest_sha256={generated_manifest_sha}",
+            f"openagent-evidence: intake_utc={utc_now()}",
+            "openagent-evidence: raw_transcript_begin",
             raw_text.rstrip(),
-            "openphone-evidence: raw_transcript_end",
-            "openphone-evidence: status=PASS",
+            "openagent-evidence: raw_transcript_end",
+            "openagent-evidence: status=PASS",
             "",
         ]
     )
@@ -241,8 +241,8 @@ def template(args: argparse.Namespace) -> int:
         for marker in spec.get("raw_required_strings", []):
             print(f"# - {marker}")
         print("#")
-        print(f"openphone-evidence: template_for={artifact_name}")
-        print("openphone-evidence: replace_this_file_with_real_generated_ap_output=true")
+        print(f"openagent-evidence: template_for={artifact_name}")
+        print("openagent-evidence: replace_this_file_with_real_generated_ap_output=true")
         print()
     return 0
 
@@ -274,7 +274,7 @@ def capture_plan(args: argparse.Namespace) -> int:
         print(
             json.dumps(
                 {
-                    "schema": "openphone.cpu_ap_capture_plan.v1",
+                    "schema": "openagent.cpu_ap_capture_plan.v1",
                     "generated_manifest": str(GENERATED_MANIFEST.relative_to(ROOT)),
                     "wrapper": "scripts/capture_chipyard_linux_evidence.sh",
                     "claim_boundary": "plan_only_no_boot_claim",
@@ -355,7 +355,7 @@ def main(argv: list[str]) -> int:
     dts_parser.add_argument(
         "--path",
         default=str(
-            (ROOT / "build/chipyard/openphone_rocket/openphone-hello.dts").relative_to(ROOT)
+            (ROOT / "build/chipyard/openagent_rocket/openagent-e1.dts").relative_to(ROOT)
         ),
         help="DTS path to audit; defaults to the generated selected AP DTS",
     )
@@ -370,9 +370,9 @@ def main(argv: list[str]) -> int:
         help="Return nonzero when AP boot markers are missing",
     )
     dts_parser.add_argument(
-        "--require-hello-peripherals",
+        "--require-e1-peripherals",
         action="store_true",
-        help="Also require hello NPU/DMA/display MMIO markers used by the Linux smoke claim",
+        help="Also require e1 NPU/DMA/display MMIO markers used by the Linux smoke claim",
     )
     dts_parser.set_defaults(func=dts_audit)
 

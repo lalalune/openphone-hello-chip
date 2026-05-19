@@ -1,10 +1,10 @@
 {
-  "_generated_from": "sw/platform/hello_platform_contract.json",
+  "_generated_from": "sw/platform/e1_platform_contract.json",
   "_generator": "scripts/gen_platform_artifacts.py",
   "devices": {
     "display": {
       "base": "0x10030000",
-      "compatible": "openphone,hello-display",
+      "compatible": "openagent,e1-display",
       "irq": 4,
       "registers": {
         "ENABLE": "0x0C",
@@ -22,7 +22,7 @@
     },
     "dma": {
       "base": "0x10010000",
-      "compatible": "openphone,hello-dma",
+      "compatible": "openagent,e1-dma",
       "irq": 2,
       "registers": {
         "BEATS_ISSUED": "0x18",
@@ -45,7 +45,7 @@
     },
     "npu": {
       "base": "0x10020000",
-      "compatible": "openphone,hello-npu",
+      "compatible": "openagent,e1-npu",
       "irq": 3,
       "registers": {
         "ACC": "0x14",
@@ -106,7 +106,7 @@
     "dram_base": "0x80000000",
     "dram_size": "0x10000000"
   },
-  "platform": "openphone-hello-cpu-variant",
+  "platform": "openagent-e1-cpu-variant",
   "uart": {
     "base": "0x10001000",
     "baud": 115200,

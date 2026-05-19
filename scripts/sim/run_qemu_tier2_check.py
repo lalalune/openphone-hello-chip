@@ -3,7 +3,7 @@
 """Run Tier 2 Linux+busybox QEMU boot and assert userspace banner + shell prompt.
 
 Asserts within 30 seconds:
-  * "openphone tier2: linux booted"
+  * "openagent tier2: linux booted"
   * "/ #"  (busybox prompt)
 
 Log: build/sim/qemu/tier2_linux.log
@@ -23,11 +23,11 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 KERNEL = Path(os.environ.get("KERNEL", REPO_ROOT / "external/linux/arch/riscv/boot/Image"))
-INITRD = Path(os.environ.get("INITRD", REPO_ROOT / "build/initramfs/openphone_tier2.cpio.gz"))
+INITRD = Path(os.environ.get("INITRD", REPO_ROOT / "build/initramfs/openagent_tier2.cpio.gz"))
 LOG = REPO_ROOT / "build/sim/qemu/tier2_linux.log"
 TIMEOUT_S = 30.0
 
-WANT_BANNER = "openphone tier2: linux booted"
+WANT_BANNER = "openagent tier2: linux booted"
 WANT_PROMPT = "/ #"
 
 

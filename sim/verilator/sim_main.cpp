@@ -1,4 +1,4 @@
-#include "Vhello_chip_top.h"
+#include "Ve1_chip_top.h"
 #include "verilated.h"
 
 #include <cstdint>
@@ -9,7 +9,7 @@ static vluint64_t main_time = 0;
 
 double sc_time_stamp() { return main_time; }
 
-static void tick(Vhello_chip_top* top) {
+static void tick(Ve1_chip_top* top) {
     top->CLK_IN = 0;
     top->eval();
     main_time++;
@@ -18,7 +18,7 @@ static void tick(Vhello_chip_top* top) {
     main_time++;
 }
 
-static void dbg_pulse(Vhello_chip_top* top, uint8_t dbg_addr, uint8_t dbg_wdata, bool dbg_write, bool dbg_launch = false) {
+static void dbg_pulse(Ve1_chip_top* top, uint8_t dbg_addr, uint8_t dbg_wdata, bool dbg_write, bool dbg_launch = false) {
     top->DBG_ADDR = dbg_addr & 0xf;
     top->DBG_WDATA = dbg_wdata & 0xf;
     top->DBG_WRITE = dbg_write ? 1 : 0;
@@ -30,32 +30,32 @@ static void dbg_pulse(Vhello_chip_top* top, uint8_t dbg_addr, uint8_t dbg_wdata,
     top->DBG_LAUNCH = 0;
 }
 
-static void load_addr(Vhello_chip_top* top, uint32_t addr) {
+static void load_addr(Ve1_chip_top* top, uint32_t addr) {
     for (int i = 0; i < 8; ++i) {
         dbg_pulse(top, i, (addr >> (4 * i)) & 0xf, true);
     }
 }
 
-static void load_wdata(Vhello_chip_top* top, uint32_t data) {
+static void load_wdata(Ve1_chip_top* top, uint32_t data) {
     for (int i = 0; i < 8; ++i) {
         dbg_pulse(top, 8 + i, (data >> (4 * i)) & 0xf, true);
     }
 }
 
-static uint8_t read_nibble(Vhello_chip_top* top, int index) {
+static uint8_t read_nibble(Ve1_chip_top* top, int index) {
     dbg_pulse(top, index, 0, false);
     top->eval();
     return top->DBG_RDATA & 0xf;
 }
 
-static void write32(Vhello_chip_top* top, uint32_t addr, uint32_t data) {
+static void write32(Ve1_chip_top* top, uint32_t addr, uint32_t data) {
     load_addr(top, addr);
     load_wdata(top, data);
     dbg_pulse(top, 0, 0, true, true);
     tick(top);
 }
 
-static uint32_t read32(Vhello_chip_top* top, uint32_t addr) {
+static uint32_t read32(Ve1_chip_top* top, uint32_t addr) {
     load_addr(top, addr);
     dbg_pulse(top, 0, 0, false, true);
     tick(top);
@@ -69,7 +69,7 @@ static uint32_t read32(Vhello_chip_top* top, uint32_t addr) {
 
 int main(int argc, char** argv) {
     Verilated::commandArgs(argc, argv);
-    Vhello_chip_top* top = new Vhello_chip_top;
+    Ve1_chip_top* top = new Ve1_chip_top;
 
     top->RST_N = 0;
     top->DBG_VALID = 0;
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < 4; ++i) tick(top);
     if (read32(top, 0x10020008) != 42) return EXIT_FAILURE;
 
-    std::cout << "hello_chip Verilator smoke passed\n";
+    std::cout << "e1_chip Verilator smoke passed\n";
     top->final();
     delete top;
     return EXIT_SUCCESS;

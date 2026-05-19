@@ -1,19 +1,19 @@
 """PLIC enable/threshold/claim contract scaffold.
 
-Drives the existing hello_interrupt_controller AXI-Lite target as a
+Drives the existing e1_interrupt_controller AXI-Lite target as a
 PLIC-style claim/complete contract. The current controller implements
 enable + claim + complete but does not yet expose a threshold register;
 when the production PLIC lands (see docs/rtl/cpu-config-selection.md)
 this test must be extended with threshold writes at offset 0x10.
 
-Register map (matches rtl/interrupts/hello_interrupt_controller.sv):
+Register map (matches rtl/interrupts/e1_interrupt_controller.sv):
     0x00  ID                   (RO)
     0x04  PENDING              (RO, set by hardware, cleared by complete)
     0x08  ENABLE               (RW, bit per source)
     0x0C  CLAIM/COMPLETE       (RO=claim_id; W=complete by writing source id)
     0x10  THRESHOLD            (FUTURE; not yet implemented)
 
-The DUT here is hello_linux_soc_contract; the PLIC window is at
+The DUT here is e1_linux_soc_contract; the PLIC window is at
 CPU-visible base 0x0C00_0000.
 """
 
@@ -119,7 +119,7 @@ async def plic_threshold_masks_below(dut):
 async def plic_priority_order_lowest_first_v0(dut):
     """v0 contract: claim returns lowest enabled pending source id.
 
-    hello_interrupt_controller does not yet implement priority; this test
+    e1_interrupt_controller does not yet implement priority; this test
     pins the current behavior so a regression on priority introduction is
     caught and the test is updated deliberately.
     """

@@ -2,21 +2,21 @@
 set -eu
 
 repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
-firmware="$repo_dir/build/qemu/hello_qemu_firmware.elf"
-firmware_lock="$repo_dir/build/qemu/.hello_qemu_firmware.lock"
+firmware="$repo_dir/build/qemu/e1_qemu_firmware.elf"
+firmware_lock="$repo_dir/build/qemu/.e1_qemu_firmware.lock"
 smoke_log="$repo_dir/build/reports/renode_smoke.log"
 smoke_manifest="$repo_dir/build/reports/renode_smoke.manifest"
 attempt_log="$repo_dir/build/reports/renode_smoke_attempt.log"
 banner_contract="$repo_dir/sim/renode/expected_serial_banner.txt"
-banner="openphone hello qemu"
+banner="openagent e1 qemu"
 intake_transcript=
 smoke_seconds="${RENODE_SMOKE_SECONDS:-30}"
 qemu_transcript="$repo_dir/build/reports/qemu_smoke.log"
 artifact_dir="$repo_dir/build/renode"
-transcript="$artifact_dir/openphone_hello_uart.transcript"
-manifest="$artifact_dir/openphone_hello_smoke.json"
-status_report="$artifact_dir/openphone_hello_status.json"
-schema="$repo_dir/sim/renode/openphone_hello_smoke.schema.json"
+transcript="$artifact_dir/openagent_e1_uart.transcript"
+manifest="$artifact_dir/openagent_e1_smoke.json"
+status_report="$artifact_dir/openagent_e1_status.json"
+schema="$repo_dir/sim/renode/openagent_e1_smoke.schema.json"
 
 status_line() {
     state=$1
@@ -72,22 +72,22 @@ renode_path = sys.argv[7] or None
 
 data = {
     "schema_version": 1,
-    "target": "openphone-hello",
+    "target": "openagent-e1",
     "model_kind": "qemu_virt_reference",
     "status": state,
     "check": check,
     "detail": detail,
     "exit_code": exit_code,
     "blocker_kind": blocker_kind,
-    "claim_boundary": "qemu-virt software reference only; not hello-chip hardware ABI boot evidence",
+    "claim_boundary": "qemu-virt software reference only; not e1-chip hardware ABI boot evidence",
     "command": "scripts/run_renode.sh --check",
     "renode_path": renode_path,
     "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
     "required_artifacts": {
-        "firmware": "build/qemu/hello_qemu_firmware.elf",
+        "firmware": "build/qemu/e1_qemu_firmware.elf",
         "qemu_reference_transcript": "build/reports/qemu_smoke.log",
-        "renode_transcript": "build/renode/openphone_hello_uart.transcript",
-        "manifest": "build/renode/openphone_hello_smoke.json",
+        "renode_transcript": "build/renode/openagent_e1_uart.transcript",
+        "manifest": "build/renode/openagent_e1_smoke.json",
     },
 }
 report.write_text(json.dumps(data, indent=2) + "\n")
@@ -143,8 +143,8 @@ done
 
 semantic_check() {
     failed=0
-    repl="$repo_dir/sim/renode/openphone_hello.repl"
-    resc="$repo_dir/sim/renode/openphone_hello.resc"
+    repl="$repo_dir/sim/renode/openagent_e1.repl"
+    resc="$repo_dir/sim/renode/openagent_e1.resc"
     readme="$repo_dir/docs/sim/renode/README.md"
 
     for path in "$repl" "$resc" "$readme" "$banner_contract" "$schema"; do
@@ -171,16 +171,16 @@ semantic_check() {
         status_line "FAIL" "renode.semantic" "Renode UART must match qemu-virt UART 0x10000000"
         failed=1
     }
-    grep -q "LoadELF @build/qemu/hello_qemu_firmware.elf" "$resc" || {
-        status_line "FAIL" "renode.semantic" "sim/renode/openphone_hello.resc must load the qemu-virt firmware ELF"
+    grep -q "LoadELF @build/qemu/e1_qemu_firmware.elf" "$resc" || {
+        status_line "FAIL" "renode.semantic" "sim/renode/openagent_e1.resc must load the qemu-virt firmware ELF"
         failed=1
     }
     grep -q "software reference" "$readme" || {
         status_line "FAIL" "renode.semantic" "docs/sim/renode/README.md must mark Renode as software reference only"
         failed=1
     }
-    grep -q "hello-chip hardware ABI" "$readme" || {
-        status_line "FAIL" "renode.semantic" "docs/sim/renode/README.md must separate Renode from hello-chip hardware ABI"
+    grep -q "e1-chip hardware ABI" "$readme" || {
+        status_line "FAIL" "renode.semantic" "docs/sim/renode/README.md must separate Renode from e1-chip hardware ABI"
         failed=1
     }
     grep -q "$banner" "$readme" || {
@@ -411,7 +411,7 @@ write_run_manifest() {
         printf 'firmware_sha256=%s\n' "$firmware_hash"
         printf 'renode=%s\n' "$(command -v renode)"
         printf 'renode_version=%s\n' "$(renode_version_label)"
-        printf 'renode_command=renode --console --disable-xwt sim/renode/openphone_hello.resc\n'
+        printf 'renode_command=renode --console --disable-xwt sim/renode/openagent_e1.resc\n'
         printf 'duration_seconds=%s\n' "$smoke_seconds"
         printf 'detail=%s\n' "$detail"
     } >"$smoke_manifest"
@@ -421,7 +421,7 @@ run_bounded_smoke() {
     mkdir -p "$repo_dir/build/reports"
     rm -f "$attempt_log"
 
-    renode --console --disable-xwt sim/renode/openphone_hello.resc >"$attempt_log" 2>&1 &
+    renode --console --disable-xwt sim/renode/openagent_e1.resc >"$attempt_log" 2>&1 &
     renode_pid=$!
 
     sleep "$smoke_seconds"
@@ -511,22 +511,22 @@ def sha256(path: Path) -> str:
 def write_status(status, check, detail, exit_code, blocker_kind):
     data = {
         "schema_version": 1,
-        "target": "openphone-hello",
+        "target": "openagent-e1",
         "model_kind": "qemu_virt_reference",
         "status": status,
         "check": check,
         "detail": detail,
         "exit_code": exit_code,
         "blocker_kind": blocker_kind,
-        "claim_boundary": "qemu-virt software reference only; not hello-chip hardware ABI boot evidence",
+        "claim_boundary": "qemu-virt software reference only; not e1-chip hardware ABI boot evidence",
         "command": "scripts/run_renode.sh --check",
         "renode_path": renode_path,
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "required_artifacts": {
-            "firmware": "build/qemu/hello_qemu_firmware.elf",
+            "firmware": "build/qemu/e1_qemu_firmware.elf",
             "qemu_reference_transcript": "build/reports/qemu_smoke.log",
-            "renode_transcript": "build/renode/openphone_hello_uart.transcript",
-            "manifest": "build/renode/openphone_hello_smoke.json",
+            "renode_transcript": "build/renode/openagent_e1_uart.transcript",
+            "manifest": "build/renode/openagent_e1_smoke.json",
         },
     }
     status_report.write_text(json.dumps(data, indent=2) + "\n")
@@ -561,7 +561,7 @@ if version_result.returncode != 0 or "Renode" not in renode_version or "fake" in
     write_status("FAIL", "renode.version", detail, 1, "tool_execution_failed")
     raise SystemExit(1)
 
-command = [renode_path, "--console", "--disable-xwt", "sim/renode/openphone_hello.resc"]
+command = [renode_path, "--console", "--disable-xwt", "sim/renode/openagent_e1.resc"]
 transcript.parent.mkdir(parents=True, exist_ok=True)
 try:
     result = subprocess.run(
@@ -591,12 +591,12 @@ if banner not in output:
 
 data = {
     "schema_version": 1,
-    "target": "openphone-hello",
+    "target": "openagent-e1",
     "model_kind": "qemu_virt_reference",
     "command": " ".join(command),
-    "firmware": "build/qemu/hello_qemu_firmware.elf",
+    "firmware": "build/qemu/e1_qemu_firmware.elf",
     "firmware_sha256": sha256(firmware),
-    "transcript": "build/renode/openphone_hello_uart.transcript",
+    "transcript": "build/renode/openagent_e1_uart.transcript",
     "transcript_sha256": sha256(transcript),
     "qemu_reference_transcript": "build/reports/qemu_smoke.log",
     "qemu_reference_transcript_sha256": sha256(qemu_transcript),
@@ -662,11 +662,11 @@ if [ "$mode" = "check" ]; then
     exit 1
 fi
 
-echo "Launching Renode qemu-virt software reference target. This is not the hello-chip hardware ABI."
+echo "Launching Renode qemu-virt software reference target. This is not the e1-chip hardware ABI."
 echo "This interactive target does not create release evidence by itself. For bounded evidence run: make renode-check"
 acquire_firmware_lock || exit $?
 trap release_firmware_lock EXIT INT TERM
 if [ ! -f "$firmware" ]; then
     blocked "Renode run needs ${firmware#"$repo_dir"/}; run scripts/run_qemu.sh --build-firmware first."
 fi
-renode sim/renode/openphone_hello.resc
+renode sim/renode/openagent_e1.resc

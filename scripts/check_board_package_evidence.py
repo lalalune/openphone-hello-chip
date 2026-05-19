@@ -366,8 +366,8 @@ def validate_scaling_assessment(manifest: dict, failures: list[str]) -> None:
     if not isinstance(assessment, dict):
         failures.append(f"{value}: assessment must be a mapping")
         return
-    if assessment.get("schema") != "openphone.board_package_scaling_assessment.v1":
-        failures.append(f"{value}: schema must be openphone.board_package_scaling_assessment.v1")
+    if assessment.get("schema") != "openagent.board_package_scaling_assessment.v1":
+        failures.append(f"{value}: schema must be openagent.board_package_scaling_assessment.v1")
     if assessment.get("status") != "non_release_assessment":
         failures.append(f"{value}: status must be non_release_assessment")
     if assessment.get("release_use") != "prohibited":
@@ -682,8 +682,8 @@ def validate_manifest(release: bool, release_blockers: list[str]) -> list[str]:
         )
     if manifest.get("release_gate") != "board_fabrication_release":
         failures.append("release_gate must be board_fabrication_release")
-    if manifest.get("schema") != "openphone.board_package_evidence.v1":
-        failures.append("schema must be openphone.board_package_evidence.v1")
+    if manifest.get("schema") != "openagent.board_package_evidence.v1":
+        failures.append("schema must be openagent.board_package_evidence.v1")
     policy = manifest.get("policy")
     if (
         not isinstance(policy, dict)

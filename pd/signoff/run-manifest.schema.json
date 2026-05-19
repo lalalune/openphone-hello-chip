@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openphone.local/schemas/pd-signoff-run-manifest.schema.json",
+  "$id": "https://openagent.local/schemas/pd-signoff-run-manifest.schema.json",
   "title": "PD signoff run manifest",
   "type": "object",
   "additionalProperties": false,
@@ -22,7 +22,7 @@
   ],
   "properties": {
     "run_id": { "type": "string", "minLength": 1 },
-    "design": { "const": "hello_chip_top" },
+    "design": { "const": "e1_chip_top" },
     "flow": { "type": "string", "minLength": 1 },
     "pdk": { "type": "string", "minLength": 1 },
     "std_cell_library": { "type": "string", "minLength": 1 },

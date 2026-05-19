@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_linux_soc_contract #(
+module e1_linux_soc_contract #(
     parameter int unsigned NUM_IRQ_SOURCES = 4
 ) (
     input  logic        clk,
@@ -121,7 +121,7 @@ module hello_linux_soc_contract #(
                                dma_mmio_wstrb,
                                dma_mmio_araddr[31:8], dma_mmio_araddr[1:0]};
 
-    hello_axi_lite_interconnect u_interconnect (
+    e1_axi_lite_interconnect u_interconnect (
         .clk(clk),
         .rst_n(rst_n),
         .m_axil_awvalid(cpu_awvalid),
@@ -280,7 +280,7 @@ module hello_linux_soc_contract #(
         end
     end
 
-    hello_dma u_dma (
+    e1_dma u_dma (
         .clk(clk),
         .rst_n(rst_n),
         .valid((dma_mmio_awvalid && dma_mmio_wvalid && dma_mmio_awready && dma_mmio_wready) ||
@@ -337,7 +337,7 @@ module hello_linux_soc_contract #(
         end
     end
 
-    hello_axi_lite_dram u_dram (
+    e1_axi_lite_dram u_dram (
         .clk(clk),
         .rst_n(rst_n),
         .s_axil_awvalid(dram_awvalid),
@@ -359,7 +359,7 @@ module hello_linux_soc_contract #(
         .s_axil_rresp(dram_rresp)
     );
 
-    hello_interrupt_controller #(
+    e1_interrupt_controller #(
         .NUM_SOURCES(NUM_IRQ_SOURCES)
     ) u_interrupt_controller (
         .clk(clk),

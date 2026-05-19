@@ -1,10 +1,10 @@
-// HelloNpu.h - v0 stub implementation for vendor.openphone.hello_npu@1.0.
+// E1Npu.h - v0 stub implementation for vendor.openagent.e1_npu@1.0.
 //
-// Backing contract: sw/platform/hello_platform_contract.json
-// Backing kernel node: /dev/hello-npu
+// Backing contract: sw/platform/e1_platform_contract.json
+// Backing kernel node: /dev/e1-npu
 //
 // Fail-closed semantics:
-//   - Constructor records whether /dev/hello-npu can be opened. It does
+//   - Constructor records whether /dev/e1-npu can be opened. It does
 //     NOT keep the fd long-term; the smoke RPC re-opens on demand so a
 //     hot-unplug or kernel module reload is handled without state.
 //   - All RPCs return Status::NOT_SUPPORTED when the device node is
@@ -13,33 +13,33 @@
 #pragma once
 
 #include <sys/types.h>
-#include <vendor/openphone/hello_npu/1.0/IHelloNpu.h>
+#include <vendor/openagent/e1_npu/1.0/IE1Npu.h>
 
 namespace vendor {
-namespace openphone {
-namespace hello_npu {
+namespace openagent {
+namespace e1_npu {
 namespace V1_0 {
 namespace implementation {
 
-class HelloNpu : public IHelloNpu {
+class E1Npu : public IE1Npu {
 public:
-    HelloNpu();
+    E1Npu();
 
-    // IHelloNpu
+    // IE1Npu
     ::android::hardware::Return<void> smoke(smoke_cb _hidl_cb) override;
 
 private:
     // Path to the backing char device. Never cached as an fd.
-    static constexpr const char* kDevicePath = "/dev/hello-npu";
+    static constexpr const char* kDevicePath = "/dev/e1-npu";
 
     // Offset into the device that returns the driver identity word.
-    // Matches sw/linux/drivers/hello/hello_platform_contract.h
-    // (HELLO_NPU_RESULT_OFFSET).
+    // Matches sw/linux/drivers/e1/e1_platform_contract.h
+    // (E1_NPU_RESULT_OFFSET).
     static constexpr off_t kResultOffset = 0x10;
 };
 
 }  // namespace implementation
 }  // namespace V1_0
-}  // namespace hello_npu
-}  // namespace openphone
+}  // namespace e1_npu
+}  // namespace openagent
 }  // namespace vendor

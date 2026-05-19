@@ -73,11 +73,11 @@ def test_selected_manifest_keeps_single_rocket_as_bringup_only() -> None:
 
 def test_capture_helper_knows_new_cpu_ap_transcripts() -> None:
     modes = capture_cpu_ap_evidence.MODE_TO_TRANSCRIPT
-    if modes["isa-cache-mmu"] != ("isa_cache_mmu_log", "openphone_hello_isa_cache_mmu"):
+    if modes["isa-cache-mmu"] != ("isa_cache_mmu_log", "openagent_e1_isa_cache_mmu"):
         raise AssertionError("isa-cache-mmu capture mode drifted")
-    if modes["ap-benchmarks"] != ("ap_benchmark_log", "openphone_hello_ap_benchmarks"):
+    if modes["ap-benchmarks"] != ("ap_benchmark_log", "openagent_e1_ap_benchmarks"):
         raise AssertionError("ap-benchmarks capture mode drifted")
-    if capture_cpu_ap_evidence.MODE_ENV["linux-boot"] != "OPENPHONE_LINUX_BOOT_CMD":
+    if capture_cpu_ap_evidence.MODE_ENV["linux-boot"] != "OPENAGENT_LINUX_BOOT_CMD":
         raise AssertionError("Linux boot command env drifted")
 
 
@@ -91,14 +91,14 @@ def test_capture_template_lists_required_markers_and_no_pass_claim() -> None:
     if result.returncode != 0:
         raise AssertionError(result.stdout + result.stderr)
     assert_contains(
-        result.stdout, "destination: build/evidence/cpu_ap/openphone_hello_linux_boot.log"
+        result.stdout, "destination: build/evidence/cpu_ap/openagent_e1_linux_boot.log"
     )
-    assert_contains(result.stdout, "command env: OPENPHONE_LINUX_BOOT_CMD")
+    assert_contains(result.stdout, "command env: OPENAGENT_LINUX_BOOT_CMD")
     assert_contains(result.stdout, "Linux early console")
     assert_contains(
-        result.stdout, "openphone-evidence: replace_this_file_with_real_generated_ap_output=true"
+        result.stdout, "openagent-evidence: replace_this_file_with_real_generated_ap_output=true"
     )
-    if "openphone-evidence: status=PASS" in result.stdout:
+    if "openagent-evidence: status=PASS" in result.stdout:
         raise AssertionError("template must not claim PASS evidence")
 
 
@@ -119,7 +119,7 @@ def test_capture_plan_json_is_machine_readable() -> None:
     if result.returncode != 0:
         raise AssertionError(result.stdout + result.stderr)
     plan = json.loads(result.stdout)
-    if plan["schema"] != "openphone.cpu_ap_capture_plan.v1":
+    if plan["schema"] != "openagent.cpu_ap_capture_plan.v1":
         raise AssertionError("capture plan schema drifted")
     entries = {entry["mode"]: entry for entry in plan["entries"]}
     for mode, env_name in capture_cpu_ap_evidence.MODE_ENV.items():
@@ -131,7 +131,7 @@ def test_capture_plan_json_is_machine_readable() -> None:
 
 
 def test_capture_wrapper_preflight_reports_missing_command_envs() -> None:
-    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENPHONE_")}
+    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENAGENT_")}
     result = subprocess.run(
         ["scripts/capture_chipyard_linux_evidence.sh", "preflight"],
         cwd=ROOT,
@@ -142,12 +142,12 @@ def test_capture_wrapper_preflight_reports_missing_command_envs() -> None:
     if result.returncode != 2:
         raise AssertionError(result.stdout + result.stderr)
     assert_contains(result.stdout, "STATUS: BLOCKED cpu_ap.capture_preflight")
-    assert_contains(result.stdout, "OPENPHONE_OPENSBI_BOOT_CMD")
-    assert_contains(result.stdout, "OPENPHONE_AP_BENCHMARKS_CMD")
+    assert_contains(result.stdout, "OPENAGENT_OPENSBI_BOOT_CMD")
+    assert_contains(result.stdout, "OPENAGENT_AP_BENCHMARKS_CMD")
 
 
 def test_capture_command_wiring_derives_linux_smoke_lanes_only() -> None:
-    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENPHONE_")}
+    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENAGENT_")}
     result = subprocess.run(
         [
             sys.executable,
@@ -163,16 +163,16 @@ def test_capture_command_wiring_derives_linux_smoke_lanes_only() -> None:
     if result.returncode != 0:
         raise AssertionError(result.stdout + result.stderr)
     wiring = json.loads(result.stdout)
-    if wiring["schema"] != "openphone.cpu_ap_capture_command_wiring.v1":
+    if wiring["schema"] != "openagent.cpu_ap_capture_command_wiring.v1":
         raise AssertionError("CPU/AP command wiring schema drifted")
     entries = {entry["mode"]: entry for entry in wiring["entries"]}
     for mode in ("opensbi-boot", "linux-boot"):
         if entries[mode]["source"] != "generated_ap_linux_smoke":
             raise AssertionError(f"{mode} should derive from the generated AP smoke runner")
-        assert_contains(entries[mode]["command"], "scripts/run_chipyard_openphone_linux_smoke.sh")
+        assert_contains(entries[mode]["command"], "scripts/run_chipyard_openagent_linux_smoke.sh")
         assert_contains(
             entries[mode]["command"],
-            "cat build/chipyard/openphone_rocket/verilator-linux-smoke.log",
+            "cat build/chipyard/openagent_rocket/verilator-linux-smoke.log",
         )
     for mode in ("trap-timer-irq", "isa-cache-mmu", "ap-benchmarks"):
         if entries[mode]["status"] != "blocked":
@@ -180,7 +180,7 @@ def test_capture_command_wiring_derives_linux_smoke_lanes_only() -> None:
 
 
 def test_capture_wire_preflight_reports_remaining_unwired_lanes() -> None:
-    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENPHONE_")}
+    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENAGENT_")}
     result = subprocess.run(
         ["scripts/capture_chipyard_linux_evidence.sh", "wire-preflight"],
         cwd=ROOT,
@@ -190,13 +190,13 @@ def test_capture_wire_preflight_reports_remaining_unwired_lanes() -> None:
     )
     if result.returncode != 2:
         raise AssertionError(result.stdout + result.stderr)
-    assert_contains(result.stdout, "READY opensbi-boot: OPENPHONE_OPENSBI_BOOT_CMD is set")
-    assert_contains(result.stdout, "READY linux-boot: OPENPHONE_LINUX_BOOT_CMD is set")
-    assert_contains(result.stdout, "BLOCKED trap-timer-irq: OPENPHONE_TRAP_TIMER_IRQ_CMD is unset")
+    assert_contains(result.stdout, "READY opensbi-boot: OPENAGENT_OPENSBI_BOOT_CMD is set")
+    assert_contains(result.stdout, "READY linux-boot: OPENAGENT_LINUX_BOOT_CMD is set")
+    assert_contains(result.stdout, "BLOCKED trap-timer-irq: OPENAGENT_TRAP_TIMER_IRQ_CMD is unset")
 
 
 def test_capture_wrapper_all_reports_every_missing_command_env() -> None:
-    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENPHONE_")}
+    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENAGENT_")}
     result = subprocess.run(
         ["scripts/capture_chipyard_linux_evidence.sh", "all"],
         cwd=ROOT,
@@ -207,17 +207,17 @@ def test_capture_wrapper_all_reports_every_missing_command_env() -> None:
     if result.returncode != 2:
         raise AssertionError(result.stdout + result.stderr)
     for name in (
-        "OPENPHONE_OPENSBI_BOOT_CMD",
-        "OPENPHONE_LINUX_BOOT_CMD",
-        "OPENPHONE_TRAP_TIMER_IRQ_CMD",
-        "OPENPHONE_ISA_CACHE_MMU_CMD",
-        "OPENPHONE_AP_BENCHMARKS_CMD",
+        "OPENAGENT_OPENSBI_BOOT_CMD",
+        "OPENAGENT_LINUX_BOOT_CMD",
+        "OPENAGENT_TRAP_TIMER_IRQ_CMD",
+        "OPENAGENT_ISA_CACHE_MMU_CMD",
+        "OPENAGENT_AP_BENCHMARKS_CMD",
     ):
         assert_contains(result.stdout, name)
 
 
-def test_dts_audit_separates_ap_boot_from_hello_peripherals() -> None:
-    dts_path = ROOT / "build/chipyard/openphone_rocket/openphone-hello.dts"
+def test_dts_audit_separates_ap_boot_from_e1_peripherals() -> None:
+    dts_path = ROOT / "build/chipyard/openagent_rocket/openagent-e1.dts"
     if not dts_path.is_file():
         return
 
@@ -235,30 +235,30 @@ def test_dts_audit_separates_ap_boot_from_hello_peripherals() -> None:
     if boot_only.returncode != 0:
         raise AssertionError(boot_only.stdout + boot_only.stderr)
     assert_contains(boot_only.stdout, "STATUS: PASS cpu_ap.dts_boot_audit")
-    assert_contains(boot_only.stdout, "generated DTS lacks hello peripheral smoke markers")
+    assert_contains(boot_only.stdout, "generated DTS lacks e1 peripheral smoke markers")
 
-    with_hello = subprocess.run(
+    with_e1 = subprocess.run(
         [
             sys.executable,
             "scripts/capture_cpu_ap_evidence.py",
             "dts-audit",
             "--require-bootable",
-            "--require-hello-peripherals",
+            "--require-e1-peripherals",
         ],
         cwd=ROOT,
         text=True,
         capture_output=True,
     )
-    if with_hello.returncode != 1:
-        raise AssertionError(with_hello.stdout + with_hello.stderr)
-    assert_contains(with_hello.stdout, "missing hello npu mmio")
+    if with_e1.returncode != 1:
+        raise AssertionError(with_e1.stdout + with_e1.stderr)
+    assert_contains(with_e1.stdout, "missing e1 npu mmio")
 
 
 def test_new_transcripts_reject_placeholder_or_incomplete_text() -> None:
     manifest = load_json(EVIDENCE_MANIFEST)
     specs = transcript_specs(manifest)
     for key in ("isa_cache_mmu_log", "ap_benchmark_log"):
-        with_placeholder = "placeholder\nopenphone-evidence: status=PASS\n"
+        with_placeholder = "placeholder\nopenagent-evidence: status=PASS\n"
         problems = text_problems(with_placeholder, specs[key], key, raw=True)
         joined = "\n".join(problems)
         assert_contains(joined, "contains forbidden placeholder/failure markers")
@@ -302,8 +302,8 @@ def test_scaffold_check_lists_new_missing_evidence_paths() -> None:
     if result.returncode != 0:
         raise AssertionError(result.stdout + result.stderr)
     assert_contains(result.stdout, "STATUS: PASS cpu_ap.scaffold")
-    assert_contains(result.stdout, "openphone_hello_isa_cache_mmu.log")
-    assert_contains(result.stdout, "openphone_hello_ap_benchmarks.log")
+    assert_contains(result.stdout, "openagent_e1_isa_cache_mmu.log")
+    assert_contains(result.stdout, "openagent_e1_ap_benchmarks.log")
     assert_contains(result.stdout, "capture commands:")
     assert_contains(result.stdout, "intake ap-benchmarks")
 
@@ -318,8 +318,8 @@ def test_payload_path_uses_cpu_ap_manifest_transcripts_only() -> None:
     if result.returncode not in (0, 2):
         raise AssertionError(result.stdout + result.stderr)
     assert_contains(result.stdout, "STATUS: BLOCKED chipyard.payload_path")
-    assert_contains(result.stdout, "openphone_hello_ap_benchmarks.log")
-    if "u_boot_openphone_build.log" in result.stdout:
+    assert_contains(result.stdout, "openagent_e1_ap_benchmarks.log")
+    if "u_boot_openagent_build.log" in result.stdout:
         raise AssertionError("Chipyard payload path gate should not own U-Boot BSP evidence")
 
 
@@ -334,7 +334,7 @@ def main() -> int:
         test_capture_command_wiring_derives_linux_smoke_lanes_only,
         test_capture_wire_preflight_reports_remaining_unwired_lanes,
         test_capture_wrapper_all_reports_every_missing_command_env,
-        test_dts_audit_separates_ap_boot_from_hello_peripherals,
+        test_dts_audit_separates_ap_boot_from_e1_peripherals,
         test_new_transcripts_reject_placeholder_or_incomplete_text,
         test_raw_ap_transcript_markers_have_positive_and_negative_paths,
         test_chipyard_generator_check_rejects_duplicate_json_keys,

@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * OpenPhone hello SoC device tree for Renode / Verilator stages.
+ * OpenAgent e1 SoC device tree for Renode / Verilator stages.
  *
  * NOTE on QEMU virt:
  *   When booting under `qemu-system-riscv64 -machine virt`, QEMU generates its
@@ -17,9 +17,9 @@
  *   - DRAM                    @ 0x80000000  256 MiB
  *
  * Convert to DTB:
- *   dtc -I dts -O dtb -o openphone-hello-qemu.dtb openphone-hello-qemu.dts
+ *   dtc -I dts -O dtb -o openagent-e1-qemu.dtb openagent-e1-qemu.dts
  *
- * Then pass `-dtb build/dts/openphone-hello-qemu.dtb` to QEMU (Renode loads
+ * Then pass `-dtb build/dts/openagent-e1-qemu.dtb` to QEMU (Renode loads
  * it via .resc; Verilator's bootrom places it at 0x82000000).
  */
 
@@ -28,8 +28,8 @@
 / {
 	#address-cells = <2>;
 	#size-cells = <2>;
-	compatible = "openphone,hello-soc", "riscv-virtio";
-	model = "OpenPhone hello SoC (Renode/Verilator)";
+	compatible = "openagent,e1-soc", "riscv-virtio";
+	model = "OpenAgent e1 SoC (Renode/Verilator)";
 
 	chosen {
 		bootargs = "console=ttyS0 earlycon=sbi panic=10";
@@ -48,7 +48,7 @@
 		cpu@0 {
 			device_type = "cpu";
 			reg = <0>;
-			compatible = "openphone,hello-core", "riscv";
+			compatible = "openagent,e1-core", "riscv";
 			riscv,isa = "rv64imafdc";
 			mmu-type = "riscv,sv39";
 			status = "okay";

@@ -11,20 +11,20 @@ from pathlib import Path
 from cpu_ap_evidence_lib import load_evidence_manifest, transcript_specs
 
 ROOT = Path(__file__).resolve().parents[1]
-BUILD = ROOT / "build/chipyard/openphone_rocket"
+BUILD = ROOT / "build/chipyard/openagent_rocket"
 GEN = BUILD / "generated-src"
-DTS = BUILD / "openphone-hello.dts"
-GEN_DTS = GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts"
-MEMMAP = GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.memmap.json"
-IMPORT_MANIFEST = BUILD / "OpenPhoneRocketConfig.manifest.json"
-VERILOG = BUILD / "openphone_rocket_ap.v"
+DTS = BUILD / "openagent-e1.dts"
+GEN_DTS = GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.dts"
+MEMMAP = GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.memmap.json"
+IMPORT_MANIFEST = BUILD / "OpenAgentRocketConfig.manifest.json"
+VERILOG = BUILD / "openagent_rocket_ap.v"
 SIMULATOR = BUILD / "simulator"
 
 REGMAPS = {
-    "boot_address": GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.0x1000.0.regmap.json",
-    "clint": GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.0x2000000.0.regmap.json",
-    "plic": GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.0xc000000.0.regmap.json",
-    "uart": GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.0x10020000.0.regmap.json",
+    "boot_address": GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.0x1000.0.regmap.json",
+    "clint": GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.0x2000000.0.regmap.json",
+    "plic": GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.0xc000000.0.regmap.json",
+    "uart": GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.0x10020000.0.regmap.json",
 }
 
 
@@ -148,8 +148,8 @@ def check_import_state(failures: list[str], blockers: list[str]) -> None:
     if VERILOG.is_file():
         text = read(VERILOG)
         require(
-            "module openphone_rocket_ap" in text,
-            f"{rel(VERILOG)} missing openphone_rocket_ap module",
+            "module openagent_rocket_ap" in text,
+            f"{rel(VERILOG)} missing openagent_rocket_ap module",
             failures,
         )
 

@@ -1,5 +1,5 @@
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/openphone_ai_soc.mk
+    $(LOCAL_DIR)/openagent_ai_soc.mk
 
 COMMON_LUNCH_CHOICES := \
-    openphone_ai_soc-userdebug
+    openagent_ai_soc-userdebug

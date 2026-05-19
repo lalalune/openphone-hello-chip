@@ -9,8 +9,8 @@ approval.
 
 ## Local evidence inputs
 
-- `package/hello-demo-pinout.yaml`: placeholder package pinout.
-- `docs/board/kicad/hello-demo/fab-notes.md`: KiCad planning notes that mark
+- `package/e1-demo-pinout.yaml`: placeholder package pinout.
+- `docs/board/kicad/e1-demo/fab-notes.md`: KiCad planning notes that mark
   the board package as non-release demo planning evidence.
 - `pd/openlane/runs/RUN_2026-05-18_05-41-42/signoff-run.yaml`: selected local
   OpenLane run record.

@@ -17,12 +17,12 @@ from typing import Any
 from cpu_ap_evidence_lib import load_evidence_manifest, transcript_specs
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "build/chipyard/openphone_rocket"
+OUT = ROOT / "build/chipyard/openagent_rocket"
 GENERATED_SRC = OUT / "generated-src"
-DTS = OUT / "openphone-hello.dts"
-VERILOG = OUT / "openphone_rocket_ap.v"
+DTS = OUT / "openagent-e1.dts"
+VERILOG = OUT / "openagent_rocket_ap.v"
 SIMULATOR = OUT / "simulator"
-GENERATED_MANIFEST = OUT / "OpenPhoneRocketConfig.manifest.json"
+GENERATED_MANIFEST = OUT / "OpenAgentRocketConfig.manifest.json"
 REPORT = ROOT / "build/reports/chipyard_payload_path.json"
 
 REQUIRED_DTS_TOKENS = {
@@ -79,7 +79,7 @@ def main() -> int:
                     {
                         "name": "generated_manifest",
                         "detail": f"missing or invalid {rel(GENERATED_MANIFEST)}",
-                        "next": "python3 scripts/generate_chipyard_openphone.py after firtool/RISCV environment is available, or regenerate/import with a complete external Chipyard flow",
+                        "next": "python3 scripts/generate_chipyard_openagent.py after firtool/RISCV environment is available, or regenerate/import with a complete external Chipyard flow",
                     }
                 )
             else:
@@ -87,7 +87,7 @@ def main() -> int:
                     {
                         "name": name,
                         "detail": f"generated artifact {name} is missing or invalid: {artifact['path']}",
-                        "next": "python3 scripts/check_chipyard_verilator_preflight.py, then generate/import the OpenPhoneRocketConfig artifacts",
+                        "next": "python3 scripts/check_chipyard_verilator_preflight.py, then generate/import the OpenAgentRocketConfig artifacts",
                     }
                 )
 
@@ -140,7 +140,7 @@ def main() -> int:
         code = 0
 
     report = {
-        "schema": "openphone.chipyard_payload_path.v1",
+        "schema": "openagent.chipyard_payload_path.v1",
         "status": status,
         "claim_boundary": "generated_chipyard_artifacts_only_not_rtl_boot_claim",
         "summary": "Generated Chipyard artifacts may feed the next external OpenSBI/U-Boot/Linux payload path, but do not prove RTL boot.",

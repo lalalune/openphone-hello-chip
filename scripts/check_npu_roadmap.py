@@ -7,7 +7,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 ROADMAP = ROOT / "docs/spec-db/npu-2028-roadmap.yaml"
 TARGET = ROOT / "docs/spec-db/npu-2028-target.yaml"
-RUNTIME_CONTRACT = ROOT / "docs/spec-db/hello-npu-runtime-contract.json"
+RUNTIME_CONTRACT = ROOT / "docs/spec-db/e1-npu-runtime-contract.json"
 
 EXPECTED_PHASES = [
     "L0_MMIO_PROTOTYPE",
@@ -62,7 +62,7 @@ REQUIRED_LATER_GATES = {
         "cts_result",
         "aidl_hal_service_declared",
         "selinux_fail_closed_policy",
-        "nnapi_accelerator_query_hello_npu",
+        "nnapi_accelerator_query_e1_npu",
         "unsupported_operator_percent_max",
         "cpu_fallback_percent_max",
     },
@@ -117,12 +117,12 @@ def main() -> int:
     roadmap = yaml.safe_load(ROADMAP.read_text())
     target = yaml.safe_load(TARGET.read_text())
 
-    if roadmap.get("schema") != "openphone.npu_2028_roadmap.v1":
+    if roadmap.get("schema") != "openagent.npu_2028_roadmap.v1":
         errors.append("unexpected NPU roadmap schema")
     if roadmap.get("target_spec") != "docs/spec-db/npu-2028-target.yaml":
         errors.append("roadmap must point at docs/spec-db/npu-2028-target.yaml")
-    if roadmap.get("runtime_contract") != "docs/spec-db/hello-npu-runtime-contract.json":
-        errors.append("roadmap must point at the hello NPU runtime contract")
+    if roadmap.get("runtime_contract") != "docs/spec-db/e1-npu-runtime-contract.json":
+        errors.append("roadmap must point at the e1 NPU runtime contract")
     if "no_android_boot_or_phone_class_accelerator_claim" not in roadmap.get("claim_boundary", ""):
         errors.append(
             "roadmap claim_boundary must fail closed for Android boot and phone-class claims"

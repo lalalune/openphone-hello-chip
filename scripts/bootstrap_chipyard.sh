@@ -4,7 +4,7 @@ set -eu
 REPO_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$REPO_DIR"
 
-MANIFEST="${CHIPYARD_MANIFEST:-docs/generators/chipyard/openphone-rocket-manifest.json}"
+MANIFEST="${CHIPYARD_MANIFEST:-docs/generators/chipyard/openagent-rocket-manifest.json}"
 CHECKOUT="${CHIPYARD_CHECKOUT:-external/chipyard}"
 SUBMODULE_JOBS="${CHIPYARD_SUBMODULE_JOBS:-1}"
 SUBMODULE_RETRIES="${CHIPYARD_SUBMODULE_RETRIES:-3}"
@@ -138,12 +138,12 @@ if [ "$GENERATE_VERILOG" = "1" ]; then
         echo "bootstrap_chipyard: CHIPYARD_GENERATE_VERILOG=1 requires $CHECKOUT/env.sh; rerun with CHIPYARD_RUN_SETUP=1 on Linux." >&2
         exit 1
     fi
-    CHIPYARD_CHECKOUT="$CHECKOUT_ABS" scripts/run_chipyard_openphone_verilator.sh verilog
+    CHIPYARD_CHECKOUT="$CHECKOUT_ABS" scripts/run_chipyard_openagent_verilator.sh verilog
 fi
 
 echo "Chipyard $CHIPYARD_TAG checked out under $CHECKOUT at $CHIPYARD_SHA."
 if [ "$RUN_SETUP" = "1" ] && [ "$GENERATE_VERILOG" = "1" ]; then
-    echo "Requested Chipyard setup and OpenPhoneRocketConfig Verilog generation completed."
+    echo "Requested Chipyard setup and OpenAgentRocketConfig Verilog generation completed."
 else
     echo "Checkout/bootstrap complete. Set CHIPYARD_RUN_SETUP=1 CHIPYARD_GENERATE_VERILOG=1 on Linux to run setup and generation."
 fi

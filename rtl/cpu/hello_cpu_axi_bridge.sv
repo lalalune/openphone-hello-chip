@@ -1,8 +1,8 @@
-// hello_cpu_axi_bridge.sv
-// AXI4 (64-bit) → AXI4-Lite (32-bit) bridge for the hello chip CPU subsystem.
+// e1_cpu_axi_bridge.sv
+// AXI4 (64-bit) → AXI4-Lite (32-bit) bridge for the e1 chip CPU subsystem.
 //
 // The CVA6 CPU presents a 64-bit AXI4 master with burst, ID, and optional user
-// sideband signals.  The hello-chip interconnect fabric speaks 32-bit AXI-Lite.
+// sideband signals.  The e1-chip interconnect fabric speaks 32-bit AXI-Lite.
 // This bridge performs width conversion and burst splitting so that the rest of
 // the SoC does not need to change.
 //
@@ -17,17 +17,17 @@
 //     bridge stalls axi4_ar_ready / axi4_aw_ready while busy.
 //   • IDs: the B/R response inherits the original AXI4 transaction ID.
 //
-// To use real CVA6: compile with +define+HELLO_HAVE_CVA6 and include
+// To use real CVA6: compile with +define+E1_HAVE_CVA6 and include
 //   external/cva6/ in your search path.
 
 `timescale 1ns/1ps
 
 /* verilator lint_off UNUSEDSIGNAL */
-module hello_cpu_axi_bridge (
+module e1_cpu_axi_bridge (
     input  logic        clk_i,
     input  logic        rst_ni,
 
-    // ── AXI4 slave port (from CVA6 / hello_cpu_subsystem) ─────────────────
+    // ── AXI4 slave port (from CVA6 / e1_cpu_subsystem) ─────────────────
     // Read address channel
     input  logic [3:0]  s_axi_ar_id,
     input  logic [63:0] s_axi_ar_addr,
@@ -75,7 +75,7 @@ module hello_cpu_axi_bridge (
     output logic        s_axi_b_valid,
     input  logic        s_axi_b_ready,
 
-    // ── AXI4-Lite master port (to hello-chip interconnect) ────────────────
+    // ── AXI4-Lite master port (to e1-chip interconnect) ────────────────
     output logic        m_axil_awvalid,
     input  logic        m_axil_awready,
     output logic [31:0] m_axil_awaddr,

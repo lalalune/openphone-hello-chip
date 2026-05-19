@@ -43,7 +43,7 @@ if [ "$(uname -s)" = "Darwin" ] && [ -d "/Applications/KiCad/KiCad.app/Contents/
 fi
 
 missing_required=0
-records="$(mktemp "${TMPDIR:-/tmp}/openphone-tools.XXXXXX")"
+records="$(mktemp "${TMPDIR:-/tmp}/openagent-tools.XXXXXX")"
 trap 'rm -f "$records"' EXIT
 
 record_status() {
@@ -223,7 +223,7 @@ summary = {
 print(
     json.dumps(
         {
-            "schema": "openphone.tool_status.v1",
+            "schema": "openagent.tool_status.v1",
             "strict": sys.argv[2] == "1",
             "missing_required": sys.argv[3] != "0",
             "summary": summary,

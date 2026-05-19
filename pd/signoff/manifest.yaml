@@ -1,5 +1,5 @@
-schema: openphone.pd_signoff_manifest.v1
-signoff: hello_chip_top_pd
+schema: openagent.pd_signoff_manifest.v1
+signoff: e1_chip_top_pd
 status: required_for_pd_release
 run_manifest_schema: pd/signoff/run-manifest.schema.json
 next_commands:
@@ -117,8 +117,8 @@ pdn_current_budget:
     - name: board_current_limit_plan
       status: draft
       globs:
-        - "docs/board/kicad/hello-demo/fab-notes.md"
-        - "docs/manufacturing/hello-demo-checklist.md"
+        - "docs/board/kicad/e1-demo/fab-notes.md"
+        - "docs/manufacturing/e1-demo-checklist.md"
         - "pd/signoff/pdn-current/local-budget.yaml"
         - "pd/signoff/pdn-current/local-budget.md"
 thermal_package_board:
@@ -150,18 +150,18 @@ padframe_package:
     - name: padframe_contract
       status: draft
       globs:
-        - "pd/padframe/hello_demo_padframe.yaml"
-        - "docs/pd/padframe/hello_demo_padframe.md"
+        - "pd/padframe/e1_demo_padframe.yaml"
+        - "docs/pd/padframe/e1_demo_padframe.md"
     - name: package_pinout
       status: draft
       globs:
-        - "package/hello-demo-pinout.yaml"
-        - "docs/package/hello-demo-package.md"
-        - "docs/package/hello-demo-pad-ring.md"
+        - "package/e1-demo-pinout.yaml"
+        - "docs/package/e1-demo-package.md"
+        - "docs/package/e1-demo-pad-ring.md"
     - name: board_footprint_notes
       status: draft
       globs:
-        - "docs/board/kicad/hello-demo/fab-notes.md"
+        - "docs/board/kicad/e1-demo/fab-notes.md"
 run_roots:
   - pd/openlane/runs
   - runs

@@ -6,24 +6,24 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "docs/spec-db/hello-npu-runtime-contract.json"
-RUNTIME = ROOT / "compiler/runtime/hello_npu_runtime.py"
-RUNTIME_SIM_TEST = ROOT / "compiler/runtime/test_hello_npu_runtime_sim.py"
+CONTRACT = ROOT / "docs/spec-db/e1-npu-runtime-contract.json"
+RUNTIME = ROOT / "compiler/runtime/e1_npu_runtime.py"
+RUNTIME_SIM_TEST = ROOT / "compiler/runtime/test_e1_npu_runtime_sim.py"
 ARCH_DOC = ROOT / "docs/arch/npu.md"
-BSP_HEADER = ROOT / "sw/linux/drivers/hello/hello_platform_contract.h"
-GENERATED_PLATFORM_HEADER = ROOT / "sw/platform/generated/hello_platform.h"
+BSP_HEADER = ROOT / "sw/linux/drivers/e1/e1_platform_contract.h"
+GENERATED_PLATFORM_HEADER = ROOT / "sw/platform/generated/e1_platform.h"
 VERILATOR_GEMM = ROOT / "verify/verilator/test_npu_gemm.cpp"
-NNAPI_PROOF = ROOT / "benchmarks/capabilities/hello_npu_nnapi.proof.json"
+NNAPI_PROOF = ROOT / "benchmarks/capabilities/e1_npu_nnapi.proof.json"
 
 
 def load_runtime_class():
-    spec = importlib.util.spec_from_file_location("hello_npu_runtime", RUNTIME)
+    spec = importlib.util.spec_from_file_location("e1_npu_runtime", RUNTIME)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"could not load {RUNTIME}")
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
-    return module.HelloNpuRuntime
+    return module.E1NpuRuntime
 
 
 def hex_to_int(value: str) -> int:
@@ -47,7 +47,7 @@ def main() -> int:
         return report(errors)
 
     contract = json.loads(CONTRACT.read_text())
-    if contract.get("schema") != "openphone.hello_npu_runtime_contract.v1":
+    if contract.get("schema") != "openagent.e1_npu_runtime_contract.v1":
         errors.append("runtime contract schema mismatch")
     boundary = contract.get("claim_boundary", "")
     if "not_phone_class_ai_accelerator" not in boundary:
@@ -150,7 +150,7 @@ def main() -> int:
     header_offsets = {
         name: int(value, 16)
         for name, value in re.findall(
-            r"#define\s+HELLO_NPU_([A-Z0-9_]+)_OFFSET\s+0x([0-9A-Fa-f]+)u",
+            r"#define\s+E1_NPU_([A-Z0-9_]+)_OFFSET\s+0x([0-9A-Fa-f]+)u",
             header_text,
         )
     }
@@ -165,14 +165,14 @@ def main() -> int:
         actual_offset = header_offsets.get(header_name)
         if actual_offset != hex_to_int(offset):
             errors.append(
-                f"BSP header HELLO_NPU_{header_name}_OFFSET {actual_offset!r} != {offset}"
+                f"BSP header E1_NPU_{header_name}_OFFSET {actual_offset!r} != {offset}"
             )
-        generated_token = f"#define HELLO_NPU_{header_name}_OFFSET 0x{hex_to_int(offset):02X}UL"
+        generated_token = f"#define E1_NPU_{header_name}_OFFSET 0x{hex_to_int(offset):02X}UL"
         if generated_token not in generated_header_text:
             errors.append(f"generated platform header missing {generated_token}")
 
     for name in ("DESC_BASE", "DESC_HEAD", "DESC_TAIL", "DESC_STATUS", "CMD_PARAM"):
-        token = f"HELLO_NPU_{name}_OFFSET"
+        token = f"E1_NPU_{name}_OFFSET"
         if token not in header_text or token not in generated_header_text:
             errors.append(f"descriptor queue register {token} missing from platform headers")
 
@@ -278,7 +278,7 @@ def report(errors: list[str]) -> int:
         for error in errors:
             print(f"FAIL: {error}")
         return 1
-    print("hello NPU runtime contract check passed")
+    print("e1 NPU runtime contract check passed")
     return 0
 
 

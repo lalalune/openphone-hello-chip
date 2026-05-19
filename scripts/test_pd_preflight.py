@@ -31,7 +31,7 @@ def test_check_config_rejects_missing_referenced_path() -> None:
             config,
             json.dumps(
                 {
-                    "DESIGN_NAME": "hello_chip_top",
+                    "DESIGN_NAME": "e1_chip_top",
                     "VERILOG_FILES": ["dir::../../rtl/missing.sv"],
                     "CLOCK_PORT": "CLK_IN",
                     "CLOCK_PERIOD": 20,

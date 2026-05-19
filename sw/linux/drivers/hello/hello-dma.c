@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Minimal OpenPhone hello DMA Linux driver source.
+ * Minimal OpenAgent e1 DMA Linux driver source.
  *
- * The register layout mirrors sw/platform/hello_platform_contract.json and is
+ * The register layout mirrors sw/platform/e1_platform_contract.json and is
  * intended for an external Linux tree integration.
  */
 
@@ -11,22 +11,22 @@
 #include <linux/of.h>
 #include <linux/platform_device.h>
 
-#include "hello_platform_contract.h"
+#include "e1_platform_contract.h"
 
-struct hello_dma {
+struct e1_dma {
 	void __iomem *regs;
 };
 
 static ssize_t contract_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	return sysfs_emit(buf, "HELLO_DMA_BASE=0x%08x compatible=openphone,hello-dma\n",
-			 HELLO_DMA_BASE);
+	return sysfs_emit(buf, "E1_DMA_BASE=0x%08x compatible=openagent,e1-dma\n",
+			 E1_DMA_BASE);
 }
 static DEVICE_ATTR_RO(contract);
 
-static int hello_dma_probe(struct platform_device *pdev)
+static int e1_dma_probe(struct platform_device *pdev)
 {
-	struct hello_dma *dma;
+	struct e1_dma *dma;
 	struct resource *res;
 
 	dma = devm_kzalloc(&pdev->dev, sizeof(*dma), GFP_KERNEL);
@@ -42,27 +42,27 @@ static int hello_dma_probe(struct platform_device *pdev)
 	return device_create_file(&pdev->dev, &dev_attr_contract);
 }
 
-static int hello_dma_remove(struct platform_device *pdev)
+static int e1_dma_remove(struct platform_device *pdev)
 {
 	device_remove_file(&pdev->dev, &dev_attr_contract);
 	return 0;
 }
 
-static const struct of_device_id hello_dma_of_match[] = {
-	{ .compatible = "openphone,hello-dma" },
+static const struct of_device_id e1_dma_of_match[] = {
+	{ .compatible = "openagent,e1-dma" },
 	{ }
 };
-MODULE_DEVICE_TABLE(of, hello_dma_of_match);
+MODULE_DEVICE_TABLE(of, e1_dma_of_match);
 
-static struct platform_driver hello_dma_driver = {
-	.probe = hello_dma_probe,
-	.remove = hello_dma_remove,
+static struct platform_driver e1_dma_driver = {
+	.probe = e1_dma_probe,
+	.remove = e1_dma_remove,
 	.driver = {
-		.name = "openphone-hello-dma",
-		.of_match_table = hello_dma_of_match,
+		.name = "openagent-e1-dma",
+		.of_match_table = e1_dma_of_match,
 	},
 };
-module_platform_driver(hello_dma_driver);
+module_platform_driver(e1_dma_driver);
 
-MODULE_DESCRIPTION("OpenPhone hello DMA contract driver");
+MODULE_DESCRIPTION("OpenAgent e1 DMA contract driver");
 MODULE_LICENSE("GPL");

@@ -2,7 +2,7 @@
 
 Targets the v0 NPU microarchitecture documented in
 ``docs/arch/npu-microarch.md``. Assumes a wrapper module
-``hello_npu_gemmini_wrapper`` exposing the documented MMIO map; the wrapper
+``e1_npu_gemmini_wrapper`` exposing the documented MMIO map; the wrapper
 itself is not yet in the tree (tracked under
 ``verify/rtl_gap_work_order.yaml#areas.npu``). Until then these tests serve
 as the executable spec for the queue/IRQ/unsupported-op contract.

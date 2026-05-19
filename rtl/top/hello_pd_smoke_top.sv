@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_pd_smoke_top (
+module e1_pd_smoke_top (
     input  logic       CLK_IN,
     input  logic       RST_N,
     input  logic       DBG_VALID,

@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_peripherals (
+module e1_peripherals (
     input  logic        clk,
     input  logic        rst_n,
     input  logic        valid,

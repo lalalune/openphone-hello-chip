@@ -2,8 +2,8 @@
 /*
  * User-space smoke source for an external Linux build.
  *
- * This probes the public BSP surface created by openphone,hello-npu,
- * openphone,hello-dma, and openphone,hello-display device tree nodes.
+ * This probes the public BSP surface created by openagent,e1-npu,
+ * openagent,e1-dma, and openagent,e1-display device tree nodes.
  */
 
 #include <errno.h>
@@ -12,9 +12,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#define HELLO_DMA_BASE 0x10010000u
-#define HELLO_NPU_BASE 0x10020000u
-#define HELLO_DISPLAY_BASE 0x10030000u
+#define E1_DMA_BASE 0x10010000u
+#define E1_NPU_BASE 0x10020000u
+#define E1_DISPLAY_BASE 0x10030000u
 
 static int require_path(const char *path)
 {
@@ -33,11 +33,11 @@ int main(void)
 {
 	int failed = 0;
 
-	printf("HELLO_DMA_BASE=0x%08x\n", HELLO_DMA_BASE);
-	printf("HELLO_NPU_BASE=0x%08x\n", HELLO_NPU_BASE);
-	printf("HELLO_DISPLAY_BASE=0x%08x\n", HELLO_DISPLAY_BASE);
-	failed |= require_path("/dev/hello-npu");
-	failed |= require_path("/sys/bus/platform/drivers/openphone-hello-dma");
+	printf("E1_DMA_BASE=0x%08x\n", E1_DMA_BASE);
+	printf("E1_NPU_BASE=0x%08x\n", E1_NPU_BASE);
+	printf("E1_DISPLAY_BASE=0x%08x\n", E1_DISPLAY_BASE);
+	failed |= require_path("/dev/e1-npu");
+	failed |= require_path("/sys/bus/platform/drivers/openagent-e1-dma");
 
 	return failed;
 }

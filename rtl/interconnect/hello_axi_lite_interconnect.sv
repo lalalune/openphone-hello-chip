@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-// hello_axi_lite_interconnect
+// e1_axi_lite_interconnect
 //
 // Multi-master AXI-Lite 3-to-3 interconnect with priority arbiter.
 //
@@ -30,7 +30,7 @@
 //   1024 cycles, timeout_irq[m] is pulsed, TIMEOUT_STATUS[m] is set, and a
 //   synthetic SLVERR response is injected.
 
-module hello_axi_lite_interconnect #(
+module e1_axi_lite_interconnect #(
     parameter int unsigned NUM_MASTERS = 3
 ) (
     input  logic        clk,

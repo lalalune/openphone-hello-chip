@@ -14,19 +14,19 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
-LINUX_DTS = ROOT / "sw/linux/dts/openphone-hello.dts"
-LINUX_KCONFIG = ROOT / "sw/linux/drivers/hello/Kconfig"
-LINUX_MAKEFILE = ROOT / "sw/linux/drivers/hello/Makefile"
-LINUX_SMOKE = ROOT / "sw/linux/tests/hello-mmio-smoke.c"
-BUILDROOT_DEFCONFIG = ROOT / "sw/buildroot/configs/openphone_hello_defconfig"
-BUILDROOT_SMOKE = ROOT / "sw/buildroot/package/hello-mmio-smoke/src/hello-mmio-smoke.c"
+CONTRACT = ROOT / "sw/platform/e1_platform_contract.json"
+LINUX_DTS = ROOT / "sw/linux/dts/openagent-e1.dts"
+LINUX_KCONFIG = ROOT / "sw/linux/drivers/e1/Kconfig"
+LINUX_MAKEFILE = ROOT / "sw/linux/drivers/e1/Makefile"
+LINUX_SMOKE = ROOT / "sw/linux/tests/e1-mmio-smoke.c"
+BUILDROOT_DEFCONFIG = ROOT / "sw/buildroot/configs/openagent_e1_defconfig"
+BUILDROOT_SMOKE = ROOT / "sw/buildroot/package/e1-mmio-smoke/src/e1-mmio-smoke.c"
 BUILDROOT_OVERLAY_SMOKE = (
-    ROOT / "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke"
+    ROOT / "sw/buildroot/board/openagent/e1/rootfs_overlay/usr/bin/e1-mmio-smoke"
 )
 QEMU_RUN = ROOT / "scripts/run_qemu.sh"
 RENODE_RUN = ROOT / "scripts/run_renode.sh"
-CHIPYARD_RUN = ROOT / "scripts/run_chipyard_openphone_linux_smoke.sh"
+CHIPYARD_RUN = ROOT / "scripts/run_chipyard_openagent_linux_smoke.sh"
 CHIPYARD_GENERATED_CHECK = ROOT / "scripts/check_chipyard_generated_linux_contract.py"
 CVA6_CLONE = ROOT / "scripts/clone_cva6.sh"
 CPU_WORK_ORDER = ROOT / "docs/project/cpu-ap-integration-work-order-2026-05-17.yaml"
@@ -53,7 +53,7 @@ def hex_cell(value: object) -> str:
 
 def check_linux_dts(errors: list[str]) -> None:
     contract = json.loads(read(CONTRACT))
-    variant = contract["hello_chip_cpu_variant"]
+    variant = contract["e1_chip_cpu_variant"]
     dts = strip_dts_comments(read(LINUX_DTS))
     dts_lower = dts.lower()
 
@@ -142,17 +142,17 @@ def check_linux_drivers(errors: list[str]) -> None:
     kconfig = read(LINUX_KCONFIG)
     makefile = read(LINUX_MAKEFILE)
     dts = read(LINUX_DTS)
-    driver_text = read(ROOT / "sw/linux/drivers/hello/hello-npu.c") + read(
-        ROOT / "sw/linux/drivers/hello/hello-dma.c"
+    driver_text = read(ROOT / "sw/linux/drivers/e1/e1-npu.c") + read(
+        ROOT / "sw/linux/drivers/e1/e1-dma.c"
     )
 
-    for compat in ("openphone,hello-npu", "openphone,hello-dma"):
+    for compat in ("openagent,e1-npu", "openagent,e1-dma"):
         require(
             compat in dts,
             f"{LINUX_DTS.relative_to(ROOT)} missing driver compatible {compat}",
             errors,
         )
-        require(compat in driver_text, f"Linux hello drivers must bind {compat}", errors)
+        require(compat in driver_text, f"Linux e1 drivers must bind {compat}", errors)
 
     for obj in re.findall(r"\+=\s*([A-Za-z0-9_-]+)\.o", makefile):
         source = LINUX_MAKEFILE.parent / f"{obj}.c"
@@ -162,7 +162,7 @@ def check_linux_drivers(errors: list[str]) -> None:
             errors,
         )
 
-    allowed = {"OPENPHONE_HELLO_BSP", "OPENPHONE_HELLO_NPU", "OPENPHONE_HELLO_DMA"}
+    allowed = {"OPENAGENT_E1_BSP", "OPENAGENT_E1_NPU", "OPENAGENT_E1_DMA"}
     for symbol in re.findall(r"config\s+([A-Z0-9_]+)", kconfig):
         require(
             symbol in allowed,
@@ -176,13 +176,13 @@ def check_buildroot(errors: list[str]) -> None:
     for path in (BUILDROOT_SMOKE, LINUX_SMOKE, BUILDROOT_OVERLAY_SMOKE):
         text = read(path)
         require(
-            "/dev/hello-npu" in text,
-            f"{path.relative_to(ROOT)} missing /dev/hello-npu smoke marker",
+            "/dev/e1-npu" in text,
+            f"{path.relative_to(ROOT)} missing /dev/e1-npu smoke marker",
             errors,
         )
         require(
-            "HELLO_NPU_BASE=0x10020000" in text or "HELLO_NPU_BASE 0x10020000u" in text,
-            f"{path.relative_to(ROOT)} missing HELLO_NPU_BASE=0x10020000 marker",
+            "E1_NPU_BASE=0x10020000" in text or "E1_NPU_BASE 0x10020000u" in text,
+            f"{path.relative_to(ROOT)} missing E1_NPU_BASE=0x10020000 marker",
             errors,
         )
         require(
@@ -191,8 +191,8 @@ def check_buildroot(errors: list[str]) -> None:
             errors,
         )
     require(
-        "BR2_PACKAGE_HELLO_MMIO_SMOKE=y" in defconfig,
-        f"{BUILDROOT_DEFCONFIG.relative_to(ROOT)} must select hello-mmio-smoke",
+        "BR2_PACKAGE_E1_MMIO_SMOKE=y" in defconfig,
+        f"{BUILDROOT_DEFCONFIG.relative_to(ROOT)} must select e1-mmio-smoke",
         errors,
     )
 
@@ -200,12 +200,12 @@ def check_buildroot(errors: list[str]) -> None:
 def check_handoffs(errors: list[str]) -> None:
     handoff_tokens = {
         QEMU_RUN: (
-            "qemu_virt_reference_only_not_hello_chip_rtl",
+            "qemu_virt_reference_only_not_e1_chip_rtl",
             "evidence_kind=qemu-os-boot-attempt",
         ),
         RENODE_RUN: (
             "qemu_virt_reference",
-            "not hello-chip hardware ABI boot evidence",
+            "not e1-chip hardware ABI boot evidence",
             "scripts/run_qemu.sh --build-firmware",
         ),
         CHIPYARD_RUN: (

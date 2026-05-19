@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_display (
+module e1_display (
     input  logic        clk,
     input  logic        rst_n,
     input  logic        valid,

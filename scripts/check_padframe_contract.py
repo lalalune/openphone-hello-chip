@@ -21,18 +21,18 @@ REQUIRED_RELEASE_GATES = {
 NON_RELEASE_EVIDENCE_CLASSES = {"non_release_placeholder", "non_release_demo_planning"}
 PROHIBITED_RELEASE_USE = "prohibited"
 REQUIRED_CROSS_PROBE_SCOPE = {
-    "package_pinout": "package/hello-demo-pinout.yaml",
-    "padframe_contract": "pd/padframe/hello_demo_padframe.yaml",
-    "rtl_top": "rtl/top/hello_chip_top.sv",
-    "board_fab_notes": "docs/board/kicad/hello-demo/fab-notes.md",
+    "package_pinout": "package/e1-demo-pinout.yaml",
+    "padframe_contract": "pd/padframe/e1_demo_padframe.yaml",
+    "rtl_top": "rtl/top/e1_chip_top.sv",
+    "board_fab_notes": "docs/board/kicad/e1-demo/fab-notes.md",
 }
 
 
 def parse_ports(path: Path) -> set[str]:
     text = path.read_text()
-    module = re.search(r"module\s+hello_chip_top\s*\((.*?)\);", text, re.S)
+    module = re.search(r"module\s+e1_chip_top\s*\((.*?)\);", text, re.S)
     if not module:
-        raise SystemExit("hello_chip_top module header not found")
+        raise SystemExit("e1_chip_top module header not found")
     ports: set[str] = set()
     for raw in module.group(1).splitlines():
         raw = raw.split("//", 1)[0].strip().rstrip(",")
@@ -105,7 +105,7 @@ def validate_cross_probe(root: Path, path: Path, expected_pins: int) -> list[str
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
-    contract = yaml.safe_load((root / "pd/padframe/hello_demo_padframe.yaml").read_text())
+    contract = yaml.safe_load((root / "pd/padframe/e1_demo_padframe.yaml").read_text())
     pinout = yaml.safe_load((root / contract["package_pinout"]).read_text())
     pins = pinout.get("pins", [])
     allowed = contract["allowed"]

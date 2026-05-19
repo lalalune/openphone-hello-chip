@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNNER_PATH = ROOT / "benchmarks/run_benchmarks.py"
 PLAN_PATH = ROOT / "benchmarks/configs/benchmark_plan.json"
 BLOCKED_METADATA = ROOT / "benchmarks/metadata/strict-blocked-template.json"
-NNAPI_PROOF_CHECK = ROOT / "scripts/check_hello_npu_nnapi_proof.py"
+NNAPI_PROOF_CHECK = ROOT / "scripts/check_e1_npu_nnapi_proof.py"
 
 spec = importlib.util.spec_from_file_location("run_benchmarks", RUNNER_PATH)
 if spec is None or spec.loader is None:
@@ -131,7 +131,7 @@ def test_strict_missing_exits_two_and_preserves_blockers() -> None:
         plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
         for bench in plan["benchmarks"]:
             if bench["name"] == "coremark":
-                bench["requires"] = ["definitely_missing_openphone_coremark"]
+                bench["requires"] = ["definitely_missing_openagent_coremark"]
             for artifact in bench.get("model_artifacts", []):
                 artifact["path"] = "benchmarks/models/definitely_missing_mobile_smoke.tflite"
         temp_plan.write_text(json.dumps(plan, indent=2), encoding="utf-8")
@@ -188,7 +188,7 @@ def test_blocked_metadata_template_covers_config_assets() -> None:
                 raise AssertionError(f"{asset_name}.{field} must be a blocked marker")
 
 
-def test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
+def test_e1_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
     temp_parent = ROOT / "build/test-temp"
     temp_parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=temp_parent) as td:
@@ -196,9 +196,9 @@ def test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
         temp_plan = temp_root / "benchmark_plan_missing_nnapi_proof.json"
         plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
         for bench in plan["benchmarks"]:
-            if bench["name"] == "tflite_hello_npu":
+            if bench["name"] == "tflite_e1_npu":
                 bench["capability_artifacts"][0]["path"] = (
-                    "benchmarks/capabilities/definitely_missing_hello_npu_nnapi.proof.json"
+                    "benchmarks/capabilities/definitely_missing_e1_npu_nnapi.proof.json"
                 )
         temp_plan.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
         status_path = Path(td) / "status.json"
@@ -225,15 +225,15 @@ def test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
     assert_equal(status["can_generate_locally"], False, "local proof generation")
     blockers = status.get("local_blockers", [])
     if not any(
-        blocker.get("blocked_reason") == "missing_hello_npu_nnapi_accelerator"
+        blocker.get("blocked_reason") == "missing_e1_npu_nnapi_accelerator"
         for blocker in blockers
     ):
         raise AssertionError(json.dumps(status, indent=2))
 
 
-def test_hello_npu_nnapi_proof_rejects_tops_and_capture_command_drift() -> None:
+def test_e1_npu_nnapi_proof_rejects_tops_and_capture_command_drift() -> None:
     plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
-    bench = next(item for item in plan["benchmarks"] if item["name"] == "tflite_hello_npu")
+    bench = next(item for item in plan["benchmarks"] if item["name"] == "tflite_e1_npu")
     artifact = dict(bench["capability_artifacts"][0])
     model_path = ROOT / "benchmarks/models/mobile_smoke.tflite"
 
@@ -250,25 +250,25 @@ def test_hello_npu_nnapi_proof_rejects_tops_and_capture_command_drift() -> None:
             "dma_trace": evidence_dir / "dma-trace.log",
         }
         transcripts["adb_devices"].write_text("List of devices attached\nabc\tdevice\n")
-        transcripts["nnapi_accelerator_query"].write_text("hello-npu\n")
+        transcripts["nnapi_accelerator_query"].write_text("e1-npu\n")
         transcripts["benchmark_model_nnapi"].write_text(
-            "--use_nnapi=true --nnapi_accelerator_name=hello-npu NNAPI\n"
+            "--use_nnapi=true --nnapi_accelerator_name=e1-npu NNAPI\n"
         )
-        transcripts["dma_trace"].write_text("hello-npu DMA bytes_read bytes_written\n")
+        transcripts["dma_trace"].write_text("e1-npu DMA bytes_read bytes_written\n")
 
-        proof_path = temp_root / "hello_npu_nnapi.proof.json"
+        proof_path = temp_root / "e1_npu_nnapi.proof.json"
         proof = {
-            "schema": "openphone.hello_npu_nnapi_capability.v1",
+            "schema": "openagent.e1_npu_nnapi_capability.v1",
             "date_utc": "2026-05-18T00:00:00+00:00",
             "target": "test-target",
             "generated_by": "unit-test",
-            "accelerator_name": "hello-npu",
+            "accelerator_name": "e1-npu",
             "capability": {
                 "claim_level": "L4_DEV_BOARD",
                 "precision": "int8",
             },
             "nnapi": {
-                "accelerator_name": "hello-npu",
+                "accelerator_name": "e1-npu",
                 "delegated_node_count": 1,
                 "total_node_count": 1,
                 "cpu_fallback_percent": 0,
@@ -290,7 +290,7 @@ def test_hello_npu_nnapi_proof_rejects_tops_and_capture_command_drift() -> None:
             },
             "capture": {
                 "commands": {
-                    **run_benchmarks.HELLO_NPU_REQUIRED_CAPTURE_COMMANDS,
+                    **run_benchmarks.E1_NPU_REQUIRED_CAPTURE_COMMANDS,
                     "benchmark_model_nnapi": "benchmark_model --wrong",
                 }
             },
@@ -327,8 +327,8 @@ def main() -> int:
         test_simulator_parser_accepts_calibrated_counter_export_shape,
         test_strict_missing_exits_two_and_preserves_blockers,
         test_blocked_metadata_template_covers_config_assets,
-        test_hello_npu_nnapi_proof_check_preserves_missing_proof_blocker,
-        test_hello_npu_nnapi_proof_rejects_tops_and_capture_command_drift,
+        test_e1_npu_nnapi_proof_check_preserves_missing_proof_blocker,
+        test_e1_npu_nnapi_proof_rejects_tops_and_capture_command_drift,
     ):
         test()
         print(f"PASS {test.__name__}")

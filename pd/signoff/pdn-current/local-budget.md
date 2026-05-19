@@ -18,7 +18,7 @@ Key local artifacts:
 - `57-openroad-irdropreport/irdrop.rpt`
 - `20-openroad-generatepdn/openroad-generatepdn.log`
 - `signoff-run.yaml`
-- `benchmarks/power/local-estimates/hello-npu-openlane-npu-estimates.json`
+- `benchmarks/power/local-estimates/e1-npu-openlane-npu-estimates.json`
 
 ## Derived budget
 

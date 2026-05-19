@@ -59,7 +59,7 @@ def test_archive_fails_closed_when_required_report_missing() -> None:
         run_dir = run_root / "RUN_missing"
         manifest = root / "manifest.yaml"
         write(manifest, yaml.safe_dump(manifest_for(str(run_root.relative_to(ROOT)))))
-        write(run_dir / "final/gds/hello.gds", "gds data\n")
+        write(run_dir / "final/gds/e1.gds", "gds data\n")
 
         result = run_archive(manifest, run_dir, root / "archive", root / "reports")
 
@@ -78,7 +78,7 @@ def test_archive_passes_when_required_artifacts_are_present_and_clean() -> None:
         run_dir = run_root / "RUN_clean"
         manifest = root / "manifest.yaml"
         write(manifest, yaml.safe_dump(manifest_for(str(run_root.relative_to(ROOT)))))
-        write(run_dir / "final/gds/hello.gds", "gds data\n")
+        write(run_dir / "final/gds/e1.gds", "gds data\n")
         write(run_dir / "reports/signoff/drc.rpt", "violations: 0\nclean\n")
 
         result = run_archive(manifest, run_dir, root / "archive", root / "reports")

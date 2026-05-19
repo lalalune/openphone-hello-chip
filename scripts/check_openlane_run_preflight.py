@@ -79,9 +79,9 @@ def active_labeled_openlane_containers() -> list[str]:
             "docker",
             "ps",
             "--filter",
-            "label=openphone.openlane=1",
+            "label=openagent.openlane=1",
             "--filter",
-            f"label=openphone.repo={ROOT}",
+            f"label=openagent.repo={ROOT}",
             "--format",
             "{{.ID}} {{.Status}} {{.Names}}",
         ],
@@ -126,8 +126,8 @@ def validate_openlane_config(config_path: Path, failures: list[str]) -> dict:
     for key in ("DESIGN_NAME", "VERILOG_FILES", "CLOCK_PORT", "CLOCK_PERIOD"):
         if key not in config:
             failures.append(f"{config_path.relative_to(ROOT)}: missing {key}")
-    if config.get("DESIGN_NAME") != "hello_chip_top":
-        failures.append(f"{config_path.relative_to(ROOT)}: DESIGN_NAME must be hello_chip_top")
+    if config.get("DESIGN_NAME") != "e1_chip_top":
+        failures.append(f"{config_path.relative_to(ROOT)}: DESIGN_NAME must be e1_chip_top")
     if not isinstance(config.get("VERILOG_FILES"), list) or not config["VERILOG_FILES"]:
         failures.append(f"{config_path.relative_to(ROOT)}: VERILOG_FILES must be a non-empty list")
     return config

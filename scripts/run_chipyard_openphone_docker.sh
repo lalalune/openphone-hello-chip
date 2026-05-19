@@ -2,12 +2,12 @@
 set -eu
 
 repo_dir="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
-image="${CHIPYARD_DOCKER_IMAGE:-openphone/chipyard-openphone-minimal-amd64:1.13.0}"
-out_dir="$repo_dir/build/chipyard/openphone_rocket"
+image="${CHIPYARD_DOCKER_IMAGE:-openagent/chipyard-openagent-minimal-amd64:1.13.0}"
+out_dir="$repo_dir/build/chipyard/openagent_rocket"
 log="$out_dir/docker-verilog-attempt.log"
 platform="${CHIPYARD_DOCKER_PLATFORM:-linux/amd64}"
-config="${CHIPYARD_CONFIG:-OpenPhoneRocketConfig}"
-config_package="${CHIPYARD_CONFIG_PACKAGE:-openphone}"
+config="${CHIPYARD_CONFIG:-OpenAgentRocketConfig}"
+config_package="${CHIPYARD_CONFIG_PACKAGE:-openagent}"
 java_tool_options="${CHIPYARD_JAVA_TOOL_OPTIONS:--Xmx3G -Xss8M -Djava.io.tmpdir=/work/external/chipyard/.java_tmp}"
 
 mkdir -p "$out_dir"
@@ -18,12 +18,12 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 {
-	printf 'openphone-evidence: target=cpu_ap artifact=chipyard_docker_verilog_attempt\n'
-	printf 'openphone-evidence: image=%s\n' "$image"
-	printf 'openphone-evidence: platform=%s\n' "$platform"
-	printf 'openphone-evidence: java_tool_options=%s\n' "$java_tool_options"
-	printf 'openphone-evidence: command=make CONFIG=%s CONFIG_PACKAGE=%s verilog\n' "$config" "$config_package"
-	printf 'openphone-evidence: raw_transcript_begin\n'
+	printf 'openagent-evidence: target=cpu_ap artifact=chipyard_docker_verilog_attempt\n'
+	printf 'openagent-evidence: image=%s\n' "$image"
+	printf 'openagent-evidence: platform=%s\n' "$platform"
+	printf 'openagent-evidence: java_tool_options=%s\n' "$java_tool_options"
+	printf 'openagent-evidence: command=make CONFIG=%s CONFIG_PACKAGE=%s verilog\n' "$config" "$config_package"
+	printf 'openagent-evidence: raw_transcript_begin\n'
 } >"$log"
 
 set +e
@@ -31,7 +31,7 @@ docker run --rm --platform "$platform" \
 	-v "$repo_dir:/work" \
 	-w /work \
 	-e "RISCV=/opt/conda/riscv-tools" \
-	-e "PATH=/opt/openphone/circt/bin:/opt/conda/riscv-tools/bin:/opt/conda/bin:/opt/conda/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+	-e "PATH=/opt/openagent/circt/bin:/opt/conda/riscv-tools/bin:/opt/conda/bin:/opt/conda/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
 	-e "JAVA_TOOL_OPTIONS=$java_tool_options" \
 	-e "CHIPYARD_JAVA_TOOL_OPTIONS=$java_tool_options" \
 	-e "CHIPYARD_DOCKER_IMAGE=$image" \
@@ -64,13 +64,13 @@ rc=$?
 set -e
 
 {
-	printf 'openphone-evidence: raw_transcript_end\n'
-	printf 'openphone-evidence: exit_code=%s\n' "$rc"
+	printf 'openagent-evidence: raw_transcript_end\n'
+	printf 'openagent-evidence: exit_code=%s\n' "$rc"
 	if [ "$rc" -eq 0 ]; then
-		printf 'openphone-evidence: status=PASS\n'
+		printf 'openagent-evidence: status=PASS\n'
 		echo "STATUS: PASS chipyard.docker_verilog - generated Verilog command completed"
 	else
-		printf 'openphone-evidence: status=BLOCKED\n'
+		printf 'openagent-evidence: status=BLOCKED\n'
 		echo "STATUS: BLOCKED chipyard.docker_verilog - containerized Verilog generation did not complete"
 	fi
 	printf 'REPORT: %s\n' "${log#"$repo_dir"/}"

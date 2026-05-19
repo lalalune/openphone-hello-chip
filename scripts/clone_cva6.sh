@@ -1,5 +1,5 @@
 #!/bin/bash
-# Clone CVA6 and set up the include path for hello chip integration
+# Clone CVA6 and set up the include path for e1 chip integration
 # Usage: ./scripts/clone_cva6.sh
 set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -27,12 +27,12 @@ for f in core/cva6.sv include/ariane_pkg.sv include/riscv_pkg.sv; do
 done
 
 echo ""
-echo "CVA6 ready. To build hello chip with CVA6:"
-echo "  Verilator: verilator +define+HELLO_HAVE_CVA6 \\"
+echo "CVA6 ready. To build e1 chip with CVA6:"
+echo "  Verilator: verilator +define+E1_HAVE_CVA6 \\"
 echo "    -I$CVA6_DIR/include -I$CVA6_DIR/core \\"
 echo "    rtl/**/*.sv $CVA6_DIR/core/cva6.sv ..."
 echo ""
-echo "  Yosys (FPGA): yosys -D HELLO_HAVE_CVA6 \\"
+echo "  Yosys (FPGA): yosys -D E1_HAVE_CVA6 \\"
 echo "    -p 'read_verilog -sv -I$CVA6_DIR/include $CVA6_DIR/core/cva6.sv rtl/**/*.sv'"
 
 # Write integration marker

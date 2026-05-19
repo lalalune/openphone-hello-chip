@@ -4,7 +4,7 @@
 This is a CLI-only readiness check. It does not build TensorFlow Lite, download
 models, or run the benchmark. When the local machine lacks a real
 benchmark_model binary, it records that blocker instead of treating the
-repo-local smoke shim as product evidence. It can also check the hello-npu
+repo-local smoke shim as product evidence. It can also check the e1-npu
 NNAPI proof gate without fabricating proof files or target results.
 """
 
@@ -31,7 +31,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--benchmark",
-        choices=("tflite_cpu", "tflite_hello_npu", "all"),
+        choices=("tflite_cpu", "tflite_e1_npu", "all"),
         default="tflite_cpu",
         help="Benchmark readiness target to check.",
     )
@@ -51,7 +51,7 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     config_path = args.config if args.config.is_absolute() else root / args.config
     config = run_benchmarks.load_config(config_path)
-    names = {"tflite_cpu", "tflite_hello_npu"} if args.benchmark == "all" else {args.benchmark}
+    names = {"tflite_cpu", "tflite_e1_npu"} if args.benchmark == "all" else {args.benchmark}
     benches = run_benchmarks.selected_benchmarks(config, names)
     checks: list[dict[str, Any]] = []
     ready = True
@@ -82,7 +82,7 @@ def main(argv: list[str]) -> int:
         checks.append(check)
 
     status: dict[str, Any] = {
-        "schema": "openphone.tflite_cpu_benchmark_readiness.v1",
+        "schema": "openagent.tflite_cpu_benchmark_readiness.v1",
         "benchmark": args.benchmark,
         "strict_real_tools": not args.allow_host_smoke_tools,
         "status": "ready" if ready else "blocked",

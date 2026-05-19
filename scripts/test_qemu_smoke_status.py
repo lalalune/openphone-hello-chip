@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUN_QEMU = ROOT / "scripts/run_qemu.sh"
-QEMU_ELF = ROOT / "build/qemu/hello_qemu_firmware.elf"
+QEMU_ELF = ROOT / "build/qemu/e1_qemu_firmware.elf"
 QEMU_LOG = ROOT / "build/reports/qemu_smoke.log"
 QEMU_MANIFEST = ROOT / "build/reports/qemu_smoke.manifest"
 QEMU_OS_ATTEMPT_LOG = ROOT / "build/reports/qemu_os_boot_attempt.log"
@@ -120,7 +120,7 @@ def test_fake_toolchain_and_qemu_pass() -> None:
         )
         write_executable(
             qemu,
-            "#!/bin/sh\nprintf 'openphone hello qemu\\n'\n",
+            "#!/bin/sh\nprintf 'openagent e1 qemu\\n'\n",
         )
         result = run_check(
             {
@@ -136,18 +136,18 @@ def test_fake_toolchain_and_qemu_pass() -> None:
     assert_contains(result.stdout, "STATUS: PASS qemu.build")
     assert_contains(result.stdout, "STATUS: PASS qemu.run")
     assert_contains(result.stdout, "STATUS: PASS qemu.check")
-    assert_contains(QEMU_LOG.read_text(errors="ignore"), "openphone hello qemu")
+    assert_contains(QEMU_LOG.read_text(errors="ignore"), "openagent e1 qemu")
     manifest = QEMU_MANIFEST.read_text(errors="ignore")
     assert_contains(manifest, "status=PASS")
     assert_contains(manifest, "check=qemu.run")
     assert_contains(manifest, "evidence_kind=qemu-executable-transcript")
-    assert_contains(manifest, "banner=openphone hello qemu")
+    assert_contains(manifest, "banner=openagent e1 qemu")
 
 
 def test_os_boot_check_blocks_without_payloads() -> None:
     result = run_os_check(
         {"PATH": os.environ["PATH"]},
-        ["--linux-kernel", "/no/such/openphone/Image", "--initrd", "/no/such/openphone/initrd"],
+        ["--linux-kernel", "/no/such/openagent/Image", "--initrd", "/no/such/openagent/initrd"],
     )
     if result.returncode != 2:
         raise AssertionError(
@@ -163,20 +163,20 @@ def test_os_boot_check_blocks_without_payloads() -> None:
     )
     assert_contains(attempt, "status=BLOCKED")
     assert_contains(attempt, "check=qemu.os_boot")
-    assert_contains(attempt, "kernel=/no/such/openphone/Image")
+    assert_contains(attempt, "kernel=/no/such/openagent/Image")
     assert_contains(attempt, "kernel_sha256=missing")
-    assert_contains(attempt, "initrd=/no/such/openphone/initrd")
+    assert_contains(attempt, "initrd=/no/such/openagent/initrd")
     assert_contains(attempt, "initrd_sha256=missing")
     manifest = json.loads(QEMU_OS_ATTEMPT_MANIFEST.read_text())
-    if manifest["schema"] != "openphone.qemu_virt_os_boot_attempt.v1":
+    if manifest["schema"] != "openagent.qemu_virt_os_boot_attempt.v1":
         raise AssertionError(f"unexpected OS attempt schema: {manifest}")
-    if manifest["claim_boundary"] != "qemu_virt_reference_only_not_hello_chip_rtl":
+    if manifest["claim_boundary"] != "qemu_virt_reference_only_not_e1_chip_rtl":
         raise AssertionError(f"unexpected OS attempt claim boundary: {manifest}")
     if manifest["status"] != "BLOCKED":
         raise AssertionError(f"unexpected OS attempt status: {manifest}")
-    if manifest["kernel"] != "/no/such/openphone/Image":
+    if manifest["kernel"] != "/no/such/openagent/Image":
         raise AssertionError(f"unexpected OS attempt kernel field: {manifest}")
-    if manifest["initrd"] != "/no/such/openphone/initrd":
+    if manifest["initrd"] != "/no/such/openagent/initrd":
         raise AssertionError(f"unexpected OS attempt payload fields: {manifest}")
 
 
@@ -258,7 +258,7 @@ def test_os_boot_check_passes_with_payloads_and_init_marker() -> None:
     manifest = json.loads(QEMU_OS_ATTEMPT_MANIFEST.read_text())
     if manifest["status"] != "PASS":
         raise AssertionError(f"unexpected OS attempt status: {manifest}")
-    if manifest["claim_boundary"] != "qemu_virt_reference_only_not_hello_chip_rtl":
+    if manifest["claim_boundary"] != "qemu_virt_reference_only_not_e1_chip_rtl":
         raise AssertionError(f"unexpected OS attempt claim boundary: {manifest}")
     if manifest["kernel"] != str(kernel):
         raise AssertionError(f"unexpected OS attempt kernel field: {manifest}")

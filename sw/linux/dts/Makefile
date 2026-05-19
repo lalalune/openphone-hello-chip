@@ -1,4 +1,4 @@
 # SPDX-License-Identifier: GPL-2.0-only
-# External Linux Kbuild fragment for the OpenPhone hello board DTS.
+# External Linux Kbuild fragment for the OpenAgent e1 board DTS.
 
-dtb-y += openphone-hello.dtb
+dtb-y += openagent-e1.dtb

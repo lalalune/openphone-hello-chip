@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
-IMG=openphone-tier2-builder
+IMG=openagent-tier2-builder
 docker build -t "$IMG" - <<'DOCKERFILE'
 FROM debian:bookworm-slim
 RUN apt-get update -qq && \
@@ -27,8 +27,8 @@ fi
 cd external/linux
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig
 # merge tiny fragment if present
-if [ -f /work/sw/linux/configs/openphone_tier2_qemu_defconfig ]; then
-  ./scripts/kconfig/merge_config.sh -m .config /work/sw/linux/configs/openphone_tier2_qemu_defconfig || true
+if [ -f /work/sw/linux/configs/openagent_tier2_qemu_defconfig ]; then
+  ./scripts/kconfig/merge_config.sh -m .config /work/sw/linux/configs/openagent_tier2_qemu_defconfig || true
   make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- olddefconfig
 fi
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc) Image 2>&1 | tail -30
@@ -66,7 +66,7 @@ cat > "$INITRAMFS_DIR/init" <<INIT
 /bin/busybox mount -t proc proc /proc
 /bin/busybox mount -t sysfs sysfs /sys
 /bin/busybox mount -t devtmpfs devtmpfs /dev 2>/dev/null
-/bin/busybox echo "openphone tier2: linux booted"
+/bin/busybox echo "openagent tier2: linux booted"
 exec /bin/busybox sh
 INIT
 chmod +x "$INITRAMFS_DIR/init"

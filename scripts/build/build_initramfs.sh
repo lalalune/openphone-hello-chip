@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# Build a minimal busybox initramfs (cpio.gz) for OpenPhone Tier 2 Linux boot.
+# Build a minimal busybox initramfs (cpio.gz) for OpenAgent Tier 2 Linux boot.
 #
 # Inputs:
 #   $1 (optional): path to static busybox binary.
 #                  Default: external/busybox/busybox
 #
 # Output:
-#   build/initramfs/openphone_tier2.cpio.gz
+#   build/initramfs/openagent_tier2.cpio.gz
 #
 # Expected size: ~1 MB.
 set -euo pipefail
@@ -17,7 +17,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BUSYBOX="${1:-${REPO_ROOT}/external/busybox/busybox}"
 OUT_DIR="${REPO_ROOT}/build/initramfs"
 ROOT_DIR="${OUT_DIR}/root"
-OUT_CPIO="${OUT_DIR}/openphone_tier2.cpio.gz"
+OUT_CPIO="${OUT_DIR}/openagent_tier2.cpio.gz"
 
 if [[ ! -x "${BUSYBOX}" ]]; then
   echo "ERROR: busybox not found or not executable at ${BUSYBOX}" >&2
@@ -38,7 +38,7 @@ cat > "${ROOT_DIR}/init" <<'INIT'
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs devtmpfs /dev
-echo "openphone tier2: linux booted"
+echo "openagent tier2: linux booted"
 exec /bin/sh
 INIT
 chmod +x "${ROOT_DIR}/init"

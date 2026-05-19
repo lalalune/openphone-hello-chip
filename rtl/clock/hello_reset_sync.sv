@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_reset_sync (
+module e1_reset_sync (
     input  logic clk,
     input  logic rst_n_async,
     output logic rst_n_sync

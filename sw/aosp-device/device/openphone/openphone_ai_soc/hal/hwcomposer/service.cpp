@@ -1,10 +1,10 @@
-// Composer 2.4 service entry for openphone_ai_soc.
+// Composer 2.4 service entry for openagent_ai_soc.
 //
 // Status: stub wrapper. Uses the AOSP-provided default passthrough
-// service that loads hwcomposer.openphone_ai_soc.so via hw_get_module().
+// service that loads hwcomposer.openagent_ai_soc.so via hw_get_module().
 // No GLES claim, no Vulkan claim.
 
-#define LOG_TAG "hwc-openphone-service"
+#define LOG_TAG "hwc-openagent-service"
 
 #include <android-base/logging.h>
 #include <android/hardware/graphics/composer/2.4/IComposer.h>

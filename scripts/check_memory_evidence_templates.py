@@ -84,7 +84,7 @@ def validate_template(errors: list[str]) -> None:
         return
 
     require(
-        data.get("schema") == "openphone.memory.bandwidth_latency_contended_access.template.v1",
+        data.get("schema") == "openagent.memory.bandwidth_latency_contended_access.template.v1",
         "memory evidence template schema drifted",
         errors,
     )

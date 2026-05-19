@@ -11,14 +11,14 @@ from typing import Any
 
 from cpu_ap_evidence_lib import ROOT, rel
 
-BUILD = ROOT / "build/chipyard/openphone_rocket"
+BUILD = ROOT / "build/chipyard/openagent_rocket"
 REPORT = ROOT / "build/reports/cpu_ap_boot_readiness.json"
-LINUX_ARTIFACTS = ROOT / "docs/evidence/linux/openphone-linux-boot-artifacts.json"
+LINUX_ARTIFACTS = ROOT / "docs/evidence/linux/openagent-linux-boot-artifacts.json"
 
 REQUIRED_GENERATED = {
-    "generated_manifest": BUILD / "OpenPhoneRocketConfig.manifest.json",
-    "verilog": BUILD / "openphone_rocket_ap.v",
-    "dts": BUILD / "openphone-hello.dts",
+    "generated_manifest": BUILD / "OpenAgentRocketConfig.manifest.json",
+    "verilog": BUILD / "openagent_rocket_ap.v",
+    "dts": BUILD / "openagent-e1.dts",
 }
 REQUIRED_DTS_TOKENS = {
     "cpu": "cpu@0",
@@ -53,7 +53,7 @@ def check_generated(errors: list[str], blockers: list[dict[str, str]]) -> dict[s
                 blockers,
                 f"generated.{name}",
                 f"{rel(path)} is missing",
-                "python3 scripts/generate_chipyard_openphone.py",
+                "python3 scripts/generate_chipyard_openagent.py",
             )
     dts = REQUIRED_GENERATED["dts"]
     if dts.is_file():
@@ -75,7 +75,7 @@ def check_smoke(blockers: list[dict[str, str]]) -> dict[str, Any]:
         blockers,
         "chipyard.verilator_linux_smoke",
         f"generated AP Linux smoke not passing; progress_stage={stage}",
-        "CHIPYARD_LINUX_BINARY=<payload> scripts/run_chipyard_openphone_linux_smoke.sh",
+        "CHIPYARD_LINUX_BINARY=<payload> scripts/run_chipyard_openagent_linux_smoke.sh",
     )
     return {"path": rel(path), "state": "blocked", "progress_stage": stage}
 
@@ -113,7 +113,7 @@ def build_report() -> dict[str, Any]:
     errors: list[str] = []
     blockers: list[dict[str, str]] = []
     report = {
-        "schema": "openphone.cpu_ap_boot_readiness.v1",
+        "schema": "openagent.cpu_ap_boot_readiness.v1",
         "claim_boundary": "readiness_gate_only_no_boot_evidence_created",
         "generated_artifacts": check_generated(errors, blockers),
         "chipyard_verilator_linux_smoke": check_smoke(blockers),

@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GENERATOR = ROOT / "benchmarks/generate_simulator_arch_metrics.py"
-BANNER = "openphone hello qemu"
+BANNER = "openagent e1 qemu"
 
 
 def run_generator(qemu_log: Path, out: Path) -> subprocess.CompletedProcess[str]:
@@ -64,7 +64,7 @@ def test_liveness_metrics_are_not_performance_evidence() -> None:
         data = json.loads(out.read_text(encoding="utf-8"))
 
     expected = {
-        "schema": "openphone.simulator_arch_metrics.v1",
+        "schema": "openagent.simulator_arch_metrics.v1",
         "evidence_class": "qemu_virt_liveness_only",
         "claim_boundary": "not_performance_evidence",
         "calibration_status": "uncalibrated",

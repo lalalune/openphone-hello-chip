@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
-# OpenPhone Tier 2 minimal Linux defconfig fragment for qemu-system-riscv64 -M virt.
+# OpenAgent Tier 2 minimal Linux defconfig fragment for qemu-system-riscv64 -M virt.
 #
 # Usage:
 #   cd external/linux
 #   make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig
 #   ./scripts/kconfig/merge_config.sh -m .config \
-#       ../../sw/linux/configs/openphone_tier2_qemu_defconfig
+#       ../../sw/linux/configs/openagent_tier2_qemu_defconfig
 #   make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- olddefconfig
 #   make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc) Image
 #

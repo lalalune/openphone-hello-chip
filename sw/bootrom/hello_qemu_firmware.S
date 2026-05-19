@@ -1,11 +1,11 @@
     .section .text
     .globl _start
 
-#include "../platform/generated/hello_platform_contract.h"
+#include "../platform/generated/e1_platform_contract.h"
 
 _start:
     la a0, message
-    li a1, HELLO_QEMU_VIRT_UART_BASE
+    li a1, E1_QEMU_VIRT_UART_BASE
 1:
     lbu a2, 0(a0)
     beqz a2, 2f
@@ -18,4 +18,4 @@ _start:
 
     .section .rodata
 message:
-    .asciz "openphone hello qemu\n"
+    .asciz "openagent e1 qemu\n"

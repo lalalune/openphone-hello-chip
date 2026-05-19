@@ -302,7 +302,7 @@ def write_coverage_artifact(extra):
         {"axi_lite_valid_ready_stability", "axi_lite_response_liveness_and_balance"}
     )
     coverage = {
-        "schema": "hello-chip.cpu_mem_intc_cocotb_coverage.v1",
+        "schema": "e1-chip.cpu_mem_intc_cocotb_coverage.v1",
         "source": "verify/cocotb/test_cpu_mem_intc_contract.py",
         "covered_contracts": sorted(_COVERED_CONTRACTS),
         "boundary": "Directed AXI-Lite memory and interrupt-controller contract checks around the tiny CPU harness only; no application-class CPU, MMU, cache, Linux, or Android boot coverage.",

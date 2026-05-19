@@ -141,13 +141,13 @@ def riscv_elf_toolchain() -> str | None:
                 "-c",
                 "/dev/null",
                 "-o",
-                "/tmp/openphone-riscv-toolchain-test.o",
+                "/tmp/openagent-riscv-toolchain-test.o",
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
         )
-        Path("/tmp/openphone-riscv-toolchain-test.o").unlink(missing_ok=True)
+        Path("/tmp/openagent-riscv-toolchain-test.o").unlink(missing_ok=True)
         if result.returncode == 0:
             return found
     return None
@@ -226,10 +226,10 @@ def toolchain_status() -> Status:
 
 def cocotb_status() -> Status:
     target_names = [
-        "hello_chip_top_test_hello_chip",
-        "hello_linux_soc_contract_test_cpu_mem_intc_contract",
-        "hello_npu_test_hello_npu",
-        "hello_tiny_cpu_contract_tb_test_tiny_cpu_execution",
+        "e1_chip_top_test_e1_chip",
+        "e1_linux_soc_contract_test_cpu_mem_intc_contract",
+        "e1_npu_test_e1_npu",
+        "e1_tiny_cpu_contract_tb_test_tiny_cpu_execution",
     ]
     manifest = ROOT / "build/reports/cocotb/manifest.json"
     if manifest.is_file():
@@ -294,15 +294,15 @@ def cocotb_status() -> Status:
 
 def formal_status() -> Status:
     sby_status = [
-        ROOT / "verify/formal/hello_dbg_mmio_bridge/status",
-        ROOT / "verify/formal/hello_npu/status",
-        ROOT / "verify/formal/hello_dma/status",
-        ROOT / "verify/formal/hello_soc_top/status",
+        ROOT / "verify/formal/e1_dbg_mmio_bridge/status",
+        ROOT / "verify/formal/e1_npu/status",
+        ROOT / "verify/formal/e1_dma/status",
+        ROOT / "verify/formal/e1_soc_top/status",
     ]
     fallback_logs = [
-        ROOT / "build/reports/hello_soc_top_formal_yosys.log",
-        ROOT / "build/reports/hello_npu_formal_yosys.log",
-        ROOT / "build/reports/hello_dma_formal_yosys.log",
+        ROOT / "build/reports/e1_soc_top_formal_yosys.log",
+        ROOT / "build/reports/e1_npu_formal_yosys.log",
+        ROOT / "build/reports/e1_dma_formal_yosys.log",
     ]
     if all(path.is_file() and "PASS" in path.read_text(errors="ignore") for path in sby_status):
         return Status(
@@ -359,7 +359,7 @@ def qemu_status() -> Status:
     )
     if status.status == PASS:
         smoke_log = ROOT / "build/reports/qemu_smoke.log"
-        if not smoke_log.is_file() or "openphone hello qemu" not in smoke_log.read_text(
+        if not smoke_log.is_file() or "openagent e1 qemu" not in smoke_log.read_text(
             errors="ignore"
         ):
             return Status(
@@ -373,8 +373,8 @@ def qemu_status() -> Status:
 
 
 def renode_status() -> Status:
-    status_path = ROOT / "build/renode/openphone_hello_status.json"
-    transcript = ROOT / "build/renode/openphone_hello_uart.transcript"
+    status_path = ROOT / "build/renode/openagent_e1_status.json"
+    transcript = ROOT / "build/renode/openagent_e1_uart.transcript"
     if status_path.is_file():
         try:
             data = json.loads(status_path.read_text(encoding="utf-8"))
@@ -579,17 +579,17 @@ def collect_statuses() -> list[Status]:
         files_status(
             "rtl-source",
             [
-                "rtl/top/hello_chip_top.sv",
-                "rtl/top/hello_soc_top.sv",
-                "rtl/npu/hello_npu.sv",
-                "rtl/dma/hello_dma.sv",
+                "rtl/top/e1_chip_top.sv",
+                "rtl/top/e1_soc_top.sv",
+                "rtl/npu/e1_npu.sv",
+                "rtl/dma/e1_dma.sv",
             ],
             "core RTL sources present",
             "make rtl-check",
         ),
         artifact_status(
             "synthesis",
-            ["build/netlist/hello_chip_synth.v", "build/reports/hello_soc_yosys.log"],
+            ["build/netlist/e1_chip_synth.v", "build/reports/e1_soc_yosys.log"],
             ("yosys",),
             "make synth",
             "Yosys missing or synth evidence not generated",
@@ -597,7 +597,7 @@ def collect_statuses() -> list[Status]:
         cocotb_status(),
         artifact_status(
             "verilator",
-            ["build/verilator/Vhello_chip_top"],
+            ["build/verilator/Ve1_chip_top"],
             ("verilator",),
             "make verilator",
             "Verilator missing or harness not built",

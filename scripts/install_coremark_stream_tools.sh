@@ -128,7 +128,7 @@ check_not_smoke() {
         echo "BLOCKED: $name was not installed as executable: $output" >&2
         return 1
     fi
-    if LC_ALL=C grep -a -q 'openphone-host-smoke' "$output"; then
+    if LC_ALL=C grep -a -q 'openagent-host-smoke' "$output"; then
         echo "BLOCKED: $name resolves to a repo-local host smoke shim, not a real benchmark: $output" >&2
         return 1
     fi

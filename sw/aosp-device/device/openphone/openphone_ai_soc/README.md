@@ -1,21 +1,21 @@
-# openphone_ai_soc AOSP device tree (v0)
+# openagent_ai_soc AOSP device tree (v0)
 
-Backing contract: `sw/platform/hello_platform_contract.json`.
+Backing contract: `sw/platform/e1_platform_contract.json`.
 
 This directory is an Android device tree scaffold for an external AOSP
 checkout. It is `host_checkable_manifest_only_not_boot_evidence` and
 intentionally tagged `expected_future_log_markers_only_not_boot_evidence`.
-It does not build Android, run Cuttlefish, or boot hello_soc on its own.
+It does not build Android, run Cuttlefish, or boot e1_soc on its own.
 
 ## Lunch + vendorimage flow (external AOSP tree)
 
 ```sh
-# From the OpenPhone-AI-SoC checkout:
+# From the OpenAgent-AI-SoC checkout:
 sw/aosp-device/import-aosp-device.sh /path/to/aosp
 
 cd /path/to/aosp
 source build/envsetup.sh
-lunch openphone_ai_soc-userdebug
+lunch openagent_ai_soc-userdebug
 m nothing            # sanity: product file is wired in
 m vendorimage        # builds /vendor with the two stub HALs
 ```
@@ -24,9 +24,9 @@ Expected first-pass artifacts (capture as evidence under
 `docs/evidence/android/`):
 
 ```
-out/target/product/openphone_ai_soc/vendor.img
-out/target/product/openphone_ai_soc/installed-files-vendor.txt
-out/target/product/openphone_ai_soc/obj/PACKAGING/check_vintf_all_intermediates/
+out/target/product/openagent_ai_soc/vendor.img
+out/target/product/openagent_ai_soc/installed-files-vendor.txt
+out/target/product/openagent_ai_soc/obj/PACKAGING/check_vintf_all_intermediates/
 ```
 
 `make aosp-bsp-check` and `python3 sw/aosp-device/scripts/check_aosp_bsp.py`
@@ -38,8 +38,8 @@ Only two HALs ship, both stubs:
 
 | HAL package | Backing node | Behavior |
 |---|---|---|
-| `vendor.openphone.hello_npu@1.0-service` | `/dev/hello-npu` | Fail-closed. Returns `NOT_SUPPORTED` when the node is absent; otherwise the single `smoke()` RPC reads the driver identity word at `HELLO_NPU_RESULT_OFFSET` (`cuttlefish_riscv64`, `qemu_riscv64`, and `renode_hello_soc` paths all use the same kernel driver). |
-| `android.hardware.graphics.composer@2.4-service.openphone_ai_soc` | `/dev/graphics/fb0` | Framebuffer pass-through. SurfaceFlinger runs in client composition. |
+| `vendor.openagent.e1_npu@1.0-service` | `/dev/e1-npu` | Fail-closed. Returns `NOT_SUPPORTED` when the node is absent; otherwise the single `smoke()` RPC reads the driver identity word at `E1_NPU_RESULT_OFFSET` (`cuttlefish_riscv64`, `qemu_riscv64`, and `renode_e1_soc` paths all use the same kernel driver). |
+| `android.hardware.graphics.composer@2.4-service.openagent_ai_soc` | `/dev/graphics/fb0` | Framebuffer pass-through. SurfaceFlinger runs in client composition. |
 
 ## Explicit non-claims (v0)
 
@@ -53,11 +53,11 @@ This device does NOT provide and MUST NOT advertise:
 - GNSS, NFC, sensors, thermal, power, secure_element, IR.
 - Vulkan (no `vulkan.*` HAL, no ICD, no SPIR-V claim).
 - GLES2/3 hardware acceleration (no Mali/Adreno/etc., no GLES driver).
-- NNAPI (`android.hardware.neuralnetworks` is not declared; the hello_npu
+- NNAPI (`android.hardware.neuralnetworks` is not declared; the e1_npu
   HAL is a vendor extension and is NOT a NNAPI driver in v0).
 - Keymaster / KeyMint / Gatekeeper / biometric / DRM / Widevine.
 - A/B slots, AVB verified boot, dm-verity error correction, recovery,
-  OTA, secure fastboot, unauthorized-flashing protection. `fstab.openphone`
+  OTA, secure fastboot, unauthorized-flashing protection. `fstab.openagent`
   documents AVB as `FUTURE (not yet implemented)`.
 - Google Play / GMS / Play Protect / Play Integrity certification. This
   device is AOSP-only and is not a Play-certified product.
@@ -66,19 +66,19 @@ This device does NOT provide and MUST NOT advertise:
 
 | File | Purpose |
 |---|---|
-| `AndroidProducts.mk` | Exposes `openphone_ai_soc-userdebug` to lunch. |
-| `openphone_ai_soc.mk` | Inherits `core_64_bit_only.mk` + `aosp_base.mk` + `device.mk`. |
+| `AndroidProducts.mk` | Exposes `openagent_ai_soc-userdebug` to lunch. |
+| `openagent_ai_soc.mk` | Inherits `core_64_bit_only.mk` + `aosp_base.mk` + `device.mk`. |
 | `BoardConfig.mk` | riscv64 target, vendor sepolicy dir, kernel fragment/DTS pointers. |
 | `device.mk` | Copies init/fstab/manifest; declares the two HAL packages. |
-| `manifest.xml` | VINTF: graphics.composer@2.4 + vendor.openphone.hello_npu@1.0 only. |
-| `init.openphone.rc` | `/dev/hello-npu` ownership; gates hello_npu on `vendor.hello_npu.ready=1`. |
-| `fstab.openphone` | `/vendor` + `/data`. AVB flags are commented as not-yet-implemented. |
-| `sepolicy/file_contexts` | Labels the two HAL binaries and `/dev/hello-npu`. |
-| `sepolicy/hello_npu.te` | Domain + minimal allow rules, no neverallow violations. |
-| `hal/hello_npu/` | C++ stub of the NPU HAL service, fail-closed. |
+| `manifest.xml` | VINTF: graphics.composer@2.4 + vendor.openagent.e1_npu@1.0 only. |
+| `init.openagent.rc` | `/dev/e1-npu` ownership; gates e1_npu on `vendor.e1_npu.ready=1`. |
+| `fstab.openagent` | `/vendor` + `/data`. AVB flags are commented as not-yet-implemented. |
+| `sepolicy/file_contexts` | Labels the two HAL binaries and `/dev/e1-npu`. |
+| `sepolicy/e1_npu.te` | Domain + minimal allow rules, no neverallow violations. |
+| `hal/e1_npu/` | C++ stub of the NPU HAL service, fail-closed. |
 | `hal/hwcomposer/` | Framebuffer-only hwcomposer stub. |
-| `kernel/openphone_ai_soc.fragment` | Android kernel config fragment (SELinux, Binder, BINDERFS, ASHMEM/MEMFD, F2FS, ext4, simple-fb). |
-| `dts/openphone-hello-android.dts` | Android-facing DTS scaffold, mirrors the platform contract. |
+| `kernel/openagent_ai_soc.fragment` | Android kernel config fragment (SELinux, Binder, BINDERFS, ASHMEM/MEMFD, F2FS, ext4, simple-fb). |
+| `dts/openagent-e1-android.dts` | Android-facing DTS scaffold, mirrors the platform contract. |
 
 ## Local check
 

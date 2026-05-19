@@ -2,7 +2,7 @@
 """Machine-readable status for external Linux BSP evidence capture.
 
 This checker does not patch or build the external tree. It reports whether a
-candidate Linux checkout exists, whether the OpenPhone BSP appears imported,
+candidate Linux checkout exists, whether the OpenAgent BSP appears imported,
 which host tools are available, and the exact commands that produce the three
 minimum Linux evidence logs.
 """
@@ -23,9 +23,9 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "docs/evidence/linux/linux-external-bsp-status.json"
 
 EVIDENCE = {
-    "linux_kernel_build": "docs/evidence/linux/openphone_hello_kernel_build.log",
-    "linux_dtb_check": "docs/evidence/linux/openphone_hello_dtb_check.log",
-    "linux_mmio_smoke": "docs/evidence/linux/hello-mmio-smoke.log",
+    "linux_kernel_build": "docs/evidence/linux/openagent_e1_kernel_build.log",
+    "linux_dtb_check": "docs/evidence/linux/openagent_e1_dtb_check.log",
+    "linux_mmio_smoke": "docs/evidence/linux/e1-mmio-smoke.log",
 }
 
 
@@ -89,21 +89,21 @@ def path_state(path: Path) -> dict[str, Any]:
 
 def imported_state(linux: Path) -> dict[str, Any]:
     required = {
-        "driver_kconfig": linux / "drivers/misc/openphone-hello/Kconfig",
-        "driver_makefile": linux / "drivers/misc/openphone-hello/Makefile",
-        "npu_driver": linux / "drivers/misc/openphone-hello/hello-npu.c",
-        "dma_driver": linux / "drivers/misc/openphone-hello/hello-dma.c",
-        "platform_header": linux / "drivers/misc/openphone-hello/hello_platform_contract.h",
-        "board_dts": linux / "arch/riscv/boot/dts/openphone/openphone-hello.dts",
+        "driver_kconfig": linux / "drivers/misc/openagent-e1/Kconfig",
+        "driver_makefile": linux / "drivers/misc/openagent-e1/Makefile",
+        "npu_driver": linux / "drivers/misc/openagent-e1/e1-npu.c",
+        "dma_driver": linux / "drivers/misc/openagent-e1/e1-dma.c",
+        "platform_header": linux / "drivers/misc/openagent-e1/e1_platform_contract.h",
+        "board_dts": linux / "arch/riscv/boot/dts/openagent/openagent-e1.dts",
     }
     optional = {
-        "board_dts_makefile": linux / "arch/riscv/boot/dts/openphone/Makefile",
+        "board_dts_makefile": linux / "arch/riscv/boot/dts/openagent/Makefile",
         "npu_binding": linux
-        / "Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml",
+        / "Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml",
         "dma_binding": linux
-        / "Documentation/devicetree/bindings/openphone/openphone,hello-dma.yaml",
+        / "Documentation/devicetree/bindings/openagent/openagent,e1-dma.yaml",
         "display_binding": linux
-        / "Documentation/devicetree/bindings/openphone/openphone,hello-display.yaml",
+        / "Documentation/devicetree/bindings/openagent/openagent,e1-display.yaml",
     }
     required_status = {name: path_state(path) for name, path in required.items()}
     optional_status = {name: path_state(path) for name, path in optional.items()}
@@ -113,19 +113,19 @@ def imported_state(linux: Path) -> dict[str, Any]:
     misc_kconfig = linux / "drivers/misc/Kconfig"
     misc_makefile = linux / "drivers/misc/Makefile"
     riscv_dts_makefile = linux / "arch/riscv/boot/dts/Makefile"
-    text_checks["drivers_misc_kconfig_sources_openphone"] = (
+    text_checks["drivers_misc_kconfig_sources_openagent"] = (
         misc_kconfig.is_file()
-        and 'source "drivers/misc/openphone-hello/Kconfig"'
+        and 'source "drivers/misc/openagent-e1/Kconfig"'
         in misc_kconfig.read_text(errors="replace")
     )
-    text_checks["drivers_misc_makefile_links_openphone"] = (
+    text_checks["drivers_misc_makefile_links_openagent"] = (
         misc_makefile.is_file()
-        and "obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-hello/"
+        and "obj-$(CONFIG_OPENAGENT_E1_BSP) += openagent-e1/"
         in misc_makefile.read_text(errors="replace")
     )
-    text_checks["riscv_dts_makefile_links_openphone"] = (
+    text_checks["riscv_dts_makefile_links_openagent"] = (
         riscv_dts_makefile.is_file()
-        and "subdir-y += openphone" in riscv_dts_makefile.read_text(errors="replace")
+        and "subdir-y += openagent" in riscv_dts_makefile.read_text(errors="replace")
     )
     return {
         "status": "imported"
@@ -159,11 +159,11 @@ def commands(linux: Path) -> dict[str, str]:
     return {
         "import_check": f"sw/linux/scripts/import-linux-bsp.sh --check {linux_text}",
         "import": f"sw/linux/scripts/import-linux-bsp.sh {linux_text}",
-        "configure": f"cd {linux_text} && make ARCH=riscv openphone_hello.config olddefconfig",
+        "configure": f"cd {linux_text} && make ARCH=riscv openagent_e1.config olddefconfig",
         "kernel_build": f"sw/linux/scripts/capture-linux-bsp-evidence.sh {linux_text} kernel-build",
         "dtb_check": f"sw/linux/scripts/capture-linux-bsp-evidence.sh {linux_text} dtb-check",
         "mmio_smoke": (
-            "HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' "
+            "E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-mmio-smoke' "
             f"sw/linux/scripts/capture-linux-bsp-evidence.sh {linux_text} smoke"
         ),
     }
@@ -207,7 +207,7 @@ def build_report(linux: Path) -> dict[str, Any]:
             blockers.append({"id": f"{name}_evidence_{state['state']}", "detail": state["path"]})
 
     return {
-        "schema": "openphone.linux_external_bsp_status.v1",
+        "schema": "openagent.linux_external_bsp_status.v1",
         "status": "blocked" if blockers else "pass",
         "claim_boundary": "status_only_not_linux_boot_evidence",
         "linux_tree": str(linux),

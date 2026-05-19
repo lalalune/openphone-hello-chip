@@ -1,6 +1,6 @@
 """Display timing / backpressure / underflow cocotb scaffolds.
 
-DUT: ``rtl/display/hello_display.sv``.
+DUT: ``rtl/display/e1_display.sv``.
 
 Covers gaps tracked under
 ``verify/rtl_gap_work_order.yaml#areas.display.critical_gaps``:

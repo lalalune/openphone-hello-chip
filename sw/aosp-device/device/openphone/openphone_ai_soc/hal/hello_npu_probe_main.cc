@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "hello_npu_runtime.h"
+#include "e1_npu_runtime.h"
 
 #include <iostream>
 #include <string>
 
 int main(int argc, char **argv) {
-	std::string device_path = "/dev/hello-npu";
+	std::string device_path = "/dev/e1-npu";
 
 	for (int i = 1; i < argc; ++i) {
 		std::string arg = argv[i];
@@ -18,9 +18,9 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	const openphone::hello_npu::ProbeResult result =
-		openphone::hello_npu::ProbeDevice(device_path);
-	std::cout << openphone::hello_npu::FormatProbeResult(device_path, result);
+	const openagent::e1_npu::ProbeResult result =
+		openagent::e1_npu::ProbeDevice(device_path);
+	std::cout << openagent::e1_npu::FormatProbeResult(device_path, result);
 
 	if (result.nnapi_acceleration) {
 		std::cerr << "error: host probe must never claim NNAPI acceleration\n";

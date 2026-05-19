@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and import the pinned OpenPhoneRocketConfig Chipyard artifacts."""
+"""Generate and import the pinned OpenAgentRocketConfig Chipyard artifacts."""
 
 from __future__ import annotations
 
@@ -15,16 +15,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CHECKOUT = ROOT / "external/chipyard"
 CHIPYARD_GEN = (
-    CHECKOUT / "sims/verilator/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+    CHECKOUT / "sims/verilator/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig"
 )
-OUT = ROOT / "build/chipyard/openphone_rocket"
+OUT = ROOT / "build/chipyard/openagent_rocket"
 IMPORTED_GEN = OUT / "generated-src"
-FIRTOOL_OUT = OUT / "firtool-out/openphone_rocket_ap.sv"
-VERILOG = OUT / "openphone_rocket_ap.v"
-DTS = OUT / "openphone-hello.dts"
+FIRTOOL_OUT = OUT / "firtool-out/openagent_rocket_ap.sv"
+VERILOG = OUT / "openagent_rocket_ap.v"
+DTS = OUT / "openagent-e1.dts"
 SIMULATOR_DIR = OUT / "simulator"
-CHIPYARD_SIMULATOR = CHECKOUT / "sims/verilator/simulator-chipyard.harness-OpenPhoneRocketConfig"
-MANIFEST = OUT / "OpenPhoneRocketConfig.manifest.json"
+CHIPYARD_SIMULATOR = CHECKOUT / "sims/verilator/simulator-chipyard.harness-OpenAgentRocketConfig"
+MANIFEST = OUT / "OpenAgentRocketConfig.manifest.json"
 
 
 def utc_now() -> str:
@@ -94,16 +94,16 @@ def run_generator(env: dict[str, str]) -> None:
         "java",
         "-jar",
         "scripts/sbt-launch.jar",
-        "-Dsbt.ivy.home=.ivy2-openphone",
-        "-Dsbt.global.base=.sbt-openphone",
-        "-Dsbt.boot.directory=.sbt-openphone/boot/",
+        "-Dsbt.ivy.home=.ivy2-openagent",
+        "-Dsbt.global.base=.sbt-openagent",
+        "-Dsbt.boot.directory=.sbt-openagent/boot/",
         "-Dsbt.color=always",
         "-Dsbt.supershell=false",
         ";project chipyard; runMain chipyard.Generator "
         f"--target-dir {CHIPYARD_GEN} "
-        "--name chipyard.harness.TestHarness.OpenPhoneRocketConfig "
+        "--name chipyard.harness.TestHarness.OpenAgentRocketConfig "
         "--top-module chipyard.harness.TestHarness "
-        "--legacy-configs openphone:OpenPhoneRocketConfig",
+        "--legacy-configs openagent:OpenAgentRocketConfig",
     ]
     log = run(command, cwd=CHECKOUT, env=env)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -114,7 +114,7 @@ def import_artifacts(env: dict[str, str]) -> None:
     if IMPORTED_GEN.exists():
         shutil.rmtree(IMPORTED_GEN)
     shutil.copytree(CHIPYARD_GEN, IMPORTED_GEN)
-    shutil.copy2(CHIPYARD_GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts", DTS)
+    shutil.copy2(CHIPYARD_GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.dts", DTS)
     FIRTOOL_OUT.parent.mkdir(parents=True, exist_ok=True)
     run(
         [
@@ -126,15 +126,15 @@ def import_artifacts(env: dict[str, str]) -> None:
             "--lowering-options=emittedLineLength=2048,noAlwaysComb,disallowLocalVariables,"
             "verifLabels,disallowPortDeclSharing,locationInfoStyle=wrapInAtSquareBracket",
             "--repl-seq-mem",
-            f"--repl-seq-mem-file={OUT / 'openphone_rocket_ap.mems.conf'}",
+            f"--repl-seq-mem-file={OUT / 'openagent_rocket_ap.mems.conf'}",
             "-o",
             str(FIRTOOL_OUT),
-            str(IMPORTED_GEN / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.fir"),
+            str(IMPORTED_GEN / "chipyard.harness.TestHarness.OpenAgentRocketConfig.fir"),
         ],
         env=env,
     )
     wrapper = (
-        "\nmodule openphone_rocket_ap(\n"
+        "\nmodule openagent_rocket_ap(\n"
         "  input clock,\n"
         "  input reset,\n"
         "  output io_success\n"
@@ -164,14 +164,14 @@ def require_simulator_executable() -> None:
     ]
     if not executables:
         raise SystemExit(
-            "STATUS: BLOCKED chipyard.openphone_generate - generated RTL/DTS collateral exists, "
+            "STATUS: BLOCKED chipyard.openagent_generate - generated RTL/DTS collateral exists, "
             f"but {rel(SIMULATOR_DIR)} lacks an executable Verilator simulator"
         )
 
 
 def write_manifest(env: dict[str, str]) -> None:
     selected = json.loads(
-        (ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json").read_text()
+        (ROOT / "docs/generators/chipyard/openagent-rocket-manifest.json").read_text()
     )
     evidence_manifest = json.loads(
         (ROOT / "docs/evidence/cpu-ap-evidence-manifest.json").read_text()
@@ -186,7 +186,7 @@ def write_manifest(env: dict[str, str]) -> None:
     }
     evidence = {name: spec["path"] for name, spec in evidence_manifest["transcripts"].items()}
     manifest = {
-        "schema": "openphone.cpu_ap_import_manifest.v1",
+        "schema": "openagent.cpu_ap_import_manifest.v1",
         "status": "generated",
         "chipyard": {
             "repo": selected["chipyard"]["repo"],
@@ -196,13 +196,13 @@ def write_manifest(env: dict[str, str]) -> None:
             "submodules": submodules,
         },
         "generation": {
-            "config": "OpenPhoneRocketConfig",
-            "package": "openphone",
-            "config_package": "openphone",
-            "top_wrapper": "openphone_rocket_ap",
-            "bootstrap_preflight_report": "build/chipyard/openphone_rocket/bootstrap-preflight.json",
-            "verilator_preflight_report": "build/chipyard/openphone_rocket/verilator-preflight.json",
-            "command": "python3 scripts/generate_chipyard_openphone.py",
+            "config": "OpenAgentRocketConfig",
+            "package": "openagent",
+            "config_package": "openagent",
+            "top_wrapper": "openagent_rocket_ap",
+            "bootstrap_preflight_report": "build/chipyard/openagent_rocket/bootstrap-preflight.json",
+            "verilator_preflight_report": "build/chipyard/openagent_rocket/verilator-preflight.json",
+            "command": "python3 scripts/generate_chipyard_openagent.py",
             "tool_versions": tool_versions,
             "generated_at_utc": utc_now(),
         },
@@ -236,7 +236,7 @@ def main() -> int:
     import_artifacts(env)
     require_simulator_executable()
     write_manifest(env)
-    print(f"STATUS: PASS chipyard.openphone_generate - wrote {rel(MANIFEST)}")
+    print(f"STATUS: PASS chipyard.openagent_generate - wrote {rel(MANIFEST)}")
     return 0
 
 

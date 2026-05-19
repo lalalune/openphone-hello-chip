@@ -64,7 +64,7 @@ def main() -> int:
     boot = json.loads(BOOT_MANIFEST.read_text())
     log_text = BOOT_LOG.read_text(errors="ignore")
 
-    if payload.get("schema") != "openphone.qemu_linux_payload.v1":
+    if payload.get("schema") != "openagent.qemu_linux_payload.v1":
         errors.append("unexpected payload manifest schema")
     if payload.get("claim_boundary") != "qemu_virt_debian_netboot_payload_only":
         errors.append("payload manifest must remain qemu-virt Debian netboot only")
@@ -83,17 +83,17 @@ def main() -> int:
         if not isinstance(item.get("bytes"), int) or item["bytes"] <= 0:
             errors.append(f"payload bytes must be positive: {name}")
 
-    if boot.get("schema") != "openphone.qemu_virt_os_boot_attempt.v1":
+    if boot.get("schema") != "openagent.qemu_virt_os_boot_attempt.v1":
         errors.append("unexpected qemu OS boot manifest schema")
-    if boot.get("claim_boundary") != "qemu_virt_reference_only_not_hello_chip_rtl":
-        errors.append("qemu OS boot manifest must remain reference-only, not hello-chip RTL")
+    if boot.get("claim_boundary") != "qemu_virt_reference_only_not_e1_chip_rtl":
+        errors.append("qemu OS boot manifest must remain reference-only, not e1-chip RTL")
     if boot.get("status") != "PASS":
         errors.append(f"qemu OS boot status is not PASS: {boot.get('status')!r}")
     if boot.get("transcript") != "build/reports/qemu_os_boot_attempt.log":
         errors.append("qemu OS boot transcript path must be build/reports/qemu_os_boot_attempt.log")
     if not any(marker in log_text for marker in REQUIRED_BOOT_MARKERS):
         errors.append("qemu OS boot log lacks an accepted Linux init/login marker")
-    for forbidden in ("hello-chip boot proven", "RTL boot proven", "OpenPhone BSP driver proof"):
+    for forbidden in ("e1-chip boot proven", "RTL boot proven", "OpenAgent BSP driver proof"):
         if forbidden in log_text or forbidden in json.dumps(boot):
             errors.append(f"qemu reference evidence contains forbidden claim: {forbidden}")
 

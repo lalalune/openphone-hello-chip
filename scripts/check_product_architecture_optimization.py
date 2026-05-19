@@ -152,7 +152,7 @@ def main() -> int:
     gaps = load_yaml(GAPS, errors)
 
     if data:
-        if data.get("schema") != "openphone.product_arch_security_radio_sensors_optimization.v1":
+        if data.get("schema") != "openagent.product_arch_security_radio_sensors_optimization.v1":
             errors.append("product architecture optimization matrix has wrong schema")
         if data.get("status") != "fail_closed_product_work_order":
             errors.append(

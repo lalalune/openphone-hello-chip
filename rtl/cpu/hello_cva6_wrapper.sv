@@ -1,18 +1,18 @@
-// hello_cva6_wrapper.sv  —  CVA6 integration wrapper for the hello-chip SoC
+// e1_cva6_wrapper.sv  —  CVA6 integration wrapper for the e1-chip SoC
 //
-// This module is the drop-in replacement for hello_cpu_subsystem_stub.  It
+// This module is the drop-in replacement for e1_cpu_subsystem_stub.  It
 // presents the same external port list as the stub (AXI-Lite manager +
 // interrupt inputs + observability outputs) but internally instantiates a
-// proper 64-bit RV64GC CVA6 core when `HELLO_HAVE_CVA6 is defined at compile
+// proper 64-bit RV64GC CVA6 core when `E1_HAVE_CVA6 is defined at compile
 // time.
 //
 // Build with the real core:
 //   RTL simulator:
-//     <simulator> +define+HELLO_HAVE_CVA6 \
+//     <simulator> +define+E1_HAVE_CVA6 \
 //       -I external/cva6/include -I external/cva6/core \
 //       rtl/**/*.sv external/cva6/core/cva6.sv ...
 //   Yosys (FPGA):
-//     yosys -D HELLO_HAVE_CVA6 \
+//     yosys -D E1_HAVE_CVA6 \
 //       -p 'read_verilog -sv -I external/cva6/include \
 //              external/cva6/core/cva6.sv rtl/**/*.sv'
 //
@@ -23,17 +23,17 @@
 // in external/cva6/include/ariane_axi_pkg.sv.  The struct-to-flat wiring is
 // shown in the `ifdef block below.
 //
-// To use real CVA6: compile with +define+HELLO_HAVE_CVA6 and include
+// To use real CVA6: compile with +define+E1_HAVE_CVA6 and include
 //   external/cva6/
 
 `timescale 1ns/1ps
 
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNUSEDSIGNAL */
-module hello_cpu_subsystem #(
+module e1_cpu_subsystem #(
     // Boot address forwarded to CVA6 as the reset PC / boot ROM entry.
-    // Matches hello_chip_cpu_variant.boot.reset_vector in
-    // sw/platform/hello_platform_contract.json.
+    // Matches e1_chip_cpu_variant.boot.reset_vector in
+    // sw/platform/e1_platform_contract.json.
     parameter logic [63:0] BOOT_ADDR = 64'h0000_0000_0000_1000
 ) (
     input  logic        clk_i,
@@ -47,7 +47,7 @@ module hello_cpu_subsystem #(
     input  logic        time_irq_i,   // timer interrupt from CLINT mtip
     input  logic        debug_req_i,  // debug request; tie 0 until JTAG wired
 
-    // ── AXI4 64-bit master port (→ hello_cpu_axi_bridge) ─────────────────
+    // ── AXI4 64-bit master port (→ e1_cpu_axi_bridge) ─────────────────
     // Read address
     output logic [3:0]  axi_ar_id,
     output logic [63:0] axi_ar_addr,
@@ -100,7 +100,7 @@ module hello_cpu_subsystem #(
     output logic        dbg_valid_o
 );
 
-`ifdef HELLO_HAVE_CVA6
+`ifdef E1_HAVE_CVA6
     // =========================================================================
     // Real CVA6 instantiation
     //
@@ -209,7 +209,7 @@ module hello_cpu_subsystem #(
     // we tap commit_instr_o[0].pc and commit_instr_o[0].valid if available,
     // or tie to zero when the port is absent in the selected CVA6 version.
     //
-    // Hart ID is fixed at 0 for the single-hart hello-chip configuration.
+    // Hart ID is fixed at 0 for the single-hart e1-chip configuration.
 
     cva6 #(
         .ArianeCfg (ariane_pkg::ArianeDefaultConfig),
@@ -246,14 +246,14 @@ module hello_cpu_subsystem #(
     assign dbg_valid_o = 1'b0;
 `endif
 
-`else  // !HELLO_HAVE_CVA6
+`else  // !E1_HAVE_CVA6
     // =========================================================================
     // Stub: safe idle outputs — CPU appears powered-off to the interconnect.
-    // Compile with +define+HELLO_HAVE_CVA6 and include external/cva6/ to
+    // Compile with +define+E1_HAVE_CVA6 and include external/cva6/ to
     // enable the real core.
     // =========================================================================
 
-    // synthesis warning: HELLO_HAVE_CVA6 not defined; CPU outputs are tied off.
+    // synthesis warning: E1_HAVE_CVA6 not defined; CPU outputs are tied off.
     // This is intentional for simulation without the CVA6 source tree.
     logic unused_stub_inputs;
     assign unused_stub_inputs = ^{
@@ -314,7 +314,7 @@ module hello_cpu_subsystem #(
     assign dbg_pc_o    = 64'h0;
     assign dbg_valid_o = 1'b0;
 
-`endif  // HELLO_HAVE_CVA6
+`endif  // E1_HAVE_CVA6
 
 endmodule
 /* verilator lint_on UNUSEDSIGNAL */

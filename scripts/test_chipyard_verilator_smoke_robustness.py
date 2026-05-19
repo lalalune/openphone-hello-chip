@@ -25,14 +25,14 @@ def test_partial_generated_driver_dir_is_repairable_blocker() -> None:
         )
         try:
             smoke.GENERATED_CONFIG_DIR = (
-                tmp / "generated-src" / "chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+                tmp / "generated-src" / "chipyard.harness.TestHarness.OpenAgentRocketConfig"
             )
             smoke.GENERATED_DRIVER_DIR = (
-                smoke.GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+                smoke.GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenAgentRocketConfig"
             )
             smoke.GENERATED_DRIVER_MAKEFILE = smoke.GENERATED_DRIVER_DIR / "VTestDriver.mk"
             smoke.GENERATED_FILELISTS = (smoke.GENERATED_CONFIG_DIR / "sim_files.f",)
-            smoke.GENERATED_SIMULATOR = tmp / "simulator-chipyard.harness-OpenPhoneRocketConfig"
+            smoke.GENERATED_SIMULATOR = tmp / "simulator-chipyard.harness-OpenAgentRocketConfig"
             smoke.GENERATED_DRIVER_DIR.mkdir(parents=True)
 
             blockers = smoke.generated_path_blockers()
@@ -67,14 +67,14 @@ def test_zero_byte_driver_outputs_are_repairable_blockers() -> None:
         )
         try:
             smoke.GENERATED_CONFIG_DIR = (
-                tmp / "generated-src" / "chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+                tmp / "generated-src" / "chipyard.harness.TestHarness.OpenAgentRocketConfig"
             )
             smoke.GENERATED_DRIVER_DIR = (
-                smoke.GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+                smoke.GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenAgentRocketConfig"
             )
             smoke.GENERATED_DRIVER_MAKEFILE = smoke.GENERATED_DRIVER_DIR / "VTestDriver.mk"
             smoke.GENERATED_FILELISTS = (smoke.GENERATED_CONFIG_DIR / "sim_files.f",)
-            smoke.GENERATED_SIMULATOR = tmp / "simulator-chipyard.harness-OpenPhoneRocketConfig"
+            smoke.GENERATED_SIMULATOR = tmp / "simulator-chipyard.harness-OpenAgentRocketConfig"
             smoke.GENERATED_DRIVER_DIR.mkdir(parents=True)
             smoke.GENERATED_DRIVER_MAKEFILE.write_text("VM_PREFIX = /tmp/tool\n", encoding="utf-8")
             (smoke.GENERATED_DRIVER_DIR / "VTestDriver__ALL.a").write_bytes(b"")
@@ -102,12 +102,12 @@ def test_log_metadata_records_attempt_and_closed_transcript() -> None:
             smoke.LOG.write_text(
                 "\n".join(
                     [
-                        "openphone-evidence: attempt=2",
-                        "openphone-evidence: clean_generated=1",
-                        "openphone-evidence: raw_transcript_begin",
+                        "openagent-evidence: attempt=2",
+                        "openagent-evidence: clean_generated=1",
+                        "openagent-evidence: raw_transcript_begin",
                         "build output",
-                        "openphone-evidence: raw_transcript_end",
-                        "openphone-evidence: exit_code=2",
+                        "openagent-evidence: raw_transcript_end",
+                        "openagent-evidence: exit_code=2",
                     ]
                 )
                 + "\n",
@@ -136,7 +136,7 @@ def test_simulator_artifact_validation_requires_executable_candidate() -> None:
             if "missing generated simulator artifact" not in "\n".join(blockers):
                 raise AssertionError(f"expected missing simulator blocker, got {blockers}")
 
-            simulator = tmp / "simulator-chipyard.harness-OpenPhoneRocketConfig"
+            simulator = tmp / "simulator-chipyard.harness-OpenAgentRocketConfig"
             simulator.write_bytes(b"\x7fELF" + bytes([2, 1, 1]) + bytes(9) + b"\x02\x00\x3e\x00")
             simulator.chmod(0o755)
             smoke.SIMULATOR_CANDIDATES = (simulator,)

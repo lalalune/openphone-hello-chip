@@ -12,31 +12,31 @@ parser.add_argument(
 args = parser.parse_args()
 
 required = [
-    "package/hello-demo-pinout.yaml",
-    "docs/package/hello-demo-package.md",
-    "docs/package/hello-demo-pad-ring.md",
+    "package/e1-demo-pinout.yaml",
+    "docs/package/e1-demo-package.md",
+    "docs/package/e1-demo-pad-ring.md",
     "package/wifi-external-interface.yaml",
-    "docs/pd/padframe/hello_demo_padframe.md",
-    "pd/padframe/hello_demo_padframe.yaml",
+    "docs/pd/padframe/e1_demo_padframe.md",
+    "pd/padframe/e1_demo_padframe.yaml",
     "pd/pin_order.cfg",
     "pd/signoff/manifest.yaml",
     "package/artifact-manifest.yaml",
     "docs/board/README.md",
     "docs/board/fpga/README.md",
     "board/fpga/artifact-manifest.yaml",
-    "board/fpga/hello_demo_fpga.yaml",
-    "board/fpga/constraints/hello_demo_ulx3s.lpf",
-    "board/kicad/hello-demo/artifact-manifest.yaml",
-    "docs/board/kicad/hello-demo/fab-notes.md",
+    "board/fpga/e1_demo_fpga.yaml",
+    "board/fpga/constraints/e1_demo_ulx3s.lpf",
+    "board/kicad/e1-demo/artifact-manifest.yaml",
+    "docs/board/kicad/e1-demo/fab-notes.md",
     "docs/fw/board-smoke/tests/smoke_plan.md",
-    "docs/manufacturing/hello-demo-checklist.md",
+    "docs/manufacturing/e1-demo-checklist.md",
     "docs/manufacturing/artifact-manifest.yaml",
     "docs/manufacturing/release-manifest.yaml",
     "docs/manufacturing/real-world-verification-gaps.yaml",
     "docs/manufacturing/physical-closure-work-order.yaml",
     "docs/manufacturing/product-feature-evidence-manifest.yaml",
     "docs/project/product-architecture-security-radio-sensors-optimization-2026-05-17.yaml",
-    "docs/pd/hello_chip_top_antenna_metadata_2026-05-18.md",
+    "docs/pd/e1_chip_top_antenna_metadata_2026-05-18.md",
     "scripts/run_product_evidence_command.py",
 ]
 
@@ -66,16 +66,16 @@ subprocess.run([sys.executable, "scripts/run_product_evidence_command.py", "--li
 
 release_blockers: list[str] = []
 
-pinout = yaml.safe_load(Path("package/hello-demo-pinout.yaml").read_text())
+pinout = yaml.safe_load(Path("package/e1-demo-pinout.yaml").read_text())
 package_name = str(pinout.get("package", ""))
 pinout_notes = "\n".join(str(note) for note in pinout.get("notes", []))
 if "placeholder" in package_name.lower() or "placeholder" in pinout_notes.lower():
     release_blockers.append("package pinout still declares a placeholder package")
 
 for path in [
-    "docs/package/hello-demo-package.md",
-    "docs/package/hello-demo-pad-ring.md",
-    "docs/board/kicad/hello-demo/fab-notes.md",
+    "docs/package/e1-demo-package.md",
+    "docs/package/e1-demo-pad-ring.md",
+    "docs/board/kicad/e1-demo/fab-notes.md",
 ]:
     text = Path(path).read_text().lower()
     if (
@@ -85,7 +85,7 @@ for path in [
     ):
         release_blockers.append(f"{path} is still a placeholder/draft artifact")
 
-kicad_dir = Path("board/kicad/hello-demo")
+kicad_dir = Path("board/kicad/e1-demo")
 kicad_required = {
     "project": list(kicad_dir.glob("*.kicad_pro")),
     "schematic": list(kicad_dir.glob("*.kicad_sch")),
@@ -95,7 +95,7 @@ for artifact, matches in kicad_required.items():
     if not matches:
         release_blockers.append(f"missing KiCad {artifact} artifact under {kicad_dir}")
 
-fpga = yaml.safe_load(Path("board/fpga/hello_demo_fpga.yaml").read_text())
+fpga = yaml.safe_load(Path("board/fpga/e1_demo_fpga.yaml").read_text())
 if fpga.get("status") != "release_ready":
     release_blockers.append(f"FPGA target status is {fpga.get('status')}, not release_ready")
 if fpga.get("board", {}).get("exact_revision") in {None, "", "unassigned"}:

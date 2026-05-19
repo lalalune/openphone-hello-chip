@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SELECTED_MANIFEST = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
+SELECTED_MANIFEST = ROOT / "docs/generators/chipyard/openagent-rocket-manifest.json"
 IMPORT_TEMPLATE = ROOT / "docs/generators/chipyard/import-manifest.template.json"
-GENERATED_MANIFEST = ROOT / "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json"
+GENERATED_MANIFEST = ROOT / "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/cpu-ap-evidence-manifest.json"
-PLATFORM_CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
+PLATFORM_CONTRACT = ROOT / "sw/platform/e1_platform_contract.json"
 
 EXPECTED_CHIPYARD = {
     "repo": "https://github.com/ucb-bar/chipyard.git",
@@ -27,9 +27,9 @@ DEFAULT_FORBIDDEN_EVIDENCE_TERMS = [
     "sample only",
     "not real evidence",
     "todo",
-    "openphone-evidence: template=true",
-    "openphone-evidence: status=FAIL",
-    "openphone-evidence: status=BLOCKED",
+    "openagent-evidence: template=true",
+    "openagent-evidence: status=FAIL",
+    "openagent-evidence: status=BLOCKED",
     "qemu-virt software reference",
     "Renode software reference",
     "/path/to/",
@@ -155,7 +155,7 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
         manifest.get("selected_manifest")
         in {
             rel(SELECTED_MANIFEST),
-            "generators/chipyard/openphone-rocket-manifest.json",
+            "generators/chipyard/openagent-rocket-manifest.json",
         },
         "CPU/AP evidence manifest selected_manifest path drifted",
         errors,
@@ -171,15 +171,15 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
         errors,
     )
     expected_linux_gates = {
-        "rv64gc_isa": "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
-        "s_mode_privilege": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-        "mmu_sv39_or_stronger": "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
-        "clint_timer_software_irq": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-        "plic_external_irq": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-        "uart_console": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-        "dtb_linux_boot_contract": "build/chipyard/openphone_rocket/openphone-hello.dts",
-        "opensbi_handoff": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-        "linux_initramfs_smoke": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+        "rv64gc_isa": "build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log",
+        "s_mode_privilege": "build/evidence/cpu_ap/openagent_e1_opensbi_boot.log",
+        "mmu_sv39_or_stronger": "build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log",
+        "clint_timer_software_irq": "build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log",
+        "plic_external_irq": "build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log",
+        "uart_console": "build/evidence/cpu_ap/openagent_e1_linux_boot.log",
+        "dtb_linux_boot_contract": "build/chipyard/openagent_rocket/openagent-e1.dts",
+        "opensbi_handoff": "build/evidence/cpu_ap/openagent_e1_opensbi_boot.log",
+        "linux_initramfs_smoke": "build/evidence/cpu_ap/openagent_e1_linux_boot.log",
     }
     gate_matrix = manifest.get("linux_capable_gate_matrix", [])
     if not isinstance(gate_matrix, list):
@@ -304,7 +304,7 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
         )
     for name, spec in artifacts.items():
         path = spec.get("path")
-        if not isinstance(path, str) or not path.startswith("build/chipyard/openphone_rocket/"):
+        if not isinstance(path, str) or not path.startswith("build/chipyard/openagent_rocket/"):
             errors.append(f"CPU/AP artifact {name} has invalid path: {path!r}")
         if spec.get("manifest_key") != name:
             errors.append(f"CPU/AP artifact {name} manifest_key must match artifact name")
@@ -388,18 +388,18 @@ def transcript_metadata_problems(text: str, rel_path: str) -> list[str]:
     expected_manifest = rel(GENERATED_MANIFEST)
     expected_sha = sha256_path(GENERATED_MANIFEST) if GENERATED_MANIFEST.is_file() else None
 
-    manifest_marker = f"openphone-evidence: generated_manifest={expected_manifest}"
+    manifest_marker = f"openagent-evidence: generated_manifest={expected_manifest}"
     if manifest_marker not in text:
         problems.append(f"{rel_path} must bind to generated manifest {expected_manifest}")
 
     if expected_sha is None:
         problems.append(f"{rel_path} cannot be release evidence until {expected_manifest} exists")
     else:
-        sha_marker = f"openphone-evidence: generated_manifest_sha256={expected_sha}"
+        sha_marker = f"openagent-evidence: generated_manifest_sha256={expected_sha}"
         if sha_marker not in text:
             problems.append(f"{rel_path} generated_manifest_sha256 must match {expected_manifest}")
 
-    if "openphone-evidence: generated_manifest_sha256=missing" in text:
+    if "openagent-evidence: generated_manifest_sha256=missing" in text:
         problems.append(f"{rel_path} records a missing generated manifest hash")
     return problems
 

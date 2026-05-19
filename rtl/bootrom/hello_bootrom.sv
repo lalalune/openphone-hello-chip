@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_bootrom (
+module e1_bootrom (
     input  logic [5:0]  addr,
     output logic [31:0] rdata
 );

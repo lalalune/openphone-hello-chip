@@ -1,4 +1,4 @@
-// hwcomposer.openphone_ai_soc - v0 framebuffer-only stub.
+// hwcomposer.openagent_ai_soc - v0 framebuffer-only stub.
 //
 // Backing node: /dev/graphics/fb0 (Linux fbdev) or simple-framebuffer
 // produced by CONFIG_FB_SIMPLE. No DRM/KMS, no GLES, no Vulkan, no HW
@@ -25,49 +25,49 @@ namespace {
 
 constexpr const char* kFb0 = "/dev/graphics/fb0";
 
-struct openphone_hwc_device {
+struct openagent_hwc_device {
     hwc2_device_t base;
     int fb_fd;
     struct fb_var_screeninfo vinfo;
     struct fb_fix_screeninfo finfo;
 };
 
-int openphone_hwc_close(hw_device_t* dev) {
-    auto* d = reinterpret_cast<openphone_hwc_device*>(dev);
+int openagent_hwc_close(hw_device_t* dev) {
+    auto* d = reinterpret_cast<openagent_hwc_device*>(dev);
     if (d->fb_fd >= 0) ::close(d->fb_fd);
     std::free(d);
     return 0;
 }
 
-int openphone_hwc_open(const hw_module_t* module, const char* name,
+int openagent_hwc_open(const hw_module_t* module, const char* name,
                        hw_device_t** device) {
     if (std::strcmp(name, HWC_HARDWARE_COMPOSER) != 0) {
-        LOG(ERROR) << "openphone_hwc: unsupported sub-device: " << name;
+        LOG(ERROR) << "openagent_hwc: unsupported sub-device: " << name;
         return -EINVAL;
     }
 
-    auto* d = static_cast<openphone_hwc_device*>(
-        std::calloc(1, sizeof(openphone_hwc_device)));
+    auto* d = static_cast<openagent_hwc_device*>(
+        std::calloc(1, sizeof(openagent_hwc_device)));
     if (!d) return -ENOMEM;
 
     d->base.common.tag = HARDWARE_DEVICE_TAG;
     d->base.common.version = HWC_DEVICE_API_VERSION_2_0;
     d->base.common.module = const_cast<hw_module_t*>(module);
-    d->base.common.close = openphone_hwc_close;
+    d->base.common.close = openagent_hwc_close;
 
     d->fb_fd = ::open(kFb0, O_RDWR | O_CLOEXEC);
     if (d->fb_fd < 0) {
-        LOG(WARNING) << "openphone_hwc: framebuffer " << kFb0
+        LOG(WARNING) << "openagent_hwc: framebuffer " << kFb0
                      << " unavailable (" << std::strerror(errno)
                      << ") - composer will report no displays";
     } else if (::ioctl(d->fb_fd, FBIOGET_VSCREENINFO, &d->vinfo) != 0 ||
                ::ioctl(d->fb_fd, FBIOGET_FSCREENINFO, &d->finfo) != 0) {
-        LOG(ERROR) << "openphone_hwc: framebuffer ioctl probe failed: "
+        LOG(ERROR) << "openagent_hwc: framebuffer ioctl probe failed: "
                    << std::strerror(errno);
         ::close(d->fb_fd);
         d->fb_fd = -1;
     } else {
-        LOG(INFO) << "openphone_hwc: framebuffer " << d->vinfo.xres << "x"
+        LOG(INFO) << "openagent_hwc: framebuffer " << d->vinfo.xres << "x"
                   << d->vinfo.yres << " bpp=" << d->vinfo.bits_per_pixel;
     }
 
@@ -80,8 +80,8 @@ int openphone_hwc_open(const hw_module_t* module, const char* name,
     return 0;
 }
 
-hw_module_methods_t openphone_hwc_module_methods = {
-    .open = openphone_hwc_open,
+hw_module_methods_t openagent_hwc_module_methods = {
+    .open = openagent_hwc_open,
 };
 
 }  // namespace
@@ -91,9 +91,9 @@ extern "C" hw_module_t HAL_MODULE_INFO_SYM = {
     .module_api_version = HWC_MODULE_API_VERSION_0_1,
     .hal_api_version = HARDWARE_HAL_API_VERSION,
     .id = HWC_HARDWARE_MODULE_ID,
-    .name = "OpenPhone hello hwcomposer (v0 stub, framebuffer-only)",
-    .author = "OpenPhone",
-    .methods = &openphone_hwc_module_methods,
+    .name = "OpenAgent e1 hwcomposer (v0 stub, framebuffer-only)",
+    .author = "OpenAgent",
+    .methods = &openagent_hwc_module_methods,
     .dso = nullptr,
     .reserved = {0},
 };

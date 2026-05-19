@@ -33,9 +33,9 @@ areas:
         category: rtl_stub
         severity: critical
         affected_paths:
-          - rtl/cpu/hello_cpu_subsystem_stub.sv
-          - rtl/interconnect/hello_linux_soc_contract.sv
-          - verify/cocotb/hello_tiny_cpu_contract_tb.sv
+          - rtl/cpu/e1_cpu_subsystem_stub.sv
+          - rtl/interconnect/e1_linux_soc_contract.sv
+          - verify/cocotb/e1_tiny_cpu_contract_tb.sv
           - verify/cocotb/test_tiny_cpu_execution.py
         partial_closure_evidence:
           - docs/rtl/cpu-config-selection.md (Chipyard Rocket RV64GC + SV39 + L1 I/D selection, wrapper layout under rtl/wrappers/, pin TODO)
@@ -48,18 +48,18 @@ areas:
         category: incomplete_subsystem
         severity: critical
         affected_paths:
-          - rtl/cpu/hello_cpu_subsystem_stub.sv
-          - rtl/bootrom/hello_bootrom.sv
+          - rtl/cpu/e1_cpu_subsystem_stub.sv
+          - rtl/bootrom/e1_bootrom.sv
           - scripts/run_qemu.sh
           - scripts/run_renode.sh
         partial_closure_evidence:
           - docs/arch/boot-rom-spec.md (reset vector, OTP layout, secure-boot stub algorithm, OpenSBI handoff ABI, debug-lock policy)
           - fw/boot-rom/reset.S (executable RV64 reset stub jumping to OpenSBI entry)
-          - fw/boot-rom/Makefile (tools-checked build rule producing hello_boot_rom.bin/.hex/.dump)
+          - fw/boot-rom/Makefile (tools-checked build rule producing e1_boot_rom.bin/.hex/.dump)
           - fw/boot-rom/linker.ld (4 KiB ROM aperture at 0x0000_1000)
           - verify/cocotb/test_clint_timer_irq.py (CLINT timer/software-irq scaffold, skipped until CLINT lands)
         current_evidence: Boot ROM exposes fixed readable words and a boot-vector contract; the executable reset stub now exists in fw/boot-rom/ and the OpenSBI handoff ABI is specified in docs/arch/boot-rom-spec.md. Pad-level RTL still has no CLINT, PLIC-compatible target, MMU, cache, UART console, or live firmware entry path.
-        blocking_gate: QEMU/Renode semantic checks must not be treated as hello-chip boot validation.
+        blocking_gate: QEMU/Renode semantic checks must not be treated as e1-chip boot validation.
         closure_evidence: Firmware ELF boots through the RTL-equivalent address map in simulation or emulation and emits a checked serial transcript.
         work_order: Define and verify a bootable CPU, timer, interrupt, memory, and console contract before claiming OS bring-up.
       - id: cpu-legacy-stub-module-name
@@ -67,15 +67,15 @@ areas:
         category: misleading_pass_gate
         severity: medium
         affected_paths:
-          - rtl/cpu/hello_cpu_subsystem_stub.sv
+          - rtl/cpu/e1_cpu_subsystem_stub.sv
           - Makefile
           - scripts/run_rtl_check.sh
         partial_closure_evidence:
-          - docs/rtl/cpu-config-selection.md (integration step 7 schedules the rename to hello_tiny_cpu_contract with a one-release alias)
+          - docs/rtl/cpu-config-selection.md (integration step 7 schedules the rename to e1_tiny_cpu_contract with a one-release alias)
         current_evidence: The executable model is still named as a stub and is included in normal RTL and synthesis source lists; rename plan now documented but not yet executed.
         blocking_gate: Passing lint/synthesis must not imply that a production CPU subsystem exists.
         closure_evidence: Production-named CPU wrapper with any compatibility alias clearly documented as non-product scaffolding.
-        work_order: Preserve the legacy hello_cpu_subsystem_stub wrapper only as a compatibility alias once a production-named CPU wrapper exists.
+        work_order: Preserve the legacy e1_cpu_subsystem_stub wrapper only as a compatibility alias once a production-named CPU wrapper exists.
   interconnect:
     current_posture: axi_lite_contract_fabric
     local_closures:
@@ -93,9 +93,9 @@ areas:
         category: incomplete_subsystem
         severity: critical
         affected_paths:
-          - rtl/top/hello_soc_top.sv
-          - rtl/interconnect/hello_axi_lite_interconnect.sv
-          - rtl/interconnect/hello_linux_soc_contract.sv
+          - rtl/top/e1_soc_top.sv
+          - rtl/interconnect/e1_axi_lite_interconnect.sv
+          - rtl/interconnect/e1_linux_soc_contract.sv
           - verify/cocotb/test_cpu_mem_intc_contract.py
         partial_closure_evidence:
           - verify/cocotb/test_mmio_decode_error.py (unmapped-address DECERR sweep for reads/writes and post-DECERR liveness)
@@ -109,9 +109,9 @@ areas:
         category: incomplete_subsystem
         severity: high
         affected_paths:
-          - rtl/interconnect/hello_linux_soc_contract.sv
-          - rtl/display/hello_display.sv
-          - rtl/npu/hello_npu.sv
+          - rtl/interconnect/e1_linux_soc_contract.sv
+          - rtl/display/e1_display.sv
+          - rtl/npu/e1_npu.sv
         current_evidence: Linux-capable contract wrapper does not expose display and NPU target wrappers under the software-visible routing policy.
         blocking_gate: Linux scaffold cannot claim complete device coverage.
         closure_evidence: NPU and display AXI-Lite target wrappers are routed, tested for decode errors, and checked against generated software headers.
@@ -121,7 +121,7 @@ areas:
         category: proof_gap
         severity: high
         affected_paths:
-          - verify/formal/hello_soc_top_formal.sv
+          - verify/formal/e1_soc_top_formal.sv
           - scripts/yosys_formal_top_structural.ys
           - scripts/run_formal.sh
         partial_closure_evidence:
@@ -146,11 +146,11 @@ areas:
         category: incomplete_subsystem
         severity: critical
         affected_paths:
-          - rtl/dma/hello_dma.sv
-          - rtl/top/hello_soc_top.sv
-          - rtl/interconnect/hello_linux_soc_contract.sv
+          - rtl/dma/e1_dma.sv
+          - rtl/top/e1_soc_top.sv
+          - rtl/interconnect/e1_linux_soc_contract.sv
           - verify/cocotb/test_cpu_mem_intc_contract.py
-          - verify/formal/hello_dma_formal.sv
+          - verify/formal/e1_dma_formal.sv
         partial_closure_evidence:
           - verify/cocotb/dma/test_dma_long_transfer.py (1 KiB transfer, partial-tail byte strobes, unaligned-programming error, completion IRQ, SLVERR propagation; not yet wired into make cocotb)
         current_evidence: DMA is a word-copy AXI-Lite master with status/error counters; pad-level top connects it to a 4 KiB internal DRAM array, not a production memory hierarchy.
@@ -162,12 +162,12 @@ areas:
         category: proof_gap
         severity: high
         affected_paths:
-          - verify/formal/hello_dma_formal.sv
-          - verify/formal/hello_dma.sby
+          - verify/formal/e1_dma_formal.sv
+          - verify/formal/e1_dma.sby
           - scripts/yosys_formal_dma.ys
         partial_closure_evidence:
           - verify/properties/axi_lite.sv (reusable AXI-Lite property pack: VALID/payload stability, response legality, bounded liveness, outstanding-transaction balance)
-          - verify/properties/dma_axil_bind.sv (bind harness wrapping hello_dma master ports)
+          - verify/properties/dma_axil_bind.sv (bind harness wrapping e1_dma master ports)
           - verify/properties/dma_axil.sby (SymbiYosys bmc depth 32 + prove depth 16 tasks)
         current_evidence: Formal depth is 12 and checks basic status and signal relationships, but not full transfer completion, liveness, backpressure stability, or all response/error interleavings.
         blocking_gate: Formal pass must not be described as full DMA correctness.
@@ -188,13 +188,13 @@ areas:
         category: rtl_stub
         severity: critical
         affected_paths:
-          - rtl/npu/hello_npu.sv
-          - verify/cocotb/test_hello_npu.py
+          - rtl/npu/e1_npu.sv
+          - verify/cocotb/test_e1_npu.py
           - verify/verilator/test_npu_gemm.cpp
-          - verify/formal/hello_npu_formal.sv
+          - verify/formal/e1_npu_formal.sv
         partial_closure_evidence:
           - docs/arch/npu-microarch.md (Gemmini v0 selection, MMIO map, 64-byte descriptor format, tensor memory ABI, v0 op set, IRQ/error registers, CPU fallback contract, validated envelope)
-          - verify/cocotb/npu/test_npu_queue_stress.py (skipped scaffolds for descriptor queue stress, completion IRQ, unsupported-op status pending hello_npu_gemmini_wrapper RTL)
+          - verify/cocotb/npu/test_npu_queue_stress.py (skipped scaffolds for descriptor queue stress, completion IRQ, unsupported-op status pending e1_npu_gemmini_wrapper RTL)
         current_evidence: NPU is an MMIO datapath with scalar ops and bounded scratch GEMM registers; it has no queue, descriptor fetch, tensor memory interface, backpressure, or integration with a production accelerator.
         blocking_gate: AI accelerator, throughput, model execution, and software fallback percentage claims remain blocked.
         closure_evidence: Selected accelerator microarchitecture or wrapped IP with descriptor ABI, memory interface, tensor layout, interrupts, driver contract, performance counters, and coverage reports.
@@ -204,7 +204,7 @@ areas:
         category: test_gap
         severity: high
         affected_paths:
-          - verify/cocotb/test_hello_npu.py
+          - verify/cocotb/test_e1_npu.py
           - verify/verilator/test_npu_gemm.cpp
           - docs/three-week-prototype-workstreams.md
         current_evidence: Tests exercise selected operations and a small GEMM case but do not publish opcode, shape, saturation, invalid-programming, or fallback coverage summaries.
@@ -214,7 +214,7 @@ areas:
   display:
     current_posture: timing_generator_with_top_level_sram_framebuffer_fetch
     local_closures:
-      - hello_soc_top connects display scanout reads to the debug-visible SRAM-backed DRAM aperture
+      - e1_soc_top connects display scanout reads to the debug-visible SRAM-backed DRAM aperture
       - out-of-aperture framebuffer addresses deassert ready and increment display underflow status
     fail_closed:
       - disabled_display_keeps_vsync_low
@@ -228,9 +228,9 @@ areas:
         category: incomplete_subsystem
         severity: critical
         affected_paths:
-          - rtl/display/hello_display.sv
-          - rtl/top/hello_soc_top.sv
-          - verify/cocotb/test_hello_display.py
+          - rtl/display/e1_display.sv
+          - rtl/top/e1_soc_top.sv
+          - verify/cocotb/test_e1_display.py
         partial_closure_evidence:
           - arch/display.md "v0 reference panel" section (720x1280 MIPI-DSI selection and DCS init sequence summary)
           - verify/cocotb/display/test_display_timing.py (hsync/vsync cadence under perfect framebuffer; fetched+underflow invariant under backpressuring framebuffer)
@@ -243,8 +243,8 @@ areas:
         category: proof_gap
         severity: high
         affected_paths:
-          - rtl/display/hello_display.sv
-          - verify/formal/hello_soc_top_formal.sv
+          - rtl/display/e1_display.sv
+          - verify/formal/e1_soc_top_formal.sv
           - scripts/run_formal.sh
         partial_closure_evidence:
           - verify/cocotb/display/test_display_timing.py (starved-framebuffer underflow counter check drives UNDERFLOW_COUNT to exactly active_pixels)
@@ -273,8 +273,8 @@ areas:
           - fw/boot-rom/reset.S
           - fw/boot-rom/linker.ld
           - fw/boot-rom/check_boot_rom.py
-          - rtl/bootrom/hello_bootrom.sv
-          - sw/bootrom/hello_qemu_firmware.S
+          - rtl/bootrom/e1_bootrom.sv
+          - sw/bootrom/e1_qemu_firmware.S
           - scripts/run_qemu.sh
         partial_closure_evidence:
           - docs/arch/boot-rom-spec.md (reset vector, OTP layout, signature-verification stub algorithm, OpenSBI handoff ABI, debug-lock policy)
@@ -302,9 +302,9 @@ areas:
         category: incomplete_subsystem
         severity: critical
         affected_paths:
-          - rtl/memory/hello_axi_lite_dram.sv
-          - rtl/top/hello_soc_top.sv
-          - rtl/interconnect/hello_linux_soc_contract.sv
+          - rtl/memory/e1_axi_lite_dram.sv
+          - rtl/top/e1_soc_top.sv
+          - rtl/interconnect/e1_linux_soc_contract.sv
         current_evidence: DRAM is modeled as a small AXI-Lite SRAM aperture, with no controller, PHY, refresh, timing, ECC, or large-capacity behavior.
         blocking_gate: Memory bandwidth, Linux memory sizing, and production DRAM claims remain blocked.
         closure_evidence: Real controller boundary or verified external memory model, capacity discovery, latency/backpressure coverage, error policy, and boot-time memory tests.
@@ -344,7 +344,7 @@ areas:
           - scripts/run_qemu.sh
           - scripts/run_renode.sh
           - docs/three-week-prototype-workstreams.md
-        current_evidence: Current checks can validate scaffold semantics or tool presence, but they are not executable hello-chip boot validation.
+        current_evidence: Current checks can validate scaffold semantics or tool presence, but they are not executable e1-chip boot validation.
         blocking_gate: Boot/OS readiness must remain blocked without checked firmware image and serial transcript evidence.
-        closure_evidence: Real QEMU/Renode run under timeout against a contract-compatible model or explicit non-hello reference target, with transcript and exit-status checks.
+        closure_evidence: Real QEMU/Renode run under timeout against a contract-compatible model or explicit non-e1 reference target, with transcript and exit-status checks.
         work_order: Split scaffold checks from boot-validation checks in status reporting and release archives.

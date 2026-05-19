@@ -1,9 +1,9 @@
 `timescale 1ns/1ps
 
 // Small ULX3S-facing smoke top for the open FPGA toolchain release evidence.
-// This intentionally exercises the same board-level pins as hello_chip_top
+// This intentionally exercises the same board-level pins as e1_chip_top
 // without pulling the full SoC/NPU memory fabric into ECP5 synthesis.
-module hello_fpga_smoke_top (
+module e1_fpga_smoke_top (
     input  logic       CLK_IN,
     input  logic       RST_N,
 

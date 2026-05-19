@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * OpenPhone Hello Demo – OpenSBI platform implementation.
+ * OpenAgent E1 Demo – OpenSBI platform implementation.
  *
- * Implements the sbi_platform ops for the hello chip RISC-V SoC:
- *   - Console via hello-uart-1.0 at HELLO_UART_BASE
- *   - Machine timer via CLINT mtime/mtimecmp at HELLO_CLINT_BASE
- *   - Software IPI via CLINT msip at HELLO_CLINT_BASE
- *   - External interrupt enable via PLIC at HELLO_PLIC_BASE
+ * Implements the sbi_platform ops for the e1 chip RISC-V SoC:
+ *   - Console via e1-uart-1.0 at E1_UART_BASE
+ *   - Machine timer via CLINT mtime/mtimecmp at E1_CLINT_BASE
+ *   - Software IPI via CLINT msip at E1_CLINT_BASE
+ *   - External interrupt enable via PLIC at E1_PLIC_BASE
  *
- * Addresses match sw/platform/hello_platform_contract.json and the
- * Linux DTS at sw/linux/dts/openphone-hello.dts.
+ * Addresses match sw/platform/e1_platform_contract.json and the
+ * Linux DTS at sw/linux/dts/openagent-e1.dts.
  */
 
 #include <sbi/riscv_io.h>
@@ -29,32 +29,32 @@
 
 /* -----------------------------------------------------------------------
  * UART console
- * hello-uart-1.0: poll TX_READY in STAT register before writing a byte.
+ * e1-uart-1.0: poll TX_READY in STAT register before writing a byte.
  * getc polls RX_READY; if no byte is available returns -1.
  * ----------------------------------------------------------------------- */
 
-static void hello_uart_putc(char ch)
+static void e1_uart_putc(char ch)
 {
-	volatile u32 *stat = (volatile u32 *)(HELLO_UART_BASE + HELLO_UART_STAT_OFFSET);
-	volatile u32 *tx   = (volatile u32 *)(HELLO_UART_BASE + HELLO_UART_TX_OFFSET);
+	volatile u32 *stat = (volatile u32 *)(E1_UART_BASE + E1_UART_STAT_OFFSET);
+	volatile u32 *tx   = (volatile u32 *)(E1_UART_BASE + E1_UART_TX_OFFSET);
 
 	/* Spin until transmit buffer is ready */
-	while (!(readl(stat) & HELLO_UART_STAT_TX_READY))
+	while (!(readl(stat) & E1_UART_STAT_TX_READY))
 		;
 	writel((u32)(unsigned char)ch, tx);
 }
 
-static int hello_uart_getc(void)
+static int e1_uart_getc(void)
 {
-	volatile u32 *stat = (volatile u32 *)(HELLO_UART_BASE + HELLO_UART_STAT_OFFSET);
-	volatile u32 *rx   = (volatile u32 *)(HELLO_UART_BASE + HELLO_UART_RX_OFFSET);
+	volatile u32 *stat = (volatile u32 *)(E1_UART_BASE + E1_UART_STAT_OFFSET);
+	volatile u32 *rx   = (volatile u32 *)(E1_UART_BASE + E1_UART_RX_OFFSET);
 	u32 word;
 
-	if (!(readl(stat) & HELLO_UART_STAT_RX_READY))
+	if (!(readl(stat) & E1_UART_STAT_RX_READY))
 		return -1;
 
 	word = readl(rx);
-	if (!(word & HELLO_UART_RX_VALID_BIT))
+	if (!(word & E1_UART_RX_VALID_BIT))
 		return -1;
 	return (int)(word & 0xFFU);
 }
@@ -66,46 +66,46 @@ static int hello_uart_getc(void)
  * Write UINT64_MAX to mtimecmp to suppress the timer interrupt.
  * ----------------------------------------------------------------------- */
 
-static inline volatile u64 *hello_clint_mtime(void)
+static inline volatile u64 *e1_clint_mtime(void)
 {
-	return (volatile u64 *)(HELLO_CLINT_BASE + HELLO_CLINT_MTIME_OFFSET);
+	return (volatile u64 *)(E1_CLINT_BASE + E1_CLINT_MTIME_OFFSET);
 }
 
-static inline volatile u64 *hello_clint_mtimecmp(u32 hartid)
+static inline volatile u64 *e1_clint_mtimecmp(u32 hartid)
 {
-	return (volatile u64 *)(HELLO_CLINT_BASE + HELLO_CLINT_MTIMECMP_OFFSET
+	return (volatile u64 *)(E1_CLINT_BASE + E1_CLINT_MTIMECMP_OFFSET
 	                        + (hartid * 8UL));
 }
 
-static inline volatile u32 *hello_clint_msip(u32 hartid)
+static inline volatile u32 *e1_clint_msip(u32 hartid)
 {
-	return (volatile u32 *)(HELLO_CLINT_BASE + HELLO_CLINT_MSIP_OFFSET
+	return (volatile u32 *)(E1_CLINT_BASE + E1_CLINT_MSIP_OFFSET
 	                        + (hartid * 4UL));
 }
 
-static u64 hello_timer_value(void)
+static u64 e1_timer_value(void)
 {
-	return readq(hello_clint_mtime());
+	return readq(e1_clint_mtime());
 }
 
-static void hello_timer_event_start(u64 next_event)
+static void e1_timer_event_start(u64 next_event)
 {
 	u32 hartid = current_hartid();
 	/*
 	 * Write high half first then low half to avoid a spurious interrupt
 	 * if the counter crosses the boundary between the two writes.
 	 */
-	volatile u32 *cmp = (volatile u32 *)hello_clint_mtimecmp(hartid);
+	volatile u32 *cmp = (volatile u32 *)e1_clint_mtimecmp(hartid);
 	/* Disable by writing max high word first */
 	writel(0xFFFFFFFFU, cmp + 1);
 	writel((u32)(next_event & 0xFFFFFFFFU), cmp);
 	writel((u32)(next_event >> 32), cmp + 1);
 }
 
-static void hello_timer_event_stop(void)
+static void e1_timer_event_stop(void)
 {
 	u32 hartid = current_hartid();
-	volatile u32 *cmp = (volatile u32 *)hello_clint_mtimecmp(hartid);
+	volatile u32 *cmp = (volatile u32 *)e1_clint_mtimecmp(hartid);
 	writel(0xFFFFFFFFU, cmp);
 	writel(0xFFFFFFFFU, cmp + 1);
 }
@@ -115,14 +115,14 @@ static void hello_timer_event_stop(void)
  * msip[hartid] bit 0 asserts machine software interrupt for that hart.
  * ----------------------------------------------------------------------- */
 
-static void hello_ipi_send(u32 target_hart)
+static void e1_ipi_send(u32 target_hart)
 {
-	writel(1U, hello_clint_msip(target_hart));
+	writel(1U, e1_clint_msip(target_hart));
 }
 
-static void hello_ipi_clear(u32 target_hart)
+static void e1_ipi_clear(u32 target_hart)
 {
-	writel(0U, hello_clint_msip(target_hart));
+	writel(0U, e1_clint_msip(target_hart));
 }
 
 /* -----------------------------------------------------------------------
@@ -131,17 +131,17 @@ static void hello_ipi_clear(u32 target_hart)
  * Clear any stale pending bits by claiming until no more are pending.
  * ----------------------------------------------------------------------- */
 
-static int hello_irqchip_init(bool cold_boot)
+static int e1_irqchip_init(bool cold_boot)
 {
-	volatile u32 *enable   = (volatile u32 *)(HELLO_PLIC_BASE + HELLO_PLIC_ENABLE_OFFSET);
-	volatile u32 *claim    = (volatile u32 *)(HELLO_PLIC_BASE + HELLO_PLIC_CLAIM_COMPLETE_OFFSET);
+	volatile u32 *enable   = (volatile u32 *)(E1_PLIC_BASE + E1_PLIC_ENABLE_OFFSET);
+	volatile u32 *claim    = (volatile u32 *)(E1_PLIC_BASE + E1_PLIC_CLAIM_COMPLETE_OFFSET);
 	u32 claimed;
 
 	if (!cold_boot)
 		return 0;
 
 	/* Enable all implemented sources (bits 0..NUM_SOURCES-1, source N at bit N-1) */
-	writel((1U << HELLO_PLIC_NUM_SOURCES) - 1U, enable);
+	writel((1U << E1_PLIC_NUM_SOURCES) - 1U, enable);
 
 	/* Drain any stale pending interrupts */
 	while ((claimed = readl(claim)) != 0U)
@@ -155,7 +155,7 @@ static int hello_irqchip_init(bool cold_boot)
  * Minimal: validate magic words in boot ROM, set up hart mask.
  * ----------------------------------------------------------------------- */
 
-static int hello_early_init(bool cold_boot)
+static int e1_early_init(bool cold_boot)
 {
 	volatile u32 *boot_rom = (volatile u32 *)0x00000000UL;
 	u32 magic0, magic1;
@@ -167,11 +167,11 @@ static int hello_early_init(bool cold_boot)
 	magic1 = readl(boot_rom + 1);
 
 	/*
-	 * 0x4F50534F = "OPSO", 0x43484950 = "CHIP" – hello chip identity.
+	 * 0x4F50534F = "OPSO", 0x43484950 = "CHIP" – e1 chip identity.
 	 * Warn but do not hard-fail; QEMU/Renode may not implement boot ROM.
 	 */
 	if (magic0 != 0x4F50534FUL || magic1 != 0x43484950UL)
-		sbi_printf("hello: boot ROM magic mismatch (0x%08x 0x%08x)\n",
+		sbi_printf("e1: boot ROM magic mismatch (0x%08x 0x%08x)\n",
 		           magic0, magic1);
 
 	return 0;
@@ -181,24 +181,24 @@ static int hello_early_init(bool cold_boot)
  * Platform init – runs after SBI core initializes scratch/console
  * ----------------------------------------------------------------------- */
 
-static int hello_init(bool cold_boot)
+static int e1_init(bool cold_boot)
 {
 	if (!cold_boot)
 		return 0;
 
 	/* Enable UART output */
-	volatile u32 *ctrl = (volatile u32 *)(HELLO_UART_BASE + HELLO_UART_CTRL_OFFSET);
+	volatile u32 *ctrl = (volatile u32 *)(E1_UART_BASE + E1_UART_CTRL_OFFSET);
 	writel(0x1U, ctrl);
 
 	/* Ensure CLINT timer is suppressed until Linux sets it */
-	hello_timer_event_stop();
+	e1_timer_event_stop();
 
 	sbi_printf("\n");
-	sbi_printf("OpenPhone Hello Demo – OpenSBI platform init\n");
-	sbi_printf("  CLINT  @ 0x%08lx\n", (unsigned long)HELLO_CLINT_BASE);
+	sbi_printf("OpenAgent E1 Demo – OpenSBI platform init\n");
+	sbi_printf("  CLINT  @ 0x%08lx\n", (unsigned long)E1_CLINT_BASE);
 	sbi_printf("  PLIC   @ 0x%08lx  sources=%d\n",
-	           (unsigned long)HELLO_PLIC_BASE, HELLO_PLIC_NUM_SOURCES);
-	sbi_printf("  UART   @ 0x%08lx\n", (unsigned long)HELLO_UART_BASE);
+	           (unsigned long)E1_PLIC_BASE, E1_PLIC_NUM_SOURCES);
+	sbi_printf("  UART   @ 0x%08lx\n", (unsigned long)E1_UART_BASE);
 	sbi_printf("\n");
 
 	return 0;
@@ -208,26 +208,26 @@ static int hello_init(bool cold_boot)
  * sbi_platform_ops – wired to the ops struct below
  * ----------------------------------------------------------------------- */
 
-static const struct sbi_platform_operations hello_platform_ops = {
+static const struct sbi_platform_operations e1_platform_ops = {
 	/* Console */
-	.console_putc          = hello_uart_putc,
-	.console_getc          = hello_uart_getc,
+	.console_putc          = e1_uart_putc,
+	.console_getc          = e1_uart_getc,
 
 	/* Timer */
-	.timer_value           = hello_timer_value,
-	.timer_event_start     = hello_timer_event_start,
-	.timer_event_stop      = hello_timer_event_stop,
+	.timer_value           = e1_timer_value,
+	.timer_event_start     = e1_timer_event_start,
+	.timer_event_stop      = e1_timer_event_stop,
 
 	/* IPI */
-	.ipi_send              = hello_ipi_send,
-	.ipi_clear             = hello_ipi_clear,
+	.ipi_send              = e1_ipi_send,
+	.ipi_clear             = e1_ipi_clear,
 
 	/* IRQ chip */
-	.irqchip_init          = hello_irqchip_init,
+	.irqchip_init          = e1_irqchip_init,
 
 	/* Platform lifecycle */
-	.early_init            = hello_early_init,
-	.final_init            = hello_init,
+	.early_init            = e1_early_init,
+	.final_init            = e1_init,
 };
 
 /* -----------------------------------------------------------------------
@@ -240,9 +240,9 @@ static const struct sbi_platform_operations hello_platform_ops = {
 const struct sbi_platform platform = {
 	.opensbi_version      = OPENSBI_VERSION,
 	.platform_version     = SBI_PLATFORM_VERSION(0, 1),
-	.name                 = "OpenPhone Hello Demo",
+	.name                 = "OpenAgent E1 Demo",
 	.features             = SBI_PLATFORM_HAS_TIMER_VALUE,
-	.hart_count           = HELLO_HART_COUNT,
-	.hart_stack_size      = HELLO_HART_STACK_SIZE,
-	.platform_ops_addr    = (unsigned long)&hello_platform_ops,
+	.hart_count           = E1_HART_COUNT,
+	.hart_stack_size      = E1_HART_STACK_SIZE,
+	.platform_ops_addr    = (unsigned long)&e1_platform_ops,
 };

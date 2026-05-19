@@ -11,9 +11,9 @@ required = [
     "docs/board/fpga/README.md",
     "docs/sim/qemu/README.md",
     "docs/sim/renode/README.md",
-    "sw/platform/hello_platform_contract.json",
-    "sw/platform/generated/hello_platform_contract.h",
-    "docs/tapeout-checklist/hello-chip.md",
+    "sw/platform/e1_platform_contract.json",
+    "sw/platform/generated/e1_platform_contract.h",
+    "docs/tapeout-checklist/e1-chip.md",
     "docs/toolchain/README.md",
 ]
 

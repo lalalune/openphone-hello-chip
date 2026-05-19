@@ -1,5 +1,5 @@
-# Buildroot external makefile for the OpenPhone hello BSP.
+# Buildroot external makefile for the OpenAgent e1 BSP.
 #
 # Package recipes are intentionally empty for now. The external tree supplies
 # board metadata, a Linux config fragment, and a rootfs overlay that imports the
-# hello MMIO smoke hook.
+# e1 MMIO smoke hook.

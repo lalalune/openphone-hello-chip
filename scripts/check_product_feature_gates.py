@@ -157,7 +157,7 @@ def require_relative_path(path: str, field: str, failures: list[str]) -> None:
 
 
 def check_manifest(data: dict, gap_ids: set[str], failures: list[str]) -> None:
-    if data.get("schema") != "openphone.product_feature_evidence.v1":
+    if data.get("schema") != "openagent.product_feature_evidence.v1":
         failures.append("product feature evidence manifest has wrong schema")
     if data.get("status") != "release_blocked":
         failures.append("product feature evidence manifest must remain release_blocked")

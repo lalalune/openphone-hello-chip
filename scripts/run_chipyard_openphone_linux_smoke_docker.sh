@@ -2,13 +2,13 @@
 set -eu
 
 repo_dir="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
-image="${CHIPYARD_DOCKER_IMAGE:-openphone/chipyard-openphone-minimal-amd64:1.13.0}"
+image="${CHIPYARD_DOCKER_IMAGE:-openagent/chipyard-openagent-minimal-amd64:1.13.0}"
 platform="${CHIPYARD_DOCKER_PLATFORM:-linux/amd64}"
-out_dir="$repo_dir/build/chipyard/openphone_rocket"
+out_dir="$repo_dir/build/chipyard/openagent_rocket"
 log="$out_dir/verilator-linux-smoke.log"
 runner_log="$out_dir/verilator-linux-smoke-runner.log"
-config="${CHIPYARD_CONFIG:-OpenPhoneRocketConfig}"
-config_package="${CHIPYARD_CONFIG_PACKAGE:-openphone}"
+config="${CHIPYARD_CONFIG:-OpenAgentRocketConfig}"
+config_package="${CHIPYARD_CONFIG_PACKAGE:-openagent}"
 payload="${CHIPYARD_LINUX_BINARY:-$repo_dir/external/chipyard/software/firemarshal/images/firechip/linux-poweroff/linux-poweroff-bin-nodisk}"
 payload_container="/work/${payload#"$repo_dir"/}"
 binary_arg="${CHIPYARD_LINUX_SMOKE_BINARY_ARG:-$payload_container}"
@@ -34,19 +34,19 @@ if [ ! -f "$payload" ]; then
 fi
 
 {
-	printf 'openphone-evidence: target=cpu_ap artifact=chipyard_verilator_linux_smoke\n'
-	printf 'openphone-evidence: image=%s\n' "$image"
-	printf 'openphone-evidence: platform=%s\n' "$platform"
-	printf 'openphone-evidence: config=%s\n' "$config"
-	printf 'openphone-evidence: config_package=%s\n' "$config_package"
-	printf 'openphone-evidence: attempt=%s\n' "$attempt"
-	printf 'openphone-evidence: clean_generated=%s\n' "$clean"
-	printf 'openphone-evidence: payload=%s\n' "$payload_container"
-	printf 'openphone-evidence: binary_arg=%s\n' "$binary_arg"
-	printf 'openphone-evidence: timeout_seconds=%s\n' "$timeout_seconds"
-	printf 'openphone-evidence: timeout_cycles=%s\n' "$timeout_cycles"
-	printf 'openphone-evidence: run_target=%s\n' "$run_target"
-	printf 'openphone-evidence: raw_transcript_begin\n'
+	printf 'openagent-evidence: target=cpu_ap artifact=chipyard_verilator_linux_smoke\n'
+	printf 'openagent-evidence: image=%s\n' "$image"
+	printf 'openagent-evidence: platform=%s\n' "$platform"
+	printf 'openagent-evidence: config=%s\n' "$config"
+	printf 'openagent-evidence: config_package=%s\n' "$config_package"
+	printf 'openagent-evidence: attempt=%s\n' "$attempt"
+	printf 'openagent-evidence: clean_generated=%s\n' "$clean"
+	printf 'openagent-evidence: payload=%s\n' "$payload_container"
+	printf 'openagent-evidence: binary_arg=%s\n' "$binary_arg"
+	printf 'openagent-evidence: timeout_seconds=%s\n' "$timeout_seconds"
+	printf 'openagent-evidence: timeout_cycles=%s\n' "$timeout_cycles"
+	printf 'openagent-evidence: run_target=%s\n' "$run_target"
+	printf 'openagent-evidence: raw_transcript_begin\n'
 } >"$log"
 
 set +e
@@ -64,7 +64,7 @@ docker run --rm --platform "$platform" \
 	-e "CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS=$timeout_seconds" \
 	-e "CHIPYARD_LINUX_SMOKE_TIMEOUT_CYCLES=$timeout_cycles" \
 	-e "CHIPYARD_LINUX_SMOKE_EXTRA_SIM_FLAGS=$extra_sim_flags" \
-	-e "OPENPHONE_HOST_REPO_DIR=$repo_dir" \
+	-e "OPENAGENT_HOST_REPO_DIR=$repo_dir" \
 	-e "CHIPYARD_LINUX_SMOKE_RUN_TARGET=$run_target" \
 	"$image" -lc '
 		set -e
@@ -88,7 +88,7 @@ docker run --rm --platform "$platform" \
 			exit 2
 		fi
 		python3 /work/scripts/repair_chipyard_generated_paths.py --rewrite \
-			--stale-root "$OPENPHONE_HOST_REPO_DIR" \
+			--stale-root "$OPENAGENT_HOST_REPO_DIR" \
 			--replacement-root /work || true
 		cd external/chipyard/sims/verilator
 			if [ "$CHIPYARD_LINUX_SMOKE_CLEAN" = "1" ]; then
@@ -122,7 +122,7 @@ docker run --rm --platform "$platform" \
 			for bootrom_img in bootrom.rv64.img bootrom.rv32.img; do
 				if [ -f "$bootrom_src/$bootrom_img" ]; then
 					cp -f "$bootrom_src/$bootrom_img" "$generated_dir/$bootrom_img"
-					echo "openphone-evidence: seeded_bootrom=$generated_dir/$bootrom_img"
+					echo "openagent-evidence: seeded_bootrom=$generated_dir/$bootrom_img"
 				fi
 			done
 			if [ ! -f "$generated_dir/bootrom.rv64.img" ]; then
@@ -158,7 +158,7 @@ docker run --rm --platform "$platform" \
 			run_binary_cmd="$run_binary_cmd BINARY=\"$CHIPYARD_LINUX_SMOKE_BINARY_ARG\""
 		fi
 		run_binary_cmd="$run_binary_cmd \"$CHIPYARD_LINUX_SMOKE_RUN_TARGET\""
-		echo "openphone-evidence: command=$run_binary_cmd"
+		echo "openagent-evidence: command=$run_binary_cmd"
 		python3 - "$CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS" "$run_binary_cmd" <<PY
 import os, signal, subprocess, sys
 timeout = int(sys.argv[1])
@@ -167,7 +167,7 @@ proc = subprocess.Popen(["bash", "-lc", command], start_new_session=True)
 try:
     raise SystemExit(proc.wait(timeout=timeout))
 except subprocess.TimeoutExpired:
-    print(f"openphone-evidence: timeout_after_seconds={timeout}", flush=True)
+    print(f"openagent-evidence: timeout_after_seconds={timeout}", flush=True)
     try:
         os.killpg(proc.pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -187,12 +187,12 @@ status_code=$?
 set -e
 
 {
-	printf 'openphone-evidence: raw_transcript_end\n'
-	printf 'openphone-evidence: exit_code=%s\n' "$status_code"
+	printf 'openagent-evidence: raw_transcript_end\n'
+	printf 'openagent-evidence: exit_code=%s\n' "$status_code"
 	if [ "$status_code" -eq 0 ]; then
-		printf 'openphone-evidence: status=PASS\n'
+		printf 'openagent-evidence: status=PASS\n'
 	else
-		printf 'openphone-evidence: status=BLOCKED\n'
+		printf 'openagent-evidence: status=BLOCKED\n'
 	fi
 } >>"$log"
 
@@ -206,7 +206,7 @@ if [ "$status_code" -ne 0 ] && [ "$retry_generated" = "1" ] && [ "$attempt" = "1
 	CHIPYARD_LINUX_SMOKE_ATTEMPT=2 \
 	CHIPYARD_LINUX_SMOKE_RETRY_GENERATED=0 \
 	CHIPYARD_LINUX_SMOKE_CLEAN=1 \
-	exec "$repo_dir/scripts/run_chipyard_openphone_linux_smoke_docker.sh"
+	exec "$repo_dir/scripts/run_chipyard_openagent_linux_smoke_docker.sh"
 fi
 
 cp "$log" "$runner_log"

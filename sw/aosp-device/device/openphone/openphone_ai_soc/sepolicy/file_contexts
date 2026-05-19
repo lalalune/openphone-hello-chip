@@ -1,12 +1,12 @@
-# SELinux file_contexts v0 for openphone_ai_soc.
-# Fail-closed: only the two declared HAL binaries and the hello-npu device
+# SELinux file_contexts v0 for openagent_ai_soc.
+# Fail-closed: only the two declared HAL binaries and the e1-npu device
 # node are labeled. Anything else stays under default vendor labels.
 #
-# Backing contract: sw/platform/hello_platform_contract.json
+# Backing contract: sw/platform/e1_platform_contract.json
 
 # HAL binaries
-/vendor/bin/hw/vendor\.openphone\.hello_npu@1\.0-service                              u:object_r:hal_hello_npu_default_exec:s0
-/vendor/bin/hw/android\.hardware\.graphics\.composer@2\.4-service\.openphone_ai_soc   u:object_r:hal_graphics_composer_default_exec:s0
+/vendor/bin/hw/vendor\.openagent\.e1_npu@1\.0-service                              u:object_r:hal_e1_npu_default_exec:s0
+/vendor/bin/hw/android\.hardware\.graphics\.composer@2\.4-service\.openagent_ai_soc   u:object_r:hal_graphics_composer_default_exec:s0
 
 # Devices
-/dev/hello-npu                                                                        u:object_r:hello_npu_device:s0
+/dev/e1-npu                                                                        u:object_r:e1_npu_device:s0

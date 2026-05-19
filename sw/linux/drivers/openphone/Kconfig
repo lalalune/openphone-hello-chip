@@ -1,43 +1,43 @@
-menuconfig OPENPHONE_HELLO
-	tristate "OpenPhone hello SoC BSP drivers"
+menuconfig OPENAGENT_E1
+	tristate "OpenAgent e1 SoC BSP drivers"
 	depends on OF
 	help
-	  Out-of-tree style BSP drivers for the OpenPhone hello platform
-	  contract (sw/platform/hello_platform_contract.json). Drop this
-	  directory into an external Linux tree under drivers/misc/openphone/
+	  Out-of-tree style BSP drivers for the OpenAgent e1 platform
+	  contract (sw/platform/e1_platform_contract.json). Drop this
+	  directory into an external Linux tree under drivers/misc/openagent/
 	  and source this Kconfig from drivers/misc/Kconfig.
 
-if OPENPHONE_HELLO
+if OPENAGENT_E1
 
-config OPENPHONE_HELLO_NPU
-	tristate "OpenPhone hello NPU character driver"
+config OPENAGENT_E1_NPU
+	tristate "OpenAgent e1 NPU character driver"
 	depends on MISC_DEVICES
 	help
-	  Creates /dev/hello-npu and exposes the NPU register window through
+	  Creates /dev/e1-npu and exposes the NPU register window through
 	  read(), ioctl() (submit OP_A/OP_B/OPCODE), and mmap() of the 4 KiB
-	  MMIO region. Bound to compatible "openphone,hello-npu".
+	  MMIO region. Bound to compatible "openagent,e1-npu".
 
-config OPENPHONE_HELLO_DMA
-	tristate "OpenPhone hello DMA platform driver"
+config OPENAGENT_E1_DMA
+	tristate "OpenAgent e1 DMA platform driver"
 	help
-	  Binds compatible "openphone,hello-dma" and exports a multi-line
+	  Binds compatible "openagent,e1-dma" and exports a multi-line
 	  platform-contract sysfs node plus live readback of BYTES_DONE and
 	  ERROR_COUNT.
 
-config OPENPHONE_HELLO_DISPLAY
-	tristate "OpenPhone hello display (simple-framebuffer compatible)"
+config OPENAGENT_E1_DISPLAY
+	tristate "OpenAgent e1 display (simple-framebuffer compatible)"
 	help
 	  Programs FB_BASE / MODE / FORMAT / ENABLE from device tree and
 	  leaves scan-out for userspace via a sibling simple-framebuffer
-	  node. Bound to compatible "openphone,hello-display".
+	  node. Bound to compatible "openagent,e1-display".
 
-config OPENPHONE_HELLO_GPIO
-	tristate "OpenPhone hello GPIO (gpio-mmio backed)"
+config OPENAGENT_E1_GPIO
+	tristate "OpenAgent e1 GPIO (gpio-mmio backed)"
 	depends on GPIOLIB
 	select GPIO_GENERIC
 	help
 	  Wraps the GPIO_OUT register inside the peripheral-control window as
 	  a 32-line gpio-mmio gpiochip. Bound to compatible
-	  "openphone,hello-gpio".
+	  "openagent,e1-gpio".
 
-endif # OPENPHONE_HELLO
+endif # OPENAGENT_E1

@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_dbg_mmio_bridge_formal;
+module e1_dbg_mmio_bridge_formal;
     logic clk;
     logic rst_n;
     logic dbg_valid;
@@ -20,7 +20,7 @@ module hello_dbg_mmio_bridge_formal;
     initial clk = 1'b0;
     always #1 clk = !clk;
 
-    hello_dbg_mmio_bridge dut (
+    e1_dbg_mmio_bridge dut (
         .clk(clk),
         .rst_n(rst_n),
         .dbg_valid(dbg_valid),

@@ -35,10 +35,10 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         )
 
         paths = {item["path"] for item in manifest["evidence"]}
-        self.assertIn("docs/evidence/android/openphone_ai_soc_cts_vts_plan.log", paths)
+        self.assertIn("docs/evidence/android/openagent_ai_soc_cts_vts_plan.log", paths)
         self.assertIn("docs/evidence/android/cuttlefish_riscv64_smoke.log", paths)
         self.assertIn("docs/evidence/android/qemu_riscv64_smoke.log", paths)
-        self.assertIn("docs/evidence/android/renode_hello_soc_smoke.log", paths)
+        self.assertIn("docs/evidence/android/renode_e1_soc_smoke.log", paths)
         claims = "\n".join(item["claim"] for item in manifest["evidence"])
         self.assertNotIn("CDD compliant", claims)
         self.assertNotIn("full CTS pass", claims)
@@ -54,7 +54,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
 
     def test_nnapi_proof_template_matches_fail_closed_harness_contract(self) -> None:
         template = json.loads(check_software_bsp.NNAPI_PROOF_TEMPLATE.read_text())
-        self.assertEqual(template["schema"], "openphone.hello_npu_nnapi_capability.v1")
+        self.assertEqual(template["schema"], "openagent.e1_npu_nnapi_capability.v1")
         self.assertIn("trace_bytes", template["dma"])
 
         transcripts = template["transcripts"]
@@ -63,7 +63,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
             with self.subTest(transcript=name):
                 self.assertIsInstance(entry, dict)
                 self.assertFalse(Path(entry["path"]).is_absolute())
-                self.assertTrue(entry["path"].startswith("docs/evidence/android/hello-npu/"))
+                self.assertTrue(entry["path"].startswith("docs/evidence/android/e1-npu/"))
                 self.assertIn("64-character lowercase sha256", entry["sha256"])
                 self.assertIsInstance(entry["bytes"], int)
 
@@ -104,15 +104,15 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn(
-            "missing docs/evidence/buildroot/openphone_hello_defconfig.log", result.stdout
+            "missing docs/evidence/buildroot/openagent_e1_defconfig.log", result.stdout
         )
         self.assertIn(
-            "missing docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
+            "missing docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
             result.stdout,
         )
         self.assertIn("missing docs/evidence/android/qemu_riscv64_smoke.log", result.stdout)
-        self.assertIn("missing docs/evidence/linux/opensbi_openphone_build.log", result.stdout)
-        self.assertNotIn("missing docs/evidence/linux/u_boot_openphone_build.log", result.stdout)
+        self.assertIn("missing docs/evidence/linux/opensbi_openagent_build.log", result.stdout)
+        self.assertNotIn("missing docs/evidence/linux/u_boot_openagent_build.log", result.stdout)
 
     def test_require_evidence_fails_closed_on_missing_external_logs(self) -> None:
         result = subprocess.run(
@@ -152,7 +152,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
                 "--buildroot",
                 "/external/buildroot",
                 "--target-host",
-                "root@openphone-target",
+                "root@openagent-target",
             ],
             cwd=ROOT,
             text=True,
@@ -165,7 +165,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
             result.stdout,
         )
         self.assertIn(
-            "HELLO_SMOKE_CMD='ssh root@openphone-target /usr/bin/hello-mmio-smoke'",
+            "E1_SMOKE_CMD='ssh root@openagent-target /usr/bin/e1-mmio-smoke'",
             result.stdout,
         )
 
@@ -192,7 +192,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
             result.stdout,
         )
         self.assertIn(
-            "OPENPHONE_OPENSBI_HANDOFF_CMD='qemu-system-riscv64 -bios fw_dynamic.bin'",
+            "OPENAGENT_OPENSBI_HANDOFF_CMD='qemu-system-riscv64 -bios fw_dynamic.bin'",
             result.stdout,
         )
 
@@ -204,13 +204,13 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
             evidence.write_text(
                 "\n".join(
                     [
-                        "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
-                        "openphone-evidence: command=make ARCH=riscv Image",
-                        "openphone-evidence: started_utc=2026-05-17T00:00:00Z",
-                        "CONFIG_OPENPHONE_HELLO=y",
+                        "openagent-evidence: target=linux artifact=openagent_e1_kernel_build",
+                        "openagent-evidence: command=make ARCH=riscv Image",
+                        "openagent-evidence: started_utc=2026-05-17T00:00:00Z",
+                        "CONFIG_OPENAGENT_E1=y",
                         "placeholder output",
-                        "openphone-evidence: status=FAIL rc=1",
-                        "openphone-evidence: ended_utc=2026-05-17T00:00:01Z",
+                        "openagent-evidence: status=FAIL rc=1",
+                        "openagent-evidence: ended_utc=2026-05-17T00:00:01Z",
                     ]
                 )
             )
@@ -219,9 +219,9 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
                 "min_bytes": 80,
                 "capture_command": "fake",
                 "required_strings": [
-                    "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
-                    "CONFIG_OPENPHONE_HELLO",
-                    "openphone-evidence: status=PASS",
+                    "openagent-evidence: target=linux artifact=openagent_e1_kernel_build",
+                    "CONFIG_OPENAGENT_E1",
+                    "openagent-evidence: status=PASS",
                 ],
             }
 
@@ -241,15 +241,15 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
             evidence.write_text(
                 "\n".join(
                     [
-                        "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
-                        "openphone-evidence: command=launch_cvd",
-                        "openphone-evidence: started_utc=2026-05-17T00:00:00Z",
+                        "openagent-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
+                        "openagent-evidence: command=launch_cvd",
+                        "openagent-evidence: started_utc=2026-05-17T00:00:00Z",
                         "launch_cvd",
                         "adb shell",
                         "ro.product.cpu.abi=riscv64",
                         "sys.boot_completed=1",
-                        "openphone-evidence: ended_utc=2026-05-17T00:00:01Z",
-                        "openphone-evidence: status=PASS",
+                        "openagent-evidence: ended_utc=2026-05-17T00:00:01Z",
+                        "openagent-evidence: status=PASS",
                     ]
                 )
             )
@@ -259,12 +259,12 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
                 "min_bytes": 80,
                 "capture_command": "fake",
                 "required_strings": [
-                    "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
+                    "openagent-evidence: target=aosp artifact=cuttlefish_riscv64_boot",
                     "launch_cvd",
                     "adb shell",
                     "ro.product.cpu.abi=riscv64",
                     "sys.boot_completed=1",
-                    "openphone-evidence: status=PASS",
+                    "openagent-evidence: status=PASS",
                 ],
             }
 

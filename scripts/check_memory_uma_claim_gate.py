@@ -13,23 +13,23 @@ GATE = ROOT / "docs/evidence/memory/uma-dram-evidence-gate.yaml"
 MEMORY = ROOT / "docs/arch/memory-subsystem.md"
 INTERCONNECT = ROOT / "docs/arch/interconnect.md"
 MEMORY_MAP = ROOT / "docs/arch/memory-map.md"
-DRAM_RTL = ROOT / "rtl/memory/hello_axi_lite_dram.sv"
-CONTRACT_RTL = ROOT / "rtl/interconnect/hello_linux_soc_contract.sv"
+DRAM_RTL = ROOT / "rtl/memory/e1_axi_lite_dram.sv"
+CONTRACT_RTL = ROOT / "rtl/interconnect/e1_linux_soc_contract.sv"
 CONTRACT_TEST = ROOT / "verify/cocotb/test_cpu_mem_intc_contract.py"
 GENERATED_MEMMAP = (
     ROOT
-    / "build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.memmap.json"
+    / "build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.memmap.json"
 )
 GENERATED_DTS = (
     ROOT
-    / "build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts"
+    / "build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.dts"
 )
-GENERATED_VERILOG = ROOT / "build/chipyard/openphone_rocket/openphone_rocket_ap.v"
+GENERATED_VERILOG = ROOT / "build/chipyard/openagent_rocket/openagent_rocket_ap.v"
 GENERATED_FIR = (
     ROOT
-    / "build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.fir"
+    / "build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.fir"
 )
-GENERATED_SIMULATOR = ROOT / "build/chipyard/openphone_rocket/simulator/simulator"
+GENERATED_SIMULATOR = ROOT / "build/chipyard/openagent_rocket/simulator/simulator"
 PERFORMANCE_TEMPLATE = (
     ROOT / "docs/evidence/memory/templates/bandwidth-latency-contended-access.template.json"
 )
@@ -97,29 +97,29 @@ REQUIRED_EVIDENCE_BY_CLAIM = {
 }
 
 REQUIRED_ARTIFACT_SCHEMAS = {
-    "docs/evidence/memory/reset_rom_boot_sram_handoff_report.json": "openphone.memory.reset_rom_boot_sram_handoff.v1",
-    "docs/evidence/memory/opensbi_dram_handoff_transcript.json": "openphone.memory.opensbi_dram_handoff.v1",
-    "docs/evidence/memory/real_dram_controller_phy_report.json": "openphone.memory.real_dram_controller_phy.v1",
-    "docs/evidence/memory/dram_training_timing_report.json": "openphone.memory.dram_training_timing.v1",
-    "docs/evidence/memory/cache_hierarchy_report.json": "openphone.memory.cache_hierarchy.v1",
-    "docs/evidence/memory/cache_latency_counter_report.json": "openphone.memory.cache_latency_counter.v1",
-    "docs/evidence/memory/axi_tl_interconnect_contract_report.json": "openphone.memory.axi_tl_interconnect_contract.v1",
-    "docs/evidence/memory/fabric_bridge_ordering_report.json": "openphone.memory.fabric_bridge_ordering.v1",
-    "docs/evidence/memory/cacheability_attribute_map_report.json": "openphone.memory.cacheability_attribute_map.v1",
-    "docs/evidence/memory/noncoherent_dma_sync_abi_report.json": "openphone.memory.noncoherent_dma_sync_abi.v1",
-    "docs/evidence/memory/uma_coherency_report.json": "openphone.memory.uma_coherency.v1",
-    "docs/evidence/memory/shared_buffer_negative_sync_report.json": "openphone.memory.shared_buffer_negative_sync.v1",
-    "docs/evidence/memory/android_dma_buf_coherency_report.json": "openphone.memory.android_dma_buf_coherency.v1",
-    "docs/evidence/memory/android_shared_buffer_fence_report.json": "openphone.memory.android_shared_buffer_fence.v1",
-    "docs/evidence/memory/iommu_fault_injection_report.json": "openphone.memory.iommu_fault_injection.v1",
-    "docs/evidence/memory/dma_isolation_fault_visibility_report.json": "openphone.memory.dma_isolation_fault_visibility.v1",
-    "docs/evidence/memory/memory_qos_report.json": "openphone.memory.qos.v1",
-    "docs/evidence/memory/contended_bandwidth_latency_report.json": "openphone.memory.contended_bandwidth_latency.v1",
-    "docs/evidence/memory/phone_2028_memory_scorecard.json": "openphone.memory.phone_2028_scorecard.v1",
-    "docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json": "openphone.memory.lpddr_bandwidth_latency_benchmark.v1",
-    "docs/evidence/memory/contended_android_memory_trace.json": "openphone.memory.contended_android_trace.v1",
-    "docs/evidence/memory/linux_interrupt_access_map_report.json": "openphone.memory.linux_interrupt_access_map.v1",
-    "docs/evidence/memory/clint_plic_dma_exclusion_report.json": "openphone.memory.clint_plic_dma_exclusion.v1",
+    "docs/evidence/memory/reset_rom_boot_sram_handoff_report.json": "openagent.memory.reset_rom_boot_sram_handoff.v1",
+    "docs/evidence/memory/opensbi_dram_handoff_transcript.json": "openagent.memory.opensbi_dram_handoff.v1",
+    "docs/evidence/memory/real_dram_controller_phy_report.json": "openagent.memory.real_dram_controller_phy.v1",
+    "docs/evidence/memory/dram_training_timing_report.json": "openagent.memory.dram_training_timing.v1",
+    "docs/evidence/memory/cache_hierarchy_report.json": "openagent.memory.cache_hierarchy.v1",
+    "docs/evidence/memory/cache_latency_counter_report.json": "openagent.memory.cache_latency_counter.v1",
+    "docs/evidence/memory/axi_tl_interconnect_contract_report.json": "openagent.memory.axi_tl_interconnect_contract.v1",
+    "docs/evidence/memory/fabric_bridge_ordering_report.json": "openagent.memory.fabric_bridge_ordering.v1",
+    "docs/evidence/memory/cacheability_attribute_map_report.json": "openagent.memory.cacheability_attribute_map.v1",
+    "docs/evidence/memory/noncoherent_dma_sync_abi_report.json": "openagent.memory.noncoherent_dma_sync_abi.v1",
+    "docs/evidence/memory/uma_coherency_report.json": "openagent.memory.uma_coherency.v1",
+    "docs/evidence/memory/shared_buffer_negative_sync_report.json": "openagent.memory.shared_buffer_negative_sync.v1",
+    "docs/evidence/memory/android_dma_buf_coherency_report.json": "openagent.memory.android_dma_buf_coherency.v1",
+    "docs/evidence/memory/android_shared_buffer_fence_report.json": "openagent.memory.android_shared_buffer_fence.v1",
+    "docs/evidence/memory/iommu_fault_injection_report.json": "openagent.memory.iommu_fault_injection.v1",
+    "docs/evidence/memory/dma_isolation_fault_visibility_report.json": "openagent.memory.dma_isolation_fault_visibility.v1",
+    "docs/evidence/memory/memory_qos_report.json": "openagent.memory.qos.v1",
+    "docs/evidence/memory/contended_bandwidth_latency_report.json": "openagent.memory.contended_bandwidth_latency.v1",
+    "docs/evidence/memory/phone_2028_memory_scorecard.json": "openagent.memory.phone_2028_scorecard.v1",
+    "docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json": "openagent.memory.lpddr_bandwidth_latency_benchmark.v1",
+    "docs/evidence/memory/contended_android_memory_trace.json": "openagent.memory.contended_android_trace.v1",
+    "docs/evidence/memory/linux_interrupt_access_map_report.json": "openagent.memory.linux_interrupt_access_map.v1",
+    "docs/evidence/memory/clint_plic_dma_exclusion_report.json": "openagent.memory.clint_plic_dma_exclusion.v1",
 }
 
 REQUIRED_TARGET_DELTAS = {
@@ -324,7 +324,7 @@ def check_gate(errors: list[str]) -> None:
         return
 
     require(
-        data.get("schema") == "openphone.memory_uma_evidence_gate.v1",
+        data.get("schema") == "openagent.memory_uma_evidence_gate.v1",
         "memory/UMA gate schema drifted",
         errors,
     )
@@ -829,7 +829,7 @@ def check_performance_template(errors: list[str]) -> None:
     if not isinstance(data, dict):
         return
     require(
-        data.get("schema") == "openphone.memory.bandwidth_latency_contended_access.template.v1",
+        data.get("schema") == "openagent.memory.bandwidth_latency_contended_access.template.v1",
         "memory performance template schema drifted",
         errors,
     )
@@ -1117,7 +1117,7 @@ def check_rtl_and_tests(errors: list[str]) -> None:
     contract = read(CONTRACT_RTL)
     test = read(CONTRACT_TEST)
 
-    require("module hello_axi_lite_dram" in dram, "DRAM scaffold module missing", errors)
+    require("module e1_axi_lite_dram" in dram, "DRAM scaffold module missing", errors)
     require(
         "logic [31:0] mem [0:DEPTH_WORDS-1]" in dram, "DRAM model must remain SRAM-backed", errors
     )

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause
 /*
- * OpenPhone Hello Demo - complete bootable device tree source.
+ * OpenAgent E1 Demo - complete bootable device tree source.
  *
  * Covers the Linux-capable RISC-V scaffold described in:
- *   sw/platform/hello_platform_contract.json
+ *   sw/platform/e1_platform_contract.json
  *   docs/arch/memory-map.md
  *   docs/arch/interrupts.md
  *
  * Import into an external Linux tree:
- *   cp sw/linux/dts/openphone-hello.dts \
- *      <linux>/arch/riscv/boot/dts/openphone/openphone-hello.dts
+ *   cp sw/linux/dts/openagent-e1.dts \
+ *      <linux>/arch/riscv/boot/dts/openagent/openagent-e1.dts
  *
  * All MMIO base addresses match the platform contract.
  */
@@ -17,14 +17,14 @@
 /dts-v1/;
 
 / {
-	compatible = "openphone,hello-board", "openphone,hello";
-	model = "OpenPhone Hello Demo SoC";
+	compatible = "openagent,e1-board", "openagent,e1";
+	model = "OpenAgent E1 Demo SoC";
 
 	#address-cells = <1>;
 	#size-cells = <1>;
 
 	chosen {
-		bootargs = "console=helloUART0,115200 root=/dev/ram rw earlycon";
+		bootargs = "console=e1UART0,115200 root=/dev/ram rw earlycon";
 		stdout-path = &uart0;
 	};
 
@@ -38,7 +38,7 @@
 			status = "disabled";
 		/*
 		 * Stub for a Murata Type 1DX / CYW4343W-class external module.
-		 * Bind WIFI_EN/WIFI_RST_N to real GPIO phandles after hello-chip
+		 * Bind WIFI_EN/WIFI_RST_N to real GPIO phandles after e1-chip
 		 * grows a GPIO/pinctrl-backed SDIO host integration.
 		 */
 		post-power-on-delay-ms = <200>;
@@ -72,13 +72,13 @@
 		ranges;
 
 		clint0: clint@2000000 {
-			compatible = "hello,clint-1.0";
+			compatible = "e1,clint-1.0";
 			reg = <0x02000000 0x00010000>;
 			interrupts-extended = <&cpu0_intc 3>, <&cpu0_intc 7>;
 		};
 
 		plic0: interrupt-controller@c000000 {
-			compatible = "hello,plic-1.0";
+			compatible = "e1,plic-1.0";
 			reg = <0x0C000000 0x00001000>;
 			interrupt-controller;
 			#interrupt-cells = <1>;
@@ -87,7 +87,7 @@
 		};
 
 		uart0: serial@10001000 {
-			compatible = "hello,uart-1.0";
+			compatible = "e1,uart-1.0";
 			reg = <0x10001000 0x00001000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <1>;
@@ -95,24 +95,24 @@
 			status = "okay";
 		};
 
-		hello_npu: npu@10020000 {
-			compatible = "openphone,hello-npu", "hello,npu-1.0";
+		e1_npu: npu@10020000 {
+			compatible = "openagent,e1-npu", "e1,npu-1.0";
 			reg = <0x10020000 0x00001000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <3>;
 			status = "okay";
 		};
 
-		hello_dma: dma@10010000 {
-			compatible = "hello,dma-1.0";
+		e1_dma: dma@10010000 {
+			compatible = "e1,dma-1.0";
 			reg = <0x10010000 0x00001000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <2>;
 			status = "okay";
 		};
 
-		hello_display: display@10030000 {
-			compatible = "hello,display-1.0";
+		e1_display: display@10030000 {
+			compatible = "e1,display-1.0";
 			reg = <0x10030000 0x00001000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <4>;
@@ -120,7 +120,7 @@
 		};
 
 		sdio0: mmc@10050000 {
-			compatible = "hello,sdio-host-1.0";
+			compatible = "e1,sdio-host-1.0";
 			status = "disabled";
 			reg = <0x10050000 0x00001000>;
 			#address-cells = <1>;
@@ -142,7 +142,7 @@
 		};
 
 			uart1: uart@10051000 {
-				compatible = "hello,uart-1.0";
+				compatible = "e1,uart-1.0";
 				status = "disabled";
 				reg = <0x10051000 0x00001000>;
 			/*

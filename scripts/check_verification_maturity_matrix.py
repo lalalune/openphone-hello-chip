@@ -130,7 +130,7 @@ def main() -> int:
         return 1
 
     require(
-        data.get("schema") == "openphone.verification_maturity_matrix.v1",
+        data.get("schema") == "openagent.verification_maturity_matrix.v1",
         "matrix schema drifted",
         errors,
     )
@@ -144,12 +144,12 @@ def main() -> int:
     require(isinstance(current, dict), "current_phase must be a mapping", errors)
     if isinstance(current, dict):
         require(
-            current.get("id") == "phase0_hello_chip_scaffold",
-            "current_phase must remain phase0_hello_chip_scaffold",
+            current.get("id") == "phase0_e1_chip_scaffold",
+            "current_phase must remain phase0_e1_chip_scaffold",
             errors,
         )
         allowed = "\n".join(current.get("allowed_claims") or [])
-        for token in ("Hello-chip", "scaffold", "PD input/preflight"):
+        for token in ("E1-chip", "scaffold", "PD input/preflight"):
             require(
                 token in allowed, f"current_phase allowed_claims missing token: {token}", errors
             )
@@ -215,7 +215,7 @@ def main() -> int:
 
     rules = "\n".join(data.get("promotion_rules") or [])
     for token in (
-        "phase0_hello_chip_scaffold",
+        "phase0_e1_chip_scaffold",
         "evidence_passed",
         "Host smoke",
         "preflight",

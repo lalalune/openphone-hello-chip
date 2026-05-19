@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  VINTF manifest for the OpenPhone hello AI SoC.
+  VINTF manifest for the OpenAgent e1 AI SoC.
 
   This manifest is intentionally scaffold-only. The hardware register layout is
-  defined in sw/platform/hello_platform_contract.json.
+  defined in sw/platform/e1_platform_contract.json.
 
   HALs deliberately absent (no implementation, no backing Linux node):
     camera, audio, radio, GNSS, NFC, bluetooth, wifi, sensors, vibrator,
@@ -11,8 +11,8 @@
     drm.
 
   Reserved future HAL package/service markers:
-    hello_npu.default
-    hwcomposer.openphone_ai_soc
+    e1_npu.default
+    hwcomposer.openagent_ai_soc
 
   Do not add active <hal> entries until the matching source or reviewed
   prebuilts are imported into the external AOSP tree and the VINTF/vendorimage

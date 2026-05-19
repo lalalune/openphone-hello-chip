@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Capture Android NNAPI hello-npu transcripts from a real connected target.
+# Capture Android NNAPI e1-npu transcripts from a real connected target.
 
 set -euo pipefail
 
 repo_root="$(CDPATH=; cd -- "$(dirname -- "$0")/../.." && pwd)"
-out_dir="${HELLO_NPU_NNAPI_EVIDENCE_DIR:-$repo_root/docs/evidence/android/hello-npu}"
-model="${HELLO_NPU_TFLITE_MODEL:-$repo_root/benchmarks/models/mobile_smoke.tflite}"
-device_model="${HELLO_NPU_DEVICE_MODEL:-/data/local/tmp/mobile_smoke.tflite}"
-accelerator="${HELLO_NPU_NNAPI_ACCELERATOR:-hello-npu}"
-dma_trace="${HELLO_NPU_DMA_TRACE:-/sys/bus/platform/devices/10020000.npu/dma_trace}"
+out_dir="${E1_NPU_NNAPI_EVIDENCE_DIR:-$repo_root/docs/evidence/android/e1-npu}"
+model="${E1_NPU_TFLITE_MODEL:-$repo_root/benchmarks/models/mobile_smoke.tflite}"
+device_model="${E1_NPU_DEVICE_MODEL:-/data/local/tmp/mobile_smoke.tflite}"
+accelerator="${E1_NPU_NNAPI_ACCELERATOR:-e1-npu}"
+dma_trace="${E1_NPU_DMA_TRACE:-/sys/bus/platform/devices/10020000.npu/dma_trace}"
 
 die() {
-	printf 'capture_hello_npu_nnapi_evidence: %s\n' "$*" >&2
+	printf 'capture_e1_npu_nnapi_evidence: %s\n' "$*" >&2
 	exit 2
 }
 
@@ -30,8 +30,8 @@ run_log() {
 	rm -f "$rc_file"
 	set +e
 	{
-		echo "openphone-evidence: target=android artifact=$name"
-		echo "openphone-evidence: claim_boundary=target_transcript_only_not_benchmark_or_compatibility_claim"
+		echo "openagent-evidence: target=android artifact=$name"
+		echo "openagent-evidence: claim_boundary=target_transcript_only_not_benchmark_or_compatibility_claim"
 		echo "COMMAND=$command_label"
 		echo "START_UTC=$start_utc"
 		echo "BOOT_CLAIM=none"
@@ -42,8 +42,8 @@ run_log() {
 		if [ "$command_rc" -eq 0 ]; then
 			status=PASS
 		fi
-		echo "openphone-evidence: ended_utc=$end_utc"
-		echo "openphone-evidence: status=$status"
+		echo "openagent-evidence: ended_utc=$end_utc"
+		echo "openagent-evidence: status=$status"
 		echo "END_UTC=$end_utc"
 		echo "RESULT=$command_rc"
 		printf '%s\n' "$command_rc" >"$rc_file"
@@ -101,9 +101,9 @@ logs = {
     "dma_trace": out_dir / "dma-trace.log",
 }
 manifest = {
-    "schema": "openphone.hello_npu_nnapi_capture_manifest.v1",
+    "schema": "openagent.e1_npu_nnapi_capture_manifest.v1",
     "status": "captured_transcripts_only",
-    "claim_boundary": "not_a_capability_proof_until_benchmarks/capabilities/hello_npu_nnapi.proof.json_is_reviewed",
+    "claim_boundary": "not_a_capability_proof_until_benchmarks/capabilities/e1_npu_nnapi.proof.json_is_reviewed",
     "transcripts": {
         name: {"path": rel(path), "sha256": sha(path), "bytes": path.stat().st_size}
         for name, path in logs.items()
@@ -115,5 +115,5 @@ manifest = {
 )
 PY
 
-printf 'hello-npu NNAPI transcripts captured under %s\n' "$out_dir"
-printf 'Next: create benchmarks/capabilities/hello_npu_nnapi.proof.json from reviewed target counters, then run scripts/check_hello_npu_nnapi_proof.py.\n'
+printf 'e1-npu NNAPI transcripts captured under %s\n' "$out_dir"
+printf 'Next: create benchmarks/capabilities/e1_npu_nnapi.proof.json from reviewed target counters, then run scripts/check_e1_npu_nnapi_proof.py.\n'

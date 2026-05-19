@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the hello-npu NNAPI capability proof gate.
+"""Check the e1-npu NNAPI capability proof gate.
 
 This is a readiness and validation check, not a proof generator. It validates
 the configured capability artifact when present and records concrete local
@@ -21,7 +21,7 @@ CAPTURE_COMMANDS = {
     "nnapi_accelerator_query": "adb shell cmd neuralnetworks list",
     "benchmark_model_nnapi": (
         "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite "
-        "--use_nnapi=true --nnapi_accelerator_name=hello-npu "
+        "--use_nnapi=true --nnapi_accelerator_name=e1-npu "
         "--enable_op_profiling=true --verbose=true"
     ),
     "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace",
@@ -101,7 +101,7 @@ def proof_json_state(artifact_status: dict[str, Any]) -> str:
     if artifact_status.get("available"):
         return "valid"
     reason = artifact_status.get("blocked_reason", "unavailable")
-    if reason == "missing_hello_npu_nnapi_accelerator":
+    if reason == "missing_e1_npu_nnapi_accelerator":
         return "missing"
     if reason == "invalid_capability_proof":
         return "invalid"
@@ -136,10 +136,10 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     config_path = args.config if args.config.is_absolute() else root / args.config
     config = run_benchmarks.load_config(config_path)
-    bench = find_benchmark(config, "tflite_hello_npu")
+    bench = find_benchmark(config, "tflite_e1_npu")
     artifacts = bench.get("capability_artifacts", [])
     if len(artifacts) != 1:
-        raise ValueError("tflite_hello_npu must have exactly one capability artifact")
+        raise ValueError("tflite_e1_npu must have exactly one capability artifact")
     proof_config = artifacts[0].get("proof", {})
     required_fields = set(proof_config.get("required_json_fields", []))
     missing_capture_fields = sorted(
@@ -179,7 +179,7 @@ def main(argv: list[str]) -> int:
                 "name": "adb_devices",
                 "kind": "target_probe",
                 "blocked_reason": probe.get("blocked_reason", "adb_unavailable"),
-                "resolution": "Connect an Android target that exposes hello-npu over NNAPI.",
+                "resolution": "Connect an Android target that exposes e1-npu over NNAPI.",
             }
         )
 
@@ -197,8 +197,8 @@ def main(argv: list[str]) -> int:
     )
 
     status = {
-        "schema": "openphone.hello_npu_nnapi_proof_readiness.v1",
-        "benchmark": "tflite_hello_npu",
+        "schema": "openagent.e1_npu_nnapi_proof_readiness.v1",
+        "benchmark": "tflite_e1_npu",
         "status": "proof_valid" if artifact_status.get("available") else "blocked",
         "proof_json_state": proof_json_state(artifact_status),
         "benchmark_model_state": benchmark_model_state(dependencies),

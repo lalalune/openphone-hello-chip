@@ -18,7 +18,7 @@ def build_report(target: str) -> dict[str, Any]:
     if any(report["missing_evidence"] for report in reports):
         status = "BLOCKED"
     return {
-        "schema": "openphone.software_bsp_evidence_release_gate.v1",
+        "schema": "openagent.software_bsp_evidence_release_gate.v1",
         "status": status,
         "claim_boundary": "external_logs_required_no_placeholder_or_failed_transcripts",
         "checker": "scripts/check_software_bsp.py --require-evidence",

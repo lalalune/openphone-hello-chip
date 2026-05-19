@@ -5,11 +5,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BOARD_DIR = ROOT / "board/kicad/hello-demo"
-BOARD_DOC_DIR = ROOT / "docs/board/kicad/hello-demo"
-COMMAND_DOC = ROOT / "docs/board/kicad/hello-demo-commands.md"
+BOARD_DIR = ROOT / "board/kicad/e1-demo"
+BOARD_DOC_DIR = ROOT / "docs/board/kicad/e1-demo"
+COMMAND_DOC = ROOT / "docs/board/kicad/e1-demo-commands.md"
 REPORT_DIR = ROOT / "board/reports/fab"
-MANIFEST = "board/kicad/hello-demo/artifact-manifest.yaml"
+MANIFEST = "board/kicad/e1-demo/artifact-manifest.yaml"
 PRINTABLE_SOURCE_LABELS = {"project", "schematic", "pcb"}
 
 REQUIRED_PROJECT_GLOBS = {
@@ -63,7 +63,7 @@ def append_process_output(
 
 def check_command_doc_staleness(failures: list[str], blockers: list[str]) -> None:
     if not COMMAND_DOC.is_file():
-        failures.append("missing docs/board/kicad/hello-demo-commands.md")
+        failures.append("missing docs/board/kicad/e1-demo-commands.md")
         return
     text = COMMAND_DOC.read_text(errors="ignore")
     has_project = bool(matches(BOARD_DIR, REQUIRED_PROJECT_GLOBS["project"]))
@@ -72,12 +72,12 @@ def check_command_doc_staleness(failures: list[str], blockers: list[str]) -> Non
     if has_project and has_schematic and has_pcb:
         stale_phrases = [
             "No KiCad project is currently checked in",
-            "once a real `board/kicad/hello-demo/*.kicad_pro`",
+            "once a real `board/kicad/e1-demo/*.kicad_pro`",
         ]
         for phrase in stale_phrases:
             if phrase in text:
                 failures.append(
-                    "docs/board/kicad/hello-demo-commands.md is stale relative to checked-in "
+                    "docs/board/kicad/e1-demo-commands.md is stale relative to checked-in "
                     f"KiCad sources: {phrase}"
                 )
     for required in (
@@ -127,11 +127,11 @@ def main() -> int:
         append_process_output("manifest", release_manifest_check, blockers)
 
     if not BOARD_DIR.is_dir():
-        failures.append("missing board/kicad/hello-demo directory")
+        failures.append("missing board/kicad/e1-demo directory")
     else:
         notes = BOARD_DOC_DIR / "fab-notes.md"
         if not notes.is_file():
-            failures.append("missing docs/board/kicad/hello-demo/fab-notes.md")
+            failures.append("missing docs/board/kicad/e1-demo/fab-notes.md")
         printable_sources_present = False
         printable_sources_missing: list[str] = []
         for label, patterns in REQUIRED_PROJECT_GLOBS.items():
@@ -141,7 +141,7 @@ def main() -> int:
                 if not found:
                     printable_sources_missing.append(label)
             elif args.release and not found:
-                blockers.append(f"missing KiCad {label} artifact under board/kicad/hello-demo")
+                blockers.append(f"missing KiCad {label} artifact under board/kicad/e1-demo")
         if printable_sources_missing:
             missing = ", ".join(printable_sources_missing)
             blockers.append(f"missing printable KiCad source artifact(s): {missing}")

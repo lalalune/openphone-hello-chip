@@ -16,8 +16,8 @@ SCALE_REPORT = ROOT / "build/reports/mvp_npu_scale_sim.json"
 MODEL = ROOT / "benchmarks/models/mobile_smoke.tflite"
 
 sys.path.insert(0, str(ROOT / "compiler/runtime"))
-from hello_npu_runtime import golden_gemm_s8  # noqa: E402
-from test_hello_npu_runtime_sim import HelloNpuMmioSim  # noqa: E402
+from e1_npu_runtime import golden_gemm_s8  # noqa: E402
+from test_e1_npu_runtime_sim import E1NpuMmioSim  # noqa: E402
 
 
 def rel(path: Path) -> str:
@@ -69,7 +69,7 @@ def run_smoke() -> int:
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     a = [[1, -2, 3], [4, 5, -6]]
     b = [[7, -8], [9, 10], [-11, 12]]
-    sim = HelloNpuMmioSim()
+    sim = E1NpuMmioSim()
     observed = sim.runtime.gemm_s8(a, b)
     expected = golden_gemm_s8(a, b)
     perf = sim.runtime.perf()
@@ -91,36 +91,36 @@ def run_smoke() -> int:
 
     status = "pass" if not errors else "fail"
     lines = [
-        "openphone-evidence: target=local_hello_npu_runtime_sim",
-        "openphone-evidence: wrapper=scripts/check_mvp_npu_ml_evidence.py --run",
-        "openphone-evidence: claim_boundary=local NPU runtime/scratchpad evidence; not Linux-integrated generated-AP evidence",
-        "openphone-evidence: npu_path=hello_npu_mmio_scratchpad",
-        "openphone-evidence: workload=gemm_s8_int8_2x2x3",
-        f"openphone-evidence: input_sha256={input_sha}",
-        f"openphone-evidence: output_sha256={output_sha}",
-        "openphone-evidence: observed_matrix=" + json.dumps(observed, separators=(",", ":")),
-        "openphone-evidence: expected_matrix=" + json.dumps(expected, separators=(",", ":")),
-        "openphone-evidence: perf=" + json.dumps(perf, sort_keys=True, separators=(",", ":")),
-        f"openphone-evidence: scale_report={rel(SCALE_REPORT)}",
-        f"openphone-evidence: status={status.upper()}",
+        "openagent-evidence: target=local_e1_npu_runtime_sim",
+        "openagent-evidence: wrapper=scripts/check_mvp_npu_ml_evidence.py --run",
+        "openagent-evidence: claim_boundary=local NPU runtime/scratchpad evidence; not Linux-integrated generated-AP evidence",
+        "openagent-evidence: npu_path=e1_npu_mmio_scratchpad",
+        "openagent-evidence: workload=gemm_s8_int8_2x2x3",
+        f"openagent-evidence: input_sha256={input_sha}",
+        f"openagent-evidence: output_sha256={output_sha}",
+        "openagent-evidence: observed_matrix=" + json.dumps(observed, separators=(",", ":")),
+        "openagent-evidence: expected_matrix=" + json.dumps(expected, separators=(",", ":")),
+        "openagent-evidence: perf=" + json.dumps(perf, sort_keys=True, separators=(",", ":")),
+        f"openagent-evidence: scale_report={rel(SCALE_REPORT)}",
+        f"openagent-evidence: status={status.upper()}",
     ]
     if scale_stdout.strip():
         lines += [
-            "openphone-evidence: scale_model_stdout_begin",
+            "openagent-evidence: scale_model_stdout_begin",
             scale_stdout.rstrip(),
-            "openphone-evidence: scale_model_stdout_end",
+            "openagent-evidence: scale_model_stdout_end",
         ]
     TRANSCRIPT.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     data = {
-        "schema": "openphone.mvp_npu_ml_smoke.v1",
+        "schema": "openagent.mvp_npu_ml_smoke.v1",
         "status": status,
         "npu_ml_smoke_claim": status == "pass",
         "integrated_linux_npu_ml_claim": False,
         "claim_boundary": (
-            "This proves a deterministic local hello NPU runtime/scratchpad INT8 GEMM "
+            "This proves a deterministic local e1 NPU runtime/scratchpad INT8 GEMM "
             "smoke only. The minimum Linux+NPU target still requires the same workload "
-            "markers in a generated OpenPhone AP Linux boot transcript."
+            "markers in a generated OpenAgent AP Linux boot transcript."
         ),
         "command": [sys.executable, "scripts/check_mvp_npu_ml_evidence.py", "--run"],
         "workload": {
@@ -139,7 +139,7 @@ def run_smoke() -> int:
         "blockers_to_integrated_linux_npu_ml": [
             {
                 "name": "generated_ap_linux_npu_ml_transcript",
-                "detail": "missing generated-AP Linux transcript markers for hello NPU device and gemm_s8_int8_2x2x3 PASS",
+                "detail": "missing generated-AP Linux transcript markers for e1 NPU device and gemm_s8_int8_2x2x3 PASS",
                 "next_command": "python3 scripts/run_mvp_simulator.py",
             }
         ],
@@ -163,7 +163,7 @@ def validate() -> int:
         return 1
 
     errors: list[str] = []
-    if data.get("schema") != "openphone.mvp_npu_ml_smoke.v1":
+    if data.get("schema") != "openagent.mvp_npu_ml_smoke.v1":
         errors.append("schema mismatch")
     if data.get("status") not in {"pass", "blocked", "fail"}:
         errors.append("invalid status")
@@ -174,13 +174,13 @@ def validate() -> int:
     else:
         text = TRANSCRIPT.read_text(encoding="utf-8", errors="replace")
         for marker in (
-            "openphone-evidence: target=local_hello_npu_runtime_sim",
-            "openphone-evidence: npu_path=hello_npu_mmio_scratchpad",
-            "openphone-evidence: workload=gemm_s8_int8_2x2x3",
-            "openphone-evidence: input_sha256=",
-            "openphone-evidence: output_sha256=",
-            "openphone-evidence: observed_matrix=",
-            "openphone-evidence: status=PASS",
+            "openagent-evidence: target=local_e1_npu_runtime_sim",
+            "openagent-evidence: npu_path=e1_npu_mmio_scratchpad",
+            "openagent-evidence: workload=gemm_s8_int8_2x2x3",
+            "openagent-evidence: input_sha256=",
+            "openagent-evidence: output_sha256=",
+            "openagent-evidence: observed_matrix=",
+            "openagent-evidence: status=PASS",
         ):
             if marker not in text:
                 errors.append(f"{rel(TRANSCRIPT)} lacks required marker: {marker}")

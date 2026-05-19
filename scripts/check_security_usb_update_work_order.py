@@ -13,8 +13,8 @@ WORK_ORDER = (
 GAPS = ROOT / "docs/manufacturing/real-world-verification-gaps.yaml"
 PRODUCT_FEATURES = ROOT / "docs/manufacturing/product-feature-evidence-manifest.yaml"
 AOSP_README = ROOT / "docs/sw/aosp-device/README.md"
-AOSP_FSTAB = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone"
-BOARD_CONFIG = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk"
+AOSP_FSTAB = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/fstab.openagent"
+BOARD_CONFIG = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk"
 
 REQUIRED_DOMAINS = {
     "secure_boot_key_debug_policy",
@@ -127,7 +127,7 @@ def require_text_terms(path: Path, terms: list[str], failures: list[str]) -> Non
 
 
 def check_work_order(data: dict, gap_ids: set[str], failures: list[str]) -> None:
-    if data.get("schema") != "openphone.security_usb_storage_update_fail_closed_work_order.v1":
+    if data.get("schema") != "openagent.security_usb_storage_update_fail_closed_work_order.v1":
         failures.append("security/USB/update work order has wrong schema")
     if data.get("status") != "fail_closed_work_order":
         failures.append("security/USB/update work order must remain fail_closed_work_order")

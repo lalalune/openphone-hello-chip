@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Reusable AXI-Lite property pack for the hello SoC.
+// Reusable AXI-Lite property pack for the e1 SoC.
 //
 // This module is parametric in address/data width and is intended to be
 // bound to any AXI-Lite master or slave instance via SystemVerilog `bind`.
@@ -15,8 +15,8 @@
 //
 // See verify/properties/README.md for bind usage.
 
-`ifndef HELLO_AXI_LITE_PROPS_SV
-`define HELLO_AXI_LITE_PROPS_SV
+`ifndef E1_AXI_LITE_PROPS_SV
+`define E1_AXI_LITE_PROPS_SV
 
 `default_nettype none
 
@@ -126,4 +126,4 @@ endmodule
 
 `default_nettype wire
 
-`endif // HELLO_AXI_LITE_PROPS_SV
+`endif // E1_AXI_LITE_PROPS_SV

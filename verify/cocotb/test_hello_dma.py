@@ -149,11 +149,11 @@ def write_coverage_artifact(extra):
         "bus_response_error",
     } | set(extra)
     coverage = {
-        "schema": "hello-chip.dma_cocotb_coverage.v1",
-        "source": "verify/cocotb/test_hello_dma.py",
+        "schema": "e1-chip.dma_cocotb_coverage.v1",
+        "source": "verify/cocotb/test_e1_dma.py",
         "covered_contracts": sorted(covered),
         "status_bits": ["busy", "done", "error"],
-        "boundary": "Directed hello_dma byte-copy, strobe, interrupt, and AXI-Lite response checks only; no coherent DMA, IOMMU, cache, or OS driver coverage.",
+        "boundary": "Directed e1_dma byte-copy, strobe, interrupt, and AXI-Lite response checks only; no coherent DMA, IOMMU, cache, or OS driver coverage.",
     }
     out = REPO_ROOT / "build/reports/dma_cocotb_coverage.json"
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_tiny_cpu_contract_tb (
+module e1_tiny_cpu_contract_tb (
     input  logic        clk,
     input  logic        rst_n,
     input  logic        cpu_enable,
@@ -106,7 +106,7 @@ module hello_tiny_cpu_contract_tb (
     assign cpu_reset_pc = reset_pc;
     assign cpu_hart_id  = hart_id;
 
-    hello_cpu_subsystem_stub #(
+    e1_cpu_subsystem_stub #(
         .RESET_PC(32'h8000_0000),
         .HART_ID(32'h0)
     ) u_cpu (
@@ -138,7 +138,7 @@ module hello_tiny_cpu_contract_tb (
         .irq_pending(cpu_irq_pending)
     );
 
-    hello_linux_soc_contract #(
+    e1_linux_soc_contract #(
         .NUM_IRQ_SOURCES(4)
     ) u_contract (
         .clk(clk),

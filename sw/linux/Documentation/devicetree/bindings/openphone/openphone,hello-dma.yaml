@@ -1,22 +1,22 @@
 # SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 %YAML 1.2
 ---
-$id: http://devicetree.org/schemas/openphone/openphone,hello-dma.yaml#
+$id: http://devicetree.org/schemas/openagent/openagent,e1-dma.yaml#
 $schema: http://devicetree.org/meta-schemas/core.yaml#
 
-title: OpenPhone hello DMA
+title: OpenAgent e1 DMA
 
 maintainers:
-  - OpenPhone hello BSP <bsp@openphone.invalid>
+  - OpenAgent e1 BSP <bsp@openagent.invalid>
 
 description: |
-  4 KiB MMIO DMA contract block at HELLO_DMA_BASE per
-  sw/platform/hello_platform_contract.json. The driver exports a sysfs
+  4 KiB MMIO DMA contract block at E1_DMA_BASE per
+  sw/platform/e1_platform_contract.json. The driver exports a sysfs
   contract string and live counters; it is not a dma-engine provider.
 
 properties:
   compatible:
-    const: openphone,hello-dma
+    const: openagent,e1-dma
 
   reg:
     maxItems: 1
@@ -37,7 +37,7 @@ additionalProperties: false
 examples:
   - |
     dma@10010000 {
-        compatible = "openphone,hello-dma";
+        compatible = "openagent,e1-dma";
         reg = <0x10010000 0x1000>;
         interrupt-names = "IRQ_DMA";
     };

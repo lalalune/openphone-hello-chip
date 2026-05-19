@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and validate the local hello-NPU coverage summary."""
+"""Build and validate the local e1-NPU coverage summary."""
 
 from __future__ import annotations
 
@@ -11,20 +11,20 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME = ROOT / "compiler/runtime/hello_npu_runtime.py"
-CONTRACT = ROOT / "docs/spec-db/hello-npu-runtime-contract.json"
+RUNTIME = ROOT / "compiler/runtime/e1_npu_runtime.py"
+CONTRACT = ROOT / "docs/spec-db/e1-npu-runtime-contract.json"
 DEFAULT_COCOTB_COVERAGE = ROOT / "build/reports/npu_cocotb_coverage.json"
 DEFAULT_OUT = ROOT / "build/reports/npu_coverage_summary.json"
 
 
 def load_runtime_class():
-    spec = importlib.util.spec_from_file_location("hello_npu_runtime", RUNTIME)
+    spec = importlib.util.spec_from_file_location("e1_npu_runtime", RUNTIME)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"could not load {RUNTIME}")
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
-    return module.HelloNpuRuntime
+    return module.E1NpuRuntime
 
 
 def rel(path: Path) -> str:
@@ -52,7 +52,7 @@ def build_summary(cocotb_path: Path) -> dict[str, Any]:
     runtime = runtime_cls(lambda _addr: 0, lambda _addr, _value: None)
 
     return {
-        "schema": "openphone.npu_local_coverage_summary.v1",
+        "schema": "openagent.npu_local_coverage_summary.v1",
         "source": rel(cocotb_path),
         "coverage_kind": "local_rtl_runtime_only",
         "claim_boundary": {
@@ -159,7 +159,7 @@ def main(argv: list[str]) -> int:
     if not cocotb_path.is_file():
         print(f"NPU coverage summary check failed: missing {rel(cocotb_path)}")
         print(
-            "Run `COCOTB_MODULE=test_hello_npu COCOTB_TOPLEVEL=hello_npu scripts/run_cocotb.sh` first."
+            "Run `COCOTB_MODULE=test_e1_npu COCOTB_TOPLEVEL=e1_npu scripts/run_cocotb.sh` first."
         )
         return 2
 

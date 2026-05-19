@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_axi_lite_dram #(
+module e1_axi_lite_dram #(
     parameter int unsigned ADDR_WIDTH  = 16,
     parameter int unsigned DEPTH_WORDS = 1024
 ) (

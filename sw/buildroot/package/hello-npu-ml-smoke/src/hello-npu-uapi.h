@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
-#ifndef _UAPI_HELLO_NPU_H
-#define _UAPI_HELLO_NPU_H
+#ifndef _UAPI_E1_NPU_H
+#define _UAPI_E1_NPU_H
 
 #include <stdint.h>
 #include <sys/ioctl.h>
@@ -9,14 +9,14 @@ typedef uint32_t __u32;
 typedef int32_t __s32;
 typedef int8_t __s8;
 
-struct hello_npu_contract {
+struct e1_npu_contract {
 	__u32 version;
 	__u32 npu_base;
 	__u32 window_bytes;
 	__u32 scratch_bytes;
 };
 
-struct hello_npu_cmd {
+struct e1_npu_cmd {
 	__u32 opcode;
 	__u32 a;
 	__u32 b;
@@ -25,7 +25,7 @@ struct hello_npu_cmd {
 	__u32 status;
 };
 
-struct hello_npu_gemm_s8 {
+struct e1_npu_gemm_s8 {
 	__u32 m;
 	__u32 n;
 	__u32 k;
@@ -35,7 +35,7 @@ struct hello_npu_gemm_s8 {
 	__u32 status;
 };
 
-struct hello_npu_descriptor_submit {
+struct e1_npu_descriptor_submit {
 	__u32 base;
 	__u32 head;
 	__u32 tail;
@@ -47,7 +47,7 @@ struct hello_npu_descriptor_submit {
 	__u32 timeout_count;
 };
 
-struct hello_npu_counters {
+struct e1_npu_counters {
 	__u32 ctrl_status;
 	__u32 desc_status;
 	__u32 desc_head;
@@ -64,7 +64,7 @@ struct hello_npu_counters {
 	__u32 perf_unsupported_ops;
 };
 
-struct hello_npu_perf {
+struct e1_npu_perf {
 	__u32 cycles;
 	__u32 macs;
 	__u32 ops;
@@ -72,20 +72,20 @@ struct hello_npu_perf {
 	__u32 unsupported_ops;
 };
 
-#define HELLO_NPU_IOC_MAGIC 'H'
-#define HELLO_NPU_IOC_RUN_CMD \
-	_IOWR(HELLO_NPU_IOC_MAGIC, 0x01, struct hello_npu_cmd)
-#define HELLO_NPU_IOC_RUN_GEMM_S8 \
-	_IOWR(HELLO_NPU_IOC_MAGIC, 0x02, struct hello_npu_gemm_s8)
-#define HELLO_NPU_IOC_SUBMIT_DESCRIPTORS \
-	_IOWR(HELLO_NPU_IOC_MAGIC, 0x03, struct hello_npu_descriptor_submit)
-#define HELLO_NPU_IOC_GET_COUNTERS \
-	_IOR(HELLO_NPU_IOC_MAGIC, 0x04, struct hello_npu_counters)
-#define HELLO_NPU_IOC_GET_PERF \
-	_IOR(HELLO_NPU_IOC_MAGIC, 0x05, struct hello_npu_perf)
-#define HELLO_NPU_IOC_GET_CONTRACT \
-	_IOR(HELLO_NPU_IOC_MAGIC, 0x06, struct hello_npu_contract)
+#define E1_NPU_IOC_MAGIC 'H'
+#define E1_NPU_IOC_RUN_CMD \
+	_IOWR(E1_NPU_IOC_MAGIC, 0x01, struct e1_npu_cmd)
+#define E1_NPU_IOC_RUN_GEMM_S8 \
+	_IOWR(E1_NPU_IOC_MAGIC, 0x02, struct e1_npu_gemm_s8)
+#define E1_NPU_IOC_SUBMIT_DESCRIPTORS \
+	_IOWR(E1_NPU_IOC_MAGIC, 0x03, struct e1_npu_descriptor_submit)
+#define E1_NPU_IOC_GET_COUNTERS \
+	_IOR(E1_NPU_IOC_MAGIC, 0x04, struct e1_npu_counters)
+#define E1_NPU_IOC_GET_PERF \
+	_IOR(E1_NPU_IOC_MAGIC, 0x05, struct e1_npu_perf)
+#define E1_NPU_IOC_GET_CONTRACT \
+	_IOR(E1_NPU_IOC_MAGIC, 0x06, struct e1_npu_contract)
 
-#define HELLO_NPU_SCRATCH_BYTES 64u
+#define E1_NPU_SCRATCH_BYTES 64u
 
-#endif /* _UAPI_HELLO_NPU_H */
+#endif /* _UAPI_E1_NPU_H */

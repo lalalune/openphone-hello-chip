@@ -38,7 +38,7 @@ def main() -> int:
     policy = roadmap.get("claim_policy", {})
 
     require(
-        roadmap.get("schema") == "openphone.cpu_ap_roadmap.v1", "roadmap schema drifted", errors
+        roadmap.get("schema") == "openagent.cpu_ap_roadmap.v1", "roadmap schema drifted", errors
     )
     require(
         phase_ids == EXPECTED_PHASES,

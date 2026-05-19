@@ -453,8 +453,8 @@ def validate_run_manifest(root: Path, run_dir: Path, run_manifest: Path) -> list
     if missing:
         failures.append(f"run_manifest: {rel_manifest} missing fields: {', '.join(missing)}")
 
-    if payload.get("design") != "hello_chip_top":
-        failures.append(f"run_manifest: {rel_manifest} design must be hello_chip_top")
+    if payload.get("design") != "e1_chip_top":
+        failures.append(f"run_manifest: {rel_manifest} design must be e1_chip_top")
     for field in ("flow", "pdk", "std_cell_library", "openlane_image"):
         if is_placeholder(payload.get(field)):
             failures.append(

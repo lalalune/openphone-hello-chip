@@ -1,11 +1,11 @@
 {
   "contract": {
-    "name": "openphone-hello-platform",
+    "name": "openagent-e1-platform",
     "version": 1,
     "byte_order": "little",
-    "source_of_truth": "sw/platform/hello_platform_contract.json"
+    "source_of_truth": "sw/platform/e1_platform_contract.json"
   },
-  "hello_chip": {
+  "e1_chip": {
     "target_kind": "hardware_abi",
     "has_cpu": false,
     "bus_master": "package_debug_nibble_bridge",
@@ -531,12 +531,12 @@
     "isa": "rv64gc",
     "load_address": "0x80000000",
     "uart_base": "0x10000000",
-    "abi_note": "This is a QEMU/Renode software bring-up target. Its UART and CPU are not the hello-chip hardware ABI."
+    "abi_note": "This is a QEMU/Renode software bring-up target. Its UART and CPU are not the e1-chip hardware ABI."
   },
-  "hello_chip_cpu_variant": {
+  "e1_chip_cpu_variant": {
     "target_kind": "linux_capable_soc_projection",
     "has_cpu": true,
-    "abi_note": "Projected Linux-capable SoC variant of the hello chip. Single source of truth for the boot vector, DRAM map, PLIC/CLINT layout, UART, timer, DMA, NPU, display, and IRQ assignments consumed by RTL decode, kernel DTS, U-Boot, OpenSBI, and AOSP HAL configs. Hardware ABI for the existing hello chip (has_cpu=false) is unchanged.",
+    "abi_note": "Projected Linux-capable SoC variant of the e1 chip. Single source of truth for the boot vector, DRAM map, PLIC/CLINT layout, UART, timer, DMA, NPU, display, and IRQ assignments consumed by RTL decode, kernel DTS, U-Boot, OpenSBI, and AOSP HAL configs. Hardware ABI for the existing e1 chip (has_cpu=false) is unchanged.",
     "isa": "rv64gc",
     "cpu_count": 1,
     "timebase_frequency_hz": 10000000,
@@ -581,19 +581,19 @@
         "base": "0x10010000",
         "size": "0x00001000",
         "irq": 2,
-        "compatible": "openphone,hello-dma"
+        "compatible": "openagent,e1-dma"
       },
       "npu": {
         "base": "0x10020000",
         "size": "0x00001000",
         "irq": 3,
-        "compatible": "openphone,hello-npu"
+        "compatible": "openagent,e1-npu"
       },
       "display": {
         "base": "0x10030000",
         "size": "0x00001000",
         "irq": 4,
-        "compatible": "openphone,hello-display"
+        "compatible": "openagent,e1-display"
       }
     },
     "interrupts": {

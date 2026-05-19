@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tier 1: boot OpenSBI+payload on QEMU virt and assert banner + HELLO.
+# Tier 1: boot OpenSBI+payload on QEMU virt and assert banner + E1.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -44,7 +44,7 @@ if ! grep -qi "OpenSBI" "$LOG"; then
     echo "[tier1] FAIL: OpenSBI banner not seen" >&2
     ok=0
 fi
-if ! grep -q "HELLO from S-mode" "$LOG"; then
+if ! grep -q "E1 from S-mode" "$LOG"; then
     echo "[tier1] FAIL: payload string not seen" >&2
     ok=0
 fi

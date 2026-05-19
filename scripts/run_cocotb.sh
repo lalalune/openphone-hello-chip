@@ -62,8 +62,8 @@ if ! "$PYTHON_BIN" -c "import cocotb" >/dev/null 2>&1; then
     fi
 fi
 
-COCOTB_TOP="${COCOTB_TOPLEVEL:-hello_chip_top}"
-COCOTB_MOD="${COCOTB_MODULE:-test_hello_chip}"
+COCOTB_TOP="${COCOTB_TOPLEVEL:-e1_chip_top}"
+COCOTB_MOD="${COCOTB_MODULE:-test_e1_chip}"
 COCOTB_BUILD="$REPO_ROOT/build/cocotb/${COCOTB_TOP}_${COCOTB_MOD}"
 COCOTB_LOCK="$REPO_ROOT/build/cocotb/.${COCOTB_TOP}_${COCOTB_MOD}.lock"
 COCOTB_RESULTS_LOCK="$REPO_ROOT/build/cocotb/.results.lock"
@@ -75,7 +75,7 @@ mkdir -p "$REPO_ROOT/build/cocotb"
 mkdir -p "$COCOTB_RESULT_DIR"
 mkdir -p "$COCOTB_REPORT_DIR"
 
-if [ "$COCOTB_TOP" = "hello_chip_top" ] && [ "$COCOTB_MOD" = "test_hello_chip" ]; then
+if [ "$COCOTB_TOP" = "e1_chip_top" ] && [ "$COCOTB_MOD" = "test_e1_chip" ]; then
     rm -f "$COCOTB_REPORT_DIR/manifest.json"
     rm -f "$COCOTB_REPORT_DIR"/*.xml "$COCOTB_RESULT_DIR"/*.xml 2>/dev/null || true
 fi

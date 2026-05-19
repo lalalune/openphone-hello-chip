@@ -1,4 +1,4 @@
-schema: openphone.pdn_current_local_budget.v1
+schema: openagent.pdn_current_local_budget.v1
 status: draft_local_evidence
 release_use: prohibited_until_external_review
 scope: local_openlane_power_ir_budget_for_blocker_triage
@@ -9,7 +9,7 @@ source_artifacts:
   - pd/openlane/runs/RUN_2026-05-18_05-41-42/57-openroad-irdropreport/irdrop.rpt
   - pd/openlane/runs/RUN_2026-05-18_05-41-42/20-openroad-generatepdn/openroad-generatepdn.log
   - pd/openlane/runs/RUN_2026-05-18_05-41-42/signoff-run.yaml
-  - benchmarks/power/local-estimates/hello-npu-openlane-npu-estimates.json
+  - benchmarks/power/local-estimates/e1-npu-openlane-npu-estimates.json
 derived_values:
   - name: vddcore_voltage
     value: 1.8 V
@@ -34,7 +34,7 @@ derived_values:
     source: benchmarks/results/npu-arch-sim-open-2028/report.json metrics.min_observed_tops
   - name: invalid_cross_substrate_tops_per_w_reference_only
     value: 8581.556130253872 to 8849.729759324306 TOPS/W
-    source: benchmarks/power/local-estimates/hello-npu-openlane-npu-estimates.json cross_substrate_arithmetic; prohibited for release use
+    source: benchmarks/power/local-estimates/e1-npu-openlane-npu-estimates.json cross_substrate_arithmetic; prohibited for release use
 rails:
   - name: VDDCORE
     board_net: +1V8

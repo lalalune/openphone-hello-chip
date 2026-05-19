@@ -25,7 +25,7 @@ class MinimumLinuxNpuTargetTest(unittest.TestCase):
 
     def test_gate_reports_concrete_minimum_target_surfaces(self):
         report = self.run_json()
-        self.assertEqual(report["schema"], "openphone.minimum_linux_npu_target.v1")
+        self.assertEqual(report["schema"], "openagent.minimum_linux_npu_target.v1")
         self.assertIn(report["status"], {"blocked", "pass"})
         self.assertFalse(report["integrated_linux_npu_ml_claim"])
         names = {gate["name"] for gate in report["gates"]}
@@ -40,8 +40,8 @@ class MinimumLinuxNpuTargetTest(unittest.TestCase):
             "local_npu_ml_smoke",
         ):
             self.assertIn(required, names)
-        self.assertEqual(report["benchmark_command"][0], "hello-npu-ml-smoke")
-        self.assertIn("/dev/hello-npu", report["benchmark_command"])
+        self.assertEqual(report["benchmark_command"][0], "e1-npu-ml-smoke")
+        self.assertIn("/dev/e1-npu", report["benchmark_command"])
 
 
 if __name__ == "__main__":

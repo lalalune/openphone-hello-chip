@@ -27,14 +27,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 REQUIRED_EVIDENCE: dict[str, list[str]] = {
     "linux": [
-        "docs/evidence/linux/openphone_hello_kernel_build.log",
-        "docs/evidence/linux/openphone_hello_dtb_check.log",
-        "docs/evidence/linux/hello-mmio-smoke.log",
+        "docs/evidence/linux/openagent_e1_kernel_build.log",
+        "docs/evidence/linux/openagent_e1_dtb_check.log",
+        "docs/evidence/linux/e1-mmio-smoke.log",
     ],
     "buildroot": [
-        "docs/evidence/buildroot/openphone_hello_defconfig.log",
-        "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
-        "docs/evidence/buildroot/hello-mmio-smoke.log",
+        "docs/evidence/buildroot/openagent_e1_defconfig.log",
+        "docs/evidence/buildroot/openagent_e1_image_manifest.txt",
+        "docs/evidence/buildroot/e1-mmio-smoke.log",
     ],
 }
 

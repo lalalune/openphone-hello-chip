@@ -13,7 +13,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFESTS = [
     "board/fpga/artifact-manifest.yaml",
-    "board/kicad/hello-demo/artifact-manifest.yaml",
+    "board/kicad/e1-demo/artifact-manifest.yaml",
     "docs/manufacturing/artifact-manifest.yaml",
     "package/artifact-manifest.yaml",
 ]

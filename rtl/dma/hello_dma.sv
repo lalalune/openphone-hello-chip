@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_dma (
+module e1_dma (
     input  logic        clk,
     input  logic        rst_n,
     input  logic        valid,

@@ -416,7 +416,7 @@ def main() -> int:
     metadata = summarize_run_metadata(run_dir)
     release_ready = all(result.status == "present" for result in results)
     summary = {
-        "schema": "openphone.pd_signoff_archive_report.v1",
+        "schema": "openagent.pd_signoff_archive_report.v1",
         "generated_at": generated_at,
         "release_ready": release_ready,
         "manifest": rel(manifest_path),

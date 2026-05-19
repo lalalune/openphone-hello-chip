@@ -43,7 +43,7 @@ def main() -> int:
         return 1
 
     errors: list[str] = []
-    if data.get("schema") != "openphone.mvp_simulator.v1":
+    if data.get("schema") != "openagent.mvp_simulator.v1":
         errors.append("schema mismatch")
     if data.get("status") not in {"pass", "blocked", "fail"}:
         errors.append("status must be pass, blocked, or fail")

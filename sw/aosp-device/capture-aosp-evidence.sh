@@ -16,8 +16,8 @@ mode=$2
 repo_root=$(CDPATH=; cd -- "$(dirname -- "$0")/../.." && pwd)
 evidence_dir="$repo_root/docs/evidence/android"
 aosp_shell=${AOSP_SHELL:-bash}
-aosp_product=${AOSP_PRODUCT:-openphone_ai_soc-userdebug}
-aosp_target_product=${AOSP_TARGET_PRODUCT:-openphone_ai_soc}
+aosp_product=${AOSP_PRODUCT:-openagent_ai_soc-userdebug}
+aosp_target_product=${AOSP_TARGET_PRODUCT:-openagent_ai_soc}
 aosp_cuttlefish_args=${AOSP_CUTTLEFISH_ARGS:---cpus=4 --memory_mb=8192 --gpu_mode=none}
 aosp_cuttlefish_launcher=${AOSP_CUTTLEFISH_LAUNCHER:-}
 aosp_adb_timeout_seconds=${AOSP_ADB_TIMEOUT_SECONDS:-180}
@@ -26,7 +26,7 @@ aosp_cts_vts_result_dir=${AOSP_CTS_VTS_RESULT_DIR:-out/host/linux-x86/cts-vts-pl
 aosp_cts_vts_plan_command=${AOSP_CTS_VTS_PLAN_COMMAND:-}
 aosp_qemu_smoke_command=${AOSP_QEMU_SMOKE_COMMAND:-}
 aosp_renode_smoke_command=${AOSP_RENODE_SMOKE_COMMAND:-}
-reference_only_boundary=reference_only_not_hello_chip_ap_evidence
+reference_only_boundary=reference_only_not_e1_chip_ap_evidence
 virtual_device_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence
 boot_transcript_schema=docs/android/boot-transcript.schema.json
 
@@ -51,21 +51,21 @@ run_capture() {
 	status=FAIL
 	status_file=$(mktemp "${TMPDIR:-/tmp}/capture-aosp-evidence.XXXXXX")
 	{
-		echo "openphone-evidence: target=aosp artifact=$artifact"
-		echo "openphone-evidence: external_tree=$aosp"
-		echo "openphone-evidence: command=$command_label"
+		echo "openagent-evidence: target=aosp artifact=$artifact"
+		echo "openagent-evidence: external_tree=$aosp"
+		echo "openagent-evidence: command=$command_label"
 		echo "EXTERNAL_TREE=$aosp"
 		echo "COMMAND=$command_label"
 		echo "START_UTC=$start_utc"
 		echo "COMPATIBILITY_CLAIM=none"
 		case "$metadata_kind" in
 			smoke)
-				echo "openphone-evidence: claim_boundary=$virtual_device_boundary"
+				echo "openagent-evidence: claim_boundary=$virtual_device_boundary"
 				echo "BOOT_CLAIM=none"
 				echo "SCHEMA=$boot_transcript_schema"
 				;;
 			reference)
-				echo "openphone-evidence: claim_boundary=$reference_only_boundary"
+				echo "openagent-evidence: claim_boundary=$reference_only_boundary"
 				echo "BOOT_CLAIM=none"
 				;;
 			compat_only)
@@ -75,7 +75,7 @@ run_capture() {
 				exit 2
 				;;
 		esac
-		echo "openphone-evidence: started_utc=$start_utc"
+		echo "openagent-evidence: started_utc=$start_utc"
 		cd "$aosp"
 		set +e
 		"$@"
@@ -85,8 +85,8 @@ run_capture() {
 		if [ "$rc" -eq 0 ]; then
 			status=PASS
 		fi
-		echo "openphone-evidence: ended_utc=$end_utc"
-		echo "openphone-evidence: status=$status"
+		echo "openagent-evidence: ended_utc=$end_utc"
+		echo "openagent-evidence: status=$status"
 		echo "END_UTC=$end_utc"
 		echo "RESULT=$rc"
 		echo "$rc" > "$status_file"
@@ -101,8 +101,8 @@ case "$mode" in
 	lunch)
 		# shellcheck disable=SC2016
 		run_capture \
-			openphone_ai_soc_lunch \
-			"$evidence_dir/openphone_ai_soc_lunch.log" \
+			openagent_ai_soc_lunch \
+			"$evidence_dir/openagent_ai_soc_lunch.log" \
 			"lunch $aosp_product" \
 			compat_only \
 			env AOSP_PRODUCT="$aosp_product" "$aosp_shell" -lc 'source build/envsetup.sh && lunch "$AOSP_PRODUCT"'
@@ -110,8 +110,8 @@ case "$mode" in
 	vendorimage)
 		# shellcheck disable=SC2016
 		run_capture \
-			openphone_ai_soc_vendorimage \
-			"$evidence_dir/openphone_ai_soc_vendorimage.log" \
+			openagent_ai_soc_vendorimage \
+			"$evidence_dir/openagent_ai_soc_vendorimage.log" \
 			"m vendorimage" \
 			compat_only \
 			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
@@ -120,24 +120,24 @@ case "$mode" in
 				m vendorimage &&
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
 				find "$product_out" -maxdepth 2 \( -name vendor.img -o -name installed-files-vendor.txt \) -print &&
-				grep -R -n -I "openphone_hello.xml" device/openphone "$product_out" 2>/dev/null &&
-				grep -R -n -I "vendor.hello_npu.ready=0" device/openphone "$product_out" 2>/dev/null
+				grep -R -n -I "openagent_e1.xml" device/openagent "$product_out" 2>/dev/null &&
+				grep -R -n -I "vendor.e1_npu.ready=0" device/openagent "$product_out" 2>/dev/null
 			'
 		;;
 	checkvintf)
 		# shellcheck disable=SC2016
 		run_capture \
-			openphone_ai_soc_checkvintf \
-			"$evidence_dir/openphone_ai_soc_checkvintf.log" \
-			"checkvintf openphone_ai_soc" \
+			openagent_ai_soc_checkvintf \
+			"$evidence_dir/openagent_ai_soc_checkvintf.log" \
+			"checkvintf openagent_ai_soc" \
 			compat_only \
 			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
 				source build/envsetup.sh &&
 				lunch "$AOSP_PRODUCT" >/dev/null &&
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
-				manifest=$(find "$product_out" -name openphone_hello.xml -print -quit 2>/dev/null) &&
+				manifest=$(find "$product_out" -name openagent_e1.xml -print -quit 2>/dev/null) &&
 				echo "TARGET_PRODUCT=$AOSP_TARGET_PRODUCT" &&
-				echo "openphone_hello.xml=$manifest" &&
+				echo "openagent_e1.xml=$manifest" &&
 				[ -n "$manifest" ] &&
 				checkvintf --check-one --dirmap /vendor:"$product_out/vendor"
 			'
@@ -145,8 +145,8 @@ case "$mode" in
 	sepolicy-build)
 		# shellcheck disable=SC2016
 		run_capture \
-			openphone_ai_soc_sepolicy_build \
-			"$evidence_dir/openphone_ai_soc_sepolicy_build.log" \
+			openagent_ai_soc_sepolicy_build \
+			"$evidence_dir/openagent_ai_soc_sepolicy_build.log" \
 			"m vendor_sepolicy.cil selinux_policy" \
 			compat_only \
 			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
@@ -156,15 +156,15 @@ case "$mode" in
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
 				echo "SEPOLICY_TARGETS=vendor_sepolicy.cil selinux_policy" &&
 				find "$product_out" -name vendor_sepolicy.cil -o -name selinux_policy 2>/dev/null &&
-				grep -R -n -I "hello_npu_device" device/openphone "$product_out" 2>/dev/null &&
-				grep -R -n -I "hal_hello_npu_default" device/openphone "$product_out" 2>/dev/null
+				grep -R -n -I "e1_npu_device" device/openagent "$product_out" 2>/dev/null &&
+				grep -R -n -I "hal_e1_npu_default" device/openagent "$product_out" 2>/dev/null
 			'
 		;;
 	selinux-neverallow)
 		# shellcheck disable=SC2016
 		run_capture \
-			openphone_ai_soc_selinux_neverallow \
-			"$evidence_dir/openphone_ai_soc_selinux_neverallow.log" \
+			openagent_ai_soc_selinux_neverallow \
+			"$evidence_dir/openagent_ai_soc_selinux_neverallow.log" \
 			"m sepolicy_neverallows" \
 			compat_only \
 			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
@@ -173,7 +173,7 @@ case "$mode" in
 				m sepolicy_neverallows &&
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
 				echo "SEPOLICY_TARGET=sepolicy_neverallows" &&
-				grep -R -n -I "hello_npu" device/openphone "$product_out" 2>/dev/null
+				grep -R -n -I "e1_npu" device/openagent "$product_out" 2>/dev/null
 			'
 		;;
 	cts-vts-plan)
@@ -183,8 +183,8 @@ case "$mode" in
 			command_label=$aosp_cts_vts_plan_command
 		fi
 		run_capture \
-			openphone_ai_soc_cts_vts_plan \
-			"$evidence_dir/openphone_ai_soc_cts_vts_plan.log" \
+			openagent_ai_soc_cts_vts_plan \
+			"$evidence_dir/openagent_ai_soc_cts_vts_plan.log" \
 			"$command_label" \
 			compat_only \
 			env AOSP_PRODUCT="$aosp_product" \
@@ -251,7 +251,7 @@ case "$mode" in
 				deadline=$((SECONDS + '"$aosp_adb_timeout_seconds"')) &&
 				until adb get-state >/dev/null 2>&1; do
 					if [ "$SECONDS" -ge "$deadline" ]; then
-						echo "openphone-evidence: adb_wait_timeout_seconds='"$aosp_adb_timeout_seconds"'" &&
+						echo "openagent-evidence: adb_wait_timeout_seconds='"$aosp_adb_timeout_seconds"'" &&
 						exit 1
 					fi
 					sleep 2
@@ -271,7 +271,7 @@ case "$mode" in
 				done &&
 				echo "sys.boot_completed=$boot" &&
 				mkdir -p out &&
-				adb shell logcat -d -b all > out/openphone-cuttlefish-boot-logcat.txt 2>/dev/null || true
+				adb shell logcat -d -b all > out/openagent-cuttlefish-boot-logcat.txt 2>/dev/null || true
 				[ "$abi" = riscv64 ] && [ "$boot" = 1 ]
 			'
 		;;
@@ -296,8 +296,8 @@ case "$mode" in
 		# shellcheck disable=SC2016
 		command_label=${aosp_renode_smoke_command:-AOSP_RENODE_SMOKE_COMMAND}
 		run_capture \
-			renode_hello_soc_smoke \
-			"$evidence_dir/renode_hello_soc_smoke.log" \
+			renode_e1_soc_smoke \
+			"$evidence_dir/renode_e1_soc_smoke.log" \
 			"$command_label" \
 			smoke \
 			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" AOSP_RENODE_SMOKE_COMMAND="$aosp_renode_smoke_command" "$aosp_shell" -lc '
@@ -315,7 +315,7 @@ case "$mode" in
 			"$evidence_dir/cts_virtual_device_subset.log" \
 			"cts-tradefed run commandAndExit cts-virtual-device-subset" \
 			reference \
-			"$aosp_shell" -lc 'echo "openphone-evidence: compatibility_scope=virtual_device_subset"; cts-tradefed run commandAndExit cts --module CtsOsTestCases --test android.os.cts.BuildTest'
+			"$aosp_shell" -lc 'echo "openagent-evidence: compatibility_scope=virtual_device_subset"; cts-tradefed run commandAndExit cts --module CtsOsTestCases --test android.os.cts.BuildTest'
 		;;
 	vts-subset)
 		run_capture \
@@ -323,7 +323,7 @@ case "$mode" in
 			"$evidence_dir/vts_virtual_device_subset.log" \
 			"vts-tradefed run commandAndExit vts-virtual-device-subset" \
 			reference \
-			"$aosp_shell" -lc 'echo "openphone-evidence: compatibility_scope=virtual_device_subset"; vts-tradefed run commandAndExit vts --module VtsTrebleVintfTest'
+			"$aosp_shell" -lc 'echo "openagent-evidence: compatibility_scope=virtual_device_subset"; vts-tradefed run commandAndExit vts --module VtsTrebleVintfTest'
 		;;
 	*)
 		usage

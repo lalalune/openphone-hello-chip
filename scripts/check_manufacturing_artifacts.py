@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFESTS = [
     "docs/manufacturing/artifact-manifest.yaml",
     "package/artifact-manifest.yaml",
-    "board/kicad/hello-demo/artifact-manifest.yaml",
+    "board/kicad/e1-demo/artifact-manifest.yaml",
     "board/fpga/artifact-manifest.yaml",
 ]
 ALLOWED_STATUS = {"missing", "draft", "complete"}
@@ -47,7 +47,7 @@ REQUIRED_GROUP_ARTIFACT_ALIASES = {
             {"pick_and_place", "position"},
         ],
     },
-    "hello_demo_kicad_board_evidence": {
+    "e1_demo_kicad_board_evidence": {
         "kicad_sources": [
             {"project", "kicad_project"},
             {"schematic", "kicad_schematic"},
@@ -63,7 +63,7 @@ REQUIRED_GROUP_ARTIFACT_ALIASES = {
             {"pick_and_place", "position"},
         ],
     },
-    "hello_demo_fpga_bitstream_evidence": {
+    "e1_demo_fpga_bitstream_evidence": {
         "target_contract": [
             {"fpga_target_contract"},
             {"pin_constraints", "final_pin_constraints"},
@@ -360,7 +360,7 @@ def resolved_manifest(manifest_paths: list[str]) -> dict:
         )
 
     return {
-        "schema": "openphone.manufacturing.resolved_artifact_manifest.v1",
+        "schema": "openagent.manufacturing.resolved_artifact_manifest.v1",
         "claim": "deterministic local file inventory only; not release readiness",
         "manifests": manifests,
     }

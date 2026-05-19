@@ -13,9 +13,9 @@ REPORT = ROOT / "build/reports/mvp_simulator.status-test.json"
 
 BOUNDARY = (
     "Simulator MVP separates qemu-virt/Renode/Android reference evidence from OS "
-    "running on generated OpenPhone AP/hello-chip RTL. qemu_os_boot may be claimed "
+    "running on generated OpenAgent AP/e1-chip RTL. qemu_os_boot may be claimed "
     "only as reference_qemu_virt_os_boot_claim. Renode smoke is renode_reference_only "
-    "unless a generated hello-chip hardware model and transcript are archived. OS "
+    "unless a generated e1-chip hardware model and transcript are archived. OS "
     "on our chip may be claimed only when on_chip_os_boot_claim is true from "
     "generated AP/Linux evidence; qemu-virt, Renode, and Android simulator evidence "
     "do not satisfy that claim. It is not a fabrication or phone-class performance "
@@ -101,7 +101,7 @@ def report_payload(*, status: str = "blocked", on_chip: bool = False) -> dict:
                 item["returncode"] = 0
         blockers = []
     return {
-        "schema": "openphone.mvp_simulator.v1",
+        "schema": "openagent.mvp_simulator.v1",
         "status": status,
         "strongest_attempted": "os_boot",
         "best_executable_evidence": "chipyard_verilator_linux_smoke"

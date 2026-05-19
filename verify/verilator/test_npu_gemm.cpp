@@ -3,12 +3,12 @@
 #include <cstdlib>
 #include <vector>
 
-#include "Vhello_soc_top.h"
+#include "Ve1_soc_top.h"
 #include "verilated.h"
 
 static vluint64_t sim_time = 0;
 
-static void tick(Vhello_soc_top& top) {
+static void tick(Ve1_soc_top& top) {
     top.clk = 0;
     top.eval();
     sim_time++;
@@ -17,7 +17,7 @@ static void tick(Vhello_soc_top& top) {
     sim_time++;
 }
 
-static void reset(Vhello_soc_top& top) {
+static void reset(Ve1_soc_top& top) {
     top.rst_n = 0;
     top.mmio_valid = 0;
     top.mmio_write = 0;
@@ -28,7 +28,7 @@ static void reset(Vhello_soc_top& top) {
     tick(top);
 }
 
-static void write32(Vhello_soc_top& top, uint32_t addr, uint32_t data) {
+static void write32(Ve1_soc_top& top, uint32_t addr, uint32_t data) {
     top.mmio_addr = addr;
     top.mmio_wdata = data;
     top.mmio_write = 1;
@@ -39,7 +39,7 @@ static void write32(Vhello_soc_top& top, uint32_t addr, uint32_t data) {
     tick(top);
 }
 
-static uint32_t read32(Vhello_soc_top& top, uint32_t addr) {
+static uint32_t read32(Ve1_soc_top& top, uint32_t addr) {
     top.mmio_addr = addr;
     top.mmio_write = 0;
     top.mmio_valid = 1;
@@ -51,7 +51,7 @@ static uint32_t read32(Vhello_soc_top& top, uint32_t addr) {
     return value;
 }
 
-static uint32_t poll_done(Vhello_soc_top& top, uint32_t addr) {
+static uint32_t poll_done(Ve1_soc_top& top, uint32_t addr) {
     for (int i = 0; i < 256; i++) {
         uint32_t status = read32(top, addr);
         if (status & 0x2) return status;
@@ -60,13 +60,13 @@ static uint32_t poll_done(Vhello_soc_top& top, uint32_t addr) {
     std::exit(1);
 }
 
-static int32_t read_s32(Vhello_soc_top& top, uint32_t addr) {
+static int32_t read_s32(Ve1_soc_top& top, uint32_t addr) {
     return static_cast<int32_t>(read32(top, addr));
 }
 
 int main(int argc, char** argv) {
     Verilated::commandArgs(argc, argv);
-    Vhello_soc_top top;
+    Ve1_soc_top top;
     reset(top);
 
     const int8_t a[2][3] = {{1, -2, 3}, {4, 5, -6}};

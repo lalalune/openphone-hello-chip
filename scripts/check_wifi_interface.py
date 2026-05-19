@@ -20,7 +20,7 @@ REQUIRED_GROUPS = {
 
 REQUIRED_INTEGRATION_STATE = {
     "rtl_host_controller": "not_implemented",
-    "padframe_bonding": "not_bonded_in_hello_chip",
+    "padframe_bonding": "not_bonded_in_e1_chip",
     "firmware_driver": "not_implemented",
     "rf_certification": "module_and_board_responsibility",
 }
@@ -58,9 +58,9 @@ def main() -> int:
         failures.append("WiFi interface must default to 1.8V IO")
     if contract.get("regulatory_boundary") != "module_and_board":
         failures.append("regulatory boundary must stay with module_and_board")
-    if contract.get("status") != "product_scaffold_not_bonded_in_hello_chip":
+    if contract.get("status") != "product_scaffold_not_bonded_in_e1_chip":
         failures.append(
-            "status must stay product_scaffold_not_bonded_in_hello_chip until pins are bonded"
+            "status must stay product_scaffold_not_bonded_in_e1_chip until pins are bonded"
         )
 
     reference = contract.get("reference_module", {})
@@ -155,7 +155,7 @@ def main() -> int:
         if phrase not in doc:
             failures.append(f"docs/arch/wifi.md must describe concrete slice term {phrase}")
 
-    dts = (root / "sw/linux/dts/openphone-hello.dts").read_text()
+    dts = (root / "sw/linux/dts/openagent-e1.dts").read_text()
     for phrase in (
         "mmc-pwrseq-simple",
         "brcm,bcm4329-fmac",
@@ -165,7 +165,7 @@ def main() -> int:
         if phrase not in dts:
             failures.append(f"Linux DTS WiFi/Bluetooth stub must include {phrase}")
 
-    linux_fragment = (root / "sw/buildroot/board/openphone/hello/linux.fragment").read_text()
+    linux_fragment = (root / "sw/buildroot/board/openagent/e1/linux.fragment").read_text()
     for phrase in ("CONFIG_BRCMFMAC", "CONFIG_BRCMFMAC_SDIO", "CONFIG_BT_HCIUART_BCM"):
         if phrase not in linux_fragment:
             failures.append(f"Buildroot Linux fragment must enable {phrase}")
@@ -179,7 +179,7 @@ def main() -> int:
             if phrase not in adapter_text:
                 failures.append(f"FPGA WiFi adapter stub must mention {phrase}")
 
-    constraints = (root / "board/fpga/constraints/hello_demo_ulx3s.lpf").read_text()
+    constraints = (root / "board/fpga/constraints/e1_demo_ulx3s.lpf").read_text()
     for phrase in ("WIFI_SDIO_CLK", "BT_UART_TX", "1.8 V", "Do not assign RF"):
         if phrase not in constraints:
             failures.append(f"FPGA constraints must reserve WiFi term {phrase}")

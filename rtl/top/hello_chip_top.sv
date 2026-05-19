@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_chip_top (
+module e1_chip_top (
     input  logic       CLK_IN,
     input  logic       RST_N,
 
@@ -42,13 +42,13 @@ module hello_chip_top (
     assign unused_test_jtag = ^{TEST_MODE, JTAG_TCK, JTAG_TMS, JTAG_TDI, msip_unused, mtip_unused};
     assign JTAG_TDO = 1'b0;
 
-    hello_reset_sync u_reset_sync (
+    e1_reset_sync u_reset_sync (
         .clk(CLK_IN),
         .rst_n_async(RST_N),
         .rst_n_sync(rst_n_sync)
     );
 
-    hello_dbg_mmio_bridge u_dbg_mmio_bridge (
+    e1_dbg_mmio_bridge u_dbg_mmio_bridge (
         .clk(CLK_IN),
         .rst_n(rst_n_sync),
         .dbg_valid(DBG_VALID),
@@ -66,7 +66,7 @@ module hello_chip_top (
         .mmio_ready(mmio_ready)
     );
 
-    hello_soc_top u_soc (
+    e1_soc_top u_soc (
         .clk(CLK_IN),
         .rst_n(rst_n_sync),
         .mmio_valid(mmio_valid),

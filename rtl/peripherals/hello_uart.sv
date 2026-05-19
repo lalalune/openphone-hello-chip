@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
-// hello_uart: Basic 8N1 UART with 16-deep TX/RX FIFOs and programmable baud divider.
+// e1_uart: Basic 8N1 UART with 16-deep TX/RX FIFOs and programmable baud divider.
 //
-// MMIO interface matches hello_soc_top's single-cycle valid/write/addr/wdata/rdata style.
+// MMIO interface matches e1_soc_top's single-cycle valid/write/addr/wdata/rdata style.
 // addr is word-address (byte_addr[7:2]).
 //
 // Register map (byte offsets from base):
@@ -14,11 +14,11 @@
 // Interrupt: level-sensitive, asserted when (RX FIFO non-empty && RX_IE) OR
 //            (TX FIFO empty && TX_IE), all gated by UART_EN.
 
-module hello_uart (
+module e1_uart (
     input  logic        clk,
     input  logic        rst_n,
 
-    // Simple MMIO slave interface (from hello_soc_top)
+    // Simple MMIO slave interface (from e1_soc_top)
     input  logic        valid,
     input  logic        write,
     input  logic [5:0]  addr,     // byte_addr[7:2]

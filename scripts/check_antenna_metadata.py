@@ -11,10 +11,10 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "pd/openlane/runs"
-PADFRAME = ROOT / "pd/padframe/hello_demo_padframe.yaml"
+PADFRAME = ROOT / "pd/padframe/e1_demo_padframe.yaml"
 RELEASE_PADFRAME_STEPS = (
     "select a foundry IO library with input, output, bidirectional, power, ground, ESD, corner, and filler cells",
-    "instantiate those pad cells around hello_chip_top instead of using the padless core wrapper as the release top",
+    "instantiate those pad cells around e1_chip_top instead of using the padless core wrapper as the release top",
     "connect JTAG_TCK, JTAG_TDI, JTAG_TMS, TEST_MODE, DBG_READY, and JTAG_TDO either to real IO pads and tested internal logic or remove them from the release top",
     "archive padframe-inclusive KLayout/Magic DRC, LVS, antenna, and ESD evidence from one selected run",
 )
@@ -43,7 +43,7 @@ def missing_metadata(report_path: Path) -> dict[str, list[str]]:
     if not isinstance(payload, list):
         return missing
     for cell in payload:
-        if not isinstance(cell, dict) or cell.get("cell") != "hello_chip_top":
+        if not isinstance(cell, dict) or cell.get("cell") != "e1_chip_top":
             continue
         for direction in missing:
             pins = cell.get(direction, [])
@@ -54,7 +54,7 @@ def missing_metadata(report_path: Path) -> dict[str, list[str]]:
 
 def main() -> int:
     parser = ArgumentParser(
-        description="Check hello_chip_top top-level antenna metadata from OpenLane output."
+        description="Check e1_chip_top top-level antenna metadata from OpenLane output."
     )
     parser.add_argument(
         "--release",

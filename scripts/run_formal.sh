@@ -50,20 +50,20 @@ def add(name: str, evidence_class: str, status_path: Path | None, log_path: Path
     }
 
 if mode == "fallback":
-    add("hello_dbg_mmio_bridge", "blocked_requires_sby", None, None)
-    add("hello_npu", "fallback_structural_only", None, root / "build/reports/hello_npu_formal_yosys.log")
-    add("hello_dma", "fallback_yosys_sat", None, root / "build/reports/hello_dma_formal_yosys.log")
-    add("hello_soc_top", "fallback_structural_only", None, root / "build/reports/hello_soc_top_formal_yosys.log")
+    add("e1_dbg_mmio_bridge", "blocked_requires_sby", None, None)
+    add("e1_npu", "fallback_structural_only", None, root / "build/reports/e1_npu_formal_yosys.log")
+    add("e1_dma", "fallback_yosys_sat", None, root / "build/reports/e1_dma_formal_yosys.log")
+    add("e1_soc_top", "fallback_structural_only", None, root / "build/reports/e1_soc_top_formal_yosys.log")
 elif mode == "sby-shallow-top":
-    add("hello_dbg_mmio_bridge", "sby_bmc", root / "verify/formal/hello_dbg_mmio_bridge/status", root / "verify/formal/hello_dbg_mmio_bridge/logfile.txt")
-    add("hello_npu", "sby_bmc", root / "verify/formal/hello_npu/status", root / "verify/formal/hello_npu/logfile.txt")
-    add("hello_dma", "sby_bmc", root / "verify/formal/hello_dma/status", root / "verify/formal/hello_dma/logfile.txt")
-    add("hello_soc_top", "fallback_structural_only", None, root / "build/reports/hello_soc_top_formal_yosys.log")
+    add("e1_dbg_mmio_bridge", "sby_bmc", root / "verify/formal/e1_dbg_mmio_bridge/status", root / "verify/formal/e1_dbg_mmio_bridge/logfile.txt")
+    add("e1_npu", "sby_bmc", root / "verify/formal/e1_npu/status", root / "verify/formal/e1_npu/logfile.txt")
+    add("e1_dma", "sby_bmc", root / "verify/formal/e1_dma/status", root / "verify/formal/e1_dma/logfile.txt")
+    add("e1_soc_top", "fallback_structural_only", None, root / "build/reports/e1_soc_top_formal_yosys.log")
 else:
-    add("hello_dbg_mmio_bridge", "sby_bmc", root / "verify/formal/hello_dbg_mmio_bridge/status", root / "verify/formal/hello_dbg_mmio_bridge/logfile.txt")
-    add("hello_npu", "sby_bmc", root / "verify/formal/hello_npu/status", root / "verify/formal/hello_npu/logfile.txt")
-    add("hello_dma", "sby_bmc", root / "verify/formal/hello_dma/status", root / "verify/formal/hello_dma/logfile.txt")
-    add("hello_soc_top", "sby_bmc_deep", root / "verify/formal/hello_soc_top/status", root / "verify/formal/hello_soc_top/logfile.txt")
+    add("e1_dbg_mmio_bridge", "sby_bmc", root / "verify/formal/e1_dbg_mmio_bridge/status", root / "verify/formal/e1_dbg_mmio_bridge/logfile.txt")
+    add("e1_npu", "sby_bmc", root / "verify/formal/e1_npu/status", root / "verify/formal/e1_npu/logfile.txt")
+    add("e1_dma", "sby_bmc", root / "verify/formal/e1_dma/status", root / "verify/formal/e1_dma/logfile.txt")
+    add("e1_soc_top", "sby_bmc_deep", root / "verify/formal/e1_soc_top/status", root / "verify/formal/e1_soc_top/logfile.txt")
 
 sources = {}
 for pattern in ("rtl/**/*.sv", "verify/formal/*.sv", "verify/formal/*.sby", "scripts/yosys_formal_*.ys", "scripts/run_formal.sh"):
@@ -72,7 +72,7 @@ for pattern in ("rtl/**/*.sv", "verify/formal/*.sv", "verify/formal/*.sby", "scr
             sources[path.relative_to(root).as_posix()] = sha256(path)
 
 manifest = {
-    "schema": "hello-chip-formal-evidence-v1",
+    "schema": "e1-chip-formal-evidence-v1",
     "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     "mode": mode,
     "release_claim": "strict_requires_sby_and_deep_top" if mode != "sby-deep-top" else "strict_formal_bmc_evidence",
@@ -93,10 +93,10 @@ if ! command -v sby >/dev/null 2>&1; then
     if command -v yosys >/dev/null 2>&1; then
         echo "SymbiYosys missing; running Yosys SAT fallback."
         echo "Bridge formal requires SymbiYosys; fallback covers legacy blocks only."
-        yosys -q -l build/reports/hello_soc_top_formal_yosys.log scripts/yosys_formal_top_structural.ys
-        yosys -q -l build/reports/hello_npu_formal_yosys.log scripts/yosys_formal_npu_structural.ys
-        yosys -q -l build/reports/hello_dma_formal_yosys.log scripts/yosys_formal_dma.ys
-        echo "Yosys formal fallback reports: build/reports/hello_*_formal_yosys.log"
+        yosys -q -l build/reports/e1_soc_top_formal_yosys.log scripts/yosys_formal_top_structural.ys
+        yosys -q -l build/reports/e1_npu_formal_yosys.log scripts/yosys_formal_npu_structural.ys
+        yosys -q -l build/reports/e1_dma_formal_yosys.log scripts/yosys_formal_dma.ys
+        echo "Yosys formal fallback reports: build/reports/e1_*_formal_yosys.log"
         write_manifest fallback
         exit 0
     fi
@@ -117,14 +117,14 @@ run_sby() {
     cp "$prefix/logfile.txt" "$canonical/logfile.txt"
 }
 
-run_sby hello_dbg_mmio_bridge
-run_sby hello_npu
-run_sby hello_dma
+run_sby e1_dbg_mmio_bridge
+run_sby e1_npu
+run_sby e1_dma
 if [ "${REQUIRE_DEEP_FORMAL:-0}" = "1" ]; then
-    run_sby hello_soc_top
+    run_sby e1_soc_top
     write_manifest sby-deep-top
 else
-    echo "Running structural top-level formal for routine CI. Set REQUIRE_DEEP_FORMAL=1 for the deeper hello_soc_top SymbiYosys BMC."
-    yosys -q -l build/reports/hello_soc_top_formal_yosys.log scripts/yosys_formal_top_structural.ys
+    echo "Running structural top-level formal for routine CI. Set REQUIRE_DEEP_FORMAL=1 for the deeper e1_soc_top SymbiYosys BMC."
+    yosys -q -l build/reports/e1_soc_top_formal_yosys.log scripts/yosys_formal_top_structural.ys
     write_manifest sby-shallow-top
 fi

@@ -13,30 +13,30 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs/project/minimum-linux-npu-target.md"
 REPORT = ROOT / "build/reports/minimum-linux-kernel-target.json"
-LINUX_DTS = ROOT / "sw/linux/dts/openphone-hello.dts"
+LINUX_DTS = ROOT / "sw/linux/dts/openagent-e1.dts"
 LINUX_EXTERNAL_STATUS = ROOT / "docs/evidence/linux/linux-external-bsp-status.json"
 
 REQUIRED_LOCAL_ARTIFACTS = {
     "linux_bsp_readme": "docs/sw/linux/README.md",
     "linux_import_script": "sw/linux/scripts/import-linux-bsp.sh",
     "linux_evidence_capture": "sw/linux/scripts/capture-linux-bsp-evidence.sh",
-    "linux_boot_artifact_manifest": "docs/evidence/linux/openphone-linux-boot-artifacts.json",
+    "linux_boot_artifact_manifest": "docs/evidence/linux/openagent-linux-boot-artifacts.json",
     "linux_boot_artifact_checker": "scripts/check_linux_boot_artifacts.py",
     "linux_external_bsp_checker": "scripts/check_linux_external_bsp.py",
     "cpu_ap_boot_readiness_checker": "scripts/check_cpu_ap_boot_readiness.py",
-    "linux_dts": "sw/linux/dts/openphone-hello.dts",
-    "linux_npu_driver": "sw/linux/drivers/hello/hello-npu.c",
-    "linux_dma_driver": "sw/linux/drivers/hello/hello-dma.c",
-    "linux_mmio_smoke_source": "sw/linux/tests/hello-mmio-smoke.c",
-    "linux_npu_smoke_source": "sw/linux/tests/hello-npu-smoke.c",
+    "linux_dts": "sw/linux/dts/openagent-e1.dts",
+    "linux_npu_driver": "sw/linux/drivers/e1/e1-npu.c",
+    "linux_dma_driver": "sw/linux/drivers/e1/e1-dma.c",
+    "linux_mmio_smoke_source": "sw/linux/tests/e1-mmio-smoke.c",
+    "linux_npu_smoke_source": "sw/linux/tests/e1-npu-smoke.c",
 }
 REQUIRED_EVIDENCE = {
-    "chipyard_generated_ap_linux_smoke": "build/chipyard/openphone_rocket/verilator-linux-smoke.log",
-    "linux_kernel_build": "docs/evidence/linux/openphone_hello_kernel_build.log",
-    "linux_dtb_check": "docs/evidence/linux/openphone_hello_dtb_check.log",
+    "chipyard_generated_ap_linux_smoke": "build/chipyard/openagent_rocket/verilator-linux-smoke.log",
+    "linux_kernel_build": "docs/evidence/linux/openagent_e1_kernel_build.log",
+    "linux_dtb_check": "docs/evidence/linux/openagent_e1_dtb_check.log",
     "opensbi_handoff": "docs/evidence/linux/opensbi_fw_dynamic_handoff.log",
-    "serial_boot_log": "docs/evidence/linux/openphone_hello_serial_boot.log",
-    "linux_mmio_smoke": "docs/evidence/linux/hello-mmio-smoke.log",
+    "serial_boot_log": "docs/evidence/linux/openagent_e1_serial_boot.log",
+    "linux_mmio_smoke": "docs/evidence/linux/e1-mmio-smoke.log",
 }
 REQUIRED_DTS_TOKENS = {
     "chosen": "chosen",
@@ -55,7 +55,7 @@ REQUIRED_DOC_TERMS = {
     "not qemu-virt-only",
     "OpenSBI",
     "Linux version",
-    "/dev/hello-npu",
+    "/dev/e1-npu",
     "GEMM_S8",
     "input hash",
     "output hash",
@@ -88,12 +88,12 @@ def check_evidence(path: Path) -> dict[str, Any]:
     blocked = path.with_suffix(path.suffix + ".BLOCKED")
     if path.is_file() and path.stat().st_size > 0:
         text = read(path)
-        if "openphone-evidence: status=PASS" not in text:
+        if "openagent-evidence: status=PASS" not in text:
             return {
                 "status": "blocked",
                 "path": rel(path),
                 "bytes": path.stat().st_size,
-                "reason": "missing openphone-evidence: status=PASS",
+                "reason": "missing openagent-evidence: status=PASS",
             }
         return {"status": "present", "path": rel(path), "bytes": path.stat().st_size}
     if blocked.is_file():
@@ -155,7 +155,7 @@ def collect() -> dict[str, Any]:
             errors.append(f"{name} evidence state is {item['status']}: {item['path']}")
 
     return {
-        "schema": "openphone.minimum_linux_kernel_target.v1",
+        "schema": "openagent.minimum_linux_kernel_target.v1",
         "status": "fail" if errors else ("blocked" if blockers else "pass"),
         "claim_boundary": "minimum target gate only; not generated-AP boot evidence by itself",
         "checklist": rel(DOC),

@@ -39,9 +39,9 @@ fi
 
 aosp=$1
 repo_root=$(CDPATH=; cd -- "$(dirname -- "$0")/../.." && pwd)
-device_src="$repo_root/sw/aosp-device/device/openphone/openphone_ai_soc"
-device_dst="$aosp/device/openphone/openphone_ai_soc"
-manifest_src="$repo_root/sw/aosp-device/manifests/openphone-ai-soc-local.xml"
+device_src="$repo_root/sw/aosp-device/device/openagent/openagent_ai_soc"
+device_dst="$aosp/device/openagent/openagent_ai_soc"
+manifest_src="$repo_root/sw/aosp-device/manifests/openagent-ai-soc-local.xml"
 
 if [ ! -f "$aosp/build/envsetup.sh" ] || [ ! -d "$aosp/device" ]; then
 	echo "error: $aosp does not look like an AOSP checkout" >&2
@@ -50,17 +50,17 @@ fi
 
 required_repo_artifacts="
 $device_src/AndroidProducts.mk
-$device_src/openphone_ai_soc.mk
+$device_src/openagent_ai_soc.mk
 $device_src/BoardConfig.mk
 $device_src/device.mk
-$device_src/init.openphone.rc
-$device_src/fstab.openphone
+$device_src/init.openagent.rc
+$device_src/fstab.openagent
 $device_src/manifest.xml
-$device_src/kernel/openphone_ai_soc.fragment
-$device_src/dts/openphone-hello-android.dts
+$device_src/kernel/openagent_ai_soc.fragment
+$device_src/dts/openagent-e1-android.dts
 $device_src/sepolicy/file_contexts
-$device_src/sepolicy/hello_npu.te
-$repo_root/docs/sw/aosp-device/device/openphone/openphone_ai_soc/hal/README.md
+$device_src/sepolicy/e1_npu.te
+$repo_root/docs/sw/aosp-device/device/openagent/openagent_ai_soc/hal/README.md
 $manifest_src
 "
 
@@ -77,21 +77,21 @@ fi
 
 if [ "$dry_run" -eq 1 ]; then
 	echo "DRY-RUN: would sync ${device_src#"$repo_root"/} -> $device_dst"
-	echo "DRY-RUN: would preserve external AOSP checkout outside device/openphone/openphone_ai_soc"
+	echo "DRY-RUN: would preserve external AOSP checkout outside device/openagent/openagent_ai_soc"
 fi
 
 if [ "$check_only" -eq 0 ] && [ "$dry_run" -eq 0 ]; then
-	mkdir -p "$aosp/device/openphone"
+	mkdir -p "$aosp/device/openagent"
 	rsync -a --delete "$device_src/" "$device_dst/"
 	mkdir -p "$device_dst/hal"
-	cp "$repo_root/docs/sw/aosp-device/device/openphone/openphone_ai_soc/hal/README.md" "$device_dst/hal/README.md"
+	cp "$repo_root/docs/sw/aosp-device/device/openagent/openagent_ai_soc/hal/README.md" "$device_dst/hal/README.md"
 fi
 
 if [ "$check_only" -eq 1 ]; then
 	if [ -d "$device_dst" ]; then
-		for rel in AndroidProducts.mk openphone_ai_soc.mk BoardConfig.mk device.mk init.openphone.rc fstab.openphone manifest.xml kernel/openphone_ai_soc.fragment dts/openphone-hello-android.dts sepolicy/file_contexts sepolicy/hello_npu.te hal/README.md; do
+		for rel in AndroidProducts.mk openagent_ai_soc.mk BoardConfig.mk device.mk init.openagent.rc fstab.openagent manifest.xml kernel/openagent_ai_soc.fragment dts/openagent-e1-android.dts sepolicy/file_contexts sepolicy/e1_npu.te hal/README.md; do
 			if [ ! -f "$device_dst/$rel" ]; then
-				echo "FAIL: imported AOSP tree missing device/openphone/openphone_ai_soc/$rel" >&2
+				echo "FAIL: imported AOSP tree missing device/openagent/openagent_ai_soc/$rel" >&2
 				missing=1
 			fi
 		done
@@ -106,18 +106,18 @@ if [ "$check_only" -eq 1 ]; then
 elif [ "$dry_run" -eq 1 ]; then
 	echo "STATUS: PASS aosp.import-dry-run - checkout shape and repo device inputs are present"
 else
-	printf 'Imported OpenPhone AOSP device tree.\n'
+	printf 'Imported OpenAgent AOSP device tree.\n'
 fi
 printf 'Validate from the AOSP checkout:\n'
 printf '  source build/envsetup.sh\n'
-printf '  lunch openphone_ai_soc-userdebug\n'
+printf '  lunch openagent_ai_soc-userdebug\n'
 printf '  m nothing\n'
 printf '  m vendorimage\n'
-printf '  checkvintf against out/target/product/openphone_ai_soc vendor artifacts\n'
+printf '  checkvintf against out/target/product/openagent_ai_soc vendor artifacts\n'
 printf 'Capture real evidence back in this repository:\n'
 # shellcheck disable=SC2016
-printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=source build/envsetup.sh && lunch openphone_ai_soc-userdebug\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; . build/envsetup.sh && lunch openphone_ai_soc-userdebug; rc=$?; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/android/openphone_ai_soc_lunch.log\n' "$aosp" "$repo_root"
+printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=source build/envsetup.sh && lunch openagent_ai_soc-userdebug\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; . build/envsetup.sh && lunch openagent_ai_soc-userdebug; rc=$?; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/android/openagent_ai_soc_lunch.log\n' "$aosp" "$repo_root"
 # shellcheck disable=SC2016
-printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=m vendorimage\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; m vendorimage; rc=$?; find out/target/product/openphone_ai_soc -path "*hello_npu.default" -o -path "*hwcomposer.openphone_ai_soc"; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/android/openphone_ai_soc_vendorimage.log\n' "$aosp" "$repo_root"
+printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=m vendorimage\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; m vendorimage; rc=$?; find out/target/product/openagent_ai_soc -path "*e1_npu.default" -o -path "*hwcomposer.openagent_ai_soc"; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/android/openagent_ai_soc_vendorimage.log\n' "$aosp" "$repo_root"
 printf '  Use docs/android/boot-transcript.schema.json sidecars for Cuttlefish, QEMU, and Renode boot transcripts.\n'
 printf 'This helper does not build Android, launch Cuttlefish, or prove boot.\n'

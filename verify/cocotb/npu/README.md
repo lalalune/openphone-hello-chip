@@ -2,7 +2,7 @@
 
 Scaffolds for the v0 NPU descriptor-queue ABI documented in
 `docs/arch/npu-microarch.md`. Tests are decorated with `skip=True` until
-the `hello_npu_gemmini_wrapper` RTL lands; they encode the queue, IRQ, and
+the `e1_npu_gemmini_wrapper` RTL lands; they encode the queue, IRQ, and
 unsupported-op contract that wrapper must satisfy.
 
 Tracked under

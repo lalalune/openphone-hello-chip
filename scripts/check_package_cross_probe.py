@@ -17,9 +17,9 @@ def logical_name(name: str) -> str:
 
 def parse_ports(path: Path) -> set[str]:
     text = path.read_text()
-    module = re.search(r"module\s+hello_chip_top\s*\((.*?)\);", text, re.S)
+    module = re.search(r"module\s+e1_chip_top\s*\((.*?)\);", text, re.S)
     if not module:
-        raise SystemExit("hello_chip_top module header not found")
+        raise SystemExit("e1_chip_top module header not found")
     ports: set[str] = set()
     for raw in module.group(1).splitlines():
         raw = raw.split("//", 1)[0].strip().rstrip(",")
@@ -46,8 +46,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    pinout = yaml.safe_load((ROOT / "package/hello-demo-pinout.yaml").read_text())
-    padframe = yaml.safe_load((ROOT / "pd/padframe/hello_demo_padframe.yaml").read_text())
+    pinout = yaml.safe_load((ROOT / "package/e1-demo-pinout.yaml").read_text())
+    padframe = yaml.safe_load((ROOT / "pd/padframe/e1_demo_padframe.yaml").read_text())
     ports = parse_ports(ROOT / padframe["rtl_top"])
 
     failures: list[str] = []
@@ -84,7 +84,7 @@ def main() -> int:
         if not path.is_file():
             failures.append(f"padframe package_artifacts.{name} points at missing file: {artifact}")
 
-    board_dir = ROOT / "board/kicad/hello-demo"
+    board_dir = ROOT / "board/kicad/e1-demo"
     kicad_files = list(board_dir.glob("*.kicad_sch")) + list(board_dir.glob("*.kicad_pcb"))
     if not kicad_files:
         blockers.append("no KiCad schematic/PCB is available for board-net cross-probe")
@@ -99,8 +99,8 @@ def main() -> int:
     if "placeholder" in str(pinout.get("package", "")).lower():
         blockers.append("package pinout still uses a placeholder package name")
     for path in (
-        ROOT / "docs/package/hello-demo-package.md",
-        ROOT / "docs/package/hello-demo-pad-ring.md",
+        ROOT / "docs/package/e1-demo-package.md",
+        ROOT / "docs/package/e1-demo-pad-ring.md",
     ):
         text = path.read_text(errors="ignore").lower()
         if "placeholder" in text or "not a foundry-approved" in text:

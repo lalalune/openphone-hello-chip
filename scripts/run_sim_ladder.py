@@ -15,26 +15,26 @@ LADDER = [
     {
         "name": "cocotb_top",
         "command": ["make", "cocotb"],
-        "required_artifacts": ["build/reports/cocotb/hello_chip_top_test_hello_chip.xml"],
+        "required_artifacts": ["build/reports/cocotb/e1_chip_top_test_e1_chip.xml"],
     },
     {
         "name": "cocotb_contract",
         "command": ["make", "cocotb-contract"],
         "required_artifacts": [
-            "build/reports/cocotb/hello_linux_soc_contract_test_cpu_mem_intc_contract.xml"
+            "build/reports/cocotb/e1_linux_soc_contract_test_cpu_mem_intc_contract.xml"
         ],
     },
     {
         "name": "cocotb_cpu",
         "command": ["make", "cocotb-cpu"],
         "required_artifacts": [
-            "build/reports/cocotb/hello_tiny_cpu_contract_tb_test_tiny_cpu_execution.xml"
+            "build/reports/cocotb/e1_tiny_cpu_contract_tb_test_tiny_cpu_execution.xml"
         ],
     },
     {
         "name": "verilator_smoke",
         "command": ["make", "verilator"],
-        "required_artifacts": ["build/verilator/Vhello_chip_top"],
+        "required_artifacts": ["build/verilator/Ve1_chip_top"],
     },
 ]
 
@@ -90,7 +90,7 @@ def main() -> int:
             break
 
     manifest = {
-        "schema": "openphone.sim_ladder.v1",
+        "schema": "openagent.sim_ladder.v1",
         "status": "pass"
         if all(item["status"] == "pass" for item in results) and len(results) == len(LADDER)
         else "fail",

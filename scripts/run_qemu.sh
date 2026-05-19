@@ -2,15 +2,15 @@
 set -eu
 
 repo_dir=$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)
-src="$repo_dir/sw/bootrom/hello_qemu_firmware.S"
+src="$repo_dir/sw/bootrom/e1_qemu_firmware.S"
 linker="$repo_dir/sw/bootrom/linker.ld"
-checked_elf="$repo_dir/build/qemu/hello_qemu_firmware.elf"
-firmware_lock="$repo_dir/build/qemu/.hello_qemu_firmware.lock"
+checked_elf="$repo_dir/build/qemu/e1_qemu_firmware.elf"
+firmware_lock="$repo_dir/build/qemu/.e1_qemu_firmware.lock"
 smoke_log="$repo_dir/build/reports/qemu_smoke.log"
 smoke_manifest="$repo_dir/build/reports/qemu_smoke.manifest"
 os_attempt_log="$repo_dir/build/reports/qemu_os_boot_attempt.log"
 os_attempt_manifest="$repo_dir/build/reports/qemu_os_boot_attempt.json"
-banner="openphone hello qemu"
+banner="openagent e1 qemu"
 load_addr="0x80000000"
 uart_addr="0x10000000"
 linux_kernel=
@@ -23,7 +23,7 @@ usage: scripts/run_qemu.sh [--check|--check-os|--build-firmware|--build-stub|--e
 
   --check           run semantic checks, build if possible, then bounded QEMU smoke
   --check-os        preflight and, when payloads exist, attempt bounded Linux/OS boot
-  --build-firmware  build build/qemu/hello_qemu_firmware.elf with a local RISC-V toolchain
+  --build-firmware  build build/qemu/e1_qemu_firmware.elf with a local RISC-V toolchain
   --build-stub      compatibility alias for --build-firmware
   --elf PATH        launch an explicit ELF instead of the default firmware path
   --linux-kernel PATH  Linux kernel Image for --check-os
@@ -116,12 +116,12 @@ find_toolchain() {
 
     for cc in /opt/homebrew/opt/llvm/bin/clang clang; do
         if command -v "$cc" >/dev/null 2>&1; then
-            if "$cc" --target=riscv64-unknown-elf -fuse-ld=lld -x assembler -c /dev/null -o /tmp/openphone-riscv-toolchain-test.o >/dev/null 2>&1; then
-                rm -f /tmp/openphone-riscv-toolchain-test.o
+            if "$cc" --target=riscv64-unknown-elf -fuse-ld=lld -x assembler -c /dev/null -o /tmp/openagent-riscv-toolchain-test.o >/dev/null 2>&1; then
+                rm -f /tmp/openagent-riscv-toolchain-test.o
                 printf '%s\n' "$cc"
                 return 0
             fi
-            rm -f /tmp/openphone-riscv-toolchain-test.o
+            rm -f /tmp/openagent-riscv-toolchain-test.o
         fi
     done
 
@@ -154,10 +154,10 @@ semantic_check() {
     fi
 
     grep -q "$banner" "$src" || {
-        status_line "FAIL" "qemu.semantic" "sw/bootrom/hello_qemu_firmware.S must print '$banner'"
+        status_line "FAIL" "qemu.semantic" "sw/bootrom/e1_qemu_firmware.S must print '$banner'"
         failed=1
     }
-    grep -q "HELLO_QEMU_VIRT_UART_BASE" "$src" || grep -Eqi "li[[:space:]]+a1,[[:space:]]*$uart_addr" "$src" || {
+    grep -q "E1_QEMU_VIRT_UART_BASE" "$src" || grep -Eqi "li[[:space:]]+a1,[[:space:]]*$uart_addr" "$src" || {
         status_line "FAIL" "qemu.semantic" "firmware must write the qemu-virt UART at $uart_addr via the platform contract"
         failed=1
     }
@@ -217,7 +217,7 @@ run_bounded_smoke() {
         return 2
     fi
 
-    log=$(mktemp "${TMPDIR:-/tmp}/hello-qemu.XXXXXX")
+    log=$(mktemp "${TMPDIR:-/tmp}/e1-qemu.XXXXXX")
     qemu-system-riscv64 -machine virt -nographic -bios none -no-reboot -kernel "$elf" >"$log" 2>&1 &
     qemu_pid=$!
 
@@ -279,9 +279,9 @@ default_initrd_payload() {
 
 default_dtb_payload() {
     for path in \
-        "$repo_dir/build/linux/arch/riscv/boot/dts/openphone/openphone-hello.dtb" \
-        "$repo_dir/build/buildroot/images/openphone-hello.dtb" \
-        "$repo_dir/buildroot/output/images/openphone-hello.dtb"; do
+        "$repo_dir/build/linux/arch/riscv/boot/dts/openagent/openagent-e1.dtb" \
+        "$repo_dir/build/buildroot/images/openagent-e1.dtb" \
+        "$repo_dir/buildroot/output/images/openagent-e1.dtb"; do
         if [ -f "$path" ]; then
             printf '%s\n' "$path"
             return 0
@@ -317,8 +317,8 @@ import os
 from pathlib import Path
 
 payload = {
-    "schema": "openphone.qemu_virt_os_boot_attempt.v1",
-    "claim_boundary": "qemu_virt_reference_only_not_hello_chip_rtl",
+    "schema": "openagent.qemu_virt_os_boot_attempt.v1",
+    "claim_boundary": "qemu_virt_reference_only_not_e1_chip_rtl",
     "status": os.environ["OS_ATTEMPT_STATE"],
     "check": "qemu.os_boot",
     "detail": os.environ["OS_ATTEMPT_DETAIL"],
@@ -399,7 +399,7 @@ check_os_boot() {
         return 2
     fi
 
-    log=$(mktemp "${TMPDIR:-/tmp}/openphone-qemu-os.XXXXXX")
+    log=$(mktemp "${TMPDIR:-/tmp}/openagent-qemu-os.XXXXXX")
     set -- qemu-system-riscv64 -machine virt -m "${QEMU_OS_MEMORY:-2G}" -nographic -no-reboot \
         -kernel "$linux_kernel" \
         -initrd "$linux_initrd" \
@@ -556,7 +556,7 @@ case "$mode" in
             exit 1
         fi
 
-        echo "Launching qemu-virt software reference target. This is not the hello-chip hardware ABI. Ctrl-A X exits."
+        echo "Launching qemu-virt software reference target. This is not the e1-chip hardware ABI. Ctrl-A X exits."
         qemu-system-riscv64 -machine virt -nographic -bios none -no-reboot -kernel "$elf"
         ;;
 esac

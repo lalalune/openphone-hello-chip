@@ -2,9 +2,9 @@
 set -eu
 
 repo_dir="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
-out_dir="$repo_dir/build/chipyard/openphone_rocket"
+out_dir="$repo_dir/build/chipyard/openagent_rocket"
 log="${CHIPYARD_ARCHIVED_SIM_LOG:-$out_dir/archived-simulator-linux-smoke.log}"
-simulator="${CHIPYARD_ARCHIVED_SIMULATOR:-$out_dir/simulator/simulator-chipyard.harness-OpenPhoneRocketConfig}"
+simulator="${CHIPYARD_ARCHIVED_SIMULATOR:-$out_dir/simulator/simulator-chipyard.harness-OpenAgentRocketConfig}"
 payload="${CHIPYARD_LINUX_BINARY:-}"
 timeout_seconds="${CHIPYARD_ARCHIVED_SIM_TIMEOUT_SECONDS:-60}"
 timeout_cycles="${CHIPYARD_ARCHIVED_SIM_TIMEOUT_CYCLES:-200000}"
@@ -23,22 +23,22 @@ if [ -z "$payload" ]; then
 fi
 
 {
-	printf 'openphone-evidence: target=generated_chipyard_ap\n'
-	printf 'openphone-evidence: wrapper=scripts/run_chipyard_archived_simulator_smoke.sh\n'
-	printf 'openphone-evidence: simulator=%s\n' "$simulator"
-	printf 'openphone-evidence: payload=%s\n' "${payload:-}"
-	printf 'openphone-evidence: timeout_after_seconds=%s\n' "$timeout_seconds"
-	printf 'openphone-evidence: timeout_cycles=%s\n' "$timeout_cycles"
-	printf 'openphone-evidence: claim_boundary=bounded archived simulator attempt only; not boot evidence unless required markers appear\n'
+	printf 'openagent-evidence: target=generated_chipyard_ap\n'
+	printf 'openagent-evidence: wrapper=scripts/run_chipyard_archived_simulator_smoke.sh\n'
+	printf 'openagent-evidence: simulator=%s\n' "$simulator"
+	printf 'openagent-evidence: payload=%s\n' "${payload:-}"
+	printf 'openagent-evidence: timeout_after_seconds=%s\n' "$timeout_seconds"
+	printf 'openagent-evidence: timeout_cycles=%s\n' "$timeout_cycles"
+	printf 'openagent-evidence: claim_boundary=bounded archived simulator attempt only; not boot evidence unless required markers appear\n'
 } >"$log"
 
 if [ ! -x "$simulator" ]; then
 	{
-		printf 'openphone-evidence: raw_transcript_begin\n'
+		printf 'openagent-evidence: raw_transcript_begin\n'
 		printf 'STATUS: BLOCKED chipyard.archived_simulator - simulator is missing or not executable: %s\n' "$simulator"
-		printf 'openphone-evidence: raw_transcript_end\n'
-		printf 'openphone-evidence: exit_code=2\n'
-		printf 'openphone-evidence: status=BLOCKED\n'
+		printf 'openagent-evidence: raw_transcript_end\n'
+		printf 'openagent-evidence: exit_code=2\n'
+		printf 'openagent-evidence: status=BLOCKED\n'
 	} >>"$log"
 	cat "$log"
 	exit 2
@@ -46,11 +46,11 @@ fi
 
 if [ -z "$payload" ] || [ ! -f "$payload" ]; then
 	{
-		printf 'openphone-evidence: raw_transcript_begin\n'
+		printf 'openagent-evidence: raw_transcript_begin\n'
 		printf 'STATUS: BLOCKED chipyard.archived_simulator - CHIPYARD_LINUX_BINARY is unset or missing: %s\n' "${payload:-}"
-		printf 'openphone-evidence: raw_transcript_end\n'
-		printf 'openphone-evidence: exit_code=2\n'
-		printf 'openphone-evidence: status=BLOCKED\n'
+		printf 'openagent-evidence: raw_transcript_end\n'
+		printf 'openagent-evidence: exit_code=2\n'
+		printf 'openagent-evidence: status=BLOCKED\n'
 	} >>"$log"
 	cat "$log"
 	exit 2
@@ -60,11 +60,11 @@ host_system="$(uname -s 2>/dev/null || printf unknown)"
 host_machine="$(uname -m 2>/dev/null || printf unknown)"
 if [ "$host_system" != "Linux" ]; then
 	{
-		printf 'openphone-evidence: raw_transcript_begin\n'
+		printf 'openagent-evidence: raw_transcript_begin\n'
 		printf 'STATUS: BLOCKED chipyard.archived_simulator - archived simulator is a Linux ELF and this host is %s/%s\n' "$host_system" "$host_machine"
-		printf 'openphone-evidence: raw_transcript_end\n'
-		printf 'openphone-evidence: exit_code=2\n'
-		printf 'openphone-evidence: status=BLOCKED\n'
+		printf 'openagent-evidence: raw_transcript_end\n'
+		printf 'openagent-evidence: exit_code=2\n'
+		printf 'openagent-evidence: status=BLOCKED\n'
 	} >>"$log"
 	cat "$log"
 	exit 2
@@ -72,8 +72,8 @@ fi
 
 command_text="$(printf '%s +permissive %s +permissive-off %s' "$simulator" "$extra_sim_flags" "$payload")"
 {
-	printf 'openphone-evidence: command=%s\n' "$command_text"
-	printf 'openphone-evidence: raw_transcript_begin\n'
+	printf 'openagent-evidence: command=%s\n' "$command_text"
+	printf 'openagent-evidence: raw_transcript_begin\n'
 } >>"$log"
 
 set +e
@@ -86,12 +86,12 @@ status=$?
 set -e
 
 {
-	printf 'openphone-evidence: raw_transcript_end\n'
-	printf 'openphone-evidence: exit_code=%s\n' "$status"
+	printf 'openagent-evidence: raw_transcript_end\n'
+	printf 'openagent-evidence: exit_code=%s\n' "$status"
 	if [ "$status" -eq 0 ]; then
-		printf 'openphone-evidence: status=PASS\n'
+		printf 'openagent-evidence: status=PASS\n'
 	else
-		printf 'openphone-evidence: status=BLOCKED\n'
+		printf 'openagent-evidence: status=BLOCKED\n'
 	fi
 } >>"$log"
 

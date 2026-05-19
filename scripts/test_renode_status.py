@@ -11,11 +11,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUN_RENODE = ROOT / "scripts/run_renode.sh"
-RENODE_ELF = ROOT / "build/qemu/hello_qemu_firmware.elf"
+RENODE_ELF = ROOT / "build/qemu/e1_qemu_firmware.elf"
 RENODE_LOG = ROOT / "build/reports/renode_smoke.log"
 RENODE_MANIFEST = ROOT / "build/reports/renode_smoke.manifest"
 RENODE_ATTEMPT_LOG = ROOT / "build/reports/renode_smoke_attempt.log"
-BANNER = "openphone hello qemu"
+BANNER = "openagent e1 qemu"
 
 
 def write_executable(path: Path, text: str) -> None:
@@ -177,7 +177,7 @@ def test_renode_with_firmware_and_banner_passes() -> None:
     assert_contains(manifest, "status=PASS")
     assert_contains(manifest, "banner_contract=sim/renode/expected_serial_banner.txt")
     assert_contains(
-        manifest, "renode_command=renode --console --disable-xwt sim/renode/openphone_hello.resc"
+        manifest, "renode_command=renode --console --disable-xwt sim/renode/openagent_e1.resc"
     )
 
 
@@ -246,7 +246,7 @@ def test_valid_transcript_intake_archives_manifest() -> None:
     assert_contains(manifest, "sha256=")
     assert_contains(manifest, f"banner={BANNER}")
     assert_contains(manifest, "banner_contract=sim/renode/expected_serial_banner.txt")
-    assert_contains(manifest, "firmware=build/qemu/hello_qemu_firmware.elf")
+    assert_contains(manifest, "firmware=build/qemu/e1_qemu_firmware.elf")
     assert_contains(manifest, "firmware_sha256=")
     assert_contains(manifest, "renode_version=Renode test double 0.0")
 

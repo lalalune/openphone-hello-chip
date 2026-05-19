@@ -1,16 +1,16 @@
-# hello_chip_top OpenLane Progress Report - 2026-05-17
+# e1_chip_top OpenLane Progress Report - 2026-05-17
 
 ## Scope
 
 This report records local MacBook physical-design evidence for exploratory
-SKY130 OpenLane runs of the full `hello_chip_top`. It is progress evidence, not
+SKY130 OpenLane runs of the full `e1_chip_top`. It is progress evidence, not
 release or tapeout signoff.
 
 ## Run
 
 - Run directory: `pd/openlane/runs/RUN_2026-05-18_04-00-56`
 - Flow config: `pd/openlane/config.sky130.json`
-- Design: `hello_chip_top`
+- Design: `e1_chip_top`
 - Runner image: `ghcr.io/efabless/openlane2:2.4.0.dev1`
 - Run status observed: reached `KLayout.DRC`; no `final/` directory was
   produced because `64-klayout-drc/state_out.json` was not written.
@@ -34,7 +34,7 @@ release or tapeout signoff.
   was not supplied.
 - KLayout DRC ran for 7m57s, peaked at 6 GiB RSS, and stopped without a
   `state_out.json`; this is the current reproducible PD closure blocker.
-- Global placement and detailed routing produced `hello_chip_top.odb`, DEF,
+- Global placement and detailed routing produced `e1_chip_top.odb`, DEF,
   netlists, SDC, and OpenROAD metrics under their respective step directories.
 - Non-release OpenLane preflight passed:
 
@@ -65,10 +65,10 @@ OpenLane run preflight passed.
 
 ## Release Blockers
 
-- No complete signoff `hello_chip_top` run exists because the best run stopped
+- No complete signoff `e1_chip_top` run exists because the best run stopped
   at KLayout DRC.
 - No `final/gds`, `final/def`, final SPEF/SDF, clean KLayout DRC report,
-  complete LVS report, or complete release manifest exists for `hello_chip_top`.
+  complete LVS report, or complete release manifest exists for `e1_chip_top`.
 - KLayout DRC must complete and produce `state_out.json` plus a release-readable
   clean report.
 - Top-level antenna metadata warnings remain:

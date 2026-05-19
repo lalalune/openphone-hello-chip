@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT_PATH = ROOT / "sw/platform/hello_platform_contract.json"
-GENERATED_HEADER = ROOT / "sw/platform/generated/hello_platform_contract.h"
-LINUX_DRIVER_HEADER = ROOT / "sw/linux/drivers/hello/hello_platform_contract.h"
+CONTRACT_PATH = ROOT / "sw/platform/e1_platform_contract.json"
+GENERATED_HEADER = ROOT / "sw/platform/generated/e1_platform_contract.h"
+LINUX_DRIVER_HEADER = ROOT / "sw/linux/drivers/e1/e1_platform_contract.h"
 
 
 REGION_RTL_NAMES = {
@@ -21,10 +21,10 @@ REGION_RTL_NAMES = {
 }
 
 MODULE_BY_REGION = {
-    "peripheral_control": ROOT / "rtl/peripherals/hello_peripherals.sv",
-    "dma": ROOT / "rtl/dma/hello_dma.sv",
-    "npu": ROOT / "rtl/npu/hello_npu.sv",
-    "display": ROOT / "rtl/display/hello_display.sv",
+    "peripheral_control": ROOT / "rtl/peripherals/e1_peripherals.sv",
+    "dma": ROOT / "rtl/dma/e1_dma.sv",
+    "npu": ROOT / "rtl/npu/e1_npu.sv",
+    "display": ROOT / "rtl/display/e1_display.sv",
 }
 
 
@@ -50,43 +50,43 @@ def load_contract() -> dict:
 
 
 def regions_by_name(contract: dict) -> dict:
-    return {region["name"]: region for region in contract["hello_chip"]["regions"]}
+    return {region["name"]: region for region in contract["e1_chip"]["regions"]}
 
 
 def generate_header(contract: dict) -> str:
-    hello = contract["hello_chip"]
+    e1 = contract["e1_chip"]
     qemu = contract["qemu_virt"]
     regions = regions_by_name(contract)
-    boot_words = {word["name"]: h(word["value"]) for word in hello["boot_rom"]["words"]}
+    boot_words = {word["name"]: h(word["value"]) for word in e1["boot_rom"]["words"]}
 
     lines = [
-        "/* Generated from sw/platform/hello_platform_contract.json. */",
-        "#ifndef HELLO_PLATFORM_CONTRACT_H",
-        "#define HELLO_PLATFORM_CONTRACT_H",
+        "/* Generated from sw/platform/e1_platform_contract.json. */",
+        "#ifndef E1_PLATFORM_CONTRACT_H",
+        "#define E1_PLATFORM_CONTRACT_H",
         "",
-        f"#define HELLO_CONTRACT_VERSION {contract['contract']['version']}u",
-        f"#define HELLO_UNMAPPED_READ_VALUE {fmt_hex(h(hello['unmapped_read_value']))}u",
-        f"#define HELLO_IMPLEMENTED_WINDOW_BYTES {hello['implemented_window_bytes']}u",
+        f"#define E1_CONTRACT_VERSION {contract['contract']['version']}u",
+        f"#define E1_UNMAPPED_READ_VALUE {fmt_hex(h(e1['unmapped_read_value']))}u",
+        f"#define E1_IMPLEMENTED_WINDOW_BYTES {e1['implemented_window_bytes']}u",
         "",
-        f"#define HELLO_BOOT_ROM_BASE {fmt_hex(h(hello['boot_rom']['base']))}u",
-        f"#define HELLO_BOOT_ROM_SIZE {fmt_hex(h(hello['boot_rom']['size']))}u",
-        f"#define HELLO_BOOT_MAGIC0 {fmt_hex(boot_words['magic0'])}u",
-        f"#define HELLO_BOOT_MAGIC1 {fmt_hex(boot_words['magic1'])}u",
-        f"#define HELLO_BOOT_VECTOR_PLACEHOLDER {fmt_hex(boot_words['boot_vector_placeholder'])}u",
+        f"#define E1_BOOT_ROM_BASE {fmt_hex(h(e1['boot_rom']['base']))}u",
+        f"#define E1_BOOT_ROM_SIZE {fmt_hex(h(e1['boot_rom']['size']))}u",
+        f"#define E1_BOOT_MAGIC0 {fmt_hex(boot_words['magic0'])}u",
+        f"#define E1_BOOT_MAGIC1 {fmt_hex(boot_words['magic1'])}u",
+        f"#define E1_BOOT_VECTOR_PLACEHOLDER {fmt_hex(boot_words['boot_vector_placeholder'])}u",
         "",
-        f"#define HELLO_PERIPHERAL_CONTROL_BASE {fmt_hex(h(regions['peripheral_control']['base']))}u",
-        f"#define HELLO_DMA_BASE {fmt_hex(h(regions['dma']['base']))}u",
-        f"#define HELLO_NPU_BASE {fmt_hex(h(regions['npu']['base']))}u",
-        f"#define HELLO_DISPLAY_BASE {fmt_hex(h(regions['display']['base']))}u",
-        f"#define HELLO_DRAM_BASE {fmt_hex(h(regions['dram']['base']))}u",
+        f"#define E1_PERIPHERAL_CONTROL_BASE {fmt_hex(h(regions['peripheral_control']['base']))}u",
+        f"#define E1_DMA_BASE {fmt_hex(h(regions['dma']['base']))}u",
+        f"#define E1_NPU_BASE {fmt_hex(h(regions['npu']['base']))}u",
+        f"#define E1_DISPLAY_BASE {fmt_hex(h(regions['display']['base']))}u",
+        f"#define E1_DRAM_BASE {fmt_hex(h(regions['dram']['base']))}u",
         "",
     ]
 
     prefix_by_region = {
-        "peripheral_control": "HELLO_PERIPH",
-        "dma": "HELLO_DMA",
-        "npu": "HELLO_NPU",
-        "display": "HELLO_DISPLAY",
+        "peripheral_control": "E1_PERIPH",
+        "dma": "E1_DMA",
+        "npu": "E1_NPU",
+        "display": "E1_DISPLAY",
     }
     for region_name in ("peripheral_control", "dma", "npu", "display"):
         prefix = prefix_by_region[region_name]
@@ -96,8 +96,8 @@ def generate_header(contract: dict) -> str:
 
     lines.extend(
         [
-            f"#define HELLO_QEMU_VIRT_LOAD_ADDRESS {fmt_hex(h(qemu['load_address']))}u",
-            f"#define HELLO_QEMU_VIRT_UART_BASE {fmt_hex(h(qemu['uart_base']))}u",
+            f"#define E1_QEMU_VIRT_LOAD_ADDRESS {fmt_hex(h(qemu['load_address']))}u",
+            f"#define E1_QEMU_VIRT_UART_BASE {fmt_hex(h(qemu['uart_base']))}u",
             "",
             "#endif",
             "",
@@ -121,8 +121,8 @@ def check_generated_header(contract: dict, errors: list[str]) -> None:
         errors.append(f"{LINUX_DRIVER_HEADER.relative_to(ROOT)} is missing")
         return
     driver_expected = expected.replace(
-        "/* Generated from sw/platform/hello_platform_contract.json. */",
-        "/* Generated import copy from sw/platform/hello_platform_contract.json. */",
+        "/* Generated from sw/platform/e1_platform_contract.json. */",
+        "/* Generated import copy from sw/platform/e1_platform_contract.json. */",
         1,
     )
     if LINUX_DRIVER_HEADER.read_text() != driver_expected:
@@ -133,7 +133,7 @@ def check_generated_header(contract: dict, errors: list[str]) -> None:
 
 
 def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
-    rtl = read_text(ROOT / "rtl/bootrom/hello_bootrom.sv")
+    rtl = read_text(ROOT / "rtl/bootrom/e1_bootrom.sv")
     constants = {
         name: h(value)
         for name, value in re.findall(
@@ -153,7 +153,7 @@ def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
         else:
             resolved = -1
         rtl_words[int(index, 16) * 4] = resolved
-    for word in contract["hello_chip"]["boot_rom"]["words"]:
+    for word in contract["e1_chip"]["boot_rom"]["words"]:
         offset = h(word["offset"])
         expected = h(word["value"])
         actual = rtl_words.get(offset)
@@ -166,7 +166,7 @@ def check_bootrom_against_rtl(contract: dict, errors: list[str]) -> None:
 
 
 def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
-    top = read_text(ROOT / "rtl/top/hello_soc_top.sv")
+    top = read_text(ROOT / "rtl/top/e1_soc_top.sv")
     decoded = {}
     for rtl_name, value in re.findall(
         r"assign\s+(\w+)_sel\s*=.*?mmio_addr\[31:12\]\s*==\s*20'h([0-9A-Fa-f_]+)",
@@ -188,7 +188,7 @@ def check_decode_against_rtl(contract: dict, errors: list[str]) -> None:
         )
 
     require("mmio_addr[11:8] == 4'h0" in top, "RTL implemented-window decode changed", errors)
-    unmapped = f"{h(contract['hello_chip']['unmapped_read_value']):08X}"
+    unmapped = f"{h(contract['e1_chip']['unmapped_read_value']):08X}"
     rtl_unmapped_values = {
         value.replace("_", "").upper() for value in re.findall(r"32'h([0-9A-Fa-f_]+)", top)
     }
@@ -224,7 +224,7 @@ def check_register_offsets_against_rtl(contract: dict, errors: list[str]) -> Non
 
 
 def check_debug_contract(errors: list[str]) -> None:
-    bridge = read_text(ROOT / "rtl/debug/hello_dbg_mmio_bridge.sv")
+    bridge = read_text(ROOT / "rtl/debug/e1_dbg_mmio_bridge.sv")
     require(
         "DBG_LAUNCH" in read_text(ROOT / "docs/arch/debug.md"),
         "docs/arch/debug.md no longer names DBG_LAUNCH",
@@ -246,7 +246,7 @@ def check_qemu_virt_separation(contract: dict, errors: list[str]) -> None:
     qemu_script = read_text(ROOT / "scripts/run_qemu.sh")
     renode_script = read_text(ROOT / "scripts/run_renode.sh")
     qemu_readme = read_text(ROOT / "docs/sim/qemu/README.md")
-    renode_repl = read_text(ROOT / "sim/renode/openphone_hello.repl")
+    renode_repl = read_text(ROOT / "sim/renode/openagent_e1.repl")
 
     require(
         "-machine virt" in qemu_script,
@@ -267,7 +267,7 @@ def check_qemu_virt_separation(contract: dict, errors: list[str]) -> None:
         errors,
     )
     require(
-        "not the hello-chip hardware ABI" in qemu_readme,
+        "not the e1-chip hardware ABI" in qemu_readme,
         "docs/sim/qemu/README.md must separate qemu-virt from hardware ABI",
         errors,
     )
@@ -285,16 +285,16 @@ def check_qemu_virt_separation(contract: dict, errors: list[str]) -> None:
 
 def check_contract(contract: dict) -> list[str]:
     errors: list[str] = []
-    hello = contract.get("hello_chip", {})
+    e1 = contract.get("e1_chip", {})
     require(
         contract["contract"]["version"] == 1,
-        "contract version must be 1 for current hello chip",
+        "contract version must be 1 for current e1 chip",
         errors,
     )
-    require(hello.get("has_cpu") is False, "hello chip contract must state has_cpu=false", errors)
+    require(e1.get("has_cpu") is False, "e1 chip contract must state has_cpu=false", errors)
     require(
-        hello.get("bus_master") == "package_debug_nibble_bridge",
-        "hello chip bus master must be the package debug nibble bridge",
+        e1.get("bus_master") == "package_debug_nibble_bridge",
+        "e1 chip bus master must be the package debug nibble bridge",
         errors,
     )
     require(
@@ -315,10 +315,10 @@ def check_contract(contract: dict) -> list[str]:
 
 def check_cpu_variant_artifacts(contract: dict, errors: list[str]) -> None:
     """Fail if the generated CPU-variant artifacts diverge from the contract."""
-    if "hello_chip_cpu_variant" not in contract:
+    if "e1_chip_cpu_variant" not in contract:
         errors.append(
-            "hello_chip_cpu_variant section is missing from "
-            "sw/platform/hello_platform_contract.json"
+            "e1_chip_cpu_variant section is missing from "
+            "sw/platform/e1_platform_contract.json"
         )
         return
     try:
@@ -350,18 +350,18 @@ def check_cpu_variant_consumers(contract: dict, errors: list[str]) -> None:
     """Spot-check that downstream consumers reference contract addresses.
 
     Keeps the cross-consumer check lightweight: every handwritten DTS that
-    advertises a hello device must use the contract base address for that
+    advertises a e1 device must use the contract base address for that
     device. RTL, kernel DTS, U-Boot, OpenSBI, and HAL configs are all
     expected to be regenerated from sw/platform/generated/ — this catches
     the case where someone forks an address into a downstream file.
     """
-    if "hello_chip_cpu_variant" not in contract:
+    if "e1_chip_cpu_variant" not in contract:
         return
-    v = contract["hello_chip_cpu_variant"]
+    v = contract["e1_chip_cpu_variant"]
     devices = v["devices"]
     candidate_dts = [
-        ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts",
-        ROOT / "sw/linux/dts/openphone-hello.dts",
+        ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/dts/openagent-e1-android.dts",
+        ROOT / "sw/linux/dts/openagent-e1.dts",
     ]
     for path in candidate_dts:
         if not path.is_file():

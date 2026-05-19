@@ -2,10 +2,10 @@
 
 After rst_n deasserts, all CPU-visible registers under the Linux contract
 fabric must come out of reset in their documented default state. This test
-walks the known register windows of hello_linux_soc_contract and asserts:
+walks the known register windows of e1_linux_soc_contract and asserts:
 
-  - hello_interrupt_controller.ENABLE == 0
-  - hello_interrupt_controller.PENDING == 0 (no spurious irq_sources)
+  - e1_interrupt_controller.ENABLE == 0
+  - e1_interrupt_controller.PENDING == 0 (no spurious irq_sources)
   - cpu_external_irq == 0
   - no stale awready/bvalid/rvalid handshake state leaks past reset
   - a follow-on transaction completes with OKAY response

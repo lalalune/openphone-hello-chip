@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Wrapper that drives the hello-demo FPGA flow end-to-end and archives logs.
+# Wrapper that drives the e1-demo FPGA flow end-to-end and archives logs.
 #
 # Steps: yosys synth -> nextpnr-ecp5 -> ecppack
-# Archive: build/fpga/hello_demo/archive/<utc-timestamp>/
+# Archive: build/fpga/e1_demo/archive/<utc-timestamp>/
 #
 # This script does NOT program the board. Run `make -C board/fpga prog`
 # (or invoke openFPGALoader directly) after inspecting the report.
@@ -13,10 +13,10 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BUILD_DIR="${REPO_ROOT}/build/fpga/hello_demo"
+BUILD_DIR="${REPO_ROOT}/build/fpga/e1_demo"
 ARCHIVE_DIR="${BUILD_DIR}/archive/$(date -u +%Y%m%dT%H%M%SZ)"
 
-log() { printf '[build_hello_demo] %s\n' "$*"; }
+log() { printf '[build_e1_demo] %s\n' "$*"; }
 
 for tool in yosys nextpnr-ecp5 ecppack; do
   if ! command -v "$tool" >/dev/null 2>&1; then
@@ -46,7 +46,7 @@ log "running: make -C board/fpga report"
 make -C board/fpga report
 
 # Archive logs and the bitstream so a build can be reproduced.
-for f in yosys.log nextpnr.log ecppack.log report.txt hello_chip_top.json hello_chip_top.config hello_chip_top.bit; do
+for f in yosys.log nextpnr.log ecppack.log report.txt e1_chip_top.json e1_chip_top.config e1_chip_top.bit; do
   if [[ -f "${BUILD_DIR}/${f}" ]]; then
     cp "${BUILD_DIR}/${f}" "${ARCHIVE_DIR}/"
   fi

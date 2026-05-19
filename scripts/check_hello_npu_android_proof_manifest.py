@@ -19,17 +19,17 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = (
-    ROOT / "docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json"
+    ROOT / "docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json"
 )
 TEMPLATE_CLAIM_BOUNDARY = "template_only_not_android_boot_cts_vts_or_nnapi_evidence"
-SCHEMA = "openphone.hello_npu_android_proof_manifest.v1"
+SCHEMA = "openagent.e1_npu_android_proof_manifest.v1"
 REQUIRED_STATUSES = {
     "aidl_or_hidl_hal_declared",
     "hal_binary_in_vendorimage",
     "vintf_check",
     "selinux_policy_build",
     "selinux_neverallow",
-    "vts_hello_npu",
+    "vts_e1_npu",
     "cts_nnapi_smoke",
     "nnapi_accelerator_query",
     "fail_closed_absent_device",
@@ -215,7 +215,7 @@ def validate_manifest(data: dict[str, Any], require_pass: bool) -> tuple[int, di
     result_status = "error" if errors else ("blocked" if blockers else "passed")
     return_code = 1 if errors else (2 if require_pass and blockers else 0)
     report = {
-        "schema": "openphone.hello_npu_android_proof_manifest_check.v1",
+        "schema": "openagent.e1_npu_android_proof_manifest_check.v1",
         "status": result_status,
         "manifest_status": status,
         "template": is_template,

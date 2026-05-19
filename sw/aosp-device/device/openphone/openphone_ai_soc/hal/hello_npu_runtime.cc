@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * Host-buildable runtime skeleton for the future hello_npu.default HAL.
+ * Host-buildable runtime skeleton for the future e1_npu.default HAL.
  *
  * This file intentionally has no Android framework dependency. The local BSP
  * checker compiles it on the host and verifies the fail-closed behavior for an
- * absent /dev/hello-npu-equivalent path.
+ * absent /dev/e1-npu-equivalent path.
  */
 
-#include "hello_npu_runtime.h"
+#include "e1_npu_runtime.h"
 
 #include <cerrno>
 #include <cstring>
@@ -17,8 +17,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace openphone {
-namespace hello_npu {
+namespace openagent {
+namespace e1_npu {
 
 namespace {
 
@@ -71,7 +71,7 @@ ProbeResult ProbeDevice(const std::string &device_path) {
 
 std::string FormatProbeResult(const std::string &device_path, const ProbeResult &result) {
 	std::ostringstream out;
-	out << "hello_npu_status=" << result.status << "\n";
+	out << "e1_npu_status=" << result.status << "\n";
 	out << "device_path=" << device_path << "\n";
 	out << "device_node_present=" << (result.device_node_present ? "true" : "false") << "\n";
 	out << "runtime_supported=" << (result.runtime_supported ? "true" : "false") << "\n";
@@ -81,5 +81,5 @@ std::string FormatProbeResult(const std::string &device_path, const ProbeResult 
 	return out.str();
 }
 
-}  // namespace hello_npu
-}  // namespace openphone
+}  // namespace e1_npu
+}  // namespace openagent

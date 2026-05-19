@@ -56,12 +56,12 @@ def test_boot_script_blocks_without_aosp_dir() -> None:
         )
     assert_contains(result.stdout, "BLOCKED: AOSP_DIR is not set")
     data = json.loads(REPORT.read_text())
-    if data.get("schema") != "openphone.android_sim_boot.v1":
+    if data.get("schema") != "openagent.android_sim_boot.v1":
         raise AssertionError("android sim report schema mismatch")
     if data.get("status") != "blocked":
         raise AssertionError("android sim report must be blocked without AOSP_DIR")
-    if "not hello-chip hardware ABI proof" not in data.get("claim_boundary", ""):
-        raise AssertionError("android sim report must keep the hello-chip ABI boundary explicit")
+    if "not e1-chip hardware ABI proof" not in data.get("claim_boundary", ""):
+        raise AssertionError("android sim report must keep the e1-chip ABI boundary explicit")
     missing_requirements = data.get("host_requirements", {}).get("missing", [])
     for requirement in (
         "AOSP_DIR is not set",
@@ -97,10 +97,10 @@ def test_boot_script_blocks_without_aosp_dir() -> None:
         raise AssertionError("android sim report must reference the BSP log evidence manifest")
     required = data.get("required_evidence", [])
     for path in (
-        "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
-        "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+        "docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
+        "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log",
         "docs/evidence/android/qemu_riscv64_smoke.log",
-        "docs/evidence/android/renode_hello_soc_smoke.log",
+        "docs/evidence/android/renode_e1_soc_smoke.log",
     ):
         if path not in required:
             raise AssertionError(f"android sim report missing required evidence category {path}")
@@ -162,14 +162,14 @@ def test_aosp_linux_preflight_blocks_without_aosp_dir() -> None:
                 f"expected preflight to block, got {result.returncode}\n{result.stdout}"
             )
         data = json.loads(result.stdout)
-        if data.get("schema") != "openphone.aosp_linux_preflight.v1":
+        if data.get("schema") != "openagent.aosp_linux_preflight.v1":
             raise AssertionError("AOSP Linux preflight schema mismatch")
         if data.get("status") != "blocked":
             raise AssertionError("AOSP Linux preflight must block without AOSP_DIR")
         if "AOSP_DIR is not set" not in data.get("blockers", []):
             raise AssertionError("AOSP Linux preflight must report missing AOSP_DIR")
         if data.get("claim_boundary") != (
-            "host_preflight_only_not_aosp_build_boot_cuttlefish_or_hello_chip_hardware_evidence"
+            "host_preflight_only_not_aosp_build_boot_cuttlefish_or_e1_chip_hardware_evidence"
         ):
             raise AssertionError("AOSP Linux preflight claim boundary changed")
         if "does not create docs/evidence/android logs" not in data.get("evidence_policy", ""):

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Tier 0: boot bare-metal HELLO on QEMU virt and assert serial output.
+# Tier 0: boot bare-metal E1 on QEMU virt and assert serial output.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-ELF="${ELF:-$ROOT/fw/bare-metal/hello/hello.elf}"
+ELF="${ELF:-$ROOT/fw/bare-metal/e1/e1.elf}"
 LOG_DIR="$ROOT/build/sim/qemu"
 LOG="$LOG_DIR/tier0_baremetal.log"
 TIMEOUT_SECS="${TIMEOUT_SECS:-5}"
@@ -11,7 +11,7 @@ TIMEOUT_SECS="${TIMEOUT_SECS:-5}"
 mkdir -p "$LOG_DIR"
 
 if [[ ! -f "$ELF" ]]; then
-    echo "ERROR: missing $ELF -- build with: make -C fw/bare-metal/hello" >&2
+    echo "ERROR: missing $ELF -- build with: make -C fw/bare-metal/e1" >&2
     exit 2
 fi
 
@@ -42,10 +42,10 @@ else
 fi
 set -e
 
-if grep -q "HELLO" "$LOG"; then
-    echo "[tier0] PASS: saw HELLO in serial log"
+if grep -q "E1" "$LOG"; then
+    echo "[tier0] PASS: saw E1 in serial log"
     exit 0
 else
-    echo "[tier0] FAIL: HELLO not found in $LOG" >&2
+    echo "[tier0] FAIL: E1 not found in $LOG" >&2
     exit 1
 fi

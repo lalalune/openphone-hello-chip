@@ -25,13 +25,13 @@ def synthetic_run_manifest(run_dir: Path) -> dict:
     for report in report_paths.values():
         write(run_dir / report, "clean\n")
     output_paths = {
-        "gds": "final/gds/hello_chip_top.gds",
-        "def": "final/def/hello_chip_top.def",
-        "gate_netlist": "final/verilog/gl/hello_chip_top.v",
+        "gds": "final/gds/e1_chip_top.gds",
+        "def": "final/def/e1_chip_top.def",
+        "gate_netlist": "final/verilog/gl/e1_chip_top.v",
         "corner_manifest": "reports/signoff/signoff-corners.yaml",
-        "sdc": "final/sdc/hello_chip_top.sdc",
-        "spef": "final/spef/hello_chip_top.spef",
-        "sdf": "final/sdf/hello_chip_top.sdf",
+        "sdc": "final/sdc/e1_chip_top.sdc",
+        "spef": "final/spef/e1_chip_top.spef",
+        "sdf": "final/sdf/e1_chip_top.sdf",
         "tool_versions": "reports/signoff/tool_versions.txt",
     }
     for output in output_paths.values():
@@ -39,7 +39,7 @@ def synthetic_run_manifest(run_dir: Path) -> dict:
 
     return {
         "run_id": "synthetic-local-parser-test",
-        "design": "hello_chip_top",
+        "design": "e1_chip_top",
         "flow": "openlane2",
         "pdk": "sky130A",
         "std_cell_library": "sky130_fd_sc_hd",
@@ -57,7 +57,7 @@ def synthetic_run_manifest(run_dir: Path) -> dict:
         ],
         "inputs": {
             "config": "config.json",
-            "sdc": "constraints/hello_soc.sdc",
+            "sdc": "constraints/e1_soc.sdc",
         },
         "outputs": {
             **output_paths,
@@ -110,7 +110,7 @@ def test_invalid_run_manifest_rejects_wrong_output_extension() -> None:
         root = Path(tmp)
         run_dir = root / "pd/openlane/runs/synthetic"
         payload = synthetic_run_manifest(run_dir)
-        payload["outputs"]["gds"] = "final/gds/hello_chip_top.txt"
+        payload["outputs"]["gds"] = "final/gds/e1_chip_top.txt"
         write(run_dir / payload["outputs"]["gds"], "not a gds\n")
         manifest_path = run_dir / "signoff-run.yaml"
         write(manifest_path, yaml.safe_dump(payload, sort_keys=True))

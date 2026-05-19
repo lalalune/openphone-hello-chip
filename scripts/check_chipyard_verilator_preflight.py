@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed environment check for generating OpenPhoneRocketConfig with Verilator."""
+"""Fail-closed environment check for generating OpenAgentRocketConfig with Verilator."""
 
 from __future__ import annotations
 
@@ -11,28 +11,28 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
+MANIFEST = ROOT / "docs/generators/chipyard/openagent-rocket-manifest.json"
 checkout_env = os.environ.get("CHIPYARD_CHECKOUT")
 CHECKOUT = (
     Path(checkout_env).resolve()
     if checkout_env and Path(checkout_env).is_absolute()
     else (ROOT / (checkout_env or "external/chipyard")).resolve()
 )
-REPORT = ROOT / "build/chipyard/openphone_rocket/verilator-preflight.json"
-CONFIG = "OpenPhoneRocketConfig"
-CONFIG_PACKAGE = "openphone"
+REPORT = ROOT / "build/chipyard/openagent_rocket/verilator-preflight.json"
+CONFIG = "OpenAgentRocketConfig"
+CONFIG_PACKAGE = "openagent"
 SIM_DIR = CHECKOUT / "sims/verilator"
 REQUIRED_RECURSIVE_SUBMODULE_ROOTS = ("generators/rocket-chip",)
 
 BUILD_COMMAND = [
     f"cd {CHECKOUT.relative_to(ROOT) if CHECKOUT.is_relative_to(ROOT) else CHECKOUT}/sims/verilator",
     "source ../../env.sh",
-    "make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone",
+    "make CONFIG=OpenAgentRocketConfig CONFIG_PACKAGE=openagent",
 ]
 VERILOG_COMMAND = [
     f"cd {CHECKOUT.relative_to(ROOT) if CHECKOUT.is_relative_to(ROOT) else CHECKOUT}/sims/verilator",
     "source ../../env.sh",
-    "make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone verilog",
+    "make CONFIG=OpenAgentRocketConfig CONFIG_PACKAGE=openagent verilog",
 ]
 
 
@@ -166,7 +166,7 @@ def main() -> int:
     config_source_checks: list[dict[str, object]] = []
     checks["config_sources"] = config_source_checks
     if not isinstance(config_sources, list) or not config_sources:
-        errors.append("selected_path.config_sources must list the OpenPhoneRocketConfig overlay")
+        errors.append("selected_path.config_sources must list the OpenAgentRocketConfig overlay")
     else:
         for entry in config_sources:
             source = ROOT / str(entry.get("source", ""))
@@ -182,13 +182,13 @@ def main() -> int:
                 errors.append(f"missing config overlay source: {rel(source)}")
             elif not destination.is_file():
                 blockers.append(
-                    f"OpenPhoneRocketConfig is not installed in checkout: {rel(destination)}"
+                    f"OpenAgentRocketConfig is not installed in checkout: {rel(destination)}"
                 )
             else:
                 record["matches"] = source.read_bytes() == destination.read_bytes()
                 if not record["matches"]:
                     errors.append(
-                        "installed OpenPhoneRocketConfig differs from repo source: "
+                        "installed OpenAgentRocketConfig differs from repo source: "
                         f"{rel(destination)}"
                     )
             config_source_checks.append(record)
@@ -258,7 +258,7 @@ def main() -> int:
         )
 
     report = {
-        "schema": "openphone.cpu_ap_chipyard_verilator_preflight.v1",
+        "schema": "openagent.cpu_ap_chipyard_verilator_preflight.v1",
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "status": "fail" if errors else "blocked" if blockers else "pass",
         "manifest": rel(MANIFEST),

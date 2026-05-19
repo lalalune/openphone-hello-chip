@@ -88,8 +88,8 @@ def test_docker_run_uses_repo_mount_labels_and_cleans_lock() -> None:
 
         assert result.returncode == 0, result.stdout + result.stderr
         log = log_path.read_text()
-        assert f"--label openphone.repo={ROOT}" in log, log
-        assert "--label openphone.openlane=1" in log, log
+        assert f"--label openagent.repo={ROOT}" in log, log
+        assert "--label openagent.openlane=1" in log, log
         assert f"-v {ROOT}:/work" in log, log
         assert "-w /work" in log, log
         assert not Path(env["OPENLANE_LOCK_DIR"]).exists()

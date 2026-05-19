@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_dma_formal(input logic clk);
+module e1_dma_formal(input logic clk);
     logic rst_n = 1'b0;
     (* anyseq *) logic valid;
     (* anyseq *) logic write;
@@ -26,7 +26,7 @@ module hello_dma_formal(input logic clk);
     logic [31:0] m_axil_araddr;
     logic m_axil_rready;
 
-    hello_dma dut (
+    e1_dma dut (
         .clk(clk),
         .rst_n(rst_n),
         .valid(valid),

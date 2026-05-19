@@ -1,6 +1,6 @@
 """Decode-error response on unmapped MMIO.
 
-hello_axi_lite_interconnect (under hello_linux_soc_contract) decodes three
+e1_axi_lite_interconnect (under e1_linux_soc_contract) decodes three
 windows:
     0x8000_0000.. DRAM  (top nibble 0x8)
     0x0C00_0000.. INTC  (top 20 bits == 0x0C000)

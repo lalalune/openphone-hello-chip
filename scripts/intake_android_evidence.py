@@ -14,15 +14,15 @@ MANIFEST_REL = Path("docs/android/bsp-log-evidence-manifest.json")
 
 TARGET_LOGS = {
     "aosp": [
-        "docs/evidence/android/openphone_ai_soc_lunch.log",
-        "docs/evidence/android/openphone_ai_soc_vendorimage.log",
-        "docs/evidence/android/openphone_ai_soc_checkvintf.log",
-        "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
-        "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
-        "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+        "docs/evidence/android/openagent_ai_soc_lunch.log",
+        "docs/evidence/android/openagent_ai_soc_vendorimage.log",
+        "docs/evidence/android/openagent_ai_soc_checkvintf.log",
+        "docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
+        "docs/evidence/android/openagent_ai_soc_selinux_neverallow.log",
+        "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log",
         "docs/evidence/android/cuttlefish_riscv64_smoke.log",
         "docs/evidence/android/qemu_riscv64_smoke.log",
-        "docs/evidence/android/renode_hello_soc_smoke.log",
+        "docs/evidence/android/renode_e1_soc_smoke.log",
     ],
 }
 

@@ -45,7 +45,7 @@ def main() -> int:
     delta_by_id = {delta.get("id"): delta for delta in deltas if isinstance(delta, dict)}
 
     require(
-        manifest.get("schema") == "openphone.cpu_ap_2028_target_deltas.v1",
+        manifest.get("schema") == "openagent.cpu_ap_2028_target_deltas.v1",
         "target delta manifest schema drifted",
         errors,
     )
@@ -85,7 +85,7 @@ def main() -> int:
     require(
         step.get("harts") == 1, "selected bring-up step must remain explicitly single-hart", errors
     )
-    require(step.get("config") == "OpenPhoneRocketConfig", "selected step config drifted", errors)
+    require(step.get("config") == "OpenAgentRocketConfig", "selected step config drifted", errors)
     require(
         target.get("minimum_harts", 0) >= 4,
         "2028 phone-class target must require at least four harts",

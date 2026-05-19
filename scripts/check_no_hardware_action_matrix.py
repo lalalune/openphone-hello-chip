@@ -42,7 +42,7 @@ def main() -> int:
         print("no-hardware action matrix must be a YAML mapping")
         return 1
 
-    if data.get("schema") != "openphone.no_hardware_action_matrix.v1":
+    if data.get("schema") != "openagent.no_hardware_action_matrix.v1":
         errors.append("wrong schema id")
     if "This is not a claim that Android or silicon works." not in str(data.get("purpose", "")):
         errors.append("purpose must explicitly reject Android/silicon claims")

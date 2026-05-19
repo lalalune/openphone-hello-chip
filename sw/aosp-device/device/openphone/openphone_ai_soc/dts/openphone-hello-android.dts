@@ -1,14 +1,14 @@
 /dts-v1/;
 
 / {
-    compatible = "openphone,openphone-ai-soc", "openphone,hello-soc";
-    model = "OpenPhone hello AI SoC Android scaffold";
+    compatible = "openagent,openagent-ai-soc", "openagent,e1-soc";
+    model = "OpenAgent e1 AI SoC Android scaffold";
     #address-cells = <2>;
     #size-cells = <2>;
 
     chosen {
         stdout-path = "serial0:115200n8";
-        bootargs = "console=ttyS0 earlycon androidboot.hardware=openphone_ai_soc";
+        bootargs = "console=ttyS0 earlycon androidboot.hardware=openagent_ai_soc";
     };
 
     aliases {
@@ -29,19 +29,19 @@
     };
 
     dma@10010000 {
-        compatible = "openphone,hello-dma";
+        compatible = "openagent,e1-dma";
         reg = <0x0 0x10010000 0x0 0x1000>;
         status = "disabled";
     };
 
     npu@10020000 {
-        compatible = "openphone,hello-npu";
+        compatible = "openagent,e1-npu";
         reg = <0x0 0x10020000 0x0 0x1000>;
         status = "disabled";
     };
 
     display@10030000 {
-        compatible = "openphone,hello-display";
+        compatible = "openagent,e1-display";
         reg = <0x0 0x10030000 0x0 0x1000>;
         status = "disabled";
     };
@@ -58,7 +58,7 @@
     };
 
     sdio0: mmc@10050000 {
-        compatible = "openphone,hello-sdio-host";
+        compatible = "openagent,e1-sdio-host";
         status = "disabled";
         reg = <0x0 0x10050000 0x0 0x1000>;
         #address-cells = <1>;
@@ -76,7 +76,7 @@
     };
 
     uart1: serial@10051000 {
-        compatible = "openphone,hello-uart";
+        compatible = "openagent,e1-uart";
         status = "disabled";
         reg = <0x0 0x10051000 0x0 0x1000>;
 

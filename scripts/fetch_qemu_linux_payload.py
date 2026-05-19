@@ -126,7 +126,7 @@ def main(argv: list[str]) -> int:
     expected = parse_sha256s(sha_file.read_text(encoding="utf-8", errors="ignore"))
 
     manifest: dict[str, object] = {
-        "schema": "openphone.qemu_linux_payload.v1",
+        "schema": "openagent.qemu_linux_payload.v1",
         "claim_boundary": "qemu_virt_debian_netboot_payload_only",
         "created_utc": utc_now(),
         "base_url": base_url,

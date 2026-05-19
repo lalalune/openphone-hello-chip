@@ -95,7 +95,7 @@ def test_uncalibrated_simulator_metrics_fail_instead_of_passing() -> None:
         metrics.write_text(
             json.dumps(
                 {
-                    "schema": "openphone.simulator_arch_metrics.v1",
+                    "schema": "openagent.simulator_arch_metrics.v1",
                     "evidence_class": "qemu_virt_liveness_only",
                     "claim_boundary": "not_performance_evidence",
                     "calibration_status": "uncalibrated",
@@ -114,7 +114,7 @@ def test_uncalibrated_simulator_metrics_fail_instead_of_passing() -> None:
             config,
             {
                 "name": "fake_simulator_arch_metrics",
-                "suite": "OpenPhone simulator metrics",
+                "suite": "OpenAgent simulator metrics",
                 "version": "test",
                 "command": [sys.executable, "-c", f"print(open({str(metrics)!r}).read())"],
                 "input_dataset": "simulator metrics JSON",

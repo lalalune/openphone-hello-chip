@@ -1,7 +1,7 @@
-# OpenSBI platform: openphone-hello-cpu-variant
+# OpenSBI platform: openagent-e1-cpu-variant
 
-OpenSBI platform glue for the `hello_chip_cpu_variant` projection from
-[`sw/platform/hello_platform_contract.json`](../../../platform/hello_platform_contract.json).
+OpenSBI platform glue for the `e1_chip_cpu_variant` projection from
+[`sw/platform/e1_platform_contract.json`](../../../platform/e1_platform_contract.json).
 
 ## Addresses (single source of truth: the contract)
 
@@ -16,14 +16,14 @@ OpenSBI platform glue for the `hello_chip_cpu_variant` projection from
 
 ```sh
 # Copy this directory into a sibling OpenSBI checkout:
-cp -r sw/opensbi/platform/openphone external/opensbi/platform/
+cp -r sw/opensbi/platform/openagent external/opensbi/platform/
 
 # Build fw_payload with the Linux kernel embedded:
-make -C external/opensbi PLATFORM=openphone \
+make -C external/opensbi PLATFORM=openagent \
     FW_PAYLOAD_PATH=$(pwd)/external/linux/arch/riscv/boot/Image
 
 # Output:
-# external/opensbi/build/platform/openphone/firmware/fw_payload.elf
+# external/opensbi/build/platform/openagent/firmware/fw_payload.elf
 ```
 
 Then run the Renode tier-2 smoke from `scripts/sim/run_renode_tier2.sh`.

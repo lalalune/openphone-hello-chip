@@ -19,10 +19,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "sw/platform/hello_platform_contract.json"
-LINUX_DTS = ROOT / "sw/linux/dts/openphone-hello.dts"
-AOSP_DTS = ROOT / "sw/aosp-device/device/openphone/openphone_ai_soc/dts/openphone-hello-android.dts"
-GENERATED_DTSI = ROOT / "sw/platform/generated/hello-platform.dtsi"
+CONTRACT = ROOT / "sw/platform/e1_platform_contract.json"
+LINUX_DTS = ROOT / "sw/linux/dts/openagent-e1.dts"
+AOSP_DTS = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/dts/openagent-e1-android.dts"
+GENERATED_DTSI = ROOT / "sw/platform/generated/e1-platform.dtsi"
 MANIFEST = ROOT / "docs/evidence/linux-memory-platform-missing-evidence.json"
 REPORT = ROOT / "build/reports/linux_memory_platform_contract.json"
 
@@ -73,7 +73,7 @@ def check_dtc(path: Path, errors: list[str]) -> None:
     if not dtc:
         return
     result = subprocess.run(
-        [dtc, "-I", "dts", "-O", "dtb", "-o", "/tmp/openphone-check.dtb", str(path)],
+        [dtc, "-I", "dts", "-O", "dtb", "-o", "/tmp/openagent-check.dtb", str(path)],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -148,14 +148,14 @@ def check_one_dts(path: Path, variant: dict[str, Any], *, android: bool, errors:
         )
 
     for forbidden in (
-        "hello,uart-1.0",
-        "hello,npu-1.0",
-        "hello,dma-1.0",
-        "hello,display-1.0",
+        "e1,uart-1.0",
+        "e1,npu-1.0",
+        "e1,dma-1.0",
+        "e1,display-1.0",
         "0x10003000",
         "0x40000000",
         "rv64imac",
-        "console=helloUART0",
+        "console=e1UART0",
     ):
         require(
             forbidden.lower() not in lower, f"{rel(path)} contains stale token {forbidden}", errors
@@ -266,7 +266,7 @@ def build_report(*, evidence_only: bool = False) -> tuple[dict[str, Any], int]:
     errors: list[str] = []
     blockers: list[str] = []
     contract = load_contract(errors)
-    variant = contract.get("hello_chip_cpu_variant", {}) if contract else {}
+    variant = contract.get("e1_chip_cpu_variant", {}) if contract else {}
     if not evidence_only and variant:
         check_one_dts(LINUX_DTS, variant, android=False, errors=errors)
         check_one_dts(AOSP_DTS, variant, android=True, errors=errors)
@@ -274,7 +274,7 @@ def build_report(*, evidence_only: bool = False) -> tuple[dict[str, Any], int]:
     check_evidence_manifest(errors, blockers)
     status = "fail" if errors else ("blocked" if blockers else "pass")
     report = {
-        "schema": "openphone.linux_memory_platform_contract.status.v1",
+        "schema": "openagent.linux_memory_platform_contract.status.v1",
         "status": status,
         "claim_boundary": "static_contract_and_missing_evidence_gate_no_boot_evidence_created",
         "errors": errors,

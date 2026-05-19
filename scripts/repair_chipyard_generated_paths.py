@@ -11,18 +11,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKOUT = ROOT / "external/chipyard"
-CONFIG = "OpenPhoneRocketConfig"
+CONFIG = "OpenAgentRocketConfig"
 GENERATED_CONFIG_DIR = (
-    CHECKOUT / "sims/verilator/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig"
+    CHECKOUT / "sims/verilator/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig"
 )
 KNOWN_FILES = (
     GENERATED_CONFIG_DIR / "sim_files.common.f",
     GENERATED_CONFIG_DIR / "sim_files.f",
-    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig.all.f",
-    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenPhoneRocketConfig" / "VTestDriver.mk",
+    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenAgentRocketConfig.all.f",
+    GENERATED_CONFIG_DIR / "chipyard.harness.TestHarness.OpenAgentRocketConfig" / "VTestDriver.mk",
 )
 DEFAULT_STALE_ROOTS = ("/work", "/workspace", "/__w")
-HOST_REPO_ENV = "OPENPHONE_HOST_REPO_DIR"
+HOST_REPO_ENV = "OPENAGENT_HOST_REPO_DIR"
 GENERATED_METADATA_PATTERNS = ("*.f", "*.mk", "*.d")
 
 
@@ -138,7 +138,7 @@ def main() -> int:
         status = "repaired"
 
     report = {
-        "schema": "openphone.chipyard_generated_path_repair.v1",
+        "schema": "openagent.chipyard_generated_path_repair.v1",
         "status": status,
         "rewrite": args.rewrite,
         "stale_roots": [root.rstrip("/") for root in stale_roots],

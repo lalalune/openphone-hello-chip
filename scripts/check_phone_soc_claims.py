@@ -34,7 +34,7 @@ REQUIRED_UMA_AXES = {
 }
 
 REQUIRED_AI_OPTIONS = {
-    "keep_hello_mmio_npu",
+    "keep_e1_mmio_npu",
     "integrate_open_npu_ip",
     "vector_cpu_baseline",
     "gpu_compute_or_2d_first",
@@ -81,7 +81,7 @@ def require_file(path: str, errors: list[str], field: str) -> None:
 
 
 def check_min_blocks(data: dict, errors: list[str]) -> None:
-    if data.get("schema") != "openphone.phone_soc_minimum_blocks.v1":
+    if data.get("schema") != "openagent.phone_soc_minimum_blocks.v1":
         errors.append("phone-soc-minimum-blocks.yaml has wrong schema")
     if data.get("status") != "pre_hardware_release_blocked":
         errors.append("phone-soc-minimum-blocks.yaml must remain pre_hardware_release_blocked")
@@ -126,7 +126,7 @@ def check_min_blocks(data: dict, errors: list[str]) -> None:
 
 
 def check_uma(data: dict, errors: list[str]) -> None:
-    if data.get("schema") != "openphone.uma_coherency_validation_strategy.v1":
+    if data.get("schema") != "openagent.uma_coherency_validation_strategy.v1":
         errors.append("uma-coherency-validation-strategy.yaml has wrong schema")
     if data.get("status") != "fail_closed_until_evidence":
         errors.append("UMA strategy must remain fail_closed_until_evidence")
@@ -153,7 +153,7 @@ def check_uma(data: dict, errors: list[str]) -> None:
 
 
 def check_ai_options(data: dict, errors: list[str]) -> None:
-    if data.get("schema") != "openphone.ai_accelerator_options.v1":
+    if data.get("schema") != "openagent.ai_accelerator_options.v1":
         errors.append("ai-accelerator-options.yaml has wrong schema")
     if data.get("status") != "decision_open_fail_closed":
         errors.append("AI accelerator options must remain decision_open_fail_closed")
@@ -180,7 +180,7 @@ def check_ai_options(data: dict, errors: list[str]) -> None:
 
 
 def check_handoffs(data: dict, errors: list[str]) -> None:
-    if data.get("schema") != "openphone.pipeline_handoff_work_order.v1":
+    if data.get("schema") != "openagent.pipeline_handoff_work_order.v1":
         errors.append("spec-rtl-sw-pd-handoff-work-order.yaml has wrong schema")
     if data.get("status") != "fail_closed_open_work":
         errors.append("handoff work order must remain fail_closed_open_work")
@@ -241,8 +241,8 @@ def check_existing_fail_closed_controls(errors: list[str]) -> None:
     for term in (
         "placeholder_allowed",
         "release_blocking",
-        "tflite_hello_npu",
-        "--nnapi_accelerator_name=hello-npu",
+        "tflite_e1_npu",
+        "--nnapi_accelerator_name=e1-npu",
     ):
         if term not in benchmark_plan:
             errors.append(f"benchmark plan missing AI claim guard: {term}")

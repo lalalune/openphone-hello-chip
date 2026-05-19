@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
-# OpenSBI platform config for the openphone hello_chip_cpu_variant.
-# Addresses MUST match sw/platform/hello_platform_contract.json
-# (section: hello_chip_cpu_variant).
+# OpenSBI platform config for the openagent e1_chip_cpu_variant.
+# Addresses MUST match sw/platform/e1_platform_contract.json
+# (section: e1_chip_cpu_variant).
 
 # Compiler pre-processor flags
 platform-cppflags-y =

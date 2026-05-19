@@ -10,9 +10,9 @@ VECTOR_PIN_RE = re.compile(r"^(DBG_ADDR|DBG_WDATA|DBG_RDATA|GPIO)(\d+)$")
 
 def parse_ports(path: Path) -> set[str]:
     text = path.read_text()
-    module = re.search(r"module\s+hello_chip_top\s*\((.*?)\);", text, re.S)
+    module = re.search(r"module\s+e1_chip_top\s*\((.*?)\);", text, re.S)
     if not module:
-        raise SystemExit("hello_chip_top module header not found")
+        raise SystemExit("e1_chip_top module header not found")
     ports: set[str] = set()
     for raw in module.group(1).splitlines():
         raw = raw.split("//", 1)[0].strip().rstrip(",")
@@ -37,13 +37,13 @@ def parse_pin_names(path: Path) -> set[str]:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
-    cfg_path = root / "board/fpga/hello_demo_fpga.yaml"
+    cfg_path = root / "board/fpga/e1_demo_fpga.yaml"
     cfg = yaml.safe_load(cfg_path.read_text())
-    ports = parse_ports(root / "rtl/top/hello_chip_top.sv")
-    pin_names = parse_pin_names(root / "package/hello-demo-pinout.yaml")
+    ports = parse_ports(root / "rtl/top/e1_chip_top.sv")
+    pin_names = parse_pin_names(root / "package/e1-demo-pinout.yaml")
 
-    if cfg.get("rtl_top") != "hello_chip_top":
-        print("FPGA target must name rtl_top hello_chip_top")
+    if cfg.get("rtl_top") != "e1_chip_top":
+        print("FPGA target must name rtl_top e1_chip_top")
         return 1
 
     required = {

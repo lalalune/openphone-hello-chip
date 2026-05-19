@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * OpenPhone hello-NPU character driver.
+ * OpenAgent e1-NPU character driver.
  *
- * /dev/hello-npu supports:
+ * /dev/e1-npu supports:
  *   - read():  ASCII "0x%08x\n" of NPU RESULT
  *   - ioctl(): submit OP_A/OP_B/OPCODE, read back result + perf counters
  *   - mmap():  map the 4 KiB MMIO window (root only) for direct register access
  *
- * Offsets come from hello_platform_contract.h. Base address comes from the
- * DT `reg` of the `openphone,hello-npu` node.
+ * Offsets come from e1_platform_contract.h. Base address comes from the
+ * DT `reg` of the `openagent,e1-npu` node.
  */
 
 #include <linux/fs.h>
@@ -22,10 +22,10 @@
 #include <linux/platform_device.h>
 #include <linux/uaccess.h>
 
-#include "hello_platform_contract.h"
-#include "openphone-hello-npu-uapi.h"
+#include "e1_platform_contract.h"
+#include "openagent-e1-npu-uapi.h"
 
-struct openphone_hello_npu {
+struct openagent_e1_npu {
 	struct device *dev;
 	void __iomem *regs;
 	phys_addr_t phys_base;
@@ -34,45 +34,45 @@ struct openphone_hello_npu {
 	struct mutex lock;
 };
 
-static inline struct openphone_hello_npu *miscdev_to_npu(struct file *file)
+static inline struct openagent_e1_npu *miscdev_to_npu(struct file *file)
 {
-	return container_of(file->private_data, struct openphone_hello_npu,
+	return container_of(file->private_data, struct openagent_e1_npu,
 			    miscdev);
 }
 
-static ssize_t openphone_hello_npu_read(struct file *file, char __user *buf,
+static ssize_t openagent_e1_npu_read(struct file *file, char __user *buf,
 					size_t len, loff_t *ppos)
 {
-	struct openphone_hello_npu *npu = miscdev_to_npu(file);
+	struct openagent_e1_npu *npu = miscdev_to_npu(file);
 	char tmp[16];
 	u32 value;
 	int n;
 
-	value = readl(npu->regs + HELLO_NPU_RESULT_OFFSET);
+	value = readl(npu->regs + E1_NPU_RESULT_OFFSET);
 	n = scnprintf(tmp, sizeof(tmp), "0x%08x\n", value);
 	return simple_read_from_buffer(buf, len, ppos, tmp, n);
 }
 
-static long openphone_hello_npu_submit(struct openphone_hello_npu *npu,
+static long openagent_e1_npu_submit(struct openagent_e1_npu *npu,
 				       void __user *argp)
 {
-	struct openphone_hello_npu_job job;
+	struct openagent_e1_npu_job job;
 
 	if (copy_from_user(&job, argp, sizeof(job)))
 		return -EFAULT;
 
 	mutex_lock(&npu->lock);
-	writel(job.op_a, npu->regs + HELLO_NPU_OP_A_OFFSET);
-	writel(job.op_b, npu->regs + HELLO_NPU_OP_B_OFFSET);
-	writel(job.opcode, npu->regs + HELLO_NPU_OPCODE_OFFSET);
-	writel(0x1u, npu->regs + HELLO_NPU_CTRL_STATUS_OFFSET);
+	writel(job.op_a, npu->regs + E1_NPU_OP_A_OFFSET);
+	writel(job.op_b, npu->regs + E1_NPU_OP_B_OFFSET);
+	writel(job.opcode, npu->regs + E1_NPU_OPCODE_OFFSET);
+	writel(0x1u, npu->regs + E1_NPU_CTRL_STATUS_OFFSET);
 
-	job.result = readl(npu->regs + HELLO_NPU_RESULT_OFFSET);
-	job.result_hi = readl(npu->regs + HELLO_NPU_RESULT_HI_OFFSET);
-	job.ctrl_status = readl(npu->regs + HELLO_NPU_CTRL_STATUS_OFFSET);
-	job.perf_cycles = readl(npu->regs + HELLO_NPU_PERF_CYCLES_OFFSET);
-	job.perf_macs = readl(npu->regs + HELLO_NPU_PERF_MACS_OFFSET);
-	job.perf_errors = readl(npu->regs + HELLO_NPU_PERF_ERRORS_OFFSET);
+	job.result = readl(npu->regs + E1_NPU_RESULT_OFFSET);
+	job.result_hi = readl(npu->regs + E1_NPU_RESULT_HI_OFFSET);
+	job.ctrl_status = readl(npu->regs + E1_NPU_CTRL_STATUS_OFFSET);
+	job.perf_cycles = readl(npu->regs + E1_NPU_PERF_CYCLES_OFFSET);
+	job.perf_macs = readl(npu->regs + E1_NPU_PERF_MACS_OFFSET);
+	job.perf_errors = readl(npu->regs + E1_NPU_PERF_ERRORS_OFFSET);
 	mutex_unlock(&npu->lock);
 
 	if (copy_to_user(argp, &job, sizeof(job)))
@@ -80,21 +80,21 @@ static long openphone_hello_npu_submit(struct openphone_hello_npu *npu,
 	return 0;
 }
 
-static long openphone_hello_npu_ioctl(struct file *file, unsigned int cmd,
+static long openagent_e1_npu_ioctl(struct file *file, unsigned int cmd,
 				      unsigned long arg)
 {
-	struct openphone_hello_npu *npu = miscdev_to_npu(file);
+	struct openagent_e1_npu *npu = miscdev_to_npu(file);
 	void __user *argp = (void __user *)arg;
 
 	switch (cmd) {
-	case OPENPHONE_HELLO_NPU_IOC_SUBMIT:
-		return openphone_hello_npu_submit(npu, argp);
-	case OPENPHONE_HELLO_NPU_IOC_GET_CONTRACT: {
-		struct openphone_hello_npu_contract c = {
-			.version = HELLO_CONTRACT_VERSION,
-			.npu_base = HELLO_NPU_BASE,
-			.window_bytes = HELLO_IMPLEMENTED_WINDOW_BYTES,
-			.unmapped_read_value = HELLO_UNMAPPED_READ_VALUE,
+	case OPENAGENT_E1_NPU_IOC_SUBMIT:
+		return openagent_e1_npu_submit(npu, argp);
+	case OPENAGENT_E1_NPU_IOC_GET_CONTRACT: {
+		struct openagent_e1_npu_contract c = {
+			.version = E1_CONTRACT_VERSION,
+			.npu_base = E1_NPU_BASE,
+			.window_bytes = E1_IMPLEMENTED_WINDOW_BYTES,
+			.unmapped_read_value = E1_UNMAPPED_READ_VALUE,
 		};
 		return copy_to_user(argp, &c, sizeof(c)) ? -EFAULT : 0;
 	}
@@ -103,10 +103,10 @@ static long openphone_hello_npu_ioctl(struct file *file, unsigned int cmd,
 	}
 }
 
-static int openphone_hello_npu_mmap(struct file *file,
+static int openagent_e1_npu_mmap(struct file *file,
 				    struct vm_area_struct *vma)
 {
-	struct openphone_hello_npu *npu = miscdev_to_npu(file);
+	struct openagent_e1_npu *npu = miscdev_to_npu(file);
 	unsigned long size = vma->vm_end - vma->vm_start;
 
 	if (!capable(CAP_SYS_RAWIO))
@@ -122,18 +122,18 @@ static int openphone_hello_npu_mmap(struct file *file,
 				  size, vma->vm_page_prot);
 }
 
-static const struct file_operations openphone_hello_npu_fops = {
+static const struct file_operations openagent_e1_npu_fops = {
 	.owner = THIS_MODULE,
-	.read = openphone_hello_npu_read,
-	.unlocked_ioctl = openphone_hello_npu_ioctl,
-	.compat_ioctl = openphone_hello_npu_ioctl,
-	.mmap = openphone_hello_npu_mmap,
+	.read = openagent_e1_npu_read,
+	.unlocked_ioctl = openagent_e1_npu_ioctl,
+	.compat_ioctl = openagent_e1_npu_ioctl,
+	.mmap = openagent_e1_npu_mmap,
 	.llseek = no_llseek,
 };
 
-static int openphone_hello_npu_probe(struct platform_device *pdev)
+static int openagent_e1_npu_probe(struct platform_device *pdev)
 {
-	struct openphone_hello_npu *npu;
+	struct openagent_e1_npu *npu;
 	struct resource *res;
 
 	npu = devm_kzalloc(&pdev->dev, sizeof(*npu), GFP_KERNEL);
@@ -154,43 +154,43 @@ static int openphone_hello_npu_probe(struct platform_device *pdev)
 	mutex_init(&npu->lock);
 
 	npu->miscdev.minor = MISC_DYNAMIC_MINOR;
-	npu->miscdev.name = "hello-npu";
-	npu->miscdev.fops = &openphone_hello_npu_fops;
+	npu->miscdev.name = "e1-npu";
+	npu->miscdev.fops = &openagent_e1_npu_fops;
 	npu->miscdev.parent = &pdev->dev;
 	platform_set_drvdata(pdev, npu);
 
 	dev_info(&pdev->dev,
-		 "openphone-hello-npu: phys=0x%llx size=0x%llx contract_v%u\n",
+		 "openagent-e1-npu: phys=0x%llx size=0x%llx contract_v%u\n",
 		 (u64)npu->phys_base, (u64)npu->size,
-		 HELLO_CONTRACT_VERSION);
+		 E1_CONTRACT_VERSION);
 
 	return misc_register(&npu->miscdev);
 }
 
-static int openphone_hello_npu_remove(struct platform_device *pdev)
+static int openagent_e1_npu_remove(struct platform_device *pdev)
 {
-	struct openphone_hello_npu *npu = platform_get_drvdata(pdev);
+	struct openagent_e1_npu *npu = platform_get_drvdata(pdev);
 
 	misc_deregister(&npu->miscdev);
 	return 0;
 }
 
-static const struct of_device_id openphone_hello_npu_of_match[] = {
-	{ .compatible = "openphone,hello-npu" },
+static const struct of_device_id openagent_e1_npu_of_match[] = {
+	{ .compatible = "openagent,e1-npu" },
 	{ }
 };
-MODULE_DEVICE_TABLE(of, openphone_hello_npu_of_match);
+MODULE_DEVICE_TABLE(of, openagent_e1_npu_of_match);
 
-static struct platform_driver openphone_hello_npu_driver = {
-	.probe = openphone_hello_npu_probe,
-	.remove = openphone_hello_npu_remove,
+static struct platform_driver openagent_e1_npu_driver = {
+	.probe = openagent_e1_npu_probe,
+	.remove = openagent_e1_npu_remove,
 	.driver = {
-		.name = "openphone-hello-npu",
-		.of_match_table = openphone_hello_npu_of_match,
+		.name = "openagent-e1-npu",
+		.of_match_table = openagent_e1_npu_of_match,
 	},
 };
-module_platform_driver(openphone_hello_npu_driver);
+module_platform_driver(openagent_e1_npu_driver);
 
-MODULE_DESCRIPTION("OpenPhone hello NPU character driver");
-MODULE_AUTHOR("OpenPhone hello BSP");
+MODULE_DESCRIPTION("OpenAgent e1 NPU character driver");
+MODULE_AUTHOR("OpenAgent e1 BSP");
 MODULE_LICENSE("GPL");

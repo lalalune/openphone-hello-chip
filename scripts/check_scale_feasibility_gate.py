@@ -66,7 +66,7 @@ def main() -> int:
         return 1
 
     require(
-        data.get("schema") == "openphone.scale_feasibility_gate.v1",
+        data.get("schema") == "openagent.scale_feasibility_gate.v1",
         "scale gate schema drifted",
         errors,
     )

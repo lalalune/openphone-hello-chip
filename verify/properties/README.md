@@ -31,7 +31,7 @@ bind my_master axi_lite_props #(.ADDR_W(32), .DATA_W(32)) u_props (
 
 ## SymbiYosys harness
 
-`dma_axil_bind.sv` is a structural top that instantiates `hello_dma` and
+`dma_axil_bind.sv` is a structural top that instantiates `e1_dma` and
 binds the property pack to its master ports. `dma_axil.sby` exposes two
 tasks: `bmc` (depth 32) and `prove` (depth 16). Run from this directory:
 

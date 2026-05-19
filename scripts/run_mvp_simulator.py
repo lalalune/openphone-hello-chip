@@ -14,16 +14,16 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "build/reports/mvp_simulator.json"
 TIMEOUT_WRAPPER = [sys.executable, "scripts/run_with_timeout.py"]
 DEFAULT_TIMEOUT_SECONDS = 300
-CHIPYARD_OUT = ROOT / "build/chipyard/openphone_rocket"
+CHIPYARD_OUT = ROOT / "build/chipyard/openagent_rocket"
 MVP_NPU_REPORT = ROOT / "build/reports/mvp_npu_ml_smoke.json"
 MVP_NPU_TRANSCRIPT = ROOT / "build/reports/mvp_npu_ml_smoke.log"
 MVP_NPU_SCALE_REPORT = ROOT / "build/reports/mvp_npu_scale_sim.json"
 INTEGRATED_NPU_LINUX_MARKERS = (
-    "openphone-evidence: target=generated_chipyard_ap",
+    "openagent-evidence: target=generated_chipyard_ap",
     "Linux version",
-    "hello-npu",
-    "openphone-evidence: workload=gemm_s8_int8_2x2x3",
-    "openphone-evidence: status=PASS",
+    "e1-npu",
+    "openagent-evidence: workload=gemm_s8_int8_2x2x3",
+    "openagent-evidence: status=PASS",
 )
 
 STEPS = [
@@ -56,7 +56,7 @@ STEPS = [
         "name": "qemu_os_boot",
         "tier": "os_boot",
         "scope": "qemu_virt_reference",
-        "claim": "QEMU qemu-virt reference OS boot to init/login; not hello-chip/AP evidence",
+        "claim": "QEMU qemu-virt reference OS boot to init/login; not e1-chip/AP evidence",
         "command": ["scripts/run_qemu.sh", "--check-os"],
         "pass_markers": ["STATUS: PASS qemu.os_boot"],
         "block_markers": ["STATUS: BLOCKED qemu.os_boot"],
@@ -76,7 +76,7 @@ STEPS = [
         "name": "chipyard_verilator_preflight",
         "tier": "os_prereq",
         "scope": "our_chip_prereq",
-        "claim": "Chipyard Verilator environment can generate OpenPhoneRocketConfig",
+        "claim": "Chipyard Verilator environment can generate OpenAgentRocketConfig",
         "command": [sys.executable, "scripts/check_chipyard_verilator_preflight.py"],
         "pass_markers": ["STATUS: PASS chipyard.verilator_preflight"],
         "block_markers": ["STATUS: BLOCKED chipyard.verilator_preflight"],
@@ -116,9 +116,9 @@ STEPS = [
         "scope": "our_chip_os_boot",
         "claim": (
             "bounded startup attempt of OpenSBI/Linux on generated "
-            "OpenPhoneRocketConfig Verilator simulator"
+            "OpenAgentRocketConfig Verilator simulator"
         ),
-        "command": ["scripts/run_chipyard_openphone_linux_smoke.sh"],
+        "command": ["scripts/run_chipyard_openagent_linux_smoke.sh"],
         "pass_markers": ["STATUS: PASS chipyard.verilator_linux_smoke"],
         "block_markers": [
             "STATUS: BLOCKED chipyard.verilator_linux_smoke",
@@ -130,30 +130,30 @@ STEPS = [
         ],
         "timeout_seconds": 1500,
         "artifact_paths": [
-            "build/chipyard/openphone_rocket/verilator-linux-smoke.log",
-            "build/chipyard/openphone_rocket/verilator-linux-smoke-runner.log",
+            "build/chipyard/openagent_rocket/verilator-linux-smoke.log",
+            "build/chipyard/openagent_rocket/verilator-linux-smoke-runner.log",
         ],
     },
     {
         "name": "chipyard_verilator_linux_smoke",
         "tier": "os_boot",
         "scope": "our_chip_os_boot",
-        "claim": "OpenSBI/Linux smoke on generated OpenPhoneRocketConfig Verilator simulator",
+        "claim": "OpenSBI/Linux smoke on generated OpenAgentRocketConfig Verilator simulator",
         "command": [sys.executable, "scripts/check_chipyard_verilator_linux_smoke.py"],
         "pass_markers": ["STATUS: PASS chipyard.verilator_linux_smoke"],
         "block_markers": ["STATUS: BLOCKED chipyard.verilator_linux_smoke"],
         "timeout_seconds": 120,
         "artifact_paths": [
-            "build/chipyard/openphone_rocket/verilator-linux-smoke.log",
-            "build/chipyard/openphone_rocket/verilator-linux-smoke.json",
-            "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
+            "build/chipyard/openagent_rocket/verilator-linux-smoke.log",
+            "build/chipyard/openagent_rocket/verilator-linux-smoke.json",
+            "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json",
         ],
     },
     {
         "name": "npu_ml_smoke",
         "tier": "npu_ml",
         "scope": "our_chip_npu_ml_local",
-        "claim": "local hello NPU INT8 GEMM runtime/scratchpad smoke transcript; not integrated generated-AP Linux evidence",
+        "claim": "local e1 NPU INT8 GEMM runtime/scratchpad smoke transcript; not integrated generated-AP Linux evidence",
         "command": [sys.executable, "scripts/check_mvp_npu_ml_evidence.py", "--run"],
         "pass_markers": ["STATUS: PASS mvp.npu_ml_smoke"],
         "block_markers": ["STATUS: BLOCKED mvp.npu_ml_smoke"],
@@ -409,7 +409,7 @@ def evidence_artifacts() -> dict[str, dict[str, Any]]:
     return {
         "aggregate_report": file_artifact(REPORT),
         "generated_ap_manifest": file_artifact(
-            CHIPYARD_OUT / "OpenPhoneRocketConfig.manifest.json"
+            CHIPYARD_OUT / "OpenAgentRocketConfig.manifest.json"
         ),
         "boot_transcript": file_artifact(CHIPYARD_OUT / "verilator-linux-smoke.log"),
         "boot_manifest": file_artifact(CHIPYARD_OUT / "verilator-linux-smoke.json"),
@@ -509,7 +509,7 @@ def main() -> int:
         )
 
     report = {
-        "schema": "openphone.mvp_simulator.v1",
+        "schema": "openagent.mvp_simulator.v1",
         "status": overall,
         "strongest_attempted": "os_boot",
         "best_executable_evidence": best["name"] if best else "none",
@@ -534,11 +534,11 @@ def main() -> int:
         "artifacts": evidence_artifacts(),
         "manifest_paths": [
             "build/reports/mvp_simulator.json",
-            "build/chipyard/openphone_rocket/verilator-linux-smoke.json",
+            "build/chipyard/openagent_rocket/verilator-linux-smoke.json",
             "build/reports/mvp_npu_ml_smoke.json",
-            "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
+            "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json",
         ],
-        "claim_boundary": "Simulator MVP separates qemu-virt/Renode/Android reference evidence from OS running on generated OpenPhone AP/hello-chip RTL. qemu_os_boot may be claimed only as reference_qemu_virt_os_boot_claim. Renode smoke is renode_reference_only unless a generated hello-chip hardware model and transcript are archived. OS on our chip may be claimed only when on_chip_os_boot_claim is true from generated AP/Linux evidence; qemu-virt, Renode, and Android simulator evidence do not satisfy that claim. The minimum Linux+NPU target may be claimed only when minimum_linux_npu_target_claim is true from one generated-AP Linux transcript that also contains the hello NPU ML smoke PASS markers; local NPU runtime smoke alone does not satisfy the integrated target. It is not a fabrication or phone-class performance claim.",
+        "claim_boundary": "Simulator MVP separates qemu-virt/Renode/Android reference evidence from OS running on generated OpenAgent AP/e1-chip RTL. qemu_os_boot may be claimed only as reference_qemu_virt_os_boot_claim. Renode smoke is renode_reference_only unless a generated e1-chip hardware model and transcript are archived. OS on our chip may be claimed only when on_chip_os_boot_claim is true from generated AP/Linux evidence; qemu-virt, Renode, and Android simulator evidence do not satisfy that claim. The minimum Linux+NPU target may be claimed only when minimum_linux_npu_target_claim is true from one generated-AP Linux transcript that also contains the e1 NPU ML smoke PASS markers; local NPU runtime smoke alone does not satisfy the integrated target. It is not a fabrication or phone-class performance claim.",
         "results": results,
     }
     tmp = REPORT.with_suffix(".json.tmp")

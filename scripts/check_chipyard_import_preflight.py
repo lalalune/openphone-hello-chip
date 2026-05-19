@@ -11,9 +11,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "docs/generators/chipyard/openphone-rocket-manifest.json"
+MANIFEST = ROOT / "docs/generators/chipyard/openagent-rocket-manifest.json"
 DEFAULT_CHECKOUT = ROOT / "external/chipyard"
-DEFAULT_REPORT = ROOT / "build/chipyard/openphone_rocket/bootstrap-preflight.json"
+DEFAULT_REPORT = ROOT / "build/chipyard/openagent_rocket/bootstrap-preflight.json"
 
 
 def run(command: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -65,7 +65,7 @@ def validate_config_sources(
 ) -> None:
     sources = selected.get("config_sources", [])
     if not isinstance(sources, list) or not sources:
-        errors.append("selected_path.config_sources must list the OpenPhoneRocketConfig overlay")
+        errors.append("selected_path.config_sources must list the OpenAgentRocketConfig overlay")
         return
 
     source_checks: list[dict[str, object]] = []
@@ -88,18 +88,18 @@ def validate_config_sources(
         }
         source_checks.append(record)
         if not source_path.is_file():
-            errors.append(f"missing OpenPhoneRocketConfig source overlay: {source}")
+            errors.append(f"missing OpenAgentRocketConfig source overlay: {source}")
             continue
         text = source_path.read_text(encoding="utf-8", errors="ignore")
-        if "package openphone" not in text:
-            errors.append(f"{source} must declare package openphone")
-        if "class OpenPhoneRocketConfig" not in text:
-            errors.append(f"{source} must define class OpenPhoneRocketConfig")
+        if "package openagent" not in text:
+            errors.append(f"{source} must declare package openagent")
+        if "class OpenAgentRocketConfig" not in text:
+            errors.append(f"{source} must define class OpenAgentRocketConfig")
         if "WithNHugeCores(1)" not in text:
             errors.append(f"{source} must select one Rocket hart for initial Linux bring-up")
         if checkout.is_dir() and not destination_path.is_file():
             blockers.append(
-                "OpenPhoneRocketConfig overlay is not installed in checkout; run "
+                "OpenAgentRocketConfig overlay is not installed in checkout; run "
                 "scripts/bootstrap_chipyard.sh to copy "
                 f"{source} to external/chipyard/{destination}"
             )
@@ -107,7 +107,7 @@ def validate_config_sources(
             installed = destination_path.read_text(encoding="utf-8", errors="ignore")
             if installed != text:
                 errors.append(
-                    "installed OpenPhoneRocketConfig overlay differs from repo source: "
+                    "installed OpenAgentRocketConfig overlay differs from repo source: "
                     f"external/chipyard/{destination}"
                 )
     checks["config_sources"] = source_checks
@@ -141,7 +141,7 @@ def main() -> int:
     blockers: list[str] = []
     checks: dict[str, object] = {}
     evidence: dict[str, object] = {
-        "schema": "openphone.cpu_ap_bootstrap_preflight.v1",
+        "schema": "openagent.cpu_ap_bootstrap_preflight.v1",
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "manifest": str(MANIFEST.relative_to(ROOT)),
         "checkout": str(checkout),

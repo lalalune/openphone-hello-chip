@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_dbg_mmio_bridge (
+module e1_dbg_mmio_bridge (
     input  logic        clk,
     input  logic        rst_n,
 

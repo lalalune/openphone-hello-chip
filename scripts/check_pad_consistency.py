@@ -2,10 +2,10 @@
 """Cross-probe RTL top-level ports, bonding CSV, and optional KiCad netlist.
 
 Reads:
-  rtl/top/hello_chip_top.sv          - RTL top-level port list
-  package/bonding/hello_demo_bonding.csv - die_pad <-> package_pin <-> board_net
-  package/hello-demo-pinout.yaml     - canonical pin/voltage/pad-type map
-  board/kicad/hello-demo/*.net       - optional KiCad netlist export
+  rtl/top/e1_chip_top.sv          - RTL top-level port list
+  package/bonding/e1_demo_bonding.csv - die_pad <-> package_pin <-> board_net
+  package/e1-demo-pinout.yaml     - canonical pin/voltage/pad-type map
+  board/kicad/e1-demo/*.net       - optional KiCad netlist export
 
 Emits:
   build/reports/pad_consistency.json - structured report
@@ -28,10 +28,10 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-RTL_TOP = REPO_ROOT / "rtl" / "top" / "hello_chip_top.sv"
-BONDING_CSV = REPO_ROOT / "package" / "bonding" / "hello_demo_bonding.csv"
-PINOUT_YAML = REPO_ROOT / "package" / "hello-demo-pinout.yaml"
-KICAD_NET_DIR = REPO_ROOT / "board" / "kicad" / "hello-demo"
+RTL_TOP = REPO_ROOT / "rtl" / "top" / "e1_chip_top.sv"
+BONDING_CSV = REPO_ROOT / "package" / "bonding" / "e1_demo_bonding.csv"
+PINOUT_YAML = REPO_ROOT / "package" / "e1-demo-pinout.yaml"
+KICAD_NET_DIR = REPO_ROOT / "board" / "kicad" / "e1-demo"
 REPORT_PATH = REPO_ROOT / "build" / "reports" / "pad_consistency.json"
 
 

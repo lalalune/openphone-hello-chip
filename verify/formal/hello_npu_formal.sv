@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_npu_formal(input logic clk);
+module e1_npu_formal(input logic clk);
     logic rst_n = 1'b0;
     (* anyseq *) logic valid;
     (* anyseq *) logic write;
@@ -16,7 +16,7 @@ module hello_npu_formal(input logic clk);
     logic [31:0] op_b_shadow = 32'h0;
     logic [31:0] acc_shadow = 32'h0;
 
-    hello_npu dut (
+    e1_npu dut (
         .clk(clk),
         .rst_n(rst_n),
         .valid(valid),

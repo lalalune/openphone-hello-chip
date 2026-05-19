@@ -1,5 +1,5 @@
-// hello_lifecycle.sv
-// Device lifecycle controller for the hello chip security subsystem.
+// e1_lifecycle.sv
+// Device lifecycle controller for the e1 chip security subsystem.
 //
 // Lifecycle states (2-bit, stored in OTP shadow word 1):
 //   LIFECYCLE_UNLOCKED (2'b00): factory/debug - all debug access permitted,
@@ -27,7 +27,7 @@
 
 `timescale 1ns/1ps
 
-module hello_lifecycle (
+module e1_lifecycle (
     input  logic        clk,
     input  logic        rst_n,
 

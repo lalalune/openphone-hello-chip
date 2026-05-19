@@ -52,7 +52,7 @@ class PhysicalGateTests(unittest.TestCase):
         self.assertIsInstance(manifest, dict)
         references = set(manifest.get("artifact_manifests", []))
         self.assertIn("package/artifact-manifest.yaml", references)
-        self.assertIn("board/kicad/hello-demo/artifact-manifest.yaml", references)
+        self.assertIn("board/kicad/e1-demo/artifact-manifest.yaml", references)
         self.assertIn("board/fpga/artifact-manifest.yaml", references)
         self.assertIn("pd/signoff/manifest.yaml", references)
 

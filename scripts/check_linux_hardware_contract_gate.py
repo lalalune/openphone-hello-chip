@@ -13,10 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 GATE = ROOT / "docs/evidence/linux-hardware-contract-gate.yaml"
 LINUX_DOC = ROOT / "docs/arch/linux-capable-cpu-contract.md"
 CPU_DOC = ROOT / "docs/arch/cpu-subsystem.md"
-CPU_RTL = ROOT / "rtl/cpu/hello_cpu_subsystem_stub.sv"
-CONTRACT_RTL = ROOT / "rtl/interconnect/hello_linux_soc_contract.sv"
-INTC_RTL = ROOT / "rtl/interrupts/hello_interrupt_controller.sv"
-DRAM_RTL = ROOT / "rtl/memory/hello_axi_lite_dram.sv"
+CPU_RTL = ROOT / "rtl/cpu/e1_cpu_subsystem_stub.sv"
+CONTRACT_RTL = ROOT / "rtl/interconnect/e1_linux_soc_contract.sv"
+INTC_RTL = ROOT / "rtl/interrupts/e1_interrupt_controller.sv"
+DRAM_RTL = ROOT / "rtl/memory/e1_axi_lite_dram.sv"
 QEMU_DOC = ROOT / "docs/sim/qemu/README.md"
 QEMU_PAYLOAD_PLAN = ROOT / "docs/evidence/linux/qemu-virt-linux-payload-plan.json"
 RUN_QEMU = ROOT / "scripts/run_qemu.sh"
@@ -58,9 +58,9 @@ REQUIRED_DOC_TOKENS = {
     ],
     QEMU_DOC: [
         "qemu-virt software reference only",
-        "not the hello-chip hardware ABI",
-        "not hello-chip hardware or generated AP evidence",
-        "cannot be used as OpenPhone AP",
+        "not the e1-chip hardware ABI",
+        "not e1-chip hardware or generated AP evidence",
+        "cannot be used as OpenAgent AP",
     ],
 }
 
@@ -141,7 +141,7 @@ def check_gate(errors: list[str]) -> None:
         return
 
     require(
-        data.get("schema") == "openphone.linux_hardware_contract_gate.v1",
+        data.get("schema") == "openagent.linux_hardware_contract_gate.v1",
         "unexpected linux gate schema",
         errors,
     )
@@ -251,20 +251,20 @@ def check_gate(errors: list[str]) -> None:
                 qemu_boundary.get(key) == expected, f"qemu_reference_boundary.{key} drifted", errors
             )
         require(
-            qemu_boundary.get("os_attempt_schema") == "openphone.qemu_virt_os_boot_attempt.v1",
+            qemu_boundary.get("os_attempt_schema") == "openagent.qemu_virt_os_boot_attempt.v1",
             "qemu OS attempt schema must stay explicit",
             errors,
         )
         require(
             qemu_boundary.get("required_claim_boundary")
-            == "qemu_virt_reference_only_not_hello_chip_rtl",
-            "qemu OS attempt claim boundary must exclude hello-chip RTL",
+            == "qemu_virt_reference_only_not_e1_chip_rtl",
+            "qemu OS attempt claim boundary must exclude e1-chip RTL",
             errors,
         )
         require(
             qemu_boundary.get("payload_plan_claim_boundary")
-            == "qemu_virt_prebuilt_payload_only_not_hello_hardware",
-            "qemu payload plan claim boundary must exclude hello hardware",
+            == "qemu_virt_prebuilt_payload_only_not_e1_hardware",
+            "qemu payload plan claim boundary must exclude e1 hardware",
             errors,
         )
         forbidden = qemu_boundary.get("forbidden_as_chip_evidence")
@@ -308,21 +308,21 @@ def check_qemu_reference_boundary(errors: list[str]) -> None:
             errors.append(f"{QEMU_PAYLOAD_PLAN.relative_to(ROOT)} is invalid JSON: {exc}")
             payload_plan = {}
         require(
-            payload_plan.get("schema") == "openphone.qemu_virt_linux_payload_plan.v1",
+            payload_plan.get("schema") == "openagent.qemu_virt_linux_payload_plan.v1",
             "QEMU Linux payload plan schema drifted",
             errors,
         )
         require(
             payload_plan.get("claim_boundary")
-            == "qemu_virt_prebuilt_payload_only_not_hello_hardware",
-            "QEMU Linux payload plan must remain excluded from hello hardware claims",
+            == "qemu_virt_prebuilt_payload_only_not_e1_hardware",
+            "QEMU Linux payload plan must remain excluded from e1 hardware claims",
             errors,
         )
         not_claimed = payload_plan.get("not_claimed", [])
         for token in (
-            "hello-chip hardware boot",
+            "e1-chip hardware boot",
             "selected AP generated-target boot",
-            "OpenPhone BSP driver runtime proof",
+            "OpenAgent BSP driver runtime proof",
         ):
             require(
                 token in not_claimed, f"QEMU payload plan not_claimed must include {token}", errors
@@ -332,8 +332,8 @@ def check_qemu_reference_boundary(errors: list[str]) -> None:
     if RUN_QEMU.is_file():
         run_qemu = read(RUN_QEMU)
         for token in (
-            '"schema": "openphone.qemu_virt_os_boot_attempt.v1"',
-            '"claim_boundary": "qemu_virt_reference_only_not_hello_chip_rtl"',
+            '"schema": "openagent.qemu_virt_os_boot_attempt.v1"',
+            '"claim_boundary": "qemu_virt_reference_only_not_e1_chip_rtl"',
             "qemu-system-riscv64 -machine virt",
             "check=qemu.os_boot",
             "evidence_kind=qemu-os-boot-attempt",
@@ -351,12 +351,12 @@ def check_qemu_reference_boundary(errors: list[str]) -> None:
             errors.append(f"{QEMU_OS_ATTEMPT_MANIFEST.relative_to(ROOT)} is invalid JSON: {exc}")
             return
         require(
-            attempt.get("schema") == "openphone.qemu_virt_os_boot_attempt.v1",
+            attempt.get("schema") == "openagent.qemu_virt_os_boot_attempt.v1",
             "QEMU OS attempt manifest schema drifted",
             errors,
         )
         require(
-            attempt.get("claim_boundary") == "qemu_virt_reference_only_not_hello_chip_rtl",
+            attempt.get("claim_boundary") == "qemu_virt_reference_only_not_e1_chip_rtl",
             "QEMU OS attempt manifest must not be chip RTL evidence",
             errors,
         )
@@ -383,7 +383,7 @@ def check_rtl_scaffold(errors: list[str]) -> None:
     dram = read(DRAM_RTL)
 
     require(
-        "module hello_cpu_subsystem_stub" in cpu,
+        "module e1_cpu_subsystem_stub" in cpu,
         "CPU scaffold module name changed; update gate",
         errors,
     )
@@ -395,12 +395,12 @@ def check_rtl_scaffold(errors: list[str]) -> None:
         )
 
     require(
-        "hello_axi_lite_dram" in contract,
+        "e1_axi_lite_dram" in contract,
         "Linux contract wrapper no longer instantiates checked memory model",
         errors,
     )
     require(
-        "hello_interrupt_controller" in contract,
+        "e1_interrupt_controller" in contract,
         "Linux contract wrapper no longer instantiates checked interrupt scaffold",
         errors,
     )

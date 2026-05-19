@@ -13,7 +13,7 @@ REQUIRED_SUFFIXES = [
     "reports/formal_manifest.json",
     "reports/cocotb/manifest.json",
     "reports/qemu_smoke.log",
-    "netlist/hello_chip_synth.v",
+    "netlist/e1_chip_synth.v",
     "source/Makefile",
     "source/scripts/check_mvp_status.py",
     "source/scripts/check_no_hardware_action_matrix.py",
@@ -63,20 +63,20 @@ REQUIRED_SUFFIXES = [
     "source/docs/toolchain/benchmark-simulator-critical-gap-audit.md",
     "source/docs/architecture-optimization/README.md",
     "source/package/artifact-manifest.yaml",
-    "source/package/hello-demo-pinout.yaml",
-    "source/docs/package/hello-demo-package.md",
-    "source/docs/package/hello-demo-pad-ring.md",
+    "source/package/e1-demo-pinout.yaml",
+    "source/docs/package/e1-demo-package.md",
+    "source/docs/package/e1-demo-pad-ring.md",
     "source/package/wifi-external-interface.yaml",
-    "source/pd/padframe/hello_demo_padframe.yaml",
-    "source/docs/pd/padframe/hello_demo_padframe.md",
+    "source/pd/padframe/e1_demo_padframe.yaml",
+    "source/docs/pd/padframe/e1_demo_padframe.md",
     "source/pd/pin_order.cfg",
     "source/pd/signoff/manifest.yaml",
     "source/board/fpga/artifact-manifest.yaml",
-    "source/board/fpga/hello_demo_fpga.yaml",
-    "source/board/fpga/constraints/hello_demo_ulx3s.lpf",
-    "source/board/kicad/hello-demo/artifact-manifest.yaml",
-    "source/docs/board/kicad/hello-demo/fab-notes.md",
-    "source/sim/renode/openphone_hello_smoke.schema.json",
+    "source/board/fpga/e1_demo_fpga.yaml",
+    "source/board/fpga/constraints/e1_demo_ulx3s.lpf",
+    "source/board/kicad/e1-demo/artifact-manifest.yaml",
+    "source/docs/board/kicad/e1-demo/fab-notes.md",
+    "source/sim/renode/openagent_e1_smoke.schema.json",
 ]
 
 REQUIRED_TEXT = {
@@ -99,7 +99,7 @@ REQUIRED_TEXT = {
         "artifact_manifests",
         "pd/signoff/manifest.yaml",
         "board/fpga/artifact-manifest.yaml",
-        "board/kicad/hello-demo/artifact-manifest.yaml",
+        "board/kicad/e1-demo/artifact-manifest.yaml",
         "package/artifact-manifest.yaml",
     ],
     "source/docs/manufacturing/schemas/artifact-manifest.schema.yaml": [
@@ -115,7 +115,7 @@ REQUIRED_TEXT = {
         "status: missing",
         "release_gate: tapeout_release",
     ],
-    "source/board/kicad/hello-demo/artifact-manifest.yaml": [
+    "source/board/kicad/e1-demo/artifact-manifest.yaml": [
         "kicad_sources",
         "kicad_cli_outputs",
         "board_reviews",
@@ -123,7 +123,7 @@ REQUIRED_TEXT = {
         "release_gate: board_fabrication_release",
     ],
     "source/board/fpga/artifact-manifest.yaml": [
-        "hello_demo_fpga_bitstream_evidence",
+        "e1_demo_fpga_bitstream_evidence",
         "bitstream_release",
         "cli_commands",
         "status: missing",
@@ -138,7 +138,7 @@ REQUIRED_TEXT = {
     ],
     "source/docs/android/bsp-log-evidence-manifest.json": [
         "cuttlefish_riscv64_boot.log",
-        "openphone_ai_soc_checkvintf.log",
+        "openagent_ai_soc_checkvintf.log",
     ],
     "source/docs/project/critical-gap-review-2026-05-17.md": [
         "A gap is closed only when",
@@ -151,12 +151,12 @@ REQUIRED_TEXT = {
         "make benchmark-sim-metrics",
     ],
     "source/docs/project/no-hardware-action-matrix-2026-05-17.yaml": [
-        "openphone.no_hardware_action_matrix.v1",
+        "openagent.no_hardware_action_matrix.v1",
         "No Android support is claimed",
         "make evidence-regression-test",
     ],
     "source/docs/project/cpu-ap-integration-work-order-2026-05-17.yaml": [
-        "openphone.cpu_ap_integration_work_order.v1",
+        "openagent.cpu_ap_integration_work_order.v1",
         "cva6",
         "make cpu-ap-evidence-check",
     ],
@@ -165,9 +165,9 @@ REQUIRED_TEXT = {
         "not_performance_evidence",
         "target_cycles",
     ],
-    "source/sim/renode/openphone_hello_smoke.schema.json": [
+    "source/sim/renode/openagent_e1_smoke.schema.json": [
         "qemu_virt_reference",
-        "openphone_hello_uart.transcript",
+        "openagent_e1_uart.transcript",
     ],
 }
 

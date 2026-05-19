@@ -17,9 +17,9 @@ REQUIRED_FEATURES = {
     "rva23.linux_userspace_discovery",
 }
 REQUIRED_EXIT_ARTIFACTS = {
-    "build/evidence/cpu_ap/openphone_hello_rva23_profile_matrix.json",
-    "build/evidence/cpu_ap/openphone_hello_rva23_hwprobe.log",
-    "build/evidence/cpu_ap/openphone_hello_rva23_compliance.log",
+    "build/evidence/cpu_ap/openagent_e1_rva23_profile_matrix.json",
+    "build/evidence/cpu_ap/openagent_e1_rva23_hwprobe.log",
+    "build/evidence/cpu_ap/openagent_e1_rva23_compliance.log",
 }
 
 
@@ -49,7 +49,7 @@ def main() -> int:
     }
 
     require(
-        plan.get("schema") == "openphone.cpu_ap_rva23_profile_plan.v1",
+        plan.get("schema") == "openagent.cpu_ap_rva23_profile_plan.v1",
         "RVA23 profile plan schema drifted",
         errors,
     )
@@ -75,7 +75,7 @@ def main() -> int:
         errors,
     )
     require(
-        bringup.get("manifest") == "generators/chipyard/openphone-rocket-manifest.json",
+        bringup.get("manifest") == "generators/chipyard/openagent-rocket-manifest.json",
         "RVA23 plan must tie back to selected Rocket manifest",
         errors,
     )

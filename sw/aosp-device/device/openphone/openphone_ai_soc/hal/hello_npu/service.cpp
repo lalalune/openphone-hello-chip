@@ -1,34 +1,34 @@
-// service.cpp - HwBinder service entry point for vendor.openphone.hello_npu@1.0.
+// service.cpp - HwBinder service entry point for vendor.openagent.e1_npu@1.0.
 //
 // Single-threaded passthrough is sufficient for the v0 fixed-vector smoke
 // RPC. Bumping the thread pool can wait for real workload evidence.
 
-#define LOG_TAG "vendor.openphone.hello_npu@1.0-service"
+#define LOG_TAG "vendor.openagent.e1_npu@1.0-service"
 
 #include <android-base/logging.h>
 #include <hidl/HidlTransportSupport.h>
 
-#include "HelloNpu.h"
+#include "E1Npu.h"
 
 using ::android::OK;
 using ::android::sp;
 using ::android::status_t;
 using ::android::hardware::configureRpcThreadpool;
 using ::android::hardware::joinRpcThreadpool;
-using ::vendor::openphone::hello_npu::V1_0::IHelloNpu;
-using ::vendor::openphone::hello_npu::V1_0::implementation::HelloNpu;
+using ::vendor::openagent::e1_npu::V1_0::IE1Npu;
+using ::vendor::openagent::e1_npu::V1_0::implementation::E1Npu;
 
 int main() {
     configureRpcThreadpool(1, true /* willJoin */);
 
-    sp<IHelloNpu> service = new HelloNpu();
+    sp<IE1Npu> service = new E1Npu();
     status_t status = service->registerAsService();
     if (status != OK) {
-        LOG(FATAL) << "Failed to register IHelloNpu/default: " << status;
+        LOG(FATAL) << "Failed to register IE1Npu/default: " << status;
         return 1;
     }
 
-    LOG(INFO) << "vendor.openphone.hello_npu@1.0-service registered";
+    LOG(INFO) << "vendor.openagent.e1_npu@1.0-service registered";
     joinRpcThreadpool();
     return 0;  // not reached
 }

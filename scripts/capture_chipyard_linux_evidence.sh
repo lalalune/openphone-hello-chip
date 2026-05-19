@@ -3,21 +3,21 @@ set -eu
 
 repo_dir="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 raw_dir="$repo_dir/build/evidence/cpu_ap/raw"
-generated_manifest="${OPENPHONE_GENERATED_MANIFEST:-build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json}"
+generated_manifest="${OPENAGENT_GENERATED_MANIFEST:-build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json}"
 mode="${1:-all}"
 
 usage() {
 	printf 'usage: %s [preflight|wire|wire-preflight|plan|all|opensbi-boot|linux-boot|trap-timer-irq|isa-cache-mmu|ap-benchmarks]\n' "$0"
 	printf '\n'
 	printf 'Set one command env var per capture. Each command must run the generated AP simulator/test and print the real transcript to stdout/stderr:\n'
-	printf '  OPENPHONE_OPENSBI_BOOT_CMD\n'
-	printf '  OPENPHONE_LINUX_BOOT_CMD\n'
-	printf '  OPENPHONE_TRAP_TIMER_IRQ_CMD\n'
-	printf '  OPENPHONE_ISA_CACHE_MMU_CMD\n'
-	printf '  OPENPHONE_AP_BENCHMARKS_CMD\n'
+	printf '  OPENAGENT_OPENSBI_BOOT_CMD\n'
+	printf '  OPENAGENT_LINUX_BOOT_CMD\n'
+	printf '  OPENAGENT_TRAP_TIMER_IRQ_CMD\n'
+	printf '  OPENAGENT_ISA_CACHE_MMU_CMD\n'
+	printf '  OPENAGENT_AP_BENCHMARKS_CMD\n'
 	printf '\n'
 	printf 'Optional:\n'
-	printf '  OPENPHONE_GENERATED_MANIFEST=%s\n' "$generated_manifest"
+	printf '  OPENAGENT_GENERATED_MANIFEST=%s\n' "$generated_manifest"
 	printf '\n'
 	printf 'Run all capture lanes after setting the command env vars:\n'
 	printf '  %s all\n' "$0"
@@ -36,11 +36,11 @@ usage() {
 
 env_name_for_mode() {
 	case "$1" in
-		opensbi-boot) printf 'OPENPHONE_OPENSBI_BOOT_CMD' ;;
-		linux-boot) printf 'OPENPHONE_LINUX_BOOT_CMD' ;;
-		trap-timer-irq) printf 'OPENPHONE_TRAP_TIMER_IRQ_CMD' ;;
-		isa-cache-mmu) printf 'OPENPHONE_ISA_CACHE_MMU_CMD' ;;
-		ap-benchmarks) printf 'OPENPHONE_AP_BENCHMARKS_CMD' ;;
+		opensbi-boot) printf 'OPENAGENT_OPENSBI_BOOT_CMD' ;;
+		linux-boot) printf 'OPENAGENT_LINUX_BOOT_CMD' ;;
+		trap-timer-irq) printf 'OPENAGENT_TRAP_TIMER_IRQ_CMD' ;;
+		isa-cache-mmu) printf 'OPENAGENT_ISA_CACHE_MMU_CMD' ;;
+		ap-benchmarks) printf 'OPENAGENT_AP_BENCHMARKS_CMD' ;;
 		*) return 1 ;;
 	esac
 }
@@ -63,7 +63,7 @@ preflight_all() {
 	printf '  generated_manifest: %s\n' "$generated_manifest"
 	if [ ! -f "$repo_dir/$generated_manifest" ] && [ ! -f "$generated_manifest" ]; then
 		printf '  - BLOCKED generated manifest is missing\n'
-		printf '    next: generate/import OpenPhoneRocketConfig before archiving boot evidence\n'
+		printf '    next: generate/import OpenAgentRocketConfig before archiving boot evidence\n'
 		rc=2
 	fi
 	for capture_mode in opensbi-boot linux-boot trap-timer-irq isa-cache-mmu ap-benchmarks; do

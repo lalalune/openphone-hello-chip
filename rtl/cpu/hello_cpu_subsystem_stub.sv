@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module hello_cpu_subsystem_stub #(
+module e1_cpu_subsystem_stub #(
     parameter logic [31:0] RESET_PC = 32'h0000_0000,
     parameter logic [31:0] HART_ID  = 32'h0000_0000
 ) (

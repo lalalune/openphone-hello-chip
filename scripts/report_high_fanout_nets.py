@@ -97,7 +97,7 @@ def load_synthesis_fanout(json_path: Path, threshold: int) -> list[dict[str, obj
     if not json_path.is_file():
         return []
     design = json.loads(json_path.read_text())
-    module = design["modules"].get("hello_chip_top")
+    module = design["modules"].get("e1_chip_top")
     if module is None:
         return []
 
@@ -154,17 +154,17 @@ def load_synthesis_fanout(json_path: Path, threshold: int) -> list[dict[str, obj
 
 def find_default_paths(run: Path) -> tuple[Path, Path]:
     netlist_candidates = [
-        run / "final/nl/hello_chip_top.nl.v",
-        *sorted(run.glob("*detailedrouting*/hello_chip_top.nl.v"), reverse=True),
+        run / "final/nl/e1_chip_top.nl.v",
+        *sorted(run.glob("*detailedrouting*/e1_chip_top.nl.v"), reverse=True),
     ]
     json_candidates = [
-        run / "06-yosys-synthesis/hello_chip_top.nl.v.json",
-        *sorted(run.glob("*/hello_chip_top.nl.v.json"), reverse=True),
+        run / "06-yosys-synthesis/e1_chip_top.nl.v.json",
+        *sorted(run.glob("*/e1_chip_top.nl.v.json"), reverse=True),
     ]
     netlist = next((path for path in netlist_candidates if path.is_file()), None)
     synth_json = next((path for path in json_candidates if path.is_file()), None)
     if netlist is None:
-        raise SystemExit(f"no routed/final hello_chip_top netlist found under {rel(run)}")
+        raise SystemExit(f"no routed/final e1_chip_top netlist found under {rel(run)}")
     if synth_json is None:
         raise SystemExit(f"no synthesis JSON found under {rel(run)}")
     return netlist, synth_json
@@ -229,7 +229,7 @@ def render_markdown(
             "",
             "1. Reset tree subagent: replace the single SoC reset distribution with module-local reset branches or a PD reset-tree strategy, then rerun OpenLane and confirm no `[DRT-0120]` reset net remains.",
             "2. MMIO/data fanout subagent: reduce write-data broadcast pressure by staging debug MMIO write data near register banks or by narrowing decoded write strobes per target.",
-            "3. NPU/generated-logic subagent: inspect ABC-generated hotspots without source attributes, correlate sink clusters to `rtl/npu/hello_npu.sv`, and split wide mux/decode cones if they remain above threshold after reset fixes.",
+            "3. NPU/generated-logic subagent: inspect ABC-generated hotspots without source attributes, correlate sink clusters to `rtl/npu/e1_npu.sv`, and split wide mux/decode cones if they remain above threshold after reset fixes.",
             "4. PD constraints subagent: evaluate OpenROAD reset buffering constraints or custom post-synthesis repair scripts before declaring RTL-level reset replication necessary.",
             "",
             "## Notes",

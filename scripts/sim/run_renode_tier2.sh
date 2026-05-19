@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Run the openphone-hello tier-2 Linux boot smoke test under Renode.
+# Run the openagent-e1 tier-2 Linux boot smoke test under Renode.
 #
 # Prereqs (produced by sibling worktrees):
-#   - external/opensbi/build/platform/openphone/firmware/fw_payload.elf
-#     (built from sw/opensbi/platform/openphone/* copied into the opensbi tree)
+#   - external/opensbi/build/platform/openagent/firmware/fw_payload.elf
+#     (built from sw/opensbi/platform/openagent/* copied into the opensbi tree)
 #   - external/linux/arch/riscv/boot/Image
-#   - build/initramfs/openphone_tier2.cpio.gz
+#   - build/initramfs/openagent_tier2.cpio.gz
 #
 # Renode is expected on PATH (`brew install --cask renode` on macOS).
 set -euo pipefail
@@ -22,12 +22,12 @@ if ! command -v renode-test >/dev/null 2>&1; then
   exit 127
 fi
 
-PAYLOAD="external/opensbi/build/platform/openphone/firmware/fw_payload.elf"
+PAYLOAD="external/opensbi/build/platform/openagent/firmware/fw_payload.elf"
 if [[ ! -f "$PAYLOAD" ]]; then
-  echo "Missing $PAYLOAD — build OpenSBI for the openphone platform first" >&2
-  echo "(see sw/opensbi/platform/openphone/README and docs/sim/renode-tier2-recipe.md)" >&2
+  echo "Missing $PAYLOAD — build OpenSBI for the openagent platform first" >&2
+  echo "(see sw/opensbi/platform/openagent/README and docs/sim/renode-tier2-recipe.md)" >&2
   exit 2
 fi
 
 echo "[run_renode_tier2] logging to $LOG"
-renode-test sim/renode/openphone_hello_tier2.robot 2>&1 | tee "$LOG"
+renode-test sim/renode/openagent_e1_tier2.robot 2>&1 | tee "$LOG"

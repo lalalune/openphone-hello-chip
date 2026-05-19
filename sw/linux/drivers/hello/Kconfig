@@ -1,40 +1,40 @@
-menuconfig OPENPHONE_HELLO_BSP
-	tristate "OpenPhone hello BSP drivers"
+menuconfig OPENAGENT_E1_BSP
+	tristate "OpenAgent e1 BSP drivers"
 	depends on OF
 	help
-	  Enables importable Linux drivers for the OpenPhone hello platform
-	  contract described by sw/platform/hello_platform_contract.json.
+	  Enables importable Linux drivers for the OpenAgent e1 platform
+	  contract described by sw/platform/e1_platform_contract.json.
 
-if OPENPHONE_HELLO_BSP
+if OPENAGENT_E1_BSP
 
-config OPENPHONE_HELLO_NPU
-	tristate "OpenPhone hello NPU contract driver"
+config OPENAGENT_E1_NPU
+	tristate "OpenAgent e1 NPU contract driver"
 	depends on MISC_DEVICES
 	help
-	  Exposes the openphone,hello-npu MMIO node through /dev/hello-npu for
-	  smoke tests. The register base is HELLO_NPU_BASE in the platform
+	  Exposes the openagent,e1-npu MMIO node through /dev/e1-npu for
+	  smoke tests. The register base is E1_NPU_BASE in the platform
 	  contract.
 
-config OPENPHONE_HELLO_DMA
-	tristate "OpenPhone hello DMA contract driver"
+config OPENAGENT_E1_DMA
+	tristate "OpenAgent e1 DMA contract driver"
 	help
-	  Binds the openphone,hello-dma MMIO node and exports a read-only sysfs
+	  Binds the openagent,e1-dma MMIO node and exports a read-only sysfs
 	  contract file for fast BSP validation.
 
-config OPENPHONE_HELLO_CLINT_TIMER
-	tristate "OpenPhone hello CLINT timer driver"
+config OPENAGENT_E1_CLINT_TIMER
+	tristate "OpenAgent e1 CLINT timer driver"
 	depends on GENERIC_CLOCKEVENTS
 	help
-	  Clocksource and clock_event_device backed by the hello chip CLINT
-	  mtime/mtimecmp registers (hello,clint-1.0).  Provides the Linux
-	  scheduler tick and high-resolution timer for the single hello hart.
+	  Clocksource and clock_event_device backed by the e1 chip CLINT
+	  mtime/mtimecmp registers (e1,clint-1.0).  Provides the Linux
+	  scheduler tick and high-resolution timer for the single e1 hart.
 
-config OPENPHONE_HELLO_PLIC
-	tristate "OpenPhone hello PLIC interrupt controller driver"
+config OPENAGENT_E1_PLIC
+	tristate "OpenAgent e1 PLIC interrupt controller driver"
 	depends on IRQ_DOMAIN
 	help
-	  IRQ domain driver for the hello_interrupt_controller.sv PLIC-style
-	  block (hello,plic-1.0).  Exposes up to 8 interrupt sources (timer,
+	  IRQ domain driver for the e1_interrupt_controller.sv PLIC-style
+	  block (e1,plic-1.0).  Exposes up to 8 interrupt sources (timer,
 	  DMA, NPU, display) as Linux virtual IRQs via an irq_domain.
 
 endif
