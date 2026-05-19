@@ -45,9 +45,6 @@ struct e1_npu_descriptor_submit {
 	__u32 tail;
 	__u32 status;
 	__u32 bytes_read;
-	__u32 bytes_written;
-	__u32 read_beats;
-	__u32 write_beats;
 	__u32 timeout_count;
 };
 
@@ -58,9 +55,6 @@ struct e1_npu_counters {
 	__u32 desc_tail;
 	__u32 desc_timeout_count;
 	__u32 desc_bytes_read;
-	__u32 desc_bytes_written;
-	__u32 desc_read_beats;
-	__u32 desc_write_beats;
 	__u32 perf_cycles;
 	__u32 perf_macs;
 	__u32 perf_ops;

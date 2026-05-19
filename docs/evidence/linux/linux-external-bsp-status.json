@@ -13,114 +13,123 @@
       "id": "gnu_make_too_old_or_missing"
     },
     {
-      "detail": "docs/evidence/linux/openphone_hello_kernel_build.log",
-      "id": "linux_kernel_build_evidence_blocked"
+      "detail": "docs/evidence/linux/openagent_e1_kernel_build.log",
+      "id": "linux_kernel_build_evidence_missing"
     },
     {
-      "detail": "docs/evidence/linux/openphone_hello_dtb_check.log",
-      "id": "linux_dtb_check_evidence_blocked"
+      "detail": "docs/evidence/linux/openagent_e1_dtb_check.log",
+      "id": "linux_dtb_check_evidence_missing"
     },
     {
-      "detail": "docs/evidence/linux/hello-mmio-smoke.log",
-      "id": "linux_mmio_smoke_evidence_blocked"
+      "detail": "docs/evidence/linux/e1-mmio-smoke.log",
+      "id": "linux_mmio_smoke_evidence_missing"
     }
   ],
   "claim_boundary": "status_only_not_linux_boot_evidence",
   "evidence": {
     "linux_dtb_check": {
-      "blocked_marker": "docs/evidence/linux/openphone_hello_dtb_check.log.BLOCKED",
-      "path": "docs/evidence/linux/openphone_hello_dtb_check.log",
-      "reason": "reason: external/linux exists and has imported the OpenPhone hello DTS/bindings, but host tools cannot run dtbs_check and no PASS transcript has been captured.",
-      "state": "blocked"
+      "blocked_marker": "docs/evidence/linux/openagent_e1_dtb_check.log.BLOCKED",
+      "path": "docs/evidence/linux/openagent_e1_dtb_check.log",
+      "state": "missing"
     },
     "linux_kernel_build": {
-      "blocked_marker": "docs/evidence/linux/openphone_hello_kernel_build.log.BLOCKED",
-      "path": "docs/evidence/linux/openphone_hello_kernel_build.log",
-      "reason": "reason: external/linux exists and has imported the OpenPhone hello BSP, but host tools cannot run the kernel build and no PASS transcript has been captured.",
-      "state": "blocked"
+      "blocked_marker": "docs/evidence/linux/openagent_e1_kernel_build.log.BLOCKED",
+      "path": "docs/evidence/linux/openagent_e1_kernel_build.log",
+      "state": "missing"
     },
     "linux_mmio_smoke": {
-      "blocked_marker": "docs/evidence/linux/hello-mmio-smoke.log.BLOCKED",
-      "path": "docs/evidence/linux/hello-mmio-smoke.log",
-      "reason": "reason: no boot transcript of an imported OpenPhone hello kernel/rootfs exists, so /dev/hello-npu and DMA sysfs smoke output cannot be captured.",
-      "state": "blocked"
+      "blocked_marker": "docs/evidence/linux/e1-mmio-smoke.log.BLOCKED",
+      "path": "docs/evidence/linux/e1-mmio-smoke.log",
+      "state": "missing"
     }
   },
   "imported_bsp": {
-    "missing_optional": [],
-    "missing_required": [],
+    "missing_optional": [
+      "board_dts_makefile",
+      "npu_binding",
+      "dma_binding",
+      "display_binding"
+    ],
+    "missing_required": [
+      "driver_kconfig",
+      "driver_makefile",
+      "npu_driver",
+      "dma_driver",
+      "platform_header",
+      "board_dts"
+    ],
     "optional": {
       "board_dts_makefile": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openphone/Makefile"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openagent/Makefile"
       },
       "display_binding": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openphone/openphone,hello-display.yaml"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-display.yaml"
       },
       "dma_binding": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openphone/openphone,hello-dma.yaml"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-dma.yaml"
       },
       "npu_binding": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml"
       }
     },
     "required": {
       "board_dts": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openphone/openphone-hello.dts"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openagent/openagent-e1.dts"
       },
       "dma_driver": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/hello-dma.c"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1-dma.c"
       },
       "driver_kconfig": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/Kconfig"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/Kconfig"
       },
       "driver_makefile": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/Makefile"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/Makefile"
       },
       "npu_driver": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/hello-npu.c"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1-npu.c"
       },
       "platform_header": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/hello_platform_contract.h"
+        "exists": false,
+        "is_file": false,
+        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1_platform_contract.h"
       }
     },
     "status": "not_imported",
     "text_checks": {
-      "drivers_misc_kconfig_sources_openphone": false,
-      "drivers_misc_makefile_links_openphone": false,
-      "riscv_dts_makefile_links_openphone": false
+      "drivers_misc_kconfig_sources_openagent": true,
+      "drivers_misc_makefile_links_openagent": true,
+      "riscv_dts_makefile_links_openagent": true
     }
   },
   "linux_tree": "/Users/shawwalters/Desktop/npu_experiment/external/linux",
   "linux_tree_valid": true,
   "producer_commands": {
-    "configure": "cd /Users/shawwalters/Desktop/npu_experiment/external/linux && make ARCH=riscv openphone_hello.config olddefconfig",
+    "configure": "cd /Users/shawwalters/Desktop/npu_experiment/external/linux && make ARCH=riscv openagent_e1.config olddefconfig",
     "dtb_check": "sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux dtb-check",
     "import": "sw/linux/scripts/import-linux-bsp.sh /Users/shawwalters/Desktop/npu_experiment/external/linux",
     "import_check": "sw/linux/scripts/import-linux-bsp.sh --check /Users/shawwalters/Desktop/npu_experiment/external/linux",
     "kernel_build": "sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux kernel-build",
-    "mmio_smoke": "HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux smoke"
+    "mmio_smoke": "E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux smoke"
   },
-  "schema": "openphone.linux_external_bsp_status.v1",
+  "schema": "openagent.linux_external_bsp_status.v1",
   "status": "blocked",
   "tools": {
     "cross_compile": "",
