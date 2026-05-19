@@ -10,7 +10,7 @@ attempt_log="$repo_dir/build/reports/renode_smoke_attempt.log"
 banner_contract="$repo_dir/sim/renode/expected_serial_banner.txt"
 banner="openphone hello qemu"
 intake_transcript=
-smoke_seconds="${RENODE_SMOKE_SECONDS:-5}"
+smoke_seconds="${RENODE_SMOKE_SECONDS:-30}"
 qemu_transcript="$repo_dir/build/reports/qemu_smoke.log"
 artifact_dir="$repo_dir/build/renode"
 transcript="$artifact_dir/openphone_hello_uart.transcript"
@@ -102,7 +102,7 @@ usage: scripts/run_renode.sh [--check] [--transcript PATH]
   --transcript PATH  intake a Renode serial transcript after validating transcript and local preflight evidence
 
 Environment:
-  RENODE_SMOKE_SECONDS  bounded run duration in seconds (default: 5)
+  RENODE_SMOKE_SECONDS  bounded run duration in seconds (default: 30)
   --check  run semantic checks and require a bounded executable Renode smoke
 EOF
 }
@@ -496,7 +496,7 @@ qemu_transcript = Path(sys.argv[5])
 banner = sys.argv[6]
 status_report = Path(sys.argv[7])
 renode_path = sys.argv[8]
-timeout_s = float(os.environ.get("RENODE_SMOKE_SECONDS", "5"))
+timeout_s = float(os.environ.get("RENODE_SMOKE_SECONDS", "30"))
 
 def rel(path: Path) -> str:
     return path.relative_to(repo).as_posix()

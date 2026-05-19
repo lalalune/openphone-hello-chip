@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from hello_npu_runtime import HelloNpuRuntime, golden_gemm_s8
+from hello_npu_runtime import HelloNpuRuntime, NpuDescriptorSubmission, golden_gemm_s8
 
 
 class HelloNpuMmioSim:
@@ -20,6 +20,14 @@ class HelloNpuMmioSim:
             self.runtime.PERF_MACS: 0,
             self.runtime.PERF_OPS: 0,
             self.runtime.PERF_ERRORS: 0,
+            self.runtime.DESC_STATUS: self.runtime.DESC_STATUS_EMPTY,
+            self.runtime.DESC_HEAD: 0,
+            self.runtime.DESC_TAIL: 0,
+            self.runtime.DESC_TIMEOUT_COUNT: 0,
+            self.runtime.DESC_BYTES_READ: 0,
+            self.runtime.DESC_BYTES_WRITTEN: 0,
+            self.runtime.DESC_READ_BEATS: 0,
+            self.runtime.DESC_WRITE_BEATS: 0,
         }
         for word in range(self.runtime.SCRATCH_BYTES // 4):
             self.regs[self.runtime.SCRATCH + word * 4] = 0
@@ -55,6 +63,25 @@ class HelloNpuMmioSim:
         self.regs[self.runtime.SCRATCH + offset] = value & 0xFFFF_FFFF
 
     def _execute(self) -> None:
+        if self.regs.get(self.runtime.CMD_PARAM, 0) == 1:
+            head = self.regs.get(self.runtime.DESC_HEAD, 0)
+            tail = self.regs.get(self.runtime.DESC_TAIL, 0)
+            queued = (tail - head) & (self.runtime.DESC_RING_ENTRIES - 1)
+            if queued == 0:
+                self.regs[self.runtime.DESC_STATUS] = (
+                    self.runtime.DESC_STATUS_EMPTY | self.runtime.DESC_STATUS_ERROR
+                )
+                self.regs[self.runtime.CTRL_STATUS] = 0x6
+                return
+            self.regs[self.runtime.DESC_BYTES_READ] += queued * 16
+            self.regs[self.runtime.DESC_BYTES_WRITTEN] += 0
+            self.regs[self.runtime.DESC_READ_BEATS] += queued
+            self.regs[self.runtime.DESC_WRITE_BEATS] += 0
+            self.regs[self.runtime.DESC_HEAD] = tail
+            self.regs[self.runtime.DESC_STATUS] = self.runtime.DESC_STATUS_DONE
+            self.regs[self.runtime.CTRL_STATUS] = 0x2
+            return
+
         opcode = self.regs.get(self.runtime.OPCODE, 0)
         self.regs[self.runtime.PERF_OPS] += 1
         if opcode == self.runtime.OP_DOT8_S4:
@@ -119,6 +146,32 @@ class HelloNpuRuntimeSimTest(unittest.TestCase):
             sim.runtime.gemm_s8(
                 [[1, 2, 3, 4, 5, 6, 7, 8]], [[1], [1], [1], [1], [1], [1], [1], [1]]
             )
+
+    def test_runtime_descriptor_submission_updates_descriptor_counters(self):
+        sim = HelloNpuMmioSim()
+
+        status = sim.runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=1))
+        counters = sim.runtime.descriptor_counters()
+
+        self.assertTrue(status.ok)
+        self.assertEqual(status.desc_status, sim.runtime.DESC_STATUS_DONE)
+        self.assertEqual(counters["status"], sim.runtime.DESC_STATUS_DONE)
+        self.assertEqual(counters["bytes_read"], 16)
+        self.assertEqual(counters["bytes_written"], 0)
+        self.assertEqual(counters["read_beats"], 1)
+        self.assertEqual(counters["write_beats"], 0)
+
+    def test_runtime_stream_descriptor_word0_sets_owner_and_writeback_bits(self):
+        word0 = HelloNpuRuntime.pack_stream_descriptor_word0(
+            HelloNpuRuntime.OP_GEMM_S8,
+            0,
+            12,
+            writeback_request=True,
+        )
+
+        self.assertTrue(word0 & HelloNpuRuntime.DESC_FLAG_VALID_OWNER)
+        self.assertTrue(word0 & HelloNpuRuntime.DESC_FLAG_WRITEBACK_REQUEST)
+        self.assertTrue(word0 & HelloNpuRuntime.DESC_FLAG_STREAM_TO_SCRATCH)
 
 
 if __name__ == "__main__":

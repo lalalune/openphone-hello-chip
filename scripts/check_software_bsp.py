@@ -17,9 +17,7 @@ ARTIFACT_MANIFEST = ROOT / "docs/android/bsp-artifact-manifest.json"
 LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
 BOOT_TRANSCRIPT_SCHEMA = ROOT / "docs/android/boot-transcript.schema.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/software-bsp-evidence-manifest.json"
-LOCAL_EXTERNAL_PREFLIGHT_REPORT = (
-    ROOT / "docs/evidence/software-bsp-external-preflight-status.json"
-)
+LOCAL_EXTERNAL_PREFLIGHT_REPORT = ROOT / "docs/evidence/software-bsp-external-preflight-status.json"
 AOSP_EVIDENCE_MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
 NNAPI_PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json"
 ANDROID_PROOF_TEMPLATE = (
@@ -82,6 +80,12 @@ TARGETS: dict[str, dict[str, Any]] = {
             "sw/buildroot/configs/openphone_hello_defconfig",
             "sw/buildroot/board/openphone/hello/linux.fragment",
             "sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke",
+            "sw/buildroot/package/hello-mmio-smoke/Config.in",
+            "sw/buildroot/package/hello-mmio-smoke/hello-mmio-smoke.mk",
+            "sw/buildroot/package/hello-mmio-smoke/src/hello-mmio-smoke.c",
+            "sw/buildroot/package/hello-npu-ml-smoke/Config.in",
+            "sw/buildroot/package/hello-npu-ml-smoke/hello-npu-ml-smoke.mk",
+            "sw/buildroot/package/hello-npu-ml-smoke/src/hello-npu-ml-smoke.c",
         ],
         "contract_terms": [
             "BR2_EXTERNAL_OPENPHONE_HELLO_PATH",
@@ -93,8 +97,9 @@ TARGETS: dict[str, dict[str, Any]] = {
             "docs/evidence/buildroot/openphone_hello_defconfig.log",
             "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
             "docs/evidence/buildroot/hello-mmio-smoke.log",
+            "docs/evidence/buildroot/hello-npu-ml-smoke.log",
         ],
-        "evidence_note": "external Buildroot image build plus hello MMIO smoke transcript",
+        "evidence_note": "external Buildroot image build plus hello MMIO and hello NPU ML smoke transcripts",
     },
     "linux": {
         "readme": ROOT / "docs/sw/linux/README.md",
@@ -130,6 +135,7 @@ TARGETS: dict[str, dict[str, Any]] = {
         "required": [
             "docs/sw/opensbi/README.md",
             "docs/sw/opensbi/capture-opensbi-evidence.sh",
+            "sw/opensbi/scripts/import-opensbi-platform.sh",
             "sw/opensbi/platform/openphone/README.md",
             "sw/opensbi/platform/openphone/config.mk",
             "sw/opensbi/platform/openphone/objects.mk",
@@ -719,8 +725,10 @@ def capture_plan_commands(
     *,
     buildroot: str | None,
     linux: str | None,
+    opensbi: str | None,
     aosp: str | None,
     target_host: str | None,
+    opensbi_handoff_cmd: str | None,
     qemu_smoke_cmd: str | None,
     renode_smoke_cmd: str | None,
 ) -> list[str]:
@@ -735,6 +743,10 @@ def capture_plan_commands(
             + target
             + " /usr/bin/hello-mmio-smoke' "
             + f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} smoke",
+            "HELLO_NPU_ML_SMOKE_CMD='ssh "
+            + target
+            + " /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' "
+            + f"sw/buildroot/scripts/capture-buildroot-evidence.sh {tree} ml-smoke",
             "python3 scripts/check_software_bsp.py buildroot --require-evidence",
         ]
     if name == "linux":
@@ -748,6 +760,15 @@ def capture_plan_commands(
             + " /tmp/hello-mmio-smoke' "
             + f"sw/linux/scripts/capture-linux-bsp-evidence.sh {tree} smoke",
             "python3 scripts/check_software_bsp.py linux --require-evidence",
+        ]
+    if name == "opensbi":
+        tree = opensbi or "/path/to/opensbi"
+        handoff = opensbi_handoff_cmd or "/exact/qemu-or-renode fw_dynamic handoff command"
+        return [
+            f"sw/opensbi/scripts/import-opensbi-platform.sh --check {tree}",
+            f"OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh {tree} build",
+            f"OPENPHONE_OPENSBI_HANDOFF_CMD={handoff!r} docs/sw/opensbi/capture-opensbi-evidence.sh {tree} handoff",
+            "python3 scripts/check_software_bsp.py opensbi --require-evidence",
         ]
     if name == "aosp":
         tree = aosp or "/path/to/aosp"
@@ -794,8 +815,10 @@ def print_capture_plan(args: argparse.Namespace) -> None:
             name,
             buildroot=args.buildroot,
             linux=args.linux,
+            opensbi=args.opensbi,
             aosp=args.aosp,
             target_host=args.target_host,
+            opensbi_handoff_cmd=args.opensbi_handoff_cmd,
             qemu_smoke_cmd=args.qemu_smoke_cmd,
             renode_smoke_cmd=args.renode_smoke_cmd,
         ):
@@ -828,7 +851,396 @@ def print_evidence_plan(name: str) -> None:
             print(f"    forbidden any: {', '.join(log_spec['forbidden_any'])}")
 
 
+def utc_now() -> str:
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def shell_arg(path: str | Path) -> str:
+    return shlex.quote(str(path))
+
+
+def default_tree(name: str) -> Path | None:
+    candidates = {
+        "linux": ROOT / "external/linux",
+        "opensbi": ROOT / "external/opensbi",
+    }
+    candidate = candidates.get(name)
+    if candidate and candidate.exists():
+        return candidate
+    return None
+
+
+def path_from_arg(value: str | None, name: str) -> Path | None:
+    if value:
+        return Path(value).expanduser().resolve()
+    return default_tree(name)
+
+
+def command_exists(name: str) -> bool:
+    return shutil.which(name) is not None
+
+
+def any_command_exists(names: list[str]) -> bool:
+    return any(command_exists(name) for name in names)
+
+
+def gnu_make_check() -> tuple[bool, str]:
+    make = shutil.which("gmake") or shutil.which("make")
+    if not make:
+        return False, "missing make/gmake"
+    try:
+        result = subprocess.run(
+            [make, "--version"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except OSError as exc:
+        return False, f"{make} --version failed: {exc}"
+    first = result.stdout.splitlines()[0] if result.stdout else make
+    match = re.search(r"GNU Make\s+(\d+)\.(\d+)", first)
+    if not match:
+        return False, f"{first} (GNU Make >= 3.82 required)"
+    version = (int(match.group(1)), int(match.group(2)))
+    return version >= (3, 82), first
+
+
+def linux_preflight(tree: Path | None, target_host: str | None) -> dict[str, Any]:
+    blockers: list[str] = []
+    checks: list[dict[str, Any]] = []
+    tree_text = str(tree) if tree else "/path/to/linux"
+
+    def check(path: Path, description: str) -> None:
+        ok = path.exists()
+        checks.append(
+            {"name": description, "path": str(path), "status": "PASS" if ok else "BLOCKED"}
+        )
+        if not ok:
+            blockers.append(f"missing {description}: {path}")
+
+    if tree is None:
+        blockers.append("LINUX_TREE not supplied and external/linux was not found")
+    else:
+        check(tree / "Kconfig", "Linux Kconfig")
+        check(tree / "drivers", "Linux drivers directory")
+        check(tree / "arch", "Linux arch directory")
+        check(
+            tree / "drivers/misc/openphone-hello/Kconfig", "imported OpenPhone Linux driver Kconfig"
+        )
+        check(tree / "arch/riscv/boot/dts/openphone/openphone-hello.dts", "imported OpenPhone DTS")
+        check(
+            tree / "Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml",
+            "imported OpenPhone DT schema",
+        )
+        check(tree / ".config", "external Linux .config")
+        if (tree / ".config").is_file():
+            config_text = (tree / ".config").read_text(errors="ignore")
+            for symbol in ["CONFIG_OPENPHONE_HELLO_NPU", "CONFIG_OPENPHONE_HELLO_DMA"]:
+                ok = symbol in config_text
+                checks.append(
+                    {"name": f"{symbol} configured", "status": "PASS" if ok else "BLOCKED"}
+                )
+                if not ok:
+                    blockers.append(
+                        f"external Linux .config missing {symbol}; run openphone_hello.config olddefconfig after import"
+                    )
+
+    cross_compile = os.environ.get("CROSS_COMPILE", "riscv64-linux-gnu-")
+    compiler = f"{cross_compile}gcc"
+    compiler_ok = command_exists(compiler)
+    checks.append(
+        {
+            "name": "RISC-V Linux cross compiler on PATH",
+            "command": compiler,
+            "status": "PASS" if compiler_ok else "BLOCKED",
+        }
+    )
+    if not compiler_ok:
+        blockers.append(
+            f"missing executable {compiler}; set CROSS_COMPILE to a usable RISC-V Linux toolchain prefix"
+        )
+    make_ok, make_detail = gnu_make_check()
+    checks.append(
+        {
+            "name": "GNU Make version",
+            "detail": make_detail,
+            "status": "PASS" if make_ok else "BLOCKED",
+        }
+    )
+    if not make_ok:
+        blockers.append(f"{make_detail}; Linux requires GNU Make >= 3.82")
+
+    return {
+        "target": "linux",
+        "tree": tree_text,
+        "status": "BLOCKED" if blockers else "READY_TO_CAPTURE",
+        "checks": checks,
+        "blockers": blockers,
+        "commands": capture_plan_commands(
+            "linux",
+            buildroot=None,
+            linux=tree_text,
+            opensbi=None,
+            aosp=None,
+            target_host=target_host,
+            opensbi_handoff_cmd=None,
+            qemu_smoke_cmd=None,
+            renode_smoke_cmd=None,
+        ),
+    }
+
+
+def buildroot_preflight(tree: Path | None, target_host: str | None) -> dict[str, Any]:
+    blockers: list[str] = []
+    checks: list[dict[str, Any]] = []
+    tree_text = str(tree) if tree else "/path/to/buildroot"
+
+    if tree is None:
+        blockers.append(
+            "BUILDROOT_TREE not supplied and no local Buildroot checkout was discovered"
+        )
+    else:
+        for rel_path, description in [
+            ("Makefile", "Buildroot Makefile"),
+            ("configs", "Buildroot configs directory"),
+        ]:
+            path = tree / rel_path
+            ok = path.exists()
+            checks.append(
+                {"name": description, "path": str(path), "status": "PASS" if ok else "BLOCKED"}
+            )
+            if not ok:
+                blockers.append(f"missing {description}: {path}")
+        images = tree / "output/images"
+        ok = images.is_dir()
+        checks.append(
+            {
+                "name": "Buildroot output/images directory",
+                "path": str(images),
+                "status": "PASS" if ok else "BLOCKED",
+            }
+        )
+        if not ok:
+            blockers.append(
+                "Buildroot output/images is absent; run the external Buildroot image build before image-manifest capture"
+            )
+
+    linux_tarball = ROOT / "sw/linux-external.tar.xz"
+    ok = linux_tarball.is_file()
+    checks.append(
+        {
+            "name": "external Linux tarball for Buildroot",
+            "path": str(linux_tarball),
+            "status": "PASS" if ok else "BLOCKED",
+        }
+    )
+    if not ok:
+        blockers.append(
+            f"missing {linux_tarball}; Buildroot defconfig cannot consume a BSP kernel source archive"
+        )
+    make_ok, make_detail = gnu_make_check()
+    checks.append(
+        {
+            "name": "GNU Make version",
+            "detail": make_detail,
+            "status": "PASS" if make_ok else "BLOCKED",
+        }
+    )
+    if not make_ok:
+        blockers.append(f"{make_detail}; Buildroot requires GNU Make >= 3.82")
+
+    return {
+        "target": "buildroot",
+        "tree": tree_text,
+        "status": "BLOCKED" if blockers else "READY_TO_CAPTURE",
+        "checks": checks,
+        "blockers": blockers,
+        "commands": capture_plan_commands(
+            "buildroot",
+            buildroot=tree_text,
+            linux=None,
+            opensbi=None,
+            aosp=None,
+            target_host=target_host,
+            opensbi_handoff_cmd=None,
+            qemu_smoke_cmd=None,
+            renode_smoke_cmd=None,
+        ),
+    }
+
+
+def opensbi_preflight(tree: Path | None, handoff_cmd: str | None) -> dict[str, Any]:
+    blockers: list[str] = []
+    checks: list[dict[str, Any]] = []
+    tree_text = str(tree) if tree else "/path/to/opensbi"
+
+    if tree is None:
+        blockers.append("OPENSBI_TREE not supplied and external/opensbi was not found")
+    else:
+        for rel_path, description in [
+            ("Makefile", "OpenSBI Makefile"),
+            ("lib", "OpenSBI lib directory"),
+            ("firmware/fw_dynamic.S", "OpenSBI fw_dynamic source"),
+        ]:
+            path = tree / rel_path
+            ok = path.exists()
+            checks.append(
+                {"name": description, "path": str(path), "status": "PASS" if ok else "BLOCKED"}
+            )
+            if not ok:
+                blockers.append(f"missing {description}: {path}")
+        imported_platform = tree / "platform/openphone/config.mk"
+        checks.append(
+            {
+                "name": "optional imported OpenPhone OpenSBI platform",
+                "path": str(imported_platform),
+                "status": "PASS" if imported_platform.is_file() else "BLOCKED",
+            }
+        )
+        if not imported_platform.is_file():
+            blockers.append(
+                "OpenPhone OpenSBI platform is not imported; copy sw/opensbi/platform/openphone to platform/openphone if building PLATFORM=openphone"
+            )
+
+    compiler_ok = any_command_exists(["riscv64-unknown-elf-gcc", "riscv64-linux-gnu-gcc"])
+    checks.append(
+        {
+            "name": "RISC-V OpenSBI cross compiler on PATH",
+            "status": "PASS" if compiler_ok else "BLOCKED",
+        }
+    )
+    if not compiler_ok:
+        blockers.append("missing riscv64-unknown-elf-gcc or riscv64-linux-gnu-gcc on PATH")
+    make_ok, make_detail = gnu_make_check()
+    checks.append(
+        {
+            "name": "GNU Make version",
+            "detail": make_detail,
+            "status": "PASS" if make_ok else "BLOCKED",
+        }
+    )
+    if not make_ok:
+        blockers.append(f"{make_detail}; OpenSBI requires GNU Make >= 3.82")
+    if not handoff_cmd:
+        blockers.append(
+            "OPENPHONE_OPENSBI_HANDOFF_CMD is not supplied; handoff capture needs the exact QEMU/Renode/board command"
+        )
+
+    return {
+        "target": "opensbi",
+        "tree": tree_text,
+        "status": "BLOCKED" if blockers else "READY_TO_CAPTURE",
+        "checks": checks,
+        "blockers": blockers,
+        "commands": capture_plan_commands(
+            "opensbi",
+            buildroot=None,
+            linux=None,
+            opensbi=tree_text,
+            aosp=None,
+            target_host=None,
+            opensbi_handoff_cmd=handoff_cmd,
+            qemu_smoke_cmd=None,
+            renode_smoke_cmd=None,
+        ),
+    }
+
+
+def external_preflight_report(args: argparse.Namespace) -> dict[str, Any]:
+    names = TARGETS.keys() if args.target == "all" else [args.target]
+    targets: list[dict[str, Any]] = []
+    for name in names:
+        if name == "linux":
+            targets.append(linux_preflight(path_from_arg(args.linux, "linux"), args.target_host))
+        elif name == "buildroot":
+            buildroot = Path(args.buildroot).expanduser().resolve() if args.buildroot else None
+            targets.append(buildroot_preflight(buildroot, args.target_host))
+        elif name == "opensbi":
+            targets.append(
+                opensbi_preflight(path_from_arg(args.opensbi, "opensbi"), args.opensbi_handoff_cmd)
+            )
+        else:
+            targets.append(
+                {
+                    "target": name,
+                    "status": "BLOCKED",
+                    "blockers": [
+                        f"external-preflight does not auto-discover {name}; use capture-plan for exact commands"
+                    ],
+                    "commands": capture_plan_commands(
+                        name,
+                        buildroot=args.buildroot,
+                        linux=args.linux,
+                        opensbi=args.opensbi,
+                        aosp=args.aosp,
+                        target_host=args.target_host,
+                        opensbi_handoff_cmd=args.opensbi_handoff_cmd,
+                        qemu_smoke_cmd=args.qemu_smoke_cmd,
+                        renode_smoke_cmd=args.renode_smoke_cmd,
+                    ),
+                }
+            )
+    status = (
+        "READY_TO_CAPTURE" if all(t["status"] == "READY_TO_CAPTURE" for t in targets) else "BLOCKED"
+    )
+    return {
+        "schema": "openphone.software_bsp_external_preflight.v1",
+        "generated_utc": utc_now(),
+        "claim_boundary": "environment_preflight_only_not_external_build_boot_or_runtime_evidence",
+        "status": status,
+        "host": {
+            "platform": sys.platform,
+            "cwd": str(ROOT),
+        },
+        "targets": targets,
+    }
+
+
+def run_external_preflight(args: argparse.Namespace) -> int:
+    report = external_preflight_report(args)
+    if args.write_report:
+        output = Path(args.output).expanduser() if args.output else LOCAL_EXTERNAL_PREFLIGHT_REPORT
+        if not output.is_absolute():
+            output = ROOT / output
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        print(f"wrote {rel(output)}")
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(f"external BSP preflight: {report['status']}")
+        for target in report["targets"]:
+            print(f"{target['target']}: {target['status']}")
+            for blocker in target.get("blockers", []):
+                print(f"  [BLOCKED] {blocker}")
+            for command in target.get("commands", []):
+                print(f"  command: {command}")
+    return 0 if report["status"] == "READY_TO_CAPTURE" else 2
+
+
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "external-preflight":
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", choices=["external-preflight"])
+        parser.add_argument("target", choices=[*TARGETS.keys(), "all"], nargs="?", default="all")
+        parser.add_argument("--buildroot")
+        parser.add_argument("--linux")
+        parser.add_argument("--opensbi")
+        parser.add_argument("--aosp")
+        parser.add_argument("--target-host")
+        parser.add_argument("--opensbi-handoff-cmd")
+        parser.add_argument("--qemu-smoke-cmd")
+        parser.add_argument("--renode-smoke-cmd")
+        parser.add_argument("--write-report", action="store_true")
+        parser.add_argument(
+            "--output",
+            default=str(LOCAL_EXTERNAL_PREFLIGHT_REPORT.relative_to(ROOT)),
+            help="Repo-relative or absolute JSON report path.",
+        )
+        parser.add_argument("--json", action="store_true")
+        args = parser.parse_args()
+        return run_external_preflight(args)
+
     if len(sys.argv) > 1 and sys.argv[1] == "status":
         parser = argparse.ArgumentParser()
         parser.add_argument("command", choices=["status"])
@@ -855,8 +1267,10 @@ def main() -> int:
         parser.add_argument("target", choices=[*TARGETS.keys(), "all"])
         parser.add_argument("--buildroot")
         parser.add_argument("--linux")
+        parser.add_argument("--opensbi")
         parser.add_argument("--aosp")
         parser.add_argument("--target-host")
+        parser.add_argument("--opensbi-handoff-cmd")
         parser.add_argument("--qemu-smoke-cmd")
         parser.add_argument("--renode-smoke-cmd")
         args = parser.parse_args()
@@ -901,7 +1315,11 @@ def main() -> int:
         return (
             1
             if any(
-                report["errors"] or (evidence_required and report["missing_evidence"])
+                report["errors"]
+                or (
+                    evidence_required
+                    and (report["missing_evidence"] or report["invalid_evidence"])
+                )
                 for report in reports
             )
             else 0

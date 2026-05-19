@@ -12,7 +12,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -53,8 +55,28 @@ def tool_status() -> dict[str, Any]:
         "riscv64-unknown-elf-gcc",
     ]
     found_compiler = next((tool for tool in compilers if tool and shutil.which(tool)), "")
+    make_path = shutil.which("make") or ""
+    make_version = ""
+    make_ok = False
+    if make_path:
+        completed = subprocess.run(
+            [make_path, "--version"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        first = completed.stdout.splitlines()[0] if completed.stdout else ""
+        make_version = first
+        match = re.search(r"GNU Make\s+([0-9]+)\.([0-9]+)", first)
+        if match:
+            major = int(match.group(1))
+            minor = int(match.group(2))
+            make_ok = (major, minor) >= (3, 82)
     return {
-        "make": shutil.which("make") or "",
+        "make": make_path,
+        "make_version": make_version,
+        "make_version_ok": make_ok,
         "dtc": shutil.which("dtc") or "",
         "riscv_compiler": found_compiler,
         "cross_compile": os.environ.get("CROSS_COMPILE", ""),
@@ -76,8 +98,10 @@ def imported_state(linux: Path) -> dict[str, Any]:
     }
     optional = {
         "board_dts_makefile": linux / "arch/riscv/boot/dts/openphone/Makefile",
-        "npu_binding": linux / "Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml",
-        "dma_binding": linux / "Documentation/devicetree/bindings/openphone/openphone,hello-dma.yaml",
+        "npu_binding": linux
+        / "Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml",
+        "dma_binding": linux
+        / "Documentation/devicetree/bindings/openphone/openphone,hello-dma.yaml",
         "display_binding": linux
         / "Documentation/devicetree/bindings/openphone/openphone,hello-display.yaml",
     }
@@ -91,11 +115,13 @@ def imported_state(linux: Path) -> dict[str, Any]:
     riscv_dts_makefile = linux / "arch/riscv/boot/dts/Makefile"
     text_checks["drivers_misc_kconfig_sources_openphone"] = (
         misc_kconfig.is_file()
-        and 'source "drivers/misc/openphone-hello/Kconfig"' in misc_kconfig.read_text(errors="replace")
+        and 'source "drivers/misc/openphone-hello/Kconfig"'
+        in misc_kconfig.read_text(errors="replace")
     )
     text_checks["drivers_misc_makefile_links_openphone"] = (
         misc_makefile.is_file()
-        and "obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-hello/" in misc_makefile.read_text(errors="replace")
+        and "obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-hello/"
+        in misc_makefile.read_text(errors="replace")
     )
     text_checks["riscv_dts_makefile_links_openphone"] = (
         riscv_dts_makefile.is_file()
@@ -156,15 +182,26 @@ def build_report(linux: Path) -> dict[str, Any]:
     elif not tree_ok:
         blockers.append({"id": "external_linux_tree_invalid", "detail": str(linux)})
     elif imported.get("status") != "imported":
-        blockers.append({
-            "id": "external_linux_bsp_not_imported",
-            "detail": "run import command before kernel-build or dtb-check evidence capture",
-        })
+        blockers.append(
+            {
+                "id": "external_linux_bsp_not_imported",
+                "detail": "run import command before kernel-build or dtb-check evidence capture",
+            }
+        )
     if not tools["riscv_compiler"] and not tools["cross_compile"]:
-        blockers.append({
-            "id": "riscv_cross_compiler_missing",
-            "detail": "set CROSS_COMPILE=... or install a riscv64 Linux compiler",
-        })
+        blockers.append(
+            {
+                "id": "riscv_cross_compiler_missing",
+                "detail": "set CROSS_COMPILE=... or install a riscv64 Linux compiler",
+            }
+        )
+    if not tools["make_version_ok"]:
+        blockers.append(
+            {
+                "id": "gnu_make_too_old_or_missing",
+                "detail": tools["make_version"] or "make not found",
+            }
+        )
     for name, state in evidence.items():
         if state["state"] != "present":
             blockers.append({"id": f"{name}_evidence_{state['state']}", "detail": state["path"]})

@@ -1,58 +1,36 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * hello-npu-ml-smoke: target-side /dev/hello-npu smoke for Buildroot.
+ * hello-npu-ml-smoke: boot-time userspace ML smoke for /dev/hello-npu.
  *
- * This proves only that the built rootfs can execute a tiny userspace program
- * against the Linux hello-NPU ioctl ABI. It is not NNAPI, Android, model, or
- * performance evidence.
+ * This deterministic Linux target workload uses the checked-in hello NPU ioctl
+ * ABI and rejects CPU-only fallback by requiring the kernel driver to execute
+ * one bounded GEMM_S8 tile.
  */
 
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/ioctl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-struct openphone_hello_npu_job {
-	uint32_t op_a;
-	uint32_t op_b;
-	uint32_t opcode;
-	uint32_t result;
-	uint32_t result_hi;
-	uint32_t ctrl_status;
-	uint32_t perf_cycles;
-	uint32_t perf_macs;
-	uint32_t perf_errors;
-	uint32_t reserved;
-};
+#include "hello-npu-uapi.h"
 
-struct openphone_hello_npu_contract {
-	uint32_t version;
-	uint32_t npu_base;
-	uint32_t window_bytes;
-	uint32_t unmapped_read_value;
-};
+#define HELLO_NPU_DEV "/dev/hello-npu"
 
-#define OPENPHONE_HELLO_NPU_IOC_MAGIC 'N'
-#define OPENPHONE_HELLO_NPU_IOC_SUBMIT \
-	_IOWR(OPENPHONE_HELLO_NPU_IOC_MAGIC, 0x01, struct openphone_hello_npu_job)
-#define OPENPHONE_HELLO_NPU_IOC_GET_CONTRACT \
-	_IOR(OPENPHONE_HELLO_NPU_IOC_MAGIC, 0x02, struct openphone_hello_npu_contract)
-
-#define HELLO_NPU_OPCODE_GEMM_S8 8u
+static void print_matrix(const int32_t *c)
+{
+	printf("[[%d,%d],[%d,%d]]", c[0], c[1], c[2], c[3]);
+}
 
 int main(int argc, char **argv)
 {
-	const char *device = "/dev/hello-npu";
-	struct openphone_hello_npu_contract contract = {0};
-	struct openphone_hello_npu_job job = {
-		.op_a = 0,
-		.op_b = 0,
-		.opcode = HELLO_NPU_OPCODE_GEMM_S8,
-	};
+	static const int32_t expected[] = { -44, 8, 139, -54 };
+	const char *device = HELLO_NPU_DEV;
+	struct hello_npu_gemm_s8 gemm;
+	struct hello_npu_counters counters;
+	unsigned int i;
 	int fd;
 
 	if (argc == 3 && strcmp(argv[1], "--device") == 0)
@@ -62,41 +40,66 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
+	memset(&gemm, 0, sizeof(gemm));
+	memset(&counters, 0, sizeof(counters));
+	gemm.m = 2;
+	gemm.n = 2;
+	gemm.k = 3;
+	gemm.a[0] = 1;
+	gemm.a[1] = -2;
+	gemm.a[2] = 3;
+	gemm.a[3] = 4;
+	gemm.a[4] = 5;
+	gemm.a[5] = -6;
+	gemm.b[0] = 7;
+	gemm.b[1] = -8;
+	gemm.b[2] = 9;
+	gemm.b[3] = 10;
+	gemm.b[4] = -11;
+	gemm.b[5] = 12;
+
 	fd = open(device, O_RDWR | O_CLOEXEC);
 	if (fd < 0) {
-		fprintf(stderr, "hello-npu-ml-smoke: FAIL open %s: %s\n",
-			device, strerror(errno));
+		fprintf(stderr, "%s: %s\n", device, strerror(errno));
+		fprintf(stderr, "CPU-only fallback rejected: hello NPU device is required\n");
 		return 2;
 	}
 
-	if (ioctl(fd, OPENPHONE_HELLO_NPU_IOC_GET_CONTRACT, &contract) != 0) {
-		fprintf(stderr, "hello-npu-ml-smoke: FAIL get-contract: %s\n",
-			strerror(errno));
+	if (ioctl(fd, HELLO_NPU_IOC_RUN_GEMM_S8, &gemm) < 0) {
+		fprintf(stderr, "HELLO_NPU_IOC_RUN_GEMM_S8: %s\n", strerror(errno));
 		close(fd);
 		return 3;
 	}
 
-	if (ioctl(fd, OPENPHONE_HELLO_NPU_IOC_SUBMIT, &job) != 0) {
-		fprintf(stderr, "hello-npu-ml-smoke: FAIL submit GEMM_S8: %s\n",
-			strerror(errno));
-		close(fd);
-		return 4;
+	for (i = 0; i < 4; i++) {
+		if (gemm.c[i] != expected[i]) {
+			fprintf(stderr, "GEMM_S8 mismatch at C[%u]: got=%d expected=%d\n",
+				i, gemm.c[i], expected[i]);
+			close(fd);
+			return 4;
+		}
 	}
+
+	if (ioctl(fd, HELLO_NPU_IOC_GET_COUNTERS, &counters) < 0)
+		fprintf(stderr, "HELLO_NPU_IOC_GET_COUNTERS: %s\n", strerror(errno));
+
+	printf("openphone-evidence: target=linux artifact=hello_npu_ml_smoke\n");
+	printf("openphone-evidence: device=%s\n", device);
+	printf("openphone-evidence: workload=gemm_s8_int8_2x2x3\n");
+	printf("openphone-evidence: input_sha256=860fe3aa9f5e4b5515d4a0a671db874748650cc4fdae1548dc7ee4f0a057a8ed\n");
+	printf("openphone-evidence: output_sha256=d70386994e16722852e1149ff822f99cb1bc13cf4ebdeceaa5aa8b2eedf5e386\n");
+	printf("hello-npu-ml-smoke: PASS workload=gemm_s8_int8_2x2x3 c=");
+	print_matrix(gemm.c);
+	printf(" cycles=%u macs=%u ops=%u errors=%u unsupported_ops=%u ",
+	       counters.perf_cycles, counters.perf_macs, counters.perf_ops,
+	       counters.perf_errors, counters.perf_unsupported_ops);
+	printf("desc_bytes_read=%u desc_bytes_written=%u desc_read_beats=%u desc_write_beats=%u ",
+	       counters.desc_bytes_read, counters.desc_bytes_written,
+	       counters.desc_read_beats, counters.desc_write_beats);
+	printf("status=0x%08x claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark\n",
+	       gemm.status);
+	printf("openphone-evidence: status=PASS\n");
 
 	close(fd);
-
-	if (job.perf_errors != 0) {
-		fprintf(stderr,
-			"hello-npu-ml-smoke: FAIL workload=gemm_s8_int8_2x2x3 errors=%u\n",
-			job.perf_errors);
-		return 5;
-	}
-
-	printf("hello-npu-ml-smoke: PASS workload=gemm_s8_int8_2x2x3 "
-	       "device=%s contract_version=%u npu_base=0x%08x result=0x%08x "
-	       "cycles=%u macs=%u errors=%u "
-	       "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark\n",
-	       device, contract.version, contract.npu_base, job.result,
-	       job.perf_cycles, job.perf_macs, job.perf_errors);
 	return 0;
 }

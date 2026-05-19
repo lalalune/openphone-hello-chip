@@ -10,15 +10,18 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 | architecture-docs | `PASS` | `command_pass` | `none` |
 | toolchain-fast-path | `PASS` | `tool_available` | `none` |
 | platform-contract | `PASS` | `command_pass` | `none` |
+| linux-boot-prerequisites | `PASS` | `command_pass` | `none` |
 | software-bsp | `BLOCK` | `scaffold_only` | `make software-bsp-evidence-check` |
 | real-world-release-gates | `PASS` | `command_pass` | `none` |
 | rtl-source | `PASS` | `source_present` | `none` |
 | synthesis | `PASS` | `generated_artifact` | `none` |
-| cocotb | `PASS` | `generated_artifact` | `none` |
+| cocotb | `BLOCK` | `regen_required` | `make cocotb cocotb-npu cocotb-contract cocotb-cpu` |
 | verilator | `PASS` | `generated_artifact` | `none` |
 | formal | `PASS` | `generated_artifact` | `none` |
 | qemu | `PASS` | `generated_artifact` | `none` |
-| renode | `PASS` | `generated_artifact` | `none` |
+| renode | `BLOCK` | `tool_blocker` | `make renode-check` |
+| npu-ml-proof | `PASS` | `generated_artifact` | `none` |
+| minimum-linux-npu-target | `BLOCK` | `tool_blocker` | `make minimum-linux-npu-target-strict` |
 | pd-contract | `PASS` | `command_pass` | `none` |
 | product-package | `BLOCK` | `release_blocker` | `close package/FPGA/KiCad/PD release blockers or keep product claim below fabrication` |
 | benchmarks | `PASS` | `generated_artifact` | `none` |
@@ -38,5 +41,6 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 ## Claim Boundaries
 
 Product scaffold PASS means blockers are named and fail closed.
+Minimum Linux+NPU target BLOCK means local NPU ML smoke evidence exists, but generated-AP Linux boot and target-side ML transcripts are still missing.
 Benchmark BLOCK means reports are planning or dry-run evidence; `make benchmark-sim-metrics` is not performance evidence.
 Android CTS/VTS, secure boot, radios, sensors, battery/PMIC/thermal, USB/storage/update, package, FPGA, KiCad, PD, SI/PI, and thermal release remain blocked until real evidence is archived.

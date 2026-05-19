@@ -2,16 +2,12 @@
 #ifndef _UAPI_HELLO_NPU_H
 #define _UAPI_HELLO_NPU_H
 
-#ifdef __KERNEL__
-#include <linux/ioctl.h>
-#include <linux/types.h>
-#else
 #include <stdint.h>
 #include <sys/ioctl.h>
+
 typedef uint32_t __u32;
 typedef int32_t __s32;
 typedef int8_t __s8;
-#endif
 
 struct hello_npu_contract {
 	__u32 version;
@@ -90,14 +86,6 @@ struct hello_npu_perf {
 #define HELLO_NPU_IOC_GET_CONTRACT \
 	_IOR(HELLO_NPU_IOC_MAGIC, 0x06, struct hello_npu_contract)
 
-#define HELLO_NPU_CTRL_START 0x1u
-#define HELLO_NPU_CTRL_DONE 0x2u
-#define HELLO_NPU_CTRL_ERROR 0x4u
-#define HELLO_NPU_DEFAULT_POLL_LIMIT 100000u
-#define HELLO_NPU_OP_DOT4_S8 4u
-#define HELLO_NPU_OP_GEMM_S8 8u
-#define HELLO_NPU_DESCRIPTOR_MODE 1u
-#define HELLO_NPU_DESC_RING_ENTRIES 8u
 #define HELLO_NPU_SCRATCH_BYTES 64u
 
 #endif /* _UAPI_HELLO_NPU_H */

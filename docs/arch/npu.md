@@ -80,6 +80,9 @@ Additional registers:
 | `0x5c` | `PERF_ERRORS` | rejected commands/configurations; write bit 0 to clear all perf counters |
 | `0x60` | `DESC_TIMEOUT_COUNT` | cycles spent in the active descriptor engine |
 | `0x64` | `DESC_BYTES_READ` | descriptor plus tensor-stream bytes accepted by the NPU read path |
+| `0x68` | `DESC_BYTES_WRITTEN` | descriptor writeback bytes accepted by the NPU write path; always zero until writeback exists |
+| `0x6c` | `DESC_READ_BEATS` | descriptor plus tensor-stream read beats accepted |
+| `0x70` | `DESC_WRITE_BEATS` | descriptor writeback beats accepted; always zero until writeback exists |
 | `0x80`-`0xbc` | `SCRATCH[0..15]` | 16 little-endian 32-bit scratchpad words |
 
 For row-major `A[M][K]`, `B[K][N]`, and `C[M][N]`, use `A_STRIDE = K`,
@@ -104,22 +107,27 @@ set and software writes `CTRL_STATUS.start`, the RTL validates base alignment
 and empty/non-empty queue state, then fetches four 32-bit descriptor words from
 the read-only `m_axil_ar/r` descriptor port for each visible queue entry.
 Descriptor word 0 carries `opcode[3:0]`, `stream_to_scratch[8]`,
-`scratch_offset[21:16]`, and `byte_count[29:24]`. Word 1 is the stream source
-byte address when streaming is enabled, or scalar `OP_A` otherwise. Words 2 and
-3 are scalar `OP_B` and `ACC`, or reserved for streamed GEMM. The stream path is
-aligned 32-bit reads only and writes into the 64-byte scratchpad before launching
-the selected existing opcode.
+`scratch_offset[21:16]`, `byte_count[29:24]`, `writeback_request[30]`, and
+`valid_owner[31]`. Software must set `valid_owner` before advancing `DESC_HEAD`;
+the current RTL rejects descriptors without this bit and leaves `DESC_TAIL`
+unchanged. Word 1 is the stream source byte address when streaming is enabled,
+or scalar `OP_A` otherwise. Words 2 and 3 are scalar `OP_B` and `ACC`, or
+reserved for streamed GEMM. The stream path is aligned 32-bit reads only and
+writes into the 64-byte scratchpad before launching the selected existing opcode.
 
 `DESC_STATUS[0]` reports empty, `[1]` reports descriptor completion, `[2]`
 reports descriptor error, `[3]` reports autonomous timeout, `[4]` reports
 descriptor fetch read error, `[5]` reports tensor stream read/configuration
-error, `[8]` reports descriptor engine busy, and `[11:9]` reports the descriptor
-index that faulted or completed. The three visible head/tail bits do not encode
-a full-ring condition. A missing descriptor or stream read response times out
-with `CTRL_STATUS.done|error`; read-response errors fail closed. The standalone
-DMA block tracks aligned 32-bit beat issue, byte completion, last
-source/destination addresses, and final write strobe, but NPU descriptor
-streaming uses the NPU read master and still has no writeback DMA path.
+error, `[6]` reports a descriptor missing the valid owner bit, `[7]` reports an
+unsupported writeback request, `[8]` reports descriptor engine busy, and
+`[11:9]` reports the descriptor index that faulted or completed. The three
+visible head/tail bits do not encode a full-ring condition. A missing descriptor
+or stream read response times out with `CTRL_STATUS.done|error`; read-response
+errors fail closed. The standalone DMA block tracks aligned 32-bit beat issue,
+byte completion, last source/destination addresses, and final write strobe, but
+NPU descriptor streaming uses the NPU read master and still has no writeback DMA
+path. Descriptors with `writeback_request` set are rejected before launch, and
+`DESC_BYTES_WRITTEN`/`DESC_WRITE_BEATS` remain zero.
 
 ## Evidence gates
 
@@ -131,8 +139,9 @@ must include:
 - total/delegated NNAPI node count, zero CPU fallback, and zero unsupported ops,
 - precision actually used by the delegate,
 - dataflow name and description from the measured path,
-- DMA path plus bytes read and written by the NPU workload; current local RTL can
-  report `DESC_BYTES_READ` only,
+- DMA path plus bytes read and written by the NPU workload; current local RTL
+  reports descriptor read counts and zero write counts because writeback
+  requests fail closed,
 - descriptor queue depth, head/tail completion evidence, and timeout/error
   behavior for queued commands,
 - MACs per inference, NPU cycles, NPU clock, DMA byte counters, operation/error

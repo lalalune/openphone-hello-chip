@@ -124,11 +124,41 @@ def test_log_metadata_records_attempt_and_closed_transcript() -> None:
             smoke.LOG = old_log
 
 
+def test_simulator_artifact_validation_requires_executable_candidate() -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+        old_candidates = smoke.SIMULATOR_CANDIDATES
+        try:
+            missing = tmp / "missing-simulator"
+            smoke.SIMULATOR_CANDIDATES = (missing,)
+            metadata = smoke.simulator_artifact_metadata()
+            blockers = smoke.simulator_artifact_blockers(metadata)
+            if "missing generated simulator artifact" not in "\n".join(blockers):
+                raise AssertionError(f"expected missing simulator blocker, got {blockers}")
+
+            simulator = tmp / "simulator-chipyard.harness-OpenPhoneRocketConfig"
+            simulator.write_bytes(b"\x7fELF" + bytes([2, 1, 1]) + bytes(9) + b"\x02\x00\x3e\x00")
+            simulator.chmod(0o755)
+            smoke.SIMULATOR_CANDIDATES = (simulator,)
+            metadata = smoke.simulator_artifact_metadata()
+            blockers = smoke.simulator_artifact_blockers(metadata)
+            if blockers:
+                raise AssertionError(f"expected executable simulator artifact, got {blockers}")
+            candidate = metadata["candidates"][0]
+            if candidate["elf_machine"] != "x86_64":
+                raise AssertionError(f"expected x86_64 ELF metadata, got {candidate}")
+            if not candidate["sha256"]:
+                raise AssertionError(f"expected simulator sha256, got {candidate}")
+        finally:
+            smoke.SIMULATOR_CANDIDATES = old_candidates
+
+
 def main() -> int:
     tests = (
         test_partial_generated_driver_dir_is_repairable_blocker,
         test_zero_byte_driver_outputs_are_repairable_blockers,
         test_log_metadata_records_attempt_and_closed_transcript,
+        test_simulator_artifact_validation_requires_executable_candidate,
     )
     for test in tests:
         test()

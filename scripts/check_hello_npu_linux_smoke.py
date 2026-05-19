@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
-"""Check the target-side hello NPU Linux ML smoke wiring.
-
-This is a source-level gate only. It must stay fail-closed until the checked-in
-Linux driver UAPI, Buildroot smoke program, DTS compatible string, and evidence
-manifest agree on the same target-side ABI and a real generated-AP transcript is
-captured.
-"""
+"""Check target-side hello NPU Linux ML smoke wiring and transcript intake."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -26,6 +21,13 @@ BUILDROOT_CONFIG = ROOT / "sw/buildroot/Config.in"
 BUILDROOT_DEFCONFIG = ROOT / "sw/buildroot/configs/openphone_hello_defconfig"
 LINUX_EVIDENCE = ROOT / "docs/evidence/linux/openphone_hello_npu_ml_smoke.log"
 
+CAPTURE_COMMANDS = {
+    "buildroot": "make BR2_EXTERNAL=$PWD/sw/buildroot openphone_hello_defconfig && make BR2_EXTERNAL=$PWD/sw/buildroot",
+    "kernel_import": "sw/linux/scripts/import-linux-bsp.sh /path/to/linux",
+    "target_smoke": "ssh root@TARGET /usr/bin/hello-npu-ml-smoke",
+    "capture_wrapper": "HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
+}
+
 
 def rel(path: Path) -> str:
     try:
@@ -38,9 +40,12 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
 
 
-def macro(text: str, name: str) -> str:
-    match = re.search(rf"(?m)^#define\s+{re.escape(name)}\s+(.+)$", text)
-    return match.group(1).strip() if match else ""
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def require(problems: list[str], condition: bool, message: str) -> None:
@@ -58,27 +63,25 @@ def build_report() -> dict[str, Any]:
     buildroot_defconfig = read(BUILDROOT_DEFCONFIG)
     problems: list[str] = []
     blockers: list[str] = []
+    evidence: dict[str, Any] = {"path": rel(LINUX_EVIDENCE), "present": LINUX_EVIDENCE.is_file()}
 
     for path in (SMOKE, PACKAGE_CONFIG, DRIVER, UAPI, DTS, BUILDROOT_CONFIG, BUILDROOT_DEFCONFIG):
         require(problems, path.is_file(), f"missing required source: {rel(path)}")
 
     require(problems, "hello-npu-ml-smoke" in smoke, "smoke source lacks command identity")
-    require(problems, "GEMM_S8" in smoke, "smoke source lacks GEMM_S8 workload marker")
-    require(problems, "input_sha256" in smoke, "smoke source lacks input hash marker")
-    require(problems, "output_sha256" in smoke, "smoke source lacks output hash marker")
-    require(problems, "PASS" in smoke, "smoke source lacks PASS marker")
-    require(
-        problems,
-        "CPU-only" in smoke or "cpu-only" in smoke.lower(),
-        "smoke source must explicitly reject CPU-only fallback",
-    )
-    require(problems, "hello-npu" in driver, "driver source lacks hello-npu device name")
+    require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in smoke, "smoke does not use RUN_GEMM_S8")
+    require(problems, "HELLO_NPU_IOC_GET_COUNTERS" in smoke, "smoke does not read counters")
+    require(problems, "CPU-only" in smoke or "cpu-only" in smoke.lower(), "smoke must reject CPU-only fallback")
+    require(problems, "input_sha256" in smoke and "output_sha256" in smoke, "smoke lacks input/output hash markers")
+    require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in uapi, "UAPI lacks RUN_GEMM_S8 ioctl")
+    require(problems, "HELLO_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl")
+    require(problems, "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" in driver, "driver lacks writeback counter readout")
     require(problems, "openphone,hello-npu" in dts, "DTS lacks openphone,hello-npu compatible")
     require(
         problems,
         "package/hello-npu-ml-smoke/Config.in" in buildroot_config
         and "BR2_PACKAGE_HELLO_NPU_ML_SMOKE" in package_config,
-        "Buildroot package is not sourced from Config.in or its package Config.in lacks the symbol",
+        "Buildroot package is not sourced or lacks BR2 symbol",
     )
     require(
         problems,
@@ -86,41 +89,32 @@ def build_report() -> dict[str, Any]:
         "Buildroot defconfig does not enable hello-npu-ml-smoke",
     )
 
-    smoke_magic = macro(smoke, "OPENPHONE_HELLO_NPU_IOC_MAGIC") or macro(
-        smoke, "HELLO_NPU_IOC_MAGIC"
-    )
-    uapi_magic = macro(uapi, "HELLO_NPU_IOC_MAGIC")
-    if smoke_magic and uapi_magic and smoke_magic != uapi_magic:
-        problems.append(f"smoke ioctl magic {smoke_magic} does not match UAPI {uapi_magic}")
-    elif not smoke_magic:
-        problems.append("smoke source does not define or include the hello NPU ioctl magic")
-    elif not uapi_magic:
-        problems.append("UAPI header does not define HELLO_NPU_IOC_MAGIC")
-
-    if "mmap(" in smoke and ".mmap" not in driver:
-        problems.append(
-            "smoke uses mmap but checked-in driver file_operations has no mmap implementation"
-        )
-    if "HELLO_NPU_IOC_RUN_GEMM_S8" in uapi and "HELLO_NPU_IOC_RUN_GEMM_S8" not in smoke:
-        problems.append("smoke does not use the checked-in RUN_GEMM_S8 UAPI")
-
     if not LINUX_EVIDENCE.is_file():
         blockers.append(f"missing target transcript: {rel(LINUX_EVIDENCE)}")
     else:
         text = read(LINUX_EVIDENCE)
+        evidence.update({"bytes": LINUX_EVIDENCE.stat().st_size, "sha256": sha256(LINUX_EVIDENCE)})
+        if LINUX_EVIDENCE.stat().st_size < 256:
+            problems.append(f"{rel(LINUX_EVIDENCE)} is too small to be a target transcript")
         for marker in (
             "openphone-evidence: target=linux artifact=hello_npu_ml_smoke",
+            "COMMAND=",
+            "/usr/bin/hello-npu-ml-smoke",
             "hello-npu-ml-smoke: PASS",
-            "workload=gemm_s8",
+            "workload=gemm_s8_int8_2x2x3",
+            "desc_bytes_written=0",
+            "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
             "openphone-evidence: status=PASS",
         ):
             if marker not in text:
                 problems.append(f"{rel(LINUX_EVIDENCE)} missing marker: {marker}")
+        if re.search(r"CPU-only fallback|status=FAIL|not found|No such file", text, re.I):
+            problems.append(f"{rel(LINUX_EVIDENCE)} contains failure or fallback text")
 
     return {
         "schema": "openphone.hello_npu_linux_smoke_source.v1",
         "status": "fail" if problems else ("blocked" if blockers else "pass"),
-        "claim_boundary": "source wiring and external transcript gate; not Linux runtime proof by itself",
+        "claim_boundary": "source wiring plus explicit target transcript gate; not NNAPI or hardware benchmark proof",
         "sources": {
             "smoke": rel(SMOKE),
             "driver": rel(DRIVER),
@@ -130,7 +124,8 @@ def build_report() -> dict[str, Any]:
             "package_config": rel(PACKAGE_CONFIG),
             "buildroot_defconfig": rel(BUILDROOT_DEFCONFIG),
         },
-        "evidence": rel(LINUX_EVIDENCE),
+        "evidence": evidence,
+        "capture_commands": CAPTURE_COMMANDS,
         "problems": problems,
         "blockers": blockers,
     }

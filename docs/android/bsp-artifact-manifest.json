@@ -14,9 +14,10 @@
       "required_repo_evidence": [
         "docs/evidence/buildroot/openphone_hello_defconfig.log",
         "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
-        "docs/evidence/buildroot/hello-mmio-smoke.log"
+        "docs/evidence/buildroot/hello-mmio-smoke.log",
+        "docs/evidence/buildroot/hello-npu-ml-smoke.log"
       ],
-      "minimum_claim_to_clear_block": "external Buildroot build completed and runtime hello-mmio-smoke transcript captured"
+      "minimum_claim_to_clear_block": "external Buildroot build completed and runtime hello-mmio-smoke plus hello-npu-ml-smoke transcripts captured"
     },
     "linux": {
       "external_tree": "Linux kernel checkout with sw/linux imported under drivers/misc/openphone-hello",

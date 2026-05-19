@@ -77,10 +77,13 @@
       "DESC_STATUS",
       "CMD_PARAM",
       "DESC_TIMEOUT_COUNT",
-      "DESC_BYTES_READ"
+      "DESC_BYTES_READ",
+      "DESC_BYTES_WRITTEN",
+      "DESC_READ_BEATS",
+      "DESC_WRITE_BEATS"
     ],
     "descriptor_words": [
-      "word0: opcode[3:0], stream_to_scratch[8], scratch_offset[21:16], byte_count[29:24]",
+      "word0: opcode[3:0], stream_to_scratch[8], scratch_offset[21:16], byte_count[29:24], writeback_request[30], valid_owner[31]",
       "word1: stream source byte address when stream_to_scratch is set; scalar OP_A otherwise",
       "word2: scalar OP_B or reserved for streamed GEMM",
       "word3: scalar ACC or reserved for streamed GEMM"
@@ -91,7 +94,10 @@
       "desc_status",
       "perf_counters",
       "desc_timeout_count",
-      "desc_bytes_read"
+      "desc_bytes_read",
+      "desc_bytes_written",
+      "desc_read_beats",
+      "desc_write_beats"
     ],
     "queue_depth_semantics": {
       "desc_status_bits": "DESC_STATUS[21:19]",
@@ -99,8 +105,8 @@
       "empty_encoding": "0",
       "full_ring_encoding": "not represented by the current 3-bit head/tail register interface"
     },
-    "implemented": "Read-only four-word descriptor fetch advances a 3-bit head/tail ring, launches existing scalar/GEMM datapath operations, optionally streams aligned descriptor-sourced DRAM words into the 64-byte scratchpad, and faults autonomously on descriptor timeout",
-    "not_claimed": "This is a local RTL prototype path only; it is not an Android NNAPI, coherent IOMMU, production queue-depth, writeback DMA, or phone-class accelerator proof"
+    "implemented": "Read-only four-word descriptor fetch requires word0 valid_owner[31], advances a 3-bit head/tail ring only after accepted execution, launches existing scalar/GEMM datapath operations, optionally streams aligned descriptor-sourced DRAM words into the 64-byte scratchpad, counts read beats/bytes, exposes zero write beats/bytes, rejects writeback_request[30] fail-closed, and faults autonomously on descriptor timeout",
+    "not_claimed": "This is a local RTL prototype path only; it is not an Android NNAPI, coherent IOMMU, production queue-depth, implemented writeback DMA, or phone-class accelerator proof"
   },
   "precision_matrix": [
     {

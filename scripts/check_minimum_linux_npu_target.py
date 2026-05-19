@@ -131,6 +131,32 @@ def run_linux_check() -> dict[str, Any]:
     }
 
 
+def run_target_smoke_source_check() -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, "scripts/check_hello_npu_linux_smoke.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    report = load_json(ROOT / "build/reports/hello_npu_linux_smoke_source.json")
+    report_status = report.get("status")
+    return {
+        "name": "target_side_npu_ml_smoke",
+        "status": (
+            "passed"
+            if report_status == "pass"
+            else "blocked"
+            if report_status == "blocked"
+            else "failed"
+        ),
+        "command": completed.args,
+        "stdout": completed.stdout,
+        "report": report,
+    }
+
+
 def build_report() -> dict[str, Any]:
     doc_text = read(DOC)
     contract = load_json(CONTRACT)
@@ -138,9 +164,11 @@ def build_report() -> dict[str, Any]:
     driver_text = read(LINUX_DRIVER)
     boot_text = read(BOOT_LOG)
     linux_check = run_linux_check()
+    target_smoke = run_target_smoke_source_check()
     mvp = run_mvp_smoke()
     gates = [
         linux_check,
+        target_smoke,
         {
             "name": "model_input",
             "status": "passed",

@@ -590,6 +590,10 @@ module hello_npu (
                             desc_status <= 32'h0;
                             desc_err_index <= 3'h0;
                             desc_timeout_count <= 32'h0;
+                            desc_bytes_read <= 32'h0;
+                            desc_bytes_written <= 32'h0;
+                            desc_read_beats <= 32'h0;
+                            desc_write_beats <= 32'h0;
                         end
                     end
                     default: begin
@@ -621,31 +625,34 @@ module hello_npu (
             6'h11: rdata = {29'h0, desc_head};
             6'h12: rdata = {29'h0, desc_tail};
             6'h13: rdata = desc_status | {10'h0, desc_pending, 7'h0, desc_err_index, desc_busy, 8'h0};
-                    6'h14: rdata = perf_cycles;
-                    6'h15: rdata = perf_macs;
-                    6'h16: rdata = perf_ops;
-                    6'h17: rdata = perf_errors;
-                    6'h18: rdata = desc_timeout_count;
-                    6'h19: rdata = desc_bytes_read;
-                    6'h20: rdata = scratch[0];
-                    6'h21: rdata = scratch[1];
-                    6'h22: rdata = scratch[2];
-                    6'h23: rdata = scratch[3];
-                    6'h24: rdata = scratch[4];
-                    6'h25: rdata = scratch[5];
-                    6'h26: rdata = scratch[6];
-                    6'h27: rdata = scratch[7];
-                    6'h28: rdata = scratch[8];
-                    6'h29: rdata = scratch[9];
-                    6'h2a: rdata = scratch[10];
-                    6'h2b: rdata = scratch[11];
-                    6'h2c: rdata = scratch[12];
-                    6'h2d: rdata = scratch[13];
-                    6'h2e: rdata = scratch[14];
-                    6'h2f: rdata = scratch[15];
-                    default: begin
-                        if (addr[5:4] == 2'b10) begin
-                            rdata = scratch[addr[3:0]];
+            6'h14: rdata = perf_cycles;
+            6'h15: rdata = perf_macs;
+            6'h16: rdata = perf_ops;
+            6'h17: rdata = perf_errors;
+            6'h18: rdata = desc_timeout_count;
+            6'h19: rdata = desc_bytes_read;
+            6'h1a: rdata = desc_bytes_written;
+            6'h1b: rdata = desc_read_beats;
+            6'h1c: rdata = desc_write_beats;
+            6'h20: rdata = scratch[0];
+            6'h21: rdata = scratch[1];
+            6'h22: rdata = scratch[2];
+            6'h23: rdata = scratch[3];
+            6'h24: rdata = scratch[4];
+            6'h25: rdata = scratch[5];
+            6'h26: rdata = scratch[6];
+            6'h27: rdata = scratch[7];
+            6'h28: rdata = scratch[8];
+            6'h29: rdata = scratch[9];
+            6'h2a: rdata = scratch[10];
+            6'h2b: rdata = scratch[11];
+            6'h2c: rdata = scratch[12];
+            6'h2d: rdata = scratch[13];
+            6'h2e: rdata = scratch[14];
+            6'h2f: rdata = scratch[15];
+            default: begin
+                if (addr[5:4] == 2'b10) begin
+                    rdata = scratch[addr[3:0]];
                 end else begin
                     rdata = 32'h0;
                 end

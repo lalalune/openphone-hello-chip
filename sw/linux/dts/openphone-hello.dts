@@ -96,7 +96,7 @@
 		};
 
 		hello_npu: npu@10020000 {
-			compatible = "hello,npu-1.0";
+			compatible = "openphone,hello-npu", "hello,npu-1.0";
 			reg = <0x10020000 0x00001000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <3>;

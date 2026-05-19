@@ -158,7 +158,9 @@ def diagnose(run_dir: Path, tail_lines: int) -> tuple[int, str]:
     incomplete_klayout_drc = [
         step for step in incomplete_steps if "klayout-drc" in step.name.lower()
     ]
-    active_run = bool(lock_lines) and pid_is_running(LOCK_DIR / "pid") and not (run_dir / "final").is_dir()
+    active_run = (
+        bool(lock_lines) and pid_is_running(LOCK_DIR / "pid") and not (run_dir / "final").is_dir()
+    )
     blocking_step = incomplete_klayout_drc[0] if incomplete_klayout_drc else None
     if blocking_step is None and incomplete_steps and not active_run:
         blocking_step = incomplete_steps[0]

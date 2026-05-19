@@ -65,6 +65,15 @@ capture path or match its `openphone-evidence` markers, command markers, and
 pass markers. Templates, substitute-only logs, failed transcripts, and too-small files
 are rejected.
 
+Environment readiness can be checked without creating evidence logs:
+
+```sh
+python3 scripts/check_software_bsp.py external-preflight linux \
+  --linux /path/to/linux \
+  --target-host root@TARGET \
+  --write-report
+```
+
 ## External Linux import
 
 The checked-in driver directory is ready to copy into an external Linux tree:

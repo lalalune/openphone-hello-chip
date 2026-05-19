@@ -111,7 +111,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
             result.stdout,
         )
         self.assertIn("missing docs/evidence/android/qemu_riscv64_smoke.log", result.stdout)
-        self.assertNotIn("missing docs/evidence/linux/opensbi_openphone_build.log", result.stdout)
+        self.assertIn("missing docs/evidence/linux/opensbi_openphone_build.log", result.stdout)
         self.assertNotIn("missing docs/evidence/linux/u_boot_openphone_build.log", result.stdout)
 
     def test_require_evidence_fails_closed_on_missing_external_logs(self) -> None:
@@ -126,7 +126,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         self.assertIn("buildroot BSP check failed", result.stdout)
         self.assertIn("linux BSP check failed", result.stdout)
         self.assertIn("aosp BSP check failed", result.stdout)
-        self.assertNotIn("opensbi BSP check failed", result.stdout)
+        self.assertIn("opensbi BSP check failed", result.stdout)
         self.assertNotIn("u-boot BSP check failed", result.stdout)
 
     def test_status_helper_reports_missing_external_logs(self) -> None:
@@ -166,6 +166,33 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         )
         self.assertIn(
             "HELLO_SMOKE_CMD='ssh root@openphone-target /usr/bin/hello-mmio-smoke'",
+            result.stdout,
+        )
+
+    def test_capture_plan_renders_exact_opensbi_commands(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "scripts/check_software_bsp.py",
+                "capture-plan",
+                "opensbi",
+                "--opensbi",
+                "/external/opensbi",
+                "--opensbi-handoff-cmd",
+                "qemu-system-riscv64 -bios fw_dynamic.bin",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            "sw/opensbi/scripts/import-opensbi-platform.sh --check /external/opensbi",
+            result.stdout,
+        )
+        self.assertIn(
+            "OPENPHONE_OPENSBI_HANDOFF_CMD='qemu-system-riscv64 -bios fw_dynamic.bin'",
             result.stdout,
         )
 

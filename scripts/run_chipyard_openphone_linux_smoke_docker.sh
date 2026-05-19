@@ -122,8 +122,13 @@ docker run --rm --platform "$platform" \
 			for bootrom_img in bootrom.rv64.img bootrom.rv32.img; do
 				if [ -f "$bootrom_src/$bootrom_img" ]; then
 					cp -f "$bootrom_src/$bootrom_img" "$generated_dir/$bootrom_img"
+					echo "openphone-evidence: seeded_bootrom=$generated_dir/$bootrom_img"
 				fi
 			done
+			if [ ! -f "$generated_dir/bootrom.rv64.img" ]; then
+				echo "STATUS: BLOCKED chipyard.verilator_linux_smoke_docker - missing seeded bootrom: $generated_dir/bootrom.rv64.img"
+				exit 2
+			fi
 			model_mk="/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/VTestDriver.mk"
 		simulator="/work/external/chipyard/sims/verilator/simulator-chipyard.harness-$CHIPYARD_CONFIG"
 		model_dir="$(dirname "$model_mk")"

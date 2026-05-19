@@ -57,6 +57,26 @@
             "openphone-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
+        },
+        {
+          "artifact": "Buildroot target hello-npu ML smoke",
+          "path": "docs/evidence/buildroot/hello-npu-ml-smoke.log",
+          "capture_command": "HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
+          "claim_boundary": "driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
+          "min_bytes": 180,
+          "required_strings": [
+            "openphone-evidence: target=buildroot artifact=hello-npu-ml-smoke",
+            "openphone-evidence: command=",
+            "openphone-evidence: started_utc=",
+            "hello-npu-ml-smoke: PASS",
+            "workload=gemm_s8_int8_2x2x3",
+            "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
+            "/dev/hello-npu",
+            "HELLO_NPU_ML_SMOKE_PASS",
+            "openphone-evidence: ended_utc=",
+            "openphone-evidence: status=PASS"
+          ],
+          "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
         }
       ]
     },
