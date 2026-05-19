@@ -158,9 +158,7 @@ def main(argv: list[str]) -> int:
     out = args.out if args.out.is_absolute() else ROOT / args.out
     if not cocotb_path.is_file():
         print(f"NPU coverage summary check failed: missing {rel(cocotb_path)}")
-        print(
-            "Run `COCOTB_MODULE=test_e1_npu COCOTB_TOPLEVEL=e1_npu scripts/run_cocotb.sh` first."
-        )
+        print("Run `COCOTB_MODULE=test_e1_npu COCOTB_TOPLEVEL=e1_npu scripts/run_cocotb.sh` first.")
         return 2
 
     summary = build_summary(cocotb_path)

@@ -404,11 +404,7 @@ async def npu_descriptor_streams_tensor_tile_into_scratchpad_and_runs_gemm(dut):
         for index in range(3)
     }
     descriptor = {
-        0x4000: 0x8000_0000
-        | E1NpuRuntime.OP_GEMM_S8
-        | (1 << 8)
-        | (0 << 16)
-        | (len(tensor) << 24),
+        0x4000: 0x8000_0000 | E1NpuRuntime.OP_GEMM_S8 | (1 << 8) | (0 << 16) | (len(tensor) << 24),
         0x4004: 0x5000,
         0x4008: 0,
         0x400C: 0,

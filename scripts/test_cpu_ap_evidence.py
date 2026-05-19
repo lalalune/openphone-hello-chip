@@ -90,9 +90,7 @@ def test_capture_template_lists_required_markers_and_no_pass_claim() -> None:
     )
     if result.returncode != 0:
         raise AssertionError(result.stdout + result.stderr)
-    assert_contains(
-        result.stdout, "destination: build/evidence/cpu_ap/openagent_e1_linux_boot.log"
-    )
+    assert_contains(result.stdout, "destination: build/evidence/cpu_ap/openagent_e1_linux_boot.log")
     assert_contains(result.stdout, "command env: OPENAGENT_LINUX_BOOT_CMD")
     assert_contains(result.stdout, "Linux early console")
     assert_contains(

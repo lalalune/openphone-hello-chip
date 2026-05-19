@@ -18,9 +18,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_MANIFEST = (
-    ROOT / "docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json"
-)
+DEFAULT_MANIFEST = ROOT / "docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json"
 TEMPLATE_CLAIM_BOUNDARY = "template_only_not_android_boot_cts_vts_or_nnapi_evidence"
 SCHEMA = "openagent.e1_npu_android_proof_manifest.v1"
 REQUIRED_STATUSES = {

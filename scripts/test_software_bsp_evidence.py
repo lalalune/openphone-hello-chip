@@ -103,9 +103,7 @@ class SoftwareBspEvidenceTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn(
-            "missing docs/evidence/buildroot/openagent_e1_defconfig.log", result.stdout
-        )
+        self.assertIn("missing docs/evidence/buildroot/openagent_e1_defconfig.log", result.stdout)
         self.assertIn(
             "missing docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
             result.stdout,

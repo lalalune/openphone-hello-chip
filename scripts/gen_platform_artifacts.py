@@ -64,8 +64,7 @@ def load_contract() -> dict:
 def cpu_variant(contract: dict) -> dict:
     if "e1_chip_cpu_variant" not in contract:
         raise SystemExit(
-            "contract is missing e1_chip_cpu_variant; "
-            "extend sw/platform/e1_platform_contract.json"
+            "contract is missing e1_chip_cpu_variant; extend sw/platform/e1_platform_contract.json"
         )
     return contract["e1_chip_cpu_variant"]
 

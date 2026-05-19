@@ -247,8 +247,7 @@ def check_memory_map_consistency(contract: dict, errors: list[str]) -> None:
         dram_base, dram_mask = rtl_regions["DRAM"]
         assert dram_base is not None and dram_mask is not None
         fail_unless(
-            dram_base == EXPECTED_E1_CHIP_DRAM_BASE
-            and dram_mask + 1 == EXPECTED_LINUX_DRAM_BYTES,
+            dram_base == EXPECTED_E1_CHIP_DRAM_BASE and dram_mask + 1 == EXPECTED_LINUX_DRAM_BYTES,
             "interconnect DRAM decode must match the 0x8000_0000 / 256 MiB scaffold aperture",
             errors,
         )

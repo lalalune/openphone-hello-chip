@@ -98,10 +98,8 @@ def imported_state(linux: Path) -> dict[str, Any]:
     }
     optional = {
         "board_dts_makefile": linux / "arch/riscv/boot/dts/openagent/Makefile",
-        "npu_binding": linux
-        / "Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml",
-        "dma_binding": linux
-        / "Documentation/devicetree/bindings/openagent/openagent,e1-dma.yaml",
+        "npu_binding": linux / "Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml",
+        "dma_binding": linux / "Documentation/devicetree/bindings/openagent/openagent,e1-dma.yaml",
         "display_binding": linux
         / "Documentation/devicetree/bindings/openagent/openagent,e1-display.yaml",
     }
@@ -115,8 +113,7 @@ def imported_state(linux: Path) -> dict[str, Any]:
     riscv_dts_makefile = linux / "arch/riscv/boot/dts/Makefile"
     text_checks["drivers_misc_kconfig_sources_openagent"] = (
         misc_kconfig.is_file()
-        and 'source "drivers/misc/openagent-e1/Kconfig"'
-        in misc_kconfig.read_text(errors="replace")
+        and 'source "drivers/misc/openagent-e1/Kconfig"' in misc_kconfig.read_text(errors="replace")
     )
     text_checks["drivers_misc_makefile_links_openagent"] = (
         misc_makefile.is_file()

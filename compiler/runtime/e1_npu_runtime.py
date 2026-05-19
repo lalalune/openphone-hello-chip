@@ -286,9 +286,7 @@ class E1NpuRuntime:
         self.write32(self.CMD_PARAM, 1)
         self.write32(self.CTRL_STATUS, 2)
         self.write32(self.CTRL_STATUS, 1)
-        runtime_status = self._poll_status(
-            submission.timeout_polls, "e1 NPU descriptor submission"
-        )
+        runtime_status = self._poll_status(submission.timeout_polls, "e1 NPU descriptor submission")
         desc_status = self.read32(self.DESC_STATUS)
         runtime_status = NpuRuntimeStatus(
             ok=bool(desc_status & self.DESC_STATUS_DONE)

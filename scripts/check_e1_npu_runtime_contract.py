@@ -164,9 +164,7 @@ def main() -> int:
         }.get(name, name)
         actual_offset = header_offsets.get(header_name)
         if actual_offset != hex_to_int(offset):
-            errors.append(
-                f"BSP header E1_NPU_{header_name}_OFFSET {actual_offset!r} != {offset}"
-            )
+            errors.append(f"BSP header E1_NPU_{header_name}_OFFSET {actual_offset!r} != {offset}")
         generated_token = f"#define E1_NPU_{header_name}_OFFSET 0x{hex_to_int(offset):02X}UL"
         if generated_token not in generated_header_text:
             errors.append(f"generated platform header missing {generated_token}")

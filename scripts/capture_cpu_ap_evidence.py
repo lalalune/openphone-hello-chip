@@ -136,10 +136,7 @@ def dts_audit(args: argparse.Namespace) -> int:
 
     print(f"STATUS: PASS cpu_ap.dts_boot_audit - {rel(path)} has AP boot DTB markers")
     if missing_e1:
-        print(
-            "  note: generated DTS lacks e1 peripheral smoke markers: "
-            + ", ".join(missing_e1)
-        )
+        print("  note: generated DTS lacks e1 peripheral smoke markers: " + ", ".join(missing_e1))
         print(
             "  note: linux-boot evidence still needs a real e1 MMIO smoke result "
             "from the selected AP/software integration"
@@ -354,9 +351,7 @@ def main(argv: list[str]) -> int:
     )
     dts_parser.add_argument(
         "--path",
-        default=str(
-            (ROOT / "build/chipyard/openagent_rocket/openagent-e1.dts").relative_to(ROOT)
-        ),
+        default=str((ROOT / "build/chipyard/openagent_rocket/openagent-e1.dts").relative_to(ROOT)),
         help="DTS path to audit; defaults to the generated selected AP DTS",
     )
     dts_parser.add_argument(

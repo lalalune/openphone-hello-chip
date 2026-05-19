@@ -11,9 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "build/reports/aosp_linux_preflight.json"
-CLAIM_BOUNDARY = (
-    "host_preflight_only_not_aosp_build_boot_cuttlefish_or_e1_chip_hardware_evidence"
-)
+CLAIM_BOUNDARY = "host_preflight_only_not_aosp_build_boot_cuttlefish_or_e1_chip_hardware_evidence"
 
 LINUX_REQUIREMENTS = [
     "Linux host with hardware virtualization enabled",

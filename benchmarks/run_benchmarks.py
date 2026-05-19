@@ -1492,9 +1492,7 @@ def validate_report(report: dict[str, Any]) -> list[str]:
                         errors.append(f"{prefix} tflite_e1_npu must report zero CPU fallback")
                     delegated_nodes = metrics.get("nnapi_delegated_nodes")
                     if not isinstance(delegated_nodes, int) or delegated_nodes <= 0:
-                        errors.append(
-                            f"{prefix} tflite_e1_npu must report delegated NNAPI nodes"
-                        )
+                        errors.append(f"{prefix} tflite_e1_npu must report delegated NNAPI nodes")
         if status == "blocked" and not (
             result.get("blocked_assets")
             or result.get("blocked_requirements")

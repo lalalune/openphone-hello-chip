@@ -317,8 +317,7 @@ def check_cpu_variant_artifacts(contract: dict, errors: list[str]) -> None:
     """Fail if the generated CPU-variant artifacts diverge from the contract."""
     if "e1_chip_cpu_variant" not in contract:
         errors.append(
-            "e1_chip_cpu_variant section is missing from "
-            "sw/platform/e1_platform_contract.json"
+            "e1_chip_cpu_variant section is missing from sw/platform/e1_platform_contract.json"
         )
         return
     try:

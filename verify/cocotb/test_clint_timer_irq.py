@@ -25,9 +25,7 @@ CLINT_MTIME = CLINT_BASE + 0xBFF8
 @cocotb.test(skip=True)
 async def clint_timer_irq_fires_when_mtime_ge_mtimecmp(dut):
     """Set mtimecmp = mtime + N, wait, assert mtip rises on cpu_timer_irq."""
-    raise NotImplementedError(
-        "Wire after CLINT lands in e1_linux_soc_contract via Rocket wrapper."
-    )
+    raise NotImplementedError("Wire after CLINT lands in e1_linux_soc_contract via Rocket wrapper.")
 
 
 @cocotb.test(skip=True)

@@ -307,9 +307,7 @@ def check_contract(errors: list[str]) -> None:
         return
     data = json.loads(CONTRACT.read_text())
     if data.get("e1_chip", {}).get("has_cpu") is not False:
-        errors.append(
-            "e1 platform contract must keep e1_chip.has_cpu=false until a CPU exists"
-        )
+        errors.append("e1 platform contract must keep e1_chip.has_cpu=false until a CPU exists")
     if data.get("qemu_virt", {}).get("target_kind") != "software_reference_only":
         errors.append("qemu_virt must be marked software_reference_only")
 
@@ -924,9 +922,7 @@ def linux_preflight(tree: Path | None, target_host: str | None) -> dict[str, Any
         check(tree / "Kconfig", "Linux Kconfig")
         check(tree / "drivers", "Linux drivers directory")
         check(tree / "arch", "Linux arch directory")
-        check(
-            tree / "drivers/misc/openagent-e1/Kconfig", "imported OpenAgent Linux driver Kconfig"
-        )
+        check(tree / "drivers/misc/openagent-e1/Kconfig", "imported OpenAgent Linux driver Kconfig")
         check(tree / "arch/riscv/boot/dts/openagent/openagent-e1.dts", "imported OpenAgent DTS")
         check(
             tree / "Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml",

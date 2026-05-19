@@ -225,8 +225,7 @@ def test_e1_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
     assert_equal(status["can_generate_locally"], False, "local proof generation")
     blockers = status.get("local_blockers", [])
     if not any(
-        blocker.get("blocked_reason") == "missing_e1_npu_nnapi_accelerator"
-        for blocker in blockers
+        blocker.get("blocked_reason") == "missing_e1_npu_nnapi_accelerator" for blocker in blockers
     ):
         raise AssertionError(json.dumps(status, indent=2))
 

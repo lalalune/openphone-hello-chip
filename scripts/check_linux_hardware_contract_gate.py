@@ -313,8 +313,7 @@ def check_qemu_reference_boundary(errors: list[str]) -> None:
             errors,
         )
         require(
-            payload_plan.get("claim_boundary")
-            == "qemu_virt_prebuilt_payload_only_not_e1_hardware",
+            payload_plan.get("claim_boundary") == "qemu_virt_prebuilt_payload_only_not_e1_hardware",
             "QEMU Linux payload plan must remain excluded from e1 hardware claims",
             errors,
         )
