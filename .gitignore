@@ -1,4 +1,4 @@
-build/
+/build/
 .venv/
 .claude/
 sim_build/
