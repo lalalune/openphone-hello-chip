@@ -112,10 +112,8 @@ int main(int argc, char **argv)
 	printf(" cycles=%u macs=%u ops=%u errors=%u unsupported_ops=%u ",
 	       counters.perf_cycles, counters.perf_macs, counters.perf_ops,
 	       counters.perf_errors, counters.perf_unsupported_ops);
-	printf("desc_bytes_read=%u desc_bytes_written=%u desc_read_beats=%u desc_write_beats=%u desc_timeout_count=%u ",
-	       counters.desc_bytes_read, counters.desc_bytes_written,
-	       counters.desc_read_beats, counters.desc_write_beats,
-	       counters.desc_timeout_count);
+	printf("desc_bytes_read=%u desc_timeout_count=%u ",
+	       counters.desc_bytes_read, counters.desc_timeout_count);
 	printf("status=0x%08x claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark\n",
 	       gemm.status);
 	printf("openphone-evidence: status=PASS\n");
