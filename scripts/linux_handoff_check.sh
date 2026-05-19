@@ -18,7 +18,7 @@ run_required() {
 	"$@" >"$tmp" 2>&1
 	rc=$?
 	set -e
-	cat "$tmp" | tee -a "$log"
+	tee -a "$log" <"$tmp"
 	rm -f "$tmp"
 	if [ "$rc" != "0" ]; then
 		printf 'FAIL: %s exited %s\n' "$name" "$rc" | tee -a "$log"
@@ -35,7 +35,7 @@ run_optional_blocking() {
 	"$@" >"$tmp" 2>&1
 	rc=$?
 	set -e
-	cat "$tmp" | tee -a "$log"
+	tee -a "$log" <"$tmp"
 	output=$(cat "$tmp")
 	rm -f "$tmp"
 	case "$rc" in

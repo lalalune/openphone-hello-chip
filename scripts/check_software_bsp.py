@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import re
+import shlex
+import shutil
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +17,9 @@ ARTIFACT_MANIFEST = ROOT / "docs/android/bsp-artifact-manifest.json"
 LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
 BOOT_TRANSCRIPT_SCHEMA = ROOT / "docs/android/boot-transcript.schema.json"
 EVIDENCE_MANIFEST = ROOT / "docs/evidence/software-bsp-evidence-manifest.json"
+LOCAL_EXTERNAL_PREFLIGHT_REPORT = (
+    ROOT / "docs/evidence/software-bsp-external-preflight-status.json"
+)
 AOSP_EVIDENCE_MANIFEST = ROOT / "sw/aosp-device/evidence_manifest.json"
 NNAPI_PROOF_TEMPLATE = ROOT / "docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json"
 ANDROID_PROOF_TEMPLATE = (
@@ -117,6 +124,29 @@ TARGETS: dict[str, dict[str, Any]] = {
             "docs/evidence/linux/hello-mmio-smoke.log",
         ],
         "evidence_note": "external Linux kernel build, DTB validation, and runtime driver smoke transcript",
+    },
+    "opensbi": {
+        "readme": ROOT / "docs/sw/opensbi/README.md",
+        "required": [
+            "docs/sw/opensbi/README.md",
+            "docs/sw/opensbi/capture-opensbi-evidence.sh",
+            "sw/opensbi/platform/openphone/README.md",
+            "sw/opensbi/platform/openphone/config.mk",
+            "sw/opensbi/platform/openphone/objects.mk",
+            "sw/opensbi/platform/openphone/platform.c",
+        ],
+        "contract_terms": [
+            "sw/platform/hello_platform_contract.json",
+            "OpenSBI",
+            "fw_dynamic",
+            "PLATFORM=openphone",
+            "FW_PAYLOAD",
+        ],
+        "evidence": [
+            "docs/evidence/linux/opensbi_openphone_build.log",
+            "docs/evidence/linux/opensbi_fw_dynamic_handoff.log",
+        ],
+        "evidence_note": "external OpenSBI build and fw_dynamic handoff transcript",
     },
     "aosp": {
         "readme": ROOT / "docs/sw/aosp-device/README.md",

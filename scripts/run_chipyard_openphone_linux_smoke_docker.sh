@@ -91,19 +91,18 @@ docker run --rm --platform "$platform" \
 			--stale-root "$OPENPHONE_HOST_REPO_DIR" \
 			--replacement-root /work || true
 		cd external/chipyard/sims/verilator
-		if [ "$CHIPYARD_LINUX_SMOKE_CLEAN" = "1" ]; then
-			python3 - "$CHIPYARD_CONFIG" <<-PY
+			if [ "$CHIPYARD_LINUX_SMOKE_CLEAN" = "1" ]; then
+				python3 - "$CHIPYARD_CONFIG" <<-PY
 			import os
 			import pathlib
 			import shutil
 			import stat
 			import sys
 
-			config = sys.argv[1]
-			path = pathlib.Path(
-			    f"generated-src/chipyard.harness.TestHarness.{config}/"
-			    f"chipyard.harness.TestHarness.{config}"
-			)
+				config = sys.argv[1]
+				path = pathlib.Path(
+				    f"generated-src/chipyard.harness.TestHarness.{config}"
+				)
 
 			def onexc(function, path_value, exc_info):
 			    try:
@@ -114,10 +113,18 @@ docker run --rm --platform "$platform" \
 
 			if path.exists():
 			    shutil.rmtree(path, onerror=onexc)
-			PY
-			rm -f "simulator-chipyard.harness-$CHIPYARD_CONFIG"
-		fi
-		model_mk="/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/VTestDriver.mk"
+				PY
+				rm -f "simulator-chipyard.harness-$CHIPYARD_CONFIG"
+			fi
+			generated_dir="/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.$CHIPYARD_CONFIG"
+			bootrom_src="/work/external/chipyard/generators/testchipip/src/main/resources/testchipip/bootrom"
+			mkdir -p "$generated_dir"
+			for bootrom_img in bootrom.rv64.img bootrom.rv32.img; do
+				if [ -f "$bootrom_src/$bootrom_img" ]; then
+					cp -f "$bootrom_src/$bootrom_img" "$generated_dir/$bootrom_img"
+				fi
+			done
+			model_mk="/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/chipyard.harness.TestHarness.$CHIPYARD_CONFIG/VTestDriver.mk"
 		simulator="/work/external/chipyard/sims/verilator/simulator-chipyard.harness-$CHIPYARD_CONFIG"
 		model_dir="$(dirname "$model_mk")"
 		if [ -d "$model_dir" ] && find "$model_dir" -maxdepth 1 -name "VTestDriver*.o" -size 0c -print -quit | grep -q .; then

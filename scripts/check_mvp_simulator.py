@@ -16,7 +16,9 @@ REQUIRED_STEPS = {
     "cpu_ap_linux_evidence",
     "chipyard_verilator_preflight",
     "chipyard_payload_path",
+    "chipyard_verilator_linux_attempt",
     "chipyard_verilator_linux_smoke",
+    "npu_ml_smoke",
     "android_sim_boot",
     "android_sim_report_check",
 }
@@ -54,6 +56,8 @@ def main() -> int:
         errors.append(
             "claim boundary must restrict our-chip OS boot claims to generated AP evidence"
         )
+    if "minimum Linux+NPU target may be claimed only when minimum_linux_npu_target_claim is true" not in boundary:
+        errors.append("claim boundary must restrict minimum Linux+NPU target claims")
     if data.get("strongest_attempted") != "os_boot":
         errors.append("strongest_attempted must record os_boot")
     if not isinstance(data.get("os_boot_claim"), bool):
@@ -70,6 +74,20 @@ def main() -> int:
         errors.append("renode_reference_only must be true")
     if data.get("os_boot_claim") != data.get("on_chip_os_boot_claim"):
         errors.append("os_boot_claim must remain an alias for on_chip_os_boot_claim")
+    if not isinstance(data.get("npu_ml_smoke_claim"), bool):
+        errors.append("npu_ml_smoke_claim must be bool")
+    if not isinstance(data.get("integrated_linux_npu_ml_claim"), bool):
+        errors.append("integrated_linux_npu_ml_claim must be bool")
+    if not isinstance(data.get("minimum_linux_npu_target_claim"), bool):
+        errors.append("minimum_linux_npu_target_claim must be bool")
+    if data.get("minimum_linux_npu_target_claim") != (
+        bool(data.get("on_chip_os_boot_claim"))
+        and bool(data.get("npu_ml_smoke_claim"))
+        and bool(data.get("integrated_linux_npu_ml_claim"))
+    ):
+        errors.append(
+            "minimum_linux_npu_target_claim must require on-chip OS boot, NPU smoke, and integrated Linux NPU markers"
+        )
     if not isinstance(data.get("best_executable_evidence"), str):
         errors.append("best_executable_evidence must be string")
     if data.get("best_executable_evidence") in {
@@ -88,6 +106,7 @@ def main() -> int:
         "os_boot",
         "os_prereq",
         "firmware_smoke",
+        "npu_ml",
         "rtl_sim",
         "none",
     }:
@@ -102,6 +121,8 @@ def main() -> int:
         errors.append("remaining_blockers must be list")
     if not isinstance(data.get("blockers_to_on_chip_os_boot"), list):
         errors.append("blockers_to_on_chip_os_boot must be list")
+    if not isinstance(data.get("blockers_to_minimum_linux_npu_target"), list):
+        errors.append("blockers_to_minimum_linux_npu_target must be list")
     if not isinstance(data.get("failures"), list):
         errors.append("failures must be list")
 
@@ -119,7 +140,7 @@ def main() -> int:
             continue
         if item.get("status") not in {"pass", "blocked", "fail"}:
             errors.append(f"results[{index}] status is invalid")
-        if item.get("tier") not in {"os_boot", "os_prereq", "firmware_smoke", "rtl_sim"}:
+        if item.get("tier") not in {"os_boot", "os_prereq", "firmware_smoke", "npu_ml", "rtl_sim"}:
             errors.append(f"results[{index}] tier is invalid")
         if item.get("scope") not in {
             "qemu_virt_reference",
@@ -127,6 +148,7 @@ def main() -> int:
             "android_reference",
             "our_chip_prereq",
             "our_chip_os_boot",
+            "our_chip_npu_ml_local",
             "our_chip_rtl_sim",
         }:
             errors.append(f"results[{index}] scope is invalid")
@@ -166,6 +188,19 @@ def main() -> int:
             errors.append(
                 "blockers_to_on_chip_os_boot missing: " + ", ".join(sorted(missing_blockers))
             )
+    if (
+        data.get("minimum_linux_npu_target_claim") is False
+        and data.get("integrated_linux_npu_ml_claim") is False
+    ):
+        blocker_names = {
+            item.get("name")
+            for item in data.get("blockers_to_minimum_linux_npu_target", [])
+            if isinstance(item, dict)
+        }
+        if "integrated_linux_npu_ml_transcript" not in blocker_names:
+            errors.append(
+                "blockers_to_minimum_linux_npu_target missing integrated_linux_npu_ml_transcript"
+            )
 
     if errors:
         print("MVP simulator check failed:")
@@ -183,6 +218,12 @@ def main() -> int:
             print("  on_chip_os_boot_claim: false")
             print("  blockers_to_on_chip_os_boot:")
             for item in data.get("blockers_to_on_chip_os_boot", []):
+                if isinstance(item, dict):
+                    print(f"    - {item.get('name')}: {item.get('detail', 'blocked')}")
+        if data.get("minimum_linux_npu_target_claim") is False:
+            print("  minimum_linux_npu_target_claim: false")
+            print("  blockers_to_minimum_linux_npu_target:")
+            for item in data.get("blockers_to_minimum_linux_npu_target", []):
                 if isinstance(item, dict):
                     print(f"    - {item.get('name')}: {item.get('detail', 'blocked')}")
         for item in results:

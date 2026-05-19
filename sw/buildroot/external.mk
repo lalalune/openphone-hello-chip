@@ -1,6 +1,5 @@
 # Buildroot external makefile for the OpenPhone hello BSP.
 #
-# The external tree supplies board metadata, a Linux config fragment, a rootfs
-# overlay, and per-package recipes under package/*/.
-
-include $(sort $(wildcard $(BR2_EXTERNAL_OPENPHONE_HELLO_PATH)/package/*/*.mk))
+# Package recipes are intentionally empty for now. The external tree supplies
+# board metadata, a Linux config fragment, and a rootfs overlay that imports the
+# hello MMIO smoke hook.

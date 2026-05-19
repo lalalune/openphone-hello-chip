@@ -110,6 +110,24 @@ def main() -> int:
     required_perf_keys = {"unsupported_ops", "cycles", "macs", "ops", "errors"}
     if perf_keys != required_perf_keys:
         errors.append(f"runtime perf keys {sorted(perf_keys)} != {sorted(required_perf_keys)}")
+    if not hasattr(runtime, "descriptor_counters"):
+        errors.append("runtime must expose descriptor_counters for queue telemetry proof")
+    else:
+        desc_keys = set(instance.descriptor_counters())
+        required_desc_keys = {
+            "status",
+            "head",
+            "tail",
+            "timeout_count",
+            "bytes_read",
+            "bytes_written",
+            "read_beats",
+            "write_beats",
+        }
+        if not required_desc_keys.issubset(desc_keys):
+            errors.append(
+                f"runtime descriptor counter keys missing {sorted(required_desc_keys - desc_keys)}"
+            )
     instance.dot8_s4(0, 0)
     if (runtime.OPCODE, runtime.OP_DOT8_S4) not in probe_writes:
         errors.append("runtime dot8_s4 must submit opcode 7")
@@ -166,7 +184,11 @@ def main() -> int:
         ("DESC_STATUS_TIMEOUT", 0x8),
         ("DESC_STATUS_MEM_ERROR", 0x10),
         ("DESC_STATUS_STREAM_ERROR", 0x20),
+        ("DESC_STATUS_OWNER_ERROR", 0x40),
+        ("DESC_STATUS_WRITEBACK_UNSUPPORTED", 0x80),
         ("DESC_FLAG_STREAM_TO_SCRATCH", 1 << 8),
+        ("DESC_FLAG_WRITEBACK_REQUEST", 1 << 30),
+        ("DESC_FLAG_VALID_OWNER", 1 << 31),
     ):
         if getattr(runtime, name, None) != expected:
             errors.append(f"runtime {name}={getattr(runtime, name, None)!r} != {expected!r}")
@@ -224,6 +246,9 @@ def main() -> int:
         "perf_counters",
         "desc_timeout_count",
         "desc_bytes_read",
+        "desc_bytes_written",
+        "desc_read_beats",
+        "desc_write_beats",
     ):
         if token not in descriptor_queue.get("required_error_reporting", []):
             errors.append(f"descriptor queue error reporting missing {token}")
@@ -232,11 +257,18 @@ def main() -> int:
     for token in (
         "gemm_s8",
         "golden_gemm_s8",
+        "submit_descriptors",
+        "descriptor_counters",
+        "DESC_BYTES_READ",
         "unsupported_ops",
         "prototype limits",
     ):
         if token not in runtime_sim_text:
             errors.append(f"runtime simulator test missing token {token!r}")
+    runtime_text = RUNTIME.read_text()
+    for token in ("DESC_FLAG_VALID_OWNER", "DESC_FLAG_WRITEBACK_REQUEST"):
+        if token not in runtime_text:
+            errors.append(f"runtime missing descriptor flag token {token!r}")
 
     return report(errors)
 

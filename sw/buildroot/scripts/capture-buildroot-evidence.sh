@@ -2,7 +2,7 @@
 set -eu
 
 if [ "$#" -ne 2 ]; then
-	echo "usage: $0 /path/to/buildroot defconfig|image-manifest|smoke" >&2
+	echo "usage: $0 /path/to/buildroot defconfig|image-manifest|smoke|ml-smoke" >&2
 	exit 2
 fi
 
@@ -45,6 +45,8 @@ record_command() {
 	if [ "$rc" -eq 0 ]; then
 		if [ "$artifact" = "hello-mmio-smoke" ]; then
 			echo "HELLO_MMIO_SMOKE_PASS" >> "$log"
+		elif [ "$artifact" = "hello-npu-ml-smoke" ]; then
+			echo "HELLO_NPU_ML_SMOKE_PASS" >> "$log"
 		fi
 		echo "openphone-evidence: status=PASS" >> "$log"
 		echo "RESULT=PASS" >> "$log"
@@ -109,6 +111,16 @@ case "$mode" in
 			hello-mmio-smoke \
 			"$evidence_dir/hello-mmio-smoke.log" \
 			"$HELLO_SMOKE_CMD"
+		;;
+	ml-smoke)
+		if [ -z "${HELLO_NPU_ML_SMOKE_CMD:-}" ]; then
+			echo "error: HELLO_NPU_ML_SMOKE_CMD is required, for example: ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu" >&2
+			exit 2
+		fi
+		record_command \
+			hello-npu-ml-smoke \
+			"$evidence_dir/hello-npu-ml-smoke.log" \
+			"$HELLO_NPU_ML_SMOKE_CMD"
 		;;
 	*)
 		echo "error: unknown mode $mode" >&2

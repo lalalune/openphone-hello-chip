@@ -123,6 +123,26 @@ CHECKS = {
             "expected output",
         ],
     },
+    "opensbi": {
+        "local": "python3 scripts/check_software_bsp.py opensbi --scaffold-only",
+        "expected": "opensbi BSP scaffold check passed; external evidence remains BLOCKED.",
+        "blocker": "external OpenSBI checkout plus simulator or board fw_dynamic handoff transcript",
+        "files": [
+            "docs/sw/opensbi/README.md",
+            "docs/sw/opensbi/capture-opensbi-evidence.sh",
+            "sw/opensbi/platform/openphone/README.md",
+            "sw/opensbi/platform/openphone/config.mk",
+            "sw/opensbi/platform/openphone/objects.mk",
+            "sw/opensbi/platform/openphone/platform.c",
+        ],
+        "terms": [
+            "sw/platform/hello_platform_contract.json",
+            "OpenSBI",
+            "fw_dynamic",
+            "PLATFORM=openphone",
+            "FW_PAYLOAD",
+        ],
+    },
 }
 
 

@@ -19,6 +19,7 @@ REQUIRED_ARTIFACTS = {
     "spef": ".spef",
     "sdf": ".sdf",
     "drc_report": ".rpt",
+    "klayout_drc_report": ".rpt",
     "lvs_report": ".rpt",
     "antenna_report": ".rpt",
     "sta_report": ".rpt",
@@ -38,6 +39,7 @@ ARTIFACT_LABELS = {
     "spef": "SPEF parasitics",
     "sdf": "SDF backannotation",
     "drc_report": "DRC report",
+    "klayout_drc_report": "KLayout DRC report",
     "lvs_report": "LVS report",
     "antenna_report": "antenna report",
     "sta_report": "STA report",
@@ -692,6 +694,8 @@ def main() -> int:
                 )
                 dirty_reports.extend(dirty)
                 missing_clean_markers.extend(missing_clean)
+                for report_path in missing_clean:
+                    failures.append(f"{name}: report missing required clean marker: {report_path}")
         for run_manifest in artifacts.get("run_manifest", []):
             failures.extend(validate_run_manifest(root, complete_run, run_manifest))
         failures.extend(validate_release_closure_metrics(complete_run))

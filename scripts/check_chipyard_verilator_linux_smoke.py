@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import json
 import os
 import platform
 import re
 import shutil
 import stat
+import subprocess
+import time
 from pathlib import Path
 
 import locate_chipyard_linux_payload
@@ -54,6 +57,10 @@ GENERATED_FILELISTS = (
     GENERATED_CONFIG_DIR / "sim_files.f",
 )
 GENERATED_SIMULATOR = SIM_DIR / f"simulator-chipyard.harness-{CONFIG}"
+ARCHIVED_SIMULATOR_DIR = OUT_DIR / "simulator"
+ARCHIVED_SIMULATOR = ARCHIVED_SIMULATOR_DIR / f"simulator-chipyard.harness-{CONFIG}"
+SIMULATOR_CANDIDATES = (GENERATED_SIMULATOR, ARCHIVED_SIMULATOR)
+GENERATED_METADATA_PATTERNS = repair_chipyard_generated_paths.GENERATED_METADATA_PATTERNS
 STALE_ABSOLUTE_ROOTS = ("/work/", "/workspace/", "/__w/")
 TRACE_LINE_RE = re.compile(
     r"^C(?P<hart>\d+):\s+(?P<cycle>\d+)\s+\[(?P<valid>[01])\]\s+pc=\[(?P<pc>[0-9a-fA-F]+)\]"
@@ -94,39 +101,45 @@ def detect_stale_absolute_roots(
     )
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def generated_metadata_files() -> list[Path]:
+    files = [path for path in (*GENERATED_FILELISTS, GENERATED_DRIVER_MAKEFILE) if path.is_file()]
+    if GENERATED_CONFIG_DIR.exists():
+        for pattern in GENERATED_METADATA_PATTERNS:
+            files.extend(path for path in GENERATED_CONFIG_DIR.rglob(pattern) if path.is_file())
+    return sorted(set(files))
+
+
 def generated_path_blockers() -> list[str]:
     blockers: list[str] = []
     allow_container_paths = os.environ.get(CONTAINER_PATH_ENV) == "1"
     partial_generated = GENERATED_CONFIG_DIR.exists() and not GENERATED_DRIVER_MAKEFILE.is_file()
-    for generated_filelist in GENERATED_FILELISTS:
-        if generated_filelist.is_file():
-            filelist_text = generated_filelist.read_text(encoding="utf-8", errors="replace")
-            stale_roots = detect_stale_absolute_roots(filelist_text, ROOT, allow_container_paths)
-            if stale_roots:
-                blockers.append(
-                    "generated Verilator filelist contains stale container/workspace "
-                    f"absolute paths ({', '.join(stale_roots)}): {rel(generated_filelist)}; "
-                    "run `python3 scripts/repair_chipyard_generated_paths.py --rewrite`, "
-                    "regenerate the full generated-src config directory on this host, or run "
-                    "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 "
-                    "scripts/run_chipyard_openphone_linux_smoke.sh` inside the /work-mounted "
-                    "container path"
-                )
-    if GENERATED_DRIVER_MAKEFILE.is_file():
-        makefile_text = GENERATED_DRIVER_MAKEFILE.read_text(encoding="utf-8", errors="replace")
-        stale_roots = detect_stale_absolute_roots(makefile_text, ROOT, allow_container_paths)
+    stale_metadata: list[tuple[Path, list[str]]] = []
+    for generated_file in generated_metadata_files():
+        file_text = generated_file.read_text(encoding="utf-8", errors="replace")
+        stale_roots = detect_stale_absolute_roots(file_text, ROOT, allow_container_paths)
         if stale_roots:
-            blockers.append(
-                "generated Verilator driver makefile contains stale container/workspace "
-                f"absolute paths ({', '.join(stale_roots)}): {rel(GENERATED_DRIVER_MAKEFILE)}; "
-                "run `python3 scripts/repair_chipyard_generated_paths.py --rewrite`, "
-                "regenerate the simulator on this host with "
-                "`scripts/run_chipyard_openphone_verilator.sh run-binary`, or run "
-                "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 "
-                "scripts/run_chipyard_openphone_linux_smoke.sh` inside the /work-mounted "
-                "container path"
-            )
-    elif (SIM_DIR / "generated-src").exists():
+            stale_metadata.append((generated_file, stale_roots))
+    if stale_metadata:
+        roots = sorted({root for _path, stale_roots in stale_metadata for root in stale_roots})
+        sample = ", ".join(rel(path) for path, _stale_roots in stale_metadata[:8])
+        extra = "" if len(stale_metadata) <= 8 else f", ... +{len(stale_metadata) - 8} more"
+        blockers.append(
+            "generated Verilator metadata contains stale container/workspace absolute paths "
+            f"({', '.join(roots)}): {sample}{extra}; run "
+            "`python3 scripts/repair_chipyard_generated_paths.py --rewrite`, regenerate the "
+            "full generated-src config directory on this host, or run "
+            "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh` "
+            "inside the /work-mounted container path"
+        )
+    elif GENERATED_CONFIG_DIR.exists() or GENERATED_SIMULATOR.exists():
         blockers.append(
             "partial generated Verilator output is missing the driver makefile after generation: "
             f"{rel(GENERATED_DRIVER_MAKEFILE)}; remove the generated config directory and rerun "
@@ -154,26 +167,150 @@ def generated_path_blockers() -> list[str]:
     return blockers
 
 
+def simulator_artifact_metadata() -> dict[str, object]:
+    candidates: list[dict[str, object]] = []
+    host_system = platform.system()
+    host_machine = platform.machine()
+    runnable_candidate = False
+    executable_candidate = False
+    for path in SIMULATOR_CANDIDATES:
+        candidate: dict[str, object] = {
+            "path": rel(path),
+            "exists": path.is_file(),
+            "size_bytes": None,
+            "executable": False,
+            "sha256": None,
+            "elf_class": None,
+            "elf_machine": None,
+            "host_runnable": False,
+            "host_blocker": "",
+        }
+        if path.is_file():
+            stat_result = path.stat()
+            executable = bool(stat_result.st_mode & 0o111)
+            candidate["size_bytes"] = stat_result.st_size
+            candidate["executable"] = executable
+            candidate["sha256"] = sha256_file(path)
+            executable_candidate = executable_candidate or executable
+            header = path.read_bytes()[:20]
+            if header.startswith(b"\x7fELF"):
+                candidate["elf_class"] = "ELF64" if header[4] == 2 else "ELF32"
+                machine = int.from_bytes(header[18:20], "little")
+                candidate["elf_machine"] = {62: "x86_64", 183: "aarch64", 243: "riscv"}.get(
+                    machine, f"em_{machine}"
+                )
+                if host_system != "Linux":
+                    candidate["host_blocker"] = f"ELF simulator requires Linux host, got {host_system}"
+                elif machine == 62 and host_machine not in {"x86_64", "amd64"}:
+                    candidate["host_blocker"] = (
+                        f"ELF x86_64 simulator requires x86_64 host, got {host_machine}"
+                    )
+                else:
+                    candidate["host_runnable"] = executable
+            else:
+                candidate["host_blocker"] = "not an ELF executable"
+            runnable_candidate = runnable_candidate or bool(candidate["host_runnable"])
+        candidates.append(candidate)
+    return {
+        "candidates": candidates,
+        "executable_candidate": executable_candidate,
+        "host_runnable_candidate": runnable_candidate,
+    }
+
+
+def simulator_artifact_blockers(metadata: dict[str, object]) -> list[str]:
+    blockers: list[str] = []
+    candidates = metadata.get("candidates")
+    existing = [
+        candidate
+        for candidate in candidates
+        if isinstance(candidate, dict) and bool(candidate.get("exists"))
+    ] if isinstance(candidates, list) else []
+    if not existing:
+        blockers.append(
+            "missing generated simulator artifact: expected one of "
+            + ", ".join(rel(path) for path in SIMULATOR_CANDIDATES)
+        )
+    elif not metadata.get("executable_candidate"):
+        blockers.append(
+            "generated simulator artifact exists but no executable candidate is present: "
+            + ", ".join(str(candidate.get("path")) for candidate in existing)
+        )
+    return blockers
+
+
 def remove_path(path: Path) -> None:
-    def onerror(function, path_value, _exc_info):
+    def fix_permissions_and_retry(function, path_value) -> None:
         try:
             os.chmod(path_value, stat.S_IRWXU)
             function(path_value)
         except FileNotFoundError:
             pass
 
+    def onerror(function, path_value, _exc_info):
+        fix_permissions_and_retry(function, path_value)
+
     if path.is_dir():
-        shutil.rmtree(path, onerror=onerror)
+        # Docker/QEMU-backed Chipyard runs can still be tearing down object files
+        # when a local repair is requested. Retry briefly, then leave the gate
+        # blocked instead of raising a Python traceback.
+        last_error: OSError | None = None
+        for _attempt in range(3):
+            try:
+                shutil.rmtree(path, onerror=onerror)
+                return
+            except OSError as exc:
+                last_error = exc
+                time.sleep(0.25)
+        raise RuntimeError(
+            f"could not remove {rel(path)} after retries; generated files are likely "
+            "being created by an active Chipyard smoke/generation job"
+        ) from last_error
     else:
         with contextlib.suppress(FileNotFoundError):
             path.unlink()
 
 
+def active_chipyard_containers() -> list[dict[str, str]]:
+    if not shutil.which("docker"):
+        return []
+    completed = subprocess.run(
+        [
+            "docker",
+            "ps",
+            "--format",
+            "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}\t{{.Command}}",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    containers: list[dict[str, str]] = []
+    for line in completed.stdout.splitlines():
+        parts = line.split("\t", 4)
+        if len(parts) != 5:
+            continue
+        container_id, image, status, name, command = parts
+        haystack = f"{image} {command}".lower()
+        if "chipyard" not in haystack and "openphone" not in haystack:
+            continue
+        containers.append(
+            {
+                "id": container_id,
+                "image": image,
+                "status": status,
+                "name": name,
+                "command": command,
+            }
+        )
+    return containers
+
+
 def repair_stale_generated_paths() -> int:
     blockers = generated_path_blockers()
-    generated_files = [
-        path for path in (*GENERATED_FILELISTS, GENERATED_DRIVER_MAKEFILE) if path.is_file()
-    ]
+    generated_files = generated_metadata_files()
     destructive_repair_needed = any(
         "partial generated Verilator" in blocker or "zero-byte model artifacts" in blocker
         for blocker in blockers
@@ -181,14 +318,14 @@ def repair_stale_generated_paths() -> int:
     if generated_files:
         _results, replacements = repair_chipyard_generated_paths.inspect_or_rewrite(
             generated_files,
-            ["/work"],
+            repair_chipyard_generated_paths.default_stale_roots(ROOT),
             ROOT,
             rewrite=True,
         )
         if replacements:
             print(
                 "STATUS: REPAIR chipyard.verilator_generated_paths - rewrote "
-                f"{replacements} stale /work path occurrence(s)"
+                f"{replacements} stale generated path occurrence(s)"
             )
             if not destructive_repair_needed:
                 print("  next: rerun python3 scripts/check_chipyard_verilator_linux_smoke.py")
@@ -209,9 +346,23 @@ def repair_stale_generated_paths() -> int:
     for blocker in repairable:
         print(f"  - {blocker}")
     print(f"  removing: {rel(GENERATED_CONFIG_DIR)}")
-    remove_path(GENERATED_CONFIG_DIR)
+    try:
+        remove_path(GENERATED_CONFIG_DIR)
+    except RuntimeError as exc:
+        print("STATUS: BLOCKED chipyard.verilator_generated_paths")
+        print(f"  - {exc}")
+        print("  next: wait for active Chipyard Docker/simulator jobs to finish, then rerun")
+        print("    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated")
+        return 2
     print(f"  removing: {rel(GENERATED_SIMULATOR)}")
-    remove_path(GENERATED_SIMULATOR)
+    try:
+        remove_path(GENERATED_SIMULATOR)
+    except RuntimeError as exc:
+        print("STATUS: BLOCKED chipyard.verilator_generated_paths")
+        print(f"  - {exc}")
+        print("  next: wait for active Chipyard Docker/simulator jobs to finish, then rerun")
+        print("    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated")
+        return 2
     print("  next: rerun the Chipyard make target so VTestDriver.mk is regenerated on this host")
     return 0
 
@@ -409,6 +560,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
     allow_container_paths = os.environ.get(CONTAINER_PATH_ENV) == "1"
     log_metadata = parse_log_metadata()
     instruction_trace = parse_instruction_trace(payload)
+    simulator_artifact = simulator_artifact_metadata()
     log_text = LOG.read_text(encoding="utf-8", errors="replace") if LOG.is_file() else ""
     progress = classify_smoke_progress(log_text, instruction_trace, log_metadata)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -428,8 +580,10 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
             "system": platform.system(),
             "machine": platform.machine(),
         },
+        "active_chipyard_containers": active_chipyard_containers(),
         "allow_container_generated_paths": allow_container_paths,
         "generated_driver_makefile": rel(GENERATED_DRIVER_MAKEFILE),
+        "simulator_artifact": simulator_artifact,
         "required_log_markers": list(REQUIRED_LOG_MARKERS),
         "next_command": next_command(),
         "blockers": blockers,
@@ -481,6 +635,8 @@ def main() -> int:
         blockers.append(f"missing Chipyard Verilator directory: {rel(SIM_DIR)}")
 
     blockers.extend(generated_path_blockers())
+    simulator_metadata = simulator_artifact_metadata()
+    blockers.extend(simulator_artifact_blockers(simulator_metadata))
 
     for artifact in REQUIRED_GENERATED_ARTIFACTS:
         if not artifact.is_file():
