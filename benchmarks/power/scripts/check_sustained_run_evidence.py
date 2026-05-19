@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import re
@@ -112,6 +113,151 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def load_csv_rows(
+    path: Path, required_columns: set[str], failures: list[str]
+) -> list[dict[str, str]]:
+    try:
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            columns = set(reader.fieldnames or [])
+            missing = sorted(required_columns - columns)
+            if missing:
+                failures.append(f"{display_path(path)} missing CSV columns: {', '.join(missing)}")
+                return []
+            rows = list(reader)
+    except csv.Error as exc:
+        failures.append(f"{display_path(path)} is not parseable CSV: {exc}")
+        return []
+    if not rows:
+        failures.append(f"{display_path(path)} must contain at least one data row")
+    return rows
+
+
+def parse_float(value: Any, field: str, failures: list[str]) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        failures.append(f"{field} must be numeric")
+        return None
+    if parsed != parsed or parsed in (float("inf"), float("-inf")):
+        failures.append(f"{field} must be finite")
+        return None
+    return parsed
+
+
+def values_from_rows(
+    rows: list[dict[str, str]], path: Path, column: str, failures: list[str]
+) -> list[float]:
+    values: list[float] = []
+    for index, row in enumerate(rows, start=2):
+        value = parse_float(row.get(column), f"{display_path(path)}:{index}:{column}", failures)
+        if value is not None:
+            values.append(value)
+    return values
+
+
+def relative_error(actual: float, expected: float) -> float:
+    denominator = max(abs(expected), 1e-12)
+    return abs(actual - expected) / denominator
+
+
+def validate_measured_artifact_contents(manifest: dict[str, Any], failures: list[str]) -> None:
+    artifacts = as_mapping(manifest.get("artifacts"))
+    metrics = as_mapping(manifest.get("computed_metrics"))
+    duration = as_number(as_mapping(manifest.get("workload")).get("duration_seconds")) or 0.0
+
+    paths: dict[str, Path] = {}
+    for name in REQUIRED_ARTIFACTS:
+        path = validate_repo_path(
+            as_mapping(artifacts.get(name)).get("path"), f"artifacts.{name}", failures
+        )
+        if path is not None:
+            paths[name] = path
+    if set(paths) != REQUIRED_ARTIFACTS:
+        return
+    missing_files = [name for name, path in paths.items() if not path.is_file()]
+    if missing_files:
+        return
+
+    power_rows = load_csv_rows(paths["power_trace"], {"timestamp_s", "watts"}, failures)
+    thermal_rows = load_csv_rows(paths["thermal_trace"], {"timestamp_s", "die_c"}, failures)
+    frequency_rows = load_csv_rows(
+        paths["frequency_trace"], {"timestamp_s", "frequency_hz"}, failures
+    )
+
+    for label, rows, path in (
+        ("power_trace", power_rows, paths["power_trace"]),
+        ("thermal_trace", thermal_rows, paths["thermal_trace"]),
+        ("frequency_trace", frequency_rows, paths["frequency_trace"]),
+    ):
+        timestamps = values_from_rows(rows, path, "timestamp_s", failures)
+        if timestamps and min(timestamps) < 0:
+            failures.append(f"{label}: timestamp_s must be non-negative")
+        if timestamps and duration and (max(timestamps) - min(timestamps)) < duration:
+            failures.append(f"{label}: timestamp span must cover workload.duration_seconds")
+
+    watts = values_from_rows(power_rows, paths["power_trace"], "watts", failures)
+    if watts and any(value <= 0 for value in watts):
+        failures.append("power_trace.watts must be positive for measured evidence")
+    if watts:
+        observed_average_watts = sum(watts) / len(watts)
+        claimed_average_watts = as_number(metrics.get("average_watts"))
+        if (
+            claimed_average_watts is not None
+            and relative_error(observed_average_watts, claimed_average_watts) > 0.05
+        ):
+            failures.append(
+                "computed_metrics.average_watts must match power_trace average within 5%"
+            )
+
+    die_c = values_from_rows(thermal_rows, paths["thermal_trace"], "die_c", failures)
+    if die_c:
+        observed_max_die_c = max(die_c)
+        claimed_max_die_c = as_number(metrics.get("max_die_c"))
+        if claimed_max_die_c is not None and abs(observed_max_die_c - claimed_max_die_c) > 0.5:
+            failures.append("computed_metrics.max_die_c must match thermal_trace max within 0.5C")
+
+    frequency_hz = values_from_rows(
+        frequency_rows, paths["frequency_trace"], "frequency_hz", failures
+    )
+    if frequency_hz and any(value <= 0 for value in frequency_hz):
+        failures.append("frequency_trace.frequency_hz must be positive for measured evidence")
+
+    sustained_tops = as_number(metrics.get("sustained_int8_tops"))
+    average_watts = as_number(metrics.get("average_watts"))
+    tops_per_w = as_number(metrics.get("sustained_tops_per_w"))
+    if sustained_tops is not None and average_watts is not None and tops_per_w is not None:
+        expected = sustained_tops / average_watts
+        if relative_error(tops_per_w, expected) > 0.02:
+            failures.append(
+                "computed_metrics.sustained_tops_per_w must equal sustained_int8_tops / average_watts within 2%"
+            )
+
+    transcript = paths["workload_transcript"].read_text(encoding="utf-8", errors="replace")
+    for marker in (
+        "openagent-evidence: status=PASS",
+        "NNAPI_ACCELERATOR=e1-npu",
+        "CPU_FALLBACK_PERCENT=0",
+        "UNSUPPORTED_OP_COUNT=0",
+    ):
+        if marker not in transcript:
+            failures.append(f"workload_transcript missing marker: {marker}")
+
+    try:
+        calibration = json.loads(paths["calibration_record"].read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        failures.append(f"{display_path(paths['calibration_record'])} is invalid JSON: {exc}")
+        return
+    if not isinstance(calibration, dict):
+        failures.append("calibration_record must contain a JSON object")
+        return
+    if calibration.get("status") != "complete":
+        failures.append("calibration_record.status must be complete")
+    for key in ("power", "thermal", "frequency"):
+        if not as_list(calibration.get(key)):
+            failures.append(f"calibration_record.{key} must list calibrated instruments")
+
+
 def validate_artifact(
     manifest: dict[str, Any],
     name: str,
@@ -190,6 +336,8 @@ def validate_manifest(manifest: dict[str, Any], *, require_measured: bool) -> li
         failures.append(f"artifacts missing: {', '.join(missing_artifacts)}")
     for name in sorted(REQUIRED_ARTIFACTS & set(artifacts)):
         validate_artifact(manifest, name, failures, require_existing=require_measured)
+    if require_measured:
+        validate_measured_artifact_contents(manifest, failures)
 
     metrics = as_mapping(manifest.get("computed_metrics"))
     for key in ("average_watts", "max_die_c", "sustained_int8_tops", "sustained_tops_per_w"):

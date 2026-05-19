@@ -8,7 +8,7 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 | --- | --- | --- | --- |
 | docs-and-project-plan | `PASS` | `command_pass` | `none` |
 | architecture-docs | `PASS` | `command_pass` | `none` |
-| toolchain-fast-path | `PASS` | `tool_available` | `none` |
+| toolchain-fast-path | `BLOCK` | `tool_blocker` | `scripts/check_tools.sh && scripts/tool_versions.sh` |
 | platform-contract | `PASS` | `command_pass` | `none` |
 | linux-boot-prerequisites | `PASS` | `command_pass` | `none` |
 | software-bsp | `BLOCK` | `scaffold_only` | `make software-bsp-evidence-check` |
@@ -18,13 +18,13 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 | cocotb | `PASS` | `generated_artifact` | `none` |
 | verilator | `PASS` | `generated_artifact` | `none` |
 | formal | `PASS` | `generated_artifact` | `none` |
-| qemu | `PASS` | `generated_artifact` | `none` |
+| qemu | `BLOCK` | `tool_blocker` | `make qemu-check` |
 | renode | `BLOCK` | `tool_blocker` | `make renode-check` |
 | npu-ml-proof | `PASS` | `generated_artifact` | `none` |
 | minimum-linux-npu-target | `BLOCK` | `tool_blocker` | `make minimum-linux-npu-target-strict` |
 | pd-contract | `PASS` | `command_pass` | `none` |
 | product-package | `BLOCK` | `release_blocker` | `close package/FPGA/KiCad/PD release blockers or keep product claim below fabrication` |
-| benchmarks | `PASS` | `generated_artifact` | `none` |
+| benchmarks | `BLOCK` | `scaffold_only` | `python3 benchmarks/run_benchmarks.py run --metadata benchmarks/metadata/strict-blocked-template.json --strict-missing` |
 | release-pipeline | `PASS` | `generated_artifact` | `none` |
 
 ## Workstream Dashboard

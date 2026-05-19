@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 set -eu
 
+repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
+if [ -d "$repo_dir/external/oss-cad-suite/bin" ]; then
+    PATH="$repo_dir/external/oss-cad-suite/bin:$PATH"
+fi
+
 if ! command -v yosys >/dev/null 2>&1; then
     echo "STATUS: BLOCKED synth.yosys - Yosys missing. Use Docker/Nix or install Yosys."
     if [ "${REQUIRE_YOSYS:-0}" = "1" ]; then

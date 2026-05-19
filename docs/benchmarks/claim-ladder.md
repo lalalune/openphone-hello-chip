@@ -54,6 +54,9 @@ Can support:
   metrics, outputs match a golden reference within stated tolerance.
 - Target-cycle counts, IPC, MPKI, cache and interconnect transactions,
   modeled frequency.
+- Modeled power, energy, thermal, and process-corner derates only when the
+  report explicitly binds to the 14A process-effects contract and marks the
+  result as modeled, not PDK or silicon signoff.
 - Operator-level NPU correctness (unsupported op count, CPU fallback
   percent) when the runtime shim is exercised.
 - Calibration evidence for `simulator_config` and
@@ -61,8 +64,8 @@ Can support:
 
 Cannot support:
 - Wall-clock latency or throughput on real hardware.
-- Power, energy, joules-per-inference.
-- Thermal behavior, sustained performance, throttling.
+- Measured silicon power, energy, joules-per-inference, thermal behavior,
+  sustained performance, or throttling.
 - Any phone-class comparison (`forbidden_metrics`:
   `wall_clock_score`, `phone_score`, `geekbench_score`).
 - AOSP boot or CTS/VTS pass status.

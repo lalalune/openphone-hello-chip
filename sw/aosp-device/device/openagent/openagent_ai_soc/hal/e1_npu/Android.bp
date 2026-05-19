@@ -1,9 +1,9 @@
-// hello_npu HAL v0 - fail-closed stub for vendor.openphone.hello_npu@1.0.
+// e1_npu HAL v0 - fail-closed stub for vendor.openagent.e1_npu@1.0.
 //
-// Backing contract: sw/platform/hello_platform_contract.json
-// Backing kernel node: /dev/hello-npu (drivers/misc/openphone-hello).
+// Backing contract: sw/platform/e1_platform_contract.json
+// Backing kernel node: /dev/e1-npu.
 //
-// Status: stub. Service binary opens /dev/hello-npu read/write and exposes
+// Status: stub. Service binary opens /dev/e1-npu read/write and exposes
 // a single fixed-vector smoke RPC. Returns UNSUPPORTED when the device
 // node is absent. No model loading, no DMA, no scheduler, no power.
 
@@ -12,15 +12,15 @@ package {
 }
 
 cc_binary {
-    name: "vendor.openphone.hello_npu@1.0-service",
+    name: "vendor.openagent.e1_npu@1.0-service",
     relative_install_path: "hw",
     vendor: true,
-    init_rc: ["vendor.openphone.hello_npu@1.0-service.rc"],
-    vintf_fragments: ["vendor.openphone.hello_npu@1.0-service.xml"],
+    init_rc: ["vendor.openagent.e1_npu@1.0-service.rc"],
+    vintf_fragments: ["vendor.openagent.e1_npu@1.0-service.xml"],
 
     srcs: [
         "service.cpp",
-        "HelloNpu.cpp",
+        "E1Npu.cpp",
     ],
 
     shared_libs: [
@@ -28,7 +28,7 @@ cc_binary {
         "libhidlbase",
         "liblog",
         "libutils",
-        "vendor.openphone.hello_npu@1.0",
+        "vendor.openagent.e1_npu@1.0",
     ],
 
     cflags: [

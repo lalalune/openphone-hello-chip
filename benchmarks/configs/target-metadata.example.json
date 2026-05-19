@@ -32,6 +32,17 @@
     "sample_count": 0,
     "averaging_window_seconds": 0
   },
+  "process": {
+    "node": "14A",
+    "pdk": "example-pdk-release-and-corner-set",
+    "process_effects_contract": {
+      "path": "docs/spec-db/process-14a-effects.yaml",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "process_corner_count": 4,
+    "worst_process_corner": "14a_ss_0p63v_105c_frontside_pdn",
+    "pdk_signoff_claim": "pdk_extracted_timing_power_thermal_signoff_passed"
+  },
   "calibration": {
     "status": "calibrated",
     "source": "example-calibration-lab-or-script",
@@ -49,6 +60,18 @@
         "source": "example-meter-calibration-record",
         "sha256": "example-sha256",
         "evidence": "example-power-evidence-path"
+      },
+      "simulator_config": {
+        "status": "calibrated",
+        "source": "benchmarks/generate_simulator_arch_metrics.py --mode model-14a-cpu-ap",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "evidence": "benchmarks/results/simulator-arch-metrics.json"
+      },
+      "simulator_counter_export": {
+        "status": "calibrated",
+        "source": "deterministic-14a-cpu-ap-architecture-model",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "evidence": "benchmarks/results/simulator-arch-metrics.json"
       }
     }
   }

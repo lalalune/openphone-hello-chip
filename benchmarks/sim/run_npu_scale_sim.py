@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,6 +27,68 @@ CONFIGS = {
     OPEN_2028_STRETCH.name: OPEN_2028_STRETCH,
 }
 MODEL = ROOT / "benchmarks/models/mobile_smoke.tflite"
+PROCESS_EFFECTS = ROOT / "docs/spec-db/process-14a-effects.yaml"
+
+
+@dataclass(frozen=True)
+class ProcessCorner:
+    name: str
+    voltage_v: float
+    temperature_c: int
+    frequency_derate: float
+    interconnect_rc_derate: float
+    dynamic_power_scale: float
+    leakage_power_scale: float
+    thermal_margin_derate: float
+    claim_boundary: str
+
+
+PROCESS_CORNERS = (
+    ProcessCorner(
+        name="14a_tt_0p70v_25c_frontside_pdn",
+        voltage_v=0.70,
+        temperature_c=25,
+        frequency_derate=1.00,
+        interconnect_rc_derate=1.00,
+        dynamic_power_scale=1.00,
+        leakage_power_scale=1.00,
+        thermal_margin_derate=1.00,
+        claim_boundary="planning_corner_not_pdk_signoff",
+    ),
+    ProcessCorner(
+        name="14a_ss_0p63v_105c_frontside_pdn",
+        voltage_v=0.63,
+        temperature_c=105,
+        frequency_derate=0.72,
+        interconnect_rc_derate=1.30,
+        dynamic_power_scale=0.81,
+        leakage_power_scale=1.85,
+        thermal_margin_derate=0.70,
+        claim_boundary="pessimistic_mobile_hot_corner_not_pdk_signoff",
+    ),
+    ProcessCorner(
+        name="14a_ff_0p77v_0c_frontside_pdn",
+        voltage_v=0.77,
+        temperature_c=0,
+        frequency_derate=1.14,
+        interconnect_rc_derate=0.88,
+        dynamic_power_scale=1.21,
+        leakage_power_scale=0.62,
+        thermal_margin_derate=1.08,
+        claim_boundary="fast_cold_corner_not_pdk_signoff",
+    ),
+    ProcessCorner(
+        name="14a_bspdn_follow_on_hot_ir_em_stress",
+        voltage_v=0.68,
+        temperature_c=115,
+        frequency_derate=0.82,
+        interconnect_rc_derate=1.12,
+        dynamic_power_scale=0.94,
+        leakage_power_scale=2.25,
+        thermal_margin_derate=0.62,
+        claim_boundary="backside_pdn_follow_on_variant_not_selected_not_pdk_signoff",
+    ),
+)
 
 
 def file_hash(path: Path) -> dict[str, str | int]:
@@ -72,6 +135,53 @@ def metric_entry(config: NpuScaleConfig, estimate) -> dict:
     }
 
 
+def process_corner_entry(config: NpuScaleConfig, corner: ProcessCorner, estimates) -> dict:
+    effective_clock_hz = int(config.clock_hz * corner.frequency_derate)
+    effective_dma_bytes_per_cycle = max(
+        1, int(config.dma_bytes_per_cycle / corner.interconnect_rc_derate)
+    )
+    kernel_entries = []
+    for estimate in estimates:
+        compute_cycles = estimate.compute_cycles
+        memory_cycles = (
+            estimate.bytes_read + estimate.bytes_written + effective_dma_bytes_per_cycle - 1
+        ) // effective_dma_bytes_per_cycle
+        cycles = max(compute_cycles, memory_cycles)
+        elapsed_s = cycles / effective_clock_hz
+        kernel_entries.append(
+            {
+                "kernel": estimate.kernel,
+                "npu_cycles": cycles,
+                "compute_cycles": compute_cycles,
+                "memory_cycles": memory_cycles,
+                "memory_wait_cycles": max(0, memory_cycles - compute_cycles),
+                "modeled_frequency_hz": effective_clock_hz,
+                "observed_tops": estimate.macs * 2 / elapsed_s / 1e12,
+                "utilization_percent": 100.0 * compute_cycles / cycles,
+            }
+        )
+    min_observed_tops = min(kernel["observed_tops"] for kernel in kernel_entries)
+    return {
+        "name": corner.name,
+        "voltage_v": corner.voltage_v,
+        "temperature_c": corner.temperature_c,
+        "frequency_derate": corner.frequency_derate,
+        "interconnect_rc_derate": corner.interconnect_rc_derate,
+        "dynamic_power_scale": corner.dynamic_power_scale,
+        "leakage_power_scale": corner.leakage_power_scale,
+        "thermal_margin_derate": corner.thermal_margin_derate,
+        "effective_clock_hz": effective_clock_hz,
+        "effective_dma_bytes_per_cycle": effective_dma_bytes_per_cycle,
+        "dense_int8_peak_tops": config.int8_macs_per_cycle * 2 * effective_clock_hz / 1e12,
+        "min_observed_tops": min_observed_tops,
+        "max_observed_tops": max(kernel["observed_tops"] for kernel in kernel_entries),
+        "min_utilization_percent": min(kernel["utilization_percent"] for kernel in kernel_entries),
+        "kernels": kernel_entries,
+        "claim_boundary": corner.claim_boundary,
+        "release_use": "prohibited_until_pdk_extracted_timing_power_thermal_signoff",
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run deterministic NPU architecture scale model")
     parser.add_argument("--config", choices=sorted(CONFIGS), default=OPEN_2028_FIRST.name)
@@ -79,9 +189,19 @@ def main() -> int:
     args = parser.parse_args()
 
     config = CONFIGS[args.config]
-    kernels = [metric_entry(config, estimate) for estimate in build_workload(config)]
+    estimates = build_workload(config)
+    kernels = [metric_entry(config, estimate) for estimate in estimates]
+    process_corners = [
+        process_corner_entry(config, corner, estimates) for corner in PROCESS_CORNERS
+    ]
+    worst_corner = min(process_corners, key=lambda corner: corner["min_observed_tops"])
     report = {
         "schema": "openagent.npu_scale_sim.v1",
+        "status": "pass",
+        "claim_boundary": (
+            "Deterministic architecture scale model only; not measured RTL, "
+            "Android NNAPI, silicon performance, or phone-class throughput evidence."
+        ),
         "config": {
             "name": config.name,
             "tiles": config.tiles,
@@ -107,16 +227,22 @@ def main() -> int:
         "artifacts": {
             "model": file_hash(MODEL),
             "benchmark_model_hash_capture": "sha256",
+            "process_effects_contract": file_hash(PROCESS_EFFECTS),
         },
         "kernels": kernels,
+        "process_corners": process_corners,
         "summary": {
             "kernel_count": len(kernels),
+            "process_corner_count": len(process_corners),
             "total_macs": sum(kernel["macs"] for kernel in kernels),
             "total_bytes_read": sum(kernel["bytes_read"] for kernel in kernels),
             "total_bytes_written": sum(kernel["bytes_written"] for kernel in kernels),
             "min_observed_tops": min(kernel["observed_tops"] for kernel in kernels),
             "max_observed_tops": max(kernel["observed_tops"] for kernel in kernels),
             "min_utilization_percent": min(kernel["utilization_percent"] for kernel in kernels),
+            "worst_process_corner": worst_corner["name"],
+            "worst_process_corner_min_observed_tops": worst_corner["min_observed_tops"],
+            "process_corner_claim_boundary": "modeled_derates_only_not_14a_pdk_or_signoff_evidence",
         },
     }
     text = json.dumps(report, indent=2, sort_keys=True) + "\n"

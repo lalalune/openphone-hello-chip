@@ -103,6 +103,7 @@ def run_smoke() -> int:
         "openagent-evidence: perf=" + json.dumps(perf, sort_keys=True, separators=(",", ":")),
         f"openagent-evidence: scale_report={rel(SCALE_REPORT)}",
         f"openagent-evidence: status={status.upper()}",
+        f"RESULT={0 if status == 'pass' else 1}",
     ]
     if scale_stdout.strip():
         lines += [
@@ -195,6 +196,14 @@ def validate() -> int:
         )
         if not isinstance(item, dict) or item.get("exists") is not True:
             errors.append(f"artifact missing: {key}")
+    if SCALE_REPORT.is_file():
+        try:
+            scale_data = json.loads(SCALE_REPORT.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            errors.append(f"{rel(SCALE_REPORT)} is invalid JSON: {exc}")
+        else:
+            if scale_data.get("status") != "pass":
+                errors.append(f"{rel(SCALE_REPORT)} status must be pass")
     if errors:
         print("STATUS: FAIL mvp.npu_ml_smoke")
         for error in errors:

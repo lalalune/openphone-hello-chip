@@ -14,14 +14,18 @@ TARGET_CPU_VARIANT := generic
 # riscv64 variants.
 ALLOW_MISSING_DEPENDENCIES := true
 TARGET_NO_BOOTLOADER := true
-TARGET_NO_KERNEL := false
+TARGET_NO_KERNEL := true
 BOARD_KERNEL_CMDLINE := console=ttyS0 earlycon androidboot.hardware=openagent_ai_soc
 BOARD_KERNEL_SEPARATED_DTBO := false
 BOARD_VENDOR_SEPOLICY_DIRS += device/openagent/openagent_ai_soc/sepolicy
-BOARD_SEPOLICY_M4DEFS += e1_npu=true
 DEVICE_MANIFEST_FILE += device/openagent/openagent_ai_soc/manifest.xml
-BOARD_USES_GENERIC_KERNEL_IMAGE := true
+DEVICE_MANIFEST_FILE += device/openagent/openagent_ai_soc/openagent_e1.xml
+# The vendorimage evidence path is vendor-only. Simulator boot evidence must
+# wire a real kernel/prebuilt through the launch flow before claiming boot.
+BOARD_USES_GENERIC_KERNEL_IMAGE := false
 TARGET_COPY_OUT_VENDOR := vendor
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_VENDORIMAGE_PARTITION_SIZE := 268435456
 
 # Scaffold inputs for the external Android kernel/device-tree integration.
 # The exact AOSP build variables depend on the selected kernel build flow.

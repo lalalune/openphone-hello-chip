@@ -10,6 +10,7 @@ any on-chip/RTL boot claim.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -23,7 +24,11 @@ DTS = OUT / "openagent-e1.dts"
 VERILOG = OUT / "openagent_rocket_ap.v"
 SIMULATOR = OUT / "simulator"
 GENERATED_MANIFEST = OUT / "OpenAgentRocketConfig.manifest.json"
-REPORT = ROOT / "build/reports/chipyard_payload_path.json"
+REPORT = Path(
+    os.environ.get("CHIPYARD_PAYLOAD_PATH_REPORT", "build/reports/chipyard_payload_path.json")
+)
+if not REPORT.is_absolute():
+    REPORT = ROOT / REPORT
 
 REQUIRED_DTS_TOKENS = {
     "cpu": "cpu@0",
@@ -153,8 +158,13 @@ def main() -> int:
         "errors": errors,
         "next_smallest_step": "Complete generated import manifest, then capture OpenSBI handoff before U-Boot/Linux boot evidence.",
     }
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    report_path: Path | None = REPORT
+    try:
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    except OSError as exc:
+        report_path = None
+        errors.append(f"could not write report {rel(REPORT)}: {exc}")
 
     if status == "fail":
         print("STATUS: FAIL chipyard.payload_path - generated artifacts are not usable")
@@ -168,7 +178,10 @@ def main() -> int:
             print(f"    next: {blocker['next']}")
     else:
         print("STATUS: PASS chipyard.payload_path - generated payload path evidence is complete")
-    print(f"REPORT: {rel(REPORT)}")
+    if report_path is not None:
+        print(f"REPORT: {rel(report_path)}")
+    else:
+        print(f"REPORT: not written ({rel(REPORT)} is unavailable)")
     return code
 
 

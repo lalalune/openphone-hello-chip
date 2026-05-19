@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -44,7 +45,12 @@ def run(name: str, cmd: list[str], *, optional: bool = False) -> bool:
         print(f"{status}: {name}: missing tool {cmd[0]}")
         return optional
     print(f"RUN: {name}: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=ROOT)
+    env = os.environ.copy()
+    if cmd[0] == "ruff":
+        cache_dir = ROOT / "build" / "cache" / "ruff"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        env.setdefault("RUFF_CACHE_DIR", str(cache_dir))
+    result = subprocess.run(cmd, cwd=ROOT, env=env)
     if result.returncode == 0:
         print(f"PASS: {name}")
         return True

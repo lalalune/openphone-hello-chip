@@ -433,8 +433,14 @@ def check_aosp_product_glue(errors: list[str]) -> None:
     board = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk"
     manifest = ROOT / "sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml"
     text = product.read_text(errors="ignore") if product.is_file() else ""
-    if "COMMON_LUNCH_CHOICES" not in text or "openagent_ai_soc-userdebug" not in text:
-        errors.append("AOSP AndroidProducts.mk must expose openagent_ai_soc-userdebug lunch")
+    lunch_choices = {
+        "openagent_ai_soc-userdebug",
+        "openagent_ai_soc-trunk_staging-userdebug",
+    }
+    if "COMMON_LUNCH_CHOICES" not in text or not any(choice in text for choice in lunch_choices):
+        errors.append(
+            "AOSP AndroidProducts.mk must expose an openagent_ai_soc userdebug lunch choice"
+        )
     board_text = board.read_text(errors="ignore") if board.is_file() else ""
     for term in [
         "TARGET_ARCH := riscv64",

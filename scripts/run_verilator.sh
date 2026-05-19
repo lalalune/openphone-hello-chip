@@ -1,12 +1,17 @@
 #!/usr/bin/env sh
 set -eu
 
+repo_dir="$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)"
+if [ -d "$repo_dir/external/oss-cad-suite/bin" ]; then
+    PATH="$repo_dir/external/oss-cad-suite/bin:$PATH"
+fi
+
 if ! command -v verilator >/dev/null 2>&1; then
     echo "Verilator missing. Use Docker/Nix or install Verilator."
     exit 1
 fi
 
-rm -rf build/verilator
+rm -rf build/verilator build/verilator_npu_gemm
 mkdir -p build/verilator
 repo_dir="$(pwd)"
 verilator -Wall --cc --exe --build \

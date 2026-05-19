@@ -129,7 +129,10 @@ def build_report() -> dict[str, Any]:
     require(
         problems,
         "package/e1-npu-ml-smoke/Config.in" in buildroot_config
-        and "BR2_PACKAGE_E1_NPU_ML_SMOKE" in package_config,
+        and (
+            "BR2_PACKAGE_E1_NPU_ML_SMOKE" in package_config
+            or "BR2_PACKAGE_HELLO_NPU_ML_SMOKE" in package_config
+        ),
         "Buildroot package is not sourced or lacks BR2 symbol",
     )
     require(

@@ -35,7 +35,7 @@ fi
 if [ -d "$repo_dir/.venv/bin" ]; then
     PATH="$repo_dir/.venv/bin:$PATH"
 fi
-if [ "$(uname -s)" = "Darwin" ] && [ -d "$repo_dir/external/oss-cad-suite/bin" ]; then
+if [ -d "$repo_dir/external/oss-cad-suite/bin" ]; then
     PATH="$repo_dir/external/oss-cad-suite/bin:$PATH"
 fi
 if [ "$(uname -s)" = "Darwin" ] && [ -d "/Applications/KiCad/KiCad.app/Contents/MacOS" ]; then

@@ -13,6 +13,7 @@ area/size, manufacturability, verification evidence, and release blockers.
 | Area | File |
 | --- | --- |
 | Compute and silicon | `compute-silicon.md` |
+| Modeled CPU+NPU operating point | `soc-optimized-operating-point.yaml` |
 | Platform and product IO | `phone-platform.md` |
 | Physical, power, package, thermal | `physical-power-thermal.md` |
 | Software, benchmarks, CI | `software-ci.md` |

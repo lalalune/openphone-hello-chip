@@ -1,9 +1,9 @@
-# Android kernel config fragment v0 for openphone_ai_soc.
+# Android kernel config fragment v0 for openagent_ai_soc.
 #
 # Merge order: base AOSP riscv64 GKI defconfig + this fragment.
-# Backing contract: sw/platform/hello_platform_contract.json
+# Backing contract: sw/platform/e1_platform_contract.json
 #
-# Only what Android requires for first boot of the hello_npu/hwcomposer
+# Only what Android requires for first boot of the e1_npu/hwcomposer
 # stub HALs. Does not enable WiFi, BT, audio, camera, modem, USB gadgets,
 # or any vendor subsystem that lacks a checked-in driver and DTS node.
 
@@ -61,7 +61,7 @@ CONFIG_SECCOMP=y
 CONFIG_SECCOMP_FILTER=y
 
 # Storage: ext4 for /vendor, f2fs for /data. dm-verity for future AVB; not
-# yet wired up by fstab.openphone but kernel support is needed before AVB
+# yet wired up by fstab.openagent but kernel support is needed before AVB
 # can be enabled.
 CONFIG_EXT4_FS=y
 CONFIG_F2FS_FS=y
@@ -75,6 +75,6 @@ CONFIG_DRM=y
 CONFIG_FB=y
 CONFIG_FB_SIMPLE=y
 
-# Hello SoC drivers (built out-of-tree from sw/linux/drivers/hello).
-CONFIG_OPENPHONE_HELLO_NPU=y
-CONFIG_OPENPHONE_HELLO_DMA=y
+# OpenAgent e1 SoC drivers (built out-of-tree from sw/linux/drivers/e1).
+CONFIG_OPENAGENT_E1_NPU=y
+CONFIG_OPENAGENT_E1_DMA=y

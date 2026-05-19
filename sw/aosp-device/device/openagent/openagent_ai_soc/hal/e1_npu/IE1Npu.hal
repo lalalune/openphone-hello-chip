@@ -1,15 +1,15 @@
-// HIDL interface v0 for the hello_npu HAL.
+// HIDL interface v0 for the e1_npu HAL.
 //
-// Backing contract: sw/platform/hello_platform_contract.json
+// Backing contract: sw/platform/e1_platform_contract.json
 // Status: stub. Only one RPC is defined: a fixed-vector smoke that returns
-// the device-side identity word produced by the openphone-hello kernel
-// driver. No model load, no inference, no DMA, no power state.
+// the device-side identity word produced by the e1 NPU kernel driver. No
+// model load, no inference, no DMA, no power state.
 //
 // Build placement (external AOSP tree):
-//   hardware/interfaces/openphone/hello_npu/1.0/IHelloNpu.hal
-// then regenerate vendor.openphone.hello_npu@1.0 with hidl-gen.
+//   hardware/interfaces/openagent/e1_npu/1.0/IE1Npu.hal
+// then regenerate vendor.openagent.e1_npu@1.0 with hidl-gen.
 
-package vendor.openphone.hello_npu@1.0;
+package vendor.openagent.e1_npu@1.0;
 
 enum Status : uint32_t {
     OK = 0,
@@ -17,12 +17,12 @@ enum Status : uint32_t {
     IO_ERROR = 2,
 };
 
-interface IHelloNpu {
+interface IE1Npu {
     /**
      * Fixed-vector smoke RPC.
      *
-     * Returns the 32-bit identity word read from HELLO_NPU_RESULT_OFFSET
-     * of the backing /dev/hello-npu node. The HAL service MUST return
+     * Returns the 32-bit identity word read from E1_NPU_RESULT_OFFSET
+     * of the backing /dev/e1-npu node. The HAL service MUST return
      * status NOT_SUPPORTED when the node is absent or open() fails.
      *
      * @return status    OK on success, NOT_SUPPORTED on missing node,

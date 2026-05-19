@@ -153,7 +153,7 @@ validation_rules:
   - Blocked model artifacts must carry stable `blocker_id`, `pipeline_visible`, and `release_blocking` fields so CI and release pipelines can gate on them.
   - Placeholder or undersized TFLite models are blocked until replaced by a declared non-proprietary model artifact.
   - Simulator wall-clock time must not be compared against commercial phone scores.
-  - Simulator-only metrics must use provenance `simulator`, claim level L0-L2, and may report target cycles, IPC, MPKI, cache/memory transactions, and modeled frequency only.
+  - Simulator-only metrics must use provenance `simulator`, claim level L0-L2, and may report target cycles, IPC, MPKI, cache/memory transactions, modeled frequency, explicitly modeled power, explicitly modeled thermal estimates, and process-corner derates only.
   - Simulator-only metrics must include `benchmark_success_allowed: true`; QEMU liveness-only exports set it to false and are parser-rejected as benchmark success.
   - FPGA power must not be reported as mobile SoC power.
   - NPU reports must include unsupported op count and CPU fallback percentage.
@@ -205,6 +205,15 @@ parser_manifests:
       - simulated_frequency_hz
       - ipc
       - benchmark_success_allowed
+    modeled_14a_metrics:
+      - estimated_package_power_w
+      - estimated_die_temp_c
+      - instructions_per_joule
+      - process_corner_count
+      - worst_process_corner_ipc
+      - worst_process_corner_frequency_hz
+      - worst_process_corner_power_w
+      - worst_process_corner_die_temp_c
     forbidden_metrics:
       - wall_clock_score
       - phone_score

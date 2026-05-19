@@ -147,6 +147,9 @@ REQUIRED_BANDWIDTH_LATENCY_FIELDS = {
     "schema",
     "target_id",
     "capture_utc",
+    "process_effects_contract",
+    "process_corner_count",
+    "worst_process_corner",
     "memory_type",
     "capacity_gib",
     "clock_state",
@@ -164,6 +167,8 @@ REQUIRED_BANDWIDTH_LATENCY_METRICS = {
     "contended_cpu_latency_ns",
     "display_underflow_count",
     "dma_copy_bandwidth_gbps",
+    "worst_process_corner_sustained_bandwidth_gbps",
+    "worst_process_corner_p95_random_read_latency_ns",
 }
 
 REQUIRED_BANDWIDTH_LATENCY_ARTIFACTS = {
@@ -233,6 +238,10 @@ REQUIRED_DOC_TOKENS = {
         "256 MiB",
         "SimDRAM",
         "not boot evidence",
+        "process effects contract",
+        "process corner count",
+        "worst process corner",
+        "14A derated bandwidth/latency metrics",
         "make memory-uma-claim-gate",
         "make cocotb-contract",
     ],
@@ -846,6 +855,9 @@ def check_performance_template(errors: list[str]) -> None:
         "simulator_wall_clock",
         "axi_lite_sram_model_cycle_count",
         "generated_memmap_without_target_run",
+        "__REQUIRED_14A_CORNER_ID__",
+        "docs/spec-db/process-14a-effects.yaml",
+        "process_corner_without_contract_hash",
     ):
         require(
             token in template_text, f"memory performance template missing token: {token}", errors
@@ -910,6 +922,7 @@ def check_bandwidth_latency_evidence_contract(data: dict, errors: list[str]) -> 
         "Simulator wall-clock",
         "AXI-Lite SRAM model",
         "Generated memmap",
+        "Process-corner derates",
     ):
         require(token in invalid, f"bandwidth/latency invalid_evidence missing {token}", errors)
 

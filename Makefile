@@ -11,7 +11,7 @@ BUILD := build
 .PHONY: ci-release-evidence evidence-regression-test formal-fast formal-strict openlane-orchestration-test physical-gates-test pipeline-check-strict strict-release-gate-test
 .PHONY: chipyard-external-generation-plan chipyard-generated-path-check chipyard-generated-path-repair chipyard-import-preflight chipyard-linux-payload-check chipyard-payload-path-check chipyard-generated-ap-boot chipyard-verilator-linux-smoke-test chipyard-verilator-preflight chipyard-verilator-stale-path-repair cpu-ap-capture-plan-shell cpu-ap-capture-wire cpu-ap-capture-wire-preflight cpu-ap-dts-audit linux-boot-artifacts-check cpu-ap-boot-readiness-check minimum-linux-target-check minimum-linux-target-strict mvp-npu-ml-evidence-check minimum-linux-npu-target-check minimum-linux-npu-target-strict hello-npu-linux-smoke-check
 
-.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks benchmark-tools benchmark-sim-metrics benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test e1-npu-nnapi-proof-check mvp-status mvp-status-strict mvp-status-json mvp-simulator mvp-simulator-check mvp-simulator-status-test linux-handoff-check chipyard-generator-check chipyard-generated-check chipyard-generated-linux-contract-check chipyard-verilator-linux-smoke-check cpu-ap-scaffold-check cpu-ap-capture-plan cpu-ap-capture-preflight cpu-ap-capture-wire cpu-ap-capture-wire-preflight cpu-ap-evidence-check cpu-ap-evidence-test cpu-ap-completion-gate no-hardware-action-check memory-uma-claim-gate memory-interconnect-contract-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check project-plan-check prototype-status-dashboard-check phone-soc-claim-check product-feature-gates-check product-check product-release-check product-evidence-commands product-resolved-manifest pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check manufacturing-artifacts-check manufacturing-artifacts-release-check kicad-artifacts-check package-artifacts-check fpga-artifacts-check real-world-gates-check antenna-metadata-check antenna-metadata-release-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal synth openlane openlane-smoke openroad qemu renode qemu-check qemu-check-strict qemu-os-check qemu-status-test renode-check renode-check-strict renode-status-test android-sim-boot-check android-sim-status-test aosp-linux-preflight aosp-linux-handoff aosp-linux-handoff-build-only platform-contract-check software-contract-check buildroot-check buildroot-scaffold-check buildroot-import-check linux-bsp-check linux-scaffold-check linux-import-check aosp-bsp-check aosp-scaffold-check aosp-import-check bsp-scaffold-check software-bsp-check software-bsp-scaffold-check software-bsp-external-preflight software-bsp-evidence-check software-bsp-test docs-check tool-versions record-tool-versions pipeline-check archive-check archive-release clean
+.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks benchmark-tools benchmark-sim-metrics benchmark-cpu-ap-sim-metrics benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test soc-thermal-sweep soc-thermal-sweep-test soc-optimization soc-optimization-work-order soc-optimization-test power-thermal-evidence-check power-thermal-evidence-test process-14a-effects-check process-14a-effects-test e1-npu-nnapi-proof-check mvp-status mvp-status-strict mvp-status-json mvp-simulator mvp-simulator-check mvp-simulator-status-test aosp-simulator-completion-check android-sim-peripheral-evidence linux-handoff-check chipyard-generator-check chipyard-generated-check chipyard-generated-linux-contract-check chipyard-verilator-linux-smoke-check cpu-ap-scaffold-check cpu-ap-capture-plan cpu-ap-capture-preflight cpu-ap-capture-wire cpu-ap-capture-wire-preflight cpu-ap-evidence-check cpu-ap-evidence-test cpu-ap-completion-gate no-hardware-action-check memory-uma-claim-gate memory-evidence-template-check memory-interconnect-contract-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check project-plan-check prototype-status-dashboard-check phone-soc-claim-check product-feature-gates-check product-check product-release-check product-evidence-commands product-resolved-manifest pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check manufacturing-artifacts-check manufacturing-artifacts-release-check kicad-artifacts-check package-artifacts-check fpga-artifacts-check real-world-gates-check antenna-metadata-check antenna-metadata-release-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal synth openlane openlane-smoke openroad qemu renode qemu-check qemu-check-strict qemu-os-check qemu-status-test renode-check renode-check-strict renode-status-test android-sim-boot-check android-sim-status-test aosp-linux-preflight aosp-linux-handoff aosp-linux-handoff-build-only platform-contract-check software-contract-check buildroot-check buildroot-scaffold-check buildroot-import-check linux-bsp-check linux-scaffold-check linux-import-check aosp-bsp-check aosp-scaffold-check aosp-import-check bsp-scaffold-check software-bsp-check software-bsp-scaffold-check software-bsp-external-preflight software-bsp-evidence-check software-bsp-test docs-check tool-versions record-tool-versions pipeline-check archive-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
@@ -36,13 +36,13 @@ analysis:
 verify-all: lint typecheck smoke analysis cocotb cocotb-npu cocotb-contract cocotb-cpu qemu-status-test renode-status-test
 	@echo "verify-all complete"
 
-smoke: lint typecheck docs-check project-plan-check prototype-status-dashboard-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check memory-interconnect-contract-check chipyard-generator-check cpu-ap-scaffold-check cpu-ap-evidence-test cpu-ap-completion-gate stub-audit bsp-scaffold-check software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
+smoke: lint typecheck docs-check project-plan-check record-tool-versions mvp-npu-ml-evidence-check prototype-status-dashboard-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check soc-thermal-sweep soc-optimization soc-optimization-work-order scale-feasibility-gate verification-maturity-matrix-check platform-contract-check memory-uma-claim-gate memory-evidence-template-check memory-interconnect-contract-check power-thermal-evidence-check power-thermal-evidence-test process-14a-effects-check process-14a-effects-test chipyard-generator-check cpu-ap-scaffold-check cpu-ap-evidence-test cpu-ap-completion-gate stub-audit bsp-scaffold-check software-bsp-check qemu-check renode-check benchmarks-dry-run rtl-check synth
 	@echo "smoke complete"
 
-ci-fast: lint typecheck docs-check project-plan-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal prototype-status-dashboard-check product-check
+ci-fast: lint typecheck docs-check project-plan-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check platform-contract-check pinout-check stub-audit rtl-check synth cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal record-tool-versions mvp-npu-ml-evidence-check prototype-status-dashboard-check product-check
 	@echo "ci-fast complete"
 
-ci-local: lint typecheck docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal prototype-status-dashboard-check tool-versions
+ci-local: lint typecheck docs-check platform-contract-check pinout-check product-check rtl-check synth cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal record-tool-versions mvp-npu-ml-evidence-check prototype-status-dashboard-check tool-versions
 	@echo "ci-local complete"
 
 ci-strict: REQUIRE_SBY=1
@@ -68,6 +68,9 @@ benchmark-tools:
 benchmark-sim-metrics: qemu-check
 	@$(PYTHON) benchmarks/generate_simulator_arch_metrics.py
 
+benchmark-cpu-ap-sim-metrics:
+	@$(PYTHON) benchmarks/generate_simulator_arch_metrics.py --mode model-14a-cpu-ap
+
 benchmark-sim-metrics-test:
 	@$(PYTHON) scripts/test_simulator_arch_metrics.py
 
@@ -76,6 +79,33 @@ benchmark-calibration-test:
 
 benchmark-parser-test:
 	@$(PYTHON) scripts/test_benchmark_parsers.py
+
+soc-thermal-sweep:
+	@$(PYTHON) scripts/check_soc_thermal_sweep.py
+
+soc-thermal-sweep-test:
+	@$(PYTHON) scripts/test_soc_thermal_sweep.py
+
+soc-optimization:
+	@$(PYTHON) scripts/check_soc_optimization.py
+
+soc-optimization-test:
+	@$(PYTHON) scripts/test_soc_optimization.py
+
+soc-optimization-work-order:
+	@$(PYTHON) scripts/check_soc_optimized_work_order.py
+
+power-thermal-evidence-check:
+	@$(PYTHON) benchmarks/power/scripts/check_sustained_run_evidence.py benchmarks/power/manifests/e1-npu-sustained-capture.template.json --allow-blocked
+
+power-thermal-evidence-test:
+	@$(PYTHON) scripts/test_power_thermal_evidence.py
+
+process-14a-effects-check:
+	@$(PYTHON) scripts/check_process_14a_effects.py
+
+process-14a-effects-test:
+	@$(PYTHON) scripts/test_process_14a_effects.py
 
 e1-npu-nnapi-proof-check:
 	@$(PYTHON) scripts/check_e1_npu_nnapi_proof.py --probe-adb
@@ -101,6 +131,12 @@ mvp-simulator-check:
 
 mvp-simulator-status-test:
 	@$(PYTHON) scripts/test_mvp_simulator_status.py
+
+aosp-simulator-completion-check:
+	@$(PYTHON) scripts/check_aosp_simulator_completion_gate.py
+
+android-sim-peripheral-evidence:
+	@$(PYTHON) scripts/android/capture_simulated_peripheral_evidence.py
 
 linux-handoff-check:
 	@scripts/linux_handoff_check.sh
@@ -214,6 +250,9 @@ no-hardware-action-check:
 memory-uma-claim-gate:
 	@$(PYTHON) scripts/check_memory_uma_claim_gate.py
 
+memory-evidence-template-check:
+	@$(PYTHON) scripts/check_memory_evidence_templates.py
+
 memory-interconnect-contract-check:
 	@$(PYTHON) scripts/check_memory_interconnect_contract.py
 
@@ -238,10 +277,10 @@ scale-feasibility-gate:
 verification-maturity-matrix-check:
 	@$(PYTHON) scripts/check_verification_maturity_matrix.py
 
-product-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check pd-signoff-manifest-check manufacturing-artifacts-check real-world-gates-check memory-uma-claim-gate memory-interconnect-contract-check product-feature-gates-check
+product-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check pd-signoff-manifest-check manufacturing-artifacts-check real-world-gates-check memory-uma-claim-gate memory-evidence-template-check memory-interconnect-contract-check product-feature-gates-check
 	@$(PYTHON) scripts/product_check.py
 
-product-release-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check pd-signoff-manifest-check manufacturing-artifacts-check real-world-gates-check memory-uma-claim-gate memory-interconnect-contract-check product-feature-gates-check
+product-release-check: pinout-check fpga-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check pd-signoff-manifest-check manufacturing-artifacts-check real-world-gates-check memory-uma-claim-gate memory-evidence-template-check memory-interconnect-contract-check product-feature-gates-check
 	@$(PYTHON) scripts/product_check.py --release
 
 product-evidence-commands:
@@ -412,6 +451,7 @@ android-sim-boot-check:
 android-sim-status-test:
 	@$(PYTHON) scripts/test_android_sim_boot_status.py
 	@$(PYTHON) scripts/test_aosp_evidence_strictness.py
+	@$(PYTHON) scripts/test_android_peripheral_evidence.py
 
 aosp-linux-preflight:
 	@$(PYTHON) scripts/check_aosp_linux_preflight.py --write-report
@@ -491,7 +531,7 @@ software-bsp-test:
 	@$(PYTHON) scripts/test_software_bsp_checks.py
 	@$(PYTHON) scripts/test_software_bsp_evidence.py
 
-evidence-regression-test: no-hardware-action-check software-bsp-test physical-gates-test product-feature-gates-check benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test renode-status-test cocotb cocotb-npu cocotb-contract cocotb-cpu strict-release-gate-test
+evidence-regression-test: no-hardware-action-check software-bsp-test physical-gates-test product-feature-gates-check benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test renode-status-test cocotb cocotb-npu cocotb-contract cocotb-cpu record-tool-versions strict-release-gate-test
 	@echo "evidence regression tests complete"
 
 docs-check:

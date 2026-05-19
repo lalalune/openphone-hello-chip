@@ -110,13 +110,13 @@ else
 fi
 printf 'Validate from the AOSP checkout:\n'
 printf '  source build/envsetup.sh\n'
-printf '  lunch openagent_ai_soc-userdebug\n'
+printf '  lunch openagent_ai_soc-trunk_staging-userdebug\n'
 printf '  m nothing\n'
 printf '  m vendorimage\n'
 printf '  checkvintf against out/target/product/openagent_ai_soc vendor artifacts\n'
 printf 'Capture real evidence back in this repository:\n'
 # shellcheck disable=SC2016
-printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=source build/envsetup.sh && lunch openagent_ai_soc-userdebug\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; . build/envsetup.sh && lunch openagent_ai_soc-userdebug; rc=$?; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/android/openagent_ai_soc_lunch.log\n' "$aosp" "$repo_root"
+printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=source build/envsetup.sh && lunch openagent_ai_soc-trunk_staging-userdebug\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; . build/envsetup.sh && lunch openagent_ai_soc-trunk_staging-userdebug; rc=$?; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/android/openagent_ai_soc_lunch.log\n' "$aosp" "$repo_root"
 # shellcheck disable=SC2016
 printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=m vendorimage\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; m vendorimage; rc=$?; find out/target/product/openagent_ai_soc -path "*e1_npu.default" -o -path "*hwcomposer.openagent_ai_soc"; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/android/openagent_ai_soc_vendorimage.log\n' "$aosp" "$repo_root"
 printf '  Use docs/android/boot-transcript.schema.json sidecars for Cuttlefish, QEMU, and Renode boot transcripts.\n'

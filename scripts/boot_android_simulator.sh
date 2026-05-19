@@ -3,11 +3,11 @@
 set -eu
 
 repo_root=$(CDPATH=; cd -- "$(dirname -- "$0")/.." && pwd)
-report="$repo_root/build/reports/android_sim_boot.json"
+report="${ANDROID_SIM_BOOT_REPORT:-$repo_root/build/reports/android_sim_boot.json}"
 evidence_dir="$repo_root/docs/evidence/android"
 aosp_dir=${AOSP_DIR:-}
 aosp_shell=${AOSP_SHELL:-bash}
-aosp_product=${AOSP_PRODUCT:-openagent_ai_soc-userdebug}
+aosp_product=${AOSP_PRODUCT:-openagent_ai_soc-trunk_staging-userdebug}
 aosp_cuttlefish_args=${AOSP_CUTTLEFISH_ARGS:---cpus=4 --memory_mb=8192 --gpu_mode=none}
 aosp_cuttlefish_launcher=${AOSP_CUTTLEFISH_LAUNCHER:-}
 aosp_adb_timeout_seconds=${AOSP_ADB_TIMEOUT_SECONDS:-180}
@@ -307,7 +307,7 @@ capture_aosp_shell() {
 	command_label=$3
 	command_script=$4
 	metadata_kind=$5
-	rcfile="$repo_root/build/reports/android_sim_boot_stage.$$.$artifact.rc"
+	rcfile=$(mktemp "${TMPDIR:-/tmp}/android_sim_boot_stage.$$.$artifact.XXXXXX")
 	start_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 	status=FAIL
 	rm -f "$rcfile"
@@ -390,20 +390,20 @@ capture_aosp_shell \
 	openagent_ai_soc_sepolicy_build \
 	"$evidence_dir/openagent_ai_soc_sepolicy_build.log" \
 	"m vendor_sepolicy.cil selinux_policy" \
-	'source build/envsetup.sh &&
+		'source build/envsetup.sh &&
 		lunch "$AOSP_PRODUCT" >/dev/null &&
 		m vendor_sepolicy.cil selinux_policy &&
-		grep -R -n "e1_npu_device\|hal_e1_npu_default" out/target/product/openagent_ai_soc/obj/ETC out/target/product/openagent_ai_soc/vendor 2>/dev/null' \
+		grep -R -n "e1_npu_device\|hal_e1_npu_default" device/openagent out/target/product/openagent_ai_soc/vendor/etc/selinux out/target/product/openagent_ai_soc/obj/ETC/vendor_sepolicy.cil_intermediates 2>/dev/null' \
 	build || true
 
 capture_aosp_shell \
 	openagent_ai_soc_selinux_neverallow \
 	"$evidence_dir/openagent_ai_soc_selinux_neverallow.log" \
 	"m sepolicy_neverallows" \
-	'source build/envsetup.sh &&
+		'source build/envsetup.sh &&
 		lunch "$AOSP_PRODUCT" >/dev/null &&
 		m sepolicy_neverallows &&
-		grep -R -n "e1_npu" out/target/product/openagent_ai_soc/obj/ETC out/target/product/openagent_ai_soc/vendor 2>/dev/null' \
+		grep -R -n "e1_npu" device/openagent out/target/product/openagent_ai_soc/vendor/etc/selinux out/target/product/openagent_ai_soc/obj/ETC/vendor_sepolicy.cil_intermediates 2>/dev/null' \
 	build || true
 
 if [ "$require_full_evidence" -eq 0 ]; then

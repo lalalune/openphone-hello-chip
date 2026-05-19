@@ -210,7 +210,11 @@ harness can execute and parse each benchmark family on this workstation; they
 are not target-board, prototype-silicon, or complete-phone performance evidence.
 `tflite_e1_npu` must still fail until a real `e1-npu` NNAPI path exists,
 and `simulator_arch_metrics` must still reject QEMU liveness-only data as
-calibrated benchmark evidence.
+calibrated benchmark evidence. For local CPU/AP modeling, run
+`make benchmark-cpu-ap-sim-metrics`; that writes deterministic 14A
+architecture metrics, including modeled process-corner, power, and thermal
+fields, but still does not create PDK, RTL, silicon, AOSP, or phone-score
+evidence.
 
 | Benchmark | What the harness expects | How to provide it |
 |---|---|---|

@@ -66,7 +66,7 @@ A 2028 performance-heavy Android phone-class memory subsystem is out of scope fo
 | Protection | IOMMU/SMMU or equivalent per-device DMA isolation |
 | Correctness | CPU, DMA, NPU, display, camera/ISP, and GPU/2D shared-buffer tests |
 
-Those numbers are target gates, not evidence. Host benchmark results, simulator wall-clock numbers, or the AXI-Lite SRAM model cannot satisfy them. Valid evidence must include the real target, memory type, capacity, clocks, thermal state, benchmark command lines, raw logs, parsed results, and contention workload details.
+Those numbers are target gates, not evidence. Host benchmark results, simulator wall-clock numbers, or the AXI-Lite SRAM model cannot satisfy them. Valid evidence must include the real target, memory type, capacity, clocks, thermal state, process effects contract, process corner count, worst process corner, benchmark command lines, raw logs, parsed results, and contention workload details.
 
 ## Required memory hierarchy work
 
@@ -94,7 +94,7 @@ Linux/Android readiness is blocked on the following explicit memory evidence. Th
 | IOMMU/SMMU | Per-device translation domains for DMA, NPU, display, camera/ISP, and GPU/2D clients, plus authorized and unauthorized descriptor tests. |
 | Page fault reporting | Kernel-visible fault records with master/client ID, IOVA, translated physical address when available, access type, permissions, syndrome/status, and recovery/reset behavior. |
 | DRAM/LPDDR evidence | Real target memory type, capacity, ranks/channels, clocks, training log, refresh/timing configuration, error policy, boot-time discovered memory map, and raw logs. |
-| Bandwidth, latency, and QoS | STREAM/lmbench/pointer-chase/DMA-copy results, contended Android traces, per-master counters, priority policy, display underflow counts, CPU latency under pressure, clocks, and thermal state. |
+| Bandwidth, latency, and QoS | STREAM/lmbench/pointer-chase/DMA-copy results, contended Android traces, per-master counters, priority policy, display underflow counts, CPU latency under pressure, clocks, thermal state, process effects contract, process corner count, worst process corner, and 14A derated bandwidth/latency metrics. |
 | CLINT/PLIC dependencies | Timer, software interrupt, and interrupt-controller windows must be reserved from DMA and described in the access map before a Linux memory map can be considered boot-ready. |
 
 ## Claim boundary

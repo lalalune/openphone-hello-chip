@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "build/reports/android_sim_boot.json"
+REPORT = Path(
+    os.environ.get("ANDROID_SIM_BOOT_REPORT", ROOT / "build/reports/android_sim_boot.json")
+)
 LOG_EVIDENCE_MANIFEST = ROOT / "docs/android/bsp-log-evidence-manifest.json"
 
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -41,6 +44,13 @@ REQUIRED_REPORT_FIELDS = {
     "handoff_commands": list,
     "claim_boundary": str,
 }
+
+
+def display_path(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
 
 
 def main() -> int:
@@ -127,7 +137,7 @@ def main() -> int:
             "blocked",
             errors
             + [
-                f"missing {REPORT.relative_to(ROOT)}",
+                f"missing {display_path(REPORT)}",
                 "run scripts/boot_android_simulator.sh with AOSP_DIR set",
             ],
         )
@@ -135,7 +145,7 @@ def main() -> int:
     try:
         data = json.loads(REPORT.read_text())
     except json.JSONDecodeError as exc:
-        return report("failed", errors + [f"{REPORT.relative_to(ROOT)} is invalid JSON: {exc}"])
+        return report("failed", errors + [f"{display_path(REPORT)} is invalid JSON: {exc}"])
 
     for field, expected_type in REQUIRED_REPORT_FIELDS.items():
         value = data.get(field)

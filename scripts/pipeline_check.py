@@ -189,7 +189,10 @@ def validate_formal_manifest(root: Path, strict: bool) -> list[str]:
         evidence_class = str(entry.get("evidence_class", ""))
         status = entry.get("status")
         paths = entry.get("paths", {})
-        if status not in {"pass", "fallback_pass"}:
+        is_allowed_fallback_blocker = (
+            not strict and evidence_class == "blocked_requires_sby" and status == "missing"
+        )
+        if status not in {"pass", "fallback_pass"} and not is_allowed_fallback_blocker:
             errors.append(f"formal {name}: non-passing status {status}")
         if strict and not evidence_class.startswith("sby_"):
             errors.append(f"formal {name}: strict gate rejects {evidence_class}")

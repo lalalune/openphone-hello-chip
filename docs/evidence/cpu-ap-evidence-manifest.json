@@ -12,6 +12,7 @@
       "mmu_page_table_and_tlb_evidence",
       "sustained_boot_and_benchmark_evidence",
       "power_thermal_voltage_frequency_evidence",
+      "process_14a_corner_benchmark_derate_evidence",
       "android_cts_vts_and_userspace_evidence"
     ],
     "forbidden_without_evidence": [
@@ -434,7 +435,12 @@
         "cpu frequency",
         "run count",
         "thermal state",
-        "power method"
+        "power method",
+        "process effects contract",
+        "process corner count",
+        "worst process corner",
+        "frequency derate",
+        "pdk signoff claim=none"
       ],
       "required_strings": [
         "openagent-evidence: target=cpu_ap artifact=openagent_e1_ap_benchmarks",
@@ -450,6 +456,11 @@
         "run count",
         "thermal state",
         "power method",
+        "process effects contract",
+        "process corner count",
+        "worst process corner",
+        "frequency derate",
+        "pdk signoff claim=none",
         "openagent-evidence: status=PASS"
       ],
       "forbidden_strings": [

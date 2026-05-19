@@ -32,6 +32,17 @@
     "sample_count": 1,
     "averaging_window_seconds": 1
   },
+  "process": {
+    "node": "blocked-no-process-node",
+    "pdk": "blocked-no-pdk",
+    "process_effects_contract": {
+      "path": "docs/spec-db/process-14a-effects.yaml",
+      "sha256": "blocked-no-process-effects-contract-hash"
+    },
+    "process_corner_count": 1,
+    "worst_process_corner": "blocked-no-worst-process-corner",
+    "pdk_signoff_claim": "blocked-no-pdk-signoff"
+  },
   "calibration": {
     "status": "blocked-no-calibrated-assets",
     "source": "blocked-no-calibration-source",

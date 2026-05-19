@@ -18,6 +18,12 @@ Thermal closure requires post-route power, package and board model, enclosure
 assumptions, battery/PMIC losses, measurement points, stop conditions, chamber
 data, and skin-temperature limits.
 
+The current modeled no-throttle work order is
+`docs/architecture-optimization/soc-optimized-operating-point.yaml`. It targets
+`<= 95 C` modeled die temperature across the required 14A process corners, but
+it remains planning evidence only until correlated activity, package, board,
+enclosure, chamber, and PDK signoff artifacts replace the model.
+
 ## DFT
 
 DFT, boundary scan, manufacturing test, serialization, calibration, and debug

@@ -12,7 +12,7 @@
       "primary_metric": "CoreMark/MHz",
       "units": "score_per_mhz",
       "parser": "coremark_v1",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["coremark_per_mhz"],
       "required_calibration_assets": ["clock_source", "power_meter", "coremark_binary"],
       "timeout_seconds": 300
@@ -28,7 +28,7 @@
       "primary_metric": "Triad bandwidth",
       "units": "MB/s",
       "parser": "stream_v5",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["triad_mb_per_s"],
       "required_calibration_assets": ["clock_source", "power_meter", "stream_binary", "memory_model"],
       "timeout_seconds": 300
@@ -44,7 +44,7 @@
       "primary_metric": "memory bandwidth",
       "units": "MB/s",
       "parser": "lmbench_bw_mem",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["bandwidth_mb_per_s"],
       "required_calibration_assets": ["clock_source", "power_meter", "lmbench_binary", "memory_model"],
       "timeout_seconds": 300
@@ -60,7 +60,7 @@
       "primary_metric": "memory latency",
       "units": "ns",
       "parser": "lmbench_lat_mem_rd",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["max_latency_ns"],
       "required_calibration_assets": ["clock_source", "power_meter", "lmbench_binary", "memory_model"],
       "timeout_seconds": 300
@@ -77,7 +77,7 @@
       "primary_metric": "read bandwidth",
       "units": "KiB/s",
       "parser": "fio_json_v3",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["read_bw_kib_s"],
       "required_calibration_assets": ["clock_source", "power_meter", "fio_binary", "storage_target"],
       "timeout_seconds": 600
@@ -94,7 +94,7 @@
       "primary_metric": "IOPS",
       "units": "iops",
       "parser": "fio_json_v3",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["read_iops", "write_iops"],
       "required_calibration_assets": ["clock_source", "power_meter", "fio_binary", "storage_target"],
       "timeout_seconds": 600
@@ -115,7 +115,13 @@
       "units": "TOPS",
       "parser": "openagent_npu_scale_sim_v1",
       "provenance": "simulator",
-      "required_metrics": ["min_observed_tops", "max_observed_tops", "min_utilization_percent"],
+      "required_metrics": [
+        "min_observed_tops",
+        "max_observed_tops",
+        "min_utilization_percent",
+        "process_corner_count",
+        "worst_process_corner_min_observed_tops"
+      ],
       "timeout_seconds": 60
     },
     {
@@ -157,7 +163,7 @@
       "primary_metric": "inference latency",
       "units": "us",
       "parser": "tflite_benchmark_model",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["avg_latency_us"],
       "required_calibration_assets": ["clock_source", "power_meter", "tflite_benchmark_model", "tflite_model"],
       "timeout_seconds": 600
@@ -254,7 +260,7 @@
       "primary_metric": "inference latency",
       "units": "us",
       "parser": "tflite_benchmark_model",
-      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "calibration"],
+      "required_metadata": ["software", "clocks", "memory", "thermal", "power", "process", "calibration"],
       "required_metrics": ["avg_latency_us", "unsupported_op_count", "cpu_fallback_percent"],
       "required_calibration_assets": ["clock_source", "power_meter", "tflite_benchmark_model", "tflite_model", "nnapi_driver"],
       "metric_gates": [
@@ -270,14 +276,26 @@
       "command": ["cat", "benchmarks/results/simulator-arch-metrics.json"],
       "requires": ["cat"],
       "required_files": ["benchmarks/results/simulator-arch-metrics.json"],
-      "install": "Run python3 benchmarks/generate_simulator_arch_metrics.py after make qemu-check, or export richer simulator metrics as JSON at benchmarks/results/simulator-arch-metrics.json. This is simulator-only evidence and must not contain phone-comparable wall-clock scores.",
+      "install": "Run make benchmark-cpu-ap-sim-metrics for deterministic 14A CPU/AP architecture metrics, or make benchmark-sim-metrics after qemu-check for liveness-only metrics. This is simulator-only evidence and must not contain phone-comparable wall-clock scores.",
       "input_dataset": "simulator metrics JSON",
       "primary_metric": "target_cycles",
       "units": "cycles",
       "parser": "simulator_metrics_v1",
       "provenance": "simulator",
-      "required_metadata": ["software", "clocks", "memory", "calibration"],
-      "required_metrics": ["target_cycles", "simulated_frequency_hz", "ipc"],
+      "required_metadata": ["software", "clocks", "memory", "process", "calibration"],
+      "required_metrics": [
+        "target_cycles",
+        "simulated_frequency_hz",
+        "ipc",
+        "estimated_package_power_w",
+        "estimated_die_temp_c",
+        "instructions_per_joule",
+        "process_corner_count",
+        "worst_process_corner_ipc",
+        "worst_process_corner_frequency_hz",
+        "worst_process_corner_power_w",
+        "worst_process_corner_die_temp_c"
+      ],
       "required_calibration_assets": ["simulator_config", "simulator_counter_export"],
       "timeout_seconds": 600
     }

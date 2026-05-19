@@ -10,7 +10,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "build/reports/aosp_linux_preflight.json"
+REPORT = Path(
+    os.environ.get("AOSP_LINUX_PREFLIGHT_REPORT", ROOT / "build/reports/aosp_linux_preflight.json")
+)
 CLAIM_BOUNDARY = "host_preflight_only_not_aosp_build_boot_cuttlefish_or_e1_chip_hardware_evidence"
 
 LINUX_REQUIREMENTS = [
@@ -29,7 +31,7 @@ EXECUTION_TRACKS = {
         "device/openagent/openagent_ai_soc can be copied into the external tree",
     ],
     "build": [
-        "lunch openagent_ai_soc-userdebug",
+        "lunch openagent_ai_soc-trunk_staging-userdebug",
         "m vendorimage",
         "checkvintf against out/target/product/openagent_ai_soc/vendor",
         "m vendor_sepolicy.cil selinux_policy",
@@ -65,6 +67,13 @@ HANDOFF_COMMANDS = [
     "python3 scripts/check_android_sim_boot.py",
     "python3 scripts/check_software_bsp.py aosp --require-evidence",
 ]
+
+
+def display_path(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
 
 
 def command_version(command: str) -> str | None:
@@ -312,7 +321,7 @@ def main() -> int:
     parser.add_argument(
         "--write-report",
         action="store_true",
-        help=f"Write {REPORT.relative_to(ROOT)} for commit-ready validation records.",
+        help=f"Write {display_path(REPORT)} for commit-ready validation records.",
     )
     args = parser.parse_args()
 

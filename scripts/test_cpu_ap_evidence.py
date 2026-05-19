@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import capture_cpu_ap_evidence  # noqa: E402
 from cpu_ap_evidence_lib import (  # noqa: E402
     EVIDENCE_MANIFEST,
+    GENERATED_MANIFEST,
     SELECTED_MANIFEST,
     load_json,
     text_problems,
@@ -47,6 +48,7 @@ def test_evidence_manifest_blocks_phone_class_claims() -> None:
         "mmu_page_table_and_tlb_evidence",
         "sustained_boot_and_benchmark_evidence",
         "power_thermal_voltage_frequency_evidence",
+        "process_14a_corner_benchmark_derate_evidence",
         "android_cts_vts_and_userspace_evidence",
     ):
         if item not in required:
@@ -165,6 +167,13 @@ def test_capture_command_wiring_derives_linux_smoke_lanes_only() -> None:
         raise AssertionError("CPU/AP command wiring schema drifted")
     entries = {entry["mode"]: entry for entry in wiring["entries"]}
     for mode in ("opensbi-boot", "linux-boot"):
+        if not GENERATED_MANIFEST.is_file():
+            if entries[mode]["status"] != "blocked":
+                raise AssertionError(f"{mode} must block while generated manifest is missing")
+            assert_contains(
+                "\n".join(entries[mode].get("problems", [])), "missing generated manifest"
+            )
+            continue
         if entries[mode]["source"] != "generated_ap_linux_smoke":
             raise AssertionError(f"{mode} should derive from the generated AP smoke runner")
         assert_contains(entries[mode]["command"], "scripts/run_chipyard_openagent_linux_smoke.sh")
@@ -188,8 +197,12 @@ def test_capture_wire_preflight_reports_remaining_unwired_lanes() -> None:
     )
     if result.returncode != 2:
         raise AssertionError(result.stdout + result.stderr)
-    assert_contains(result.stdout, "READY opensbi-boot: OPENAGENT_OPENSBI_BOOT_CMD is set")
-    assert_contains(result.stdout, "READY linux-boot: OPENAGENT_LINUX_BOOT_CMD is set")
+    if GENERATED_MANIFEST.is_file():
+        assert_contains(result.stdout, "READY opensbi-boot: OPENAGENT_OPENSBI_BOOT_CMD is set")
+        assert_contains(result.stdout, "READY linux-boot: OPENAGENT_LINUX_BOOT_CMD is set")
+    else:
+        assert_contains(result.stdout, "BLOCKED opensbi-boot: OPENAGENT_OPENSBI_BOOT_CMD is unset")
+        assert_contains(result.stdout, "BLOCKED linux-boot: OPENAGENT_LINUX_BOOT_CMD is unset")
     assert_contains(result.stdout, "BLOCKED trap-timer-irq: OPENAGENT_TRAP_TIMER_IRQ_CMD is unset")
 
 
@@ -263,6 +276,32 @@ def test_new_transcripts_reject_placeholder_or_incomplete_text() -> None:
         assert_contains(joined, "missing required transcript markers")
 
 
+def test_ap_benchmark_transcript_requires_process_corner_markers() -> None:
+    manifest = load_json(EVIDENCE_MANIFEST)
+    spec = transcript_specs(manifest)["ap_benchmark_log"]
+    required = "\n".join(str(token) for token in spec["raw_required_strings"])
+    for token in (
+        "process effects contract",
+        "process corner count",
+        "worst process corner",
+        "frequency derate",
+        "pdk signoff claim=none",
+    ):
+        assert_contains(required, token)
+
+    missing_process = "\n".join(
+        str(token)
+        for token in spec["raw_required_strings"]
+        if not str(token).startswith(("process ", "worst process", "frequency derate", "pdk "))
+    )
+    missing_process += "\n" + ("generated AP benchmark transcript line\n" * 20)
+    problems = text_problems(missing_process, spec, "ap_benchmark_log", raw=True)
+    joined = "\n".join(problems)
+    assert_contains(joined, "process effects contract")
+    assert_contains(joined, "worst process corner")
+    assert_contains(joined, "pdk signoff claim=none")
+
+
 def test_raw_ap_transcript_markers_have_positive_and_negative_paths() -> None:
     manifest = load_json(EVIDENCE_MANIFEST)
     spec = transcript_specs(manifest)["linux_boot_log"]
@@ -307,11 +346,14 @@ def test_scaffold_check_lists_new_missing_evidence_paths() -> None:
 
 
 def test_payload_path_uses_cpu_ap_manifest_transcripts_only() -> None:
+    env = os.environ.copy()
+    env["CHIPYARD_PAYLOAD_PATH_REPORT"] = "benchmarks/results/test-temp/chipyard_payload_path.json"
     result = subprocess.run(
         [sys.executable, "scripts/check_chipyard_payload_path.py"],
         cwd=ROOT,
         text=True,
         capture_output=True,
+        env=env,
     )
     if result.returncode not in (0, 2):
         raise AssertionError(result.stdout + result.stderr)
@@ -334,6 +376,7 @@ def main() -> int:
         test_capture_wrapper_all_reports_every_missing_command_env,
         test_dts_audit_separates_ap_boot_from_e1_peripherals,
         test_new_transcripts_reject_placeholder_or_incomplete_text,
+        test_ap_benchmark_transcript_requires_process_corner_markers,
         test_raw_ap_transcript_markers_have_positive_and_negative_paths,
         test_chipyard_generator_check_rejects_duplicate_json_keys,
         test_scaffold_check_lists_new_missing_evidence_paths,

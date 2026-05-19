@@ -22,7 +22,7 @@ PRODUCT_COPY_FILES += \
 # Future integration points:
 #   android.hardware.graphics.composer@2.4-service
 #   hwcomposer.openagent_ai_soc
-#   e1_npu.default
+#   vendor.openagent.e1_npu@1.0-service
 # HAL package names are intentionally not listed until source or prebuilts are
 # imported into the external AOSP tree. Keeping these out of PRODUCT_PACKAGES
 # prevents vendorimage from passing with misleading, unimplemented services.

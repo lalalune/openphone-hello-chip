@@ -124,8 +124,32 @@ def test_simulator_parser_accepts_calibrated_counter_export_shape() -> None:
     assert_equal(metrics["benchmark_success_allowed"], True, "simulator success flag")
 
 
+def test_npu_scale_parser_preserves_process_corner_metrics() -> None:
+    result = subprocess.run(
+        [
+            "python3",
+            str(ROOT / "benchmarks/sim/run_npu_scale_sim.py"),
+            "--config",
+            "open_2028_first_50tops",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stdout)
+    metrics = run_benchmarks.parse_openagent_npu_scale_sim(result.stdout)
+    assert_equal(metrics["process_corner_count"], 4, "process corner count")
+    if metrics["worst_process_corner_min_observed_tops"] <= 0:
+        raise AssertionError("worst process corner TOPS must be positive")
+
+
 def test_strict_missing_exits_two_and_preserves_blockers() -> None:
-    with tempfile.TemporaryDirectory(dir=ROOT / "build") as td:
+    temp_parent = ROOT / "benchmarks/results/test-temp"
+    temp_parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=temp_parent) as td:
         temp_root = Path(td)
         temp_plan = temp_root / "benchmark_plan_missing_assets.json"
         plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
@@ -168,6 +192,21 @@ def test_strict_missing_exits_two_and_preserves_blockers() -> None:
 def test_blocked_metadata_template_covers_config_assets() -> None:
     plan = json.loads(PLAN_PATH.read_text(encoding="utf-8"))
     metadata = json.loads(BLOCKED_METADATA.read_text(encoding="utf-8"))
+    if "process" not in metadata:
+        raise AssertionError("blocked metadata template missing process section")
+    process = metadata["process"]
+    assert_equal(
+        process.get("process_effects_contract", {}).get("path"),
+        "docs/spec-db/process-14a-effects.yaml",
+        "process effects contract path",
+    )
+    if process.get("pdk_signoff_claim") != "blocked-no-pdk-signoff":
+        raise AssertionError("blocked metadata template must keep PDK signoff blocked")
+    for bench in plan["benchmarks"]:
+        if bench.get("provenance") != "simulator":
+            required_metadata = set(bench.get("required_metadata", []))
+            if "process" not in required_metadata:
+                raise AssertionError(f"{bench['name']} missing required process metadata")
     assets = metadata["calibration"]["assets"]
     expected_assets = sorted(
         {
@@ -188,8 +227,31 @@ def test_blocked_metadata_template_covers_config_assets() -> None:
                 raise AssertionError(f"{asset_name}.{field} must be a blocked marker")
 
 
+def test_process_metadata_blocks_without_pdk_signoff() -> None:
+    report = {
+        "process": {
+            "node": "14A",
+            "pdk": "pre-pdk-model",
+            "process_effects_contract": {
+                "path": "docs/spec-db/process-14a-effects.yaml",
+                "sha256": "a" * 64,
+            },
+            "process_corner_count": 4,
+            "worst_process_corner": "14a_ss_0p63v_105c_frontside_pdn",
+            "pdk_signoff_claim": "none",
+        },
+        "calibration": {"status": "calibrated", "assets": {}},
+    }
+    bench = {"required_metadata": ["process"], "required_calibration_assets": []}
+
+    blockers = run_benchmarks.metadata_blockers(report, bench)
+
+    if not any(blocker.get("reason") == "missing_pdk_signoff" for blocker in blockers):
+        raise AssertionError(json.dumps(blockers, indent=2))
+
+
 def test_e1_npu_nnapi_proof_check_preserves_missing_proof_blocker() -> None:
-    temp_parent = ROOT / "build/test-temp"
+    temp_parent = ROOT / "benchmarks/results/test-temp"
     temp_parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=temp_parent) as td:
         temp_root = Path(td)
@@ -236,7 +298,7 @@ def test_e1_npu_nnapi_proof_rejects_tops_and_capture_command_drift() -> None:
     artifact = dict(bench["capability_artifacts"][0])
     model_path = ROOT / "benchmarks/models/mobile_smoke.tflite"
 
-    temp_parent = ROOT / "build/test-temp"
+    temp_parent = ROOT / "benchmarks/results/test-temp"
     temp_parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=temp_parent) as td:
         temp_root = Path(td)
@@ -324,8 +386,10 @@ def main() -> int:
         test_suite_parsers_accept_real_formats,
         test_parsers_reject_incomplete_or_comparable_metrics,
         test_simulator_parser_accepts_calibrated_counter_export_shape,
+        test_npu_scale_parser_preserves_process_corner_metrics,
         test_strict_missing_exits_two_and_preserves_blockers,
         test_blocked_metadata_template_covers_config_assets,
+        test_process_metadata_blocks_without_pdk_signoff,
         test_e1_npu_nnapi_proof_check_preserves_missing_proof_blocker,
         test_e1_npu_nnapi_proof_rejects_tops_and_capture_command_drift,
     ):

@@ -1,12 +1,12 @@
 {
   "blockers": [
     {
-      "detail": "set CROSS_COMPILE=... or install a riscv64 Linux compiler",
-      "id": "riscv_cross_compiler_missing"
+      "detail": "/home/shaw/milady/eliza/packages/chip/external/linux",
+      "id": "external_linux_tree_missing"
     },
     {
-      "detail": "GNU Make 3.81",
-      "id": "gnu_make_too_old_or_missing"
+      "detail": "set CROSS_COMPILE=... or install a riscv64 Linux compiler",
+      "id": "riscv_cross_compiler_missing"
     },
     {
       "detail": "docs/evidence/linux/openagent_e1_kernel_build.log",
@@ -43,87 +43,26 @@
     }
   },
   "imported_bsp": {
-    "missing_optional": [],
-    "missing_required": [],
-    "optional": {
-      "board_dts_makefile": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openagent/Makefile"
-      },
-      "display_binding": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-display.yaml"
-      },
-      "dma_binding": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-dma.yaml"
-      },
-      "npu_binding": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml"
-      }
-    },
-    "required": {
-      "board_dts": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openagent/openagent-e1.dts"
-      },
-      "dma_driver": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1-dma.c"
-      },
-      "driver_kconfig": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/Kconfig"
-      },
-      "driver_makefile": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/Makefile"
-      },
-      "npu_driver": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1-npu.c"
-      },
-      "platform_header": {
-        "exists": true,
-        "is_file": true,
-        "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/e1_platform_contract.h"
-      }
-    },
-    "status": "imported",
-    "text_checks": {
-      "drivers_misc_kconfig_sources_openagent": true,
-      "drivers_misc_makefile_links_openagent": true,
-      "riscv_dts_makefile_links_openagent": true
-    }
+    "status": "missing_tree"
   },
-  "linux_tree": "/Users/shawwalters/Desktop/npu_experiment/external/linux",
-  "linux_tree_valid": true,
+  "linux_tree": "/home/shaw/milady/eliza/packages/chip/external/linux",
+  "linux_tree_valid": false,
   "producer_commands": {
-    "configure": "cd /Users/shawwalters/Desktop/npu_experiment/external/linux && make ARCH=riscv openagent_e1.config olddefconfig",
-    "dtb_check": "sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux dtb-check",
-    "import": "sw/linux/scripts/import-linux-bsp.sh /Users/shawwalters/Desktop/npu_experiment/external/linux",
-    "import_check": "sw/linux/scripts/import-linux-bsp.sh --check /Users/shawwalters/Desktop/npu_experiment/external/linux",
-    "kernel_build": "sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux kernel-build",
-    "mmio_smoke": "E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux smoke"
+    "configure": "cd /home/shaw/milady/eliza/packages/chip/external/linux && make ARCH=riscv openagent_e1.config olddefconfig",
+    "dtb_check": "sw/linux/scripts/capture-linux-bsp-evidence.sh /home/shaw/milady/eliza/packages/chip/external/linux dtb-check",
+    "import": "sw/linux/scripts/import-linux-bsp.sh /home/shaw/milady/eliza/packages/chip/external/linux",
+    "import_check": "sw/linux/scripts/import-linux-bsp.sh --check /home/shaw/milady/eliza/packages/chip/external/linux",
+    "kernel_build": "sw/linux/scripts/capture-linux-bsp-evidence.sh /home/shaw/milady/eliza/packages/chip/external/linux kernel-build",
+    "mmio_smoke": "E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /home/shaw/milady/eliza/packages/chip/external/linux smoke"
   },
   "schema": "openagent.linux_external_bsp_status.v1",
   "status": "blocked",
   "tools": {
     "cross_compile": "",
-    "dtc": "/opt/homebrew/bin/dtc",
+    "dtc": "",
     "make": "/usr/bin/make",
-    "make_version": "GNU Make 3.81",
-    "make_version_ok": false,
+    "make_version": "GNU Make 4.3",
+    "make_version_ok": true,
     "riscv_compiler": ""
   }
 }

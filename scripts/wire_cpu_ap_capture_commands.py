@@ -117,7 +117,7 @@ def print_shell(entries: list[dict[str, object]]) -> None:
             print(f"export {env_name}={quote(command)}")
         else:
             problem_items = cast(list[str], entry.get("problems", []))
-            problems = "; ".join(str(item) for item in problem_items)
+            problems = "; ".join(str(item).replace("\n", " | ") for item in problem_items)
             print(f"# BLOCKED {entry['mode']}: {env_name} unset. {problems}")
 
 

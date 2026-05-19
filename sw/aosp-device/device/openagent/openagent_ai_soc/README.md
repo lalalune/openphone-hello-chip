@@ -15,7 +15,7 @@ sw/aosp-device/import-aosp-device.sh /path/to/aosp
 
 cd /path/to/aosp
 source build/envsetup.sh
-lunch openagent_ai_soc-userdebug
+lunch openagent_ai_soc-trunk_staging-userdebug
 m nothing            # sanity: product file is wired in
 m vendorimage        # builds /vendor with the two stub HALs
 ```
@@ -26,7 +26,7 @@ Expected first-pass artifacts (capture as evidence under
 ```
 out/target/product/openagent_ai_soc/vendor.img
 out/target/product/openagent_ai_soc/installed-files-vendor.txt
-out/target/product/openagent_ai_soc/obj/PACKAGING/check_vintf_all_intermediates/
+out/target/product/openagent_ai_soc/vendor/etc/vintf/manifest/openagent_e1.xml
 ```
 
 `make aosp-bsp-check` and `python3 sw/aosp-device/scripts/check_aosp_bsp.py`
@@ -34,7 +34,9 @@ remain BLOCKED until those logs are checked in.
 
 ## What this v0 device actually claims
 
-Only two HALs ship, both stubs:
+Only the fail-closed NPU VINTF fragment is installed in the current
+vendorimage evidence path. The HAL source scaffolds remain present for
+external-tree integration once the matching generated HIDL package is added.
 
 | HAL package | Backing node | Behavior |
 |---|---|---|
@@ -66,11 +68,11 @@ This device does NOT provide and MUST NOT advertise:
 
 | File | Purpose |
 |---|---|
-| `AndroidProducts.mk` | Exposes `openagent_ai_soc-userdebug` to lunch. |
+| `AndroidProducts.mk` | Exposes `openagent_ai_soc-trunk_staging-userdebug` to lunch. |
 | `openagent_ai_soc.mk` | Inherits `core_64_bit_only.mk` + `aosp_base.mk` + `device.mk`. |
 | `BoardConfig.mk` | riscv64 target, vendor sepolicy dir, kernel fragment/DTS pointers. |
-| `device.mk` | Copies init/fstab/manifest; declares the two HAL packages. |
-| `manifest.xml` | VINTF: graphics.composer@2.4 + vendor.openagent.e1_npu@1.0 only. |
+| `device.mk` | Copies init/fstab and the e1 NPU VINTF fragment. |
+| `manifest.xml` | Reserved for full-device VINTF entries once matching services are packaged. |
 | `init.openagent.rc` | `/dev/e1-npu` ownership; gates e1_npu on `vendor.e1_npu.ready=1`. |
 | `fstab.openagent` | `/vendor` + `/data`. AVB flags are commented as not-yet-implemented. |
 | `sepolicy/file_contexts` | Labels the two HAL binaries and `/dev/e1-npu`. |

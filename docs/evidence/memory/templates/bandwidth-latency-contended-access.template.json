@@ -12,6 +12,15 @@
       "is_simulator": false,
       "capture_utc": "__REQUIRED_UTC_TIMESTAMP__"
     },
+    "process_corners": {
+      "process_effects_contract": {
+        "path": "docs/spec-db/process-14a-effects.yaml",
+        "sha256": "__REQUIRED_SHA256__"
+      },
+      "process_corner_count": "__REQUIRED_INTEGER__",
+      "worst_process_corner": "__REQUIRED_14A_CORNER_ID__",
+      "pdk_signoff_claim": "none"
+    },
     "memory_config": {
       "memory_type": "__REQUIRED_LPDDR_OR_DECLARED_DOWNGRADE__",
       "capacity_gib": "__REQUIRED_NUMBER__",
@@ -42,7 +51,9 @@
       "p95_random_read_latency_ns": "__REQUIRED_NUMBER__",
       "contended_cpu_latency_ns": "__REQUIRED_NUMBER__",
       "display_underflow_count": "__REQUIRED_INTEGER__",
-      "dma_copy_bandwidth_gbps": "__REQUIRED_NUMBER__"
+      "dma_copy_bandwidth_gbps": "__REQUIRED_NUMBER__",
+      "worst_process_corner_sustained_bandwidth_gbps": "__REQUIRED_NUMBER__",
+      "worst_process_corner_p95_random_read_latency_ns": "__REQUIRED_NUMBER__"
     },
     "contention_workload": {
       "clients": [
@@ -67,7 +78,8 @@
       "host_benchmark": "reject",
       "simulator_wall_clock": "reject",
       "axi_lite_sram_model_cycle_count": "reject",
-      "generated_memmap_without_target_run": "reject"
+      "generated_memmap_without_target_run": "reject",
+      "process_corner_without_contract_hash": "reject"
     }
   }
 }

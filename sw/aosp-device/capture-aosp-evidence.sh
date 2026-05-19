@@ -16,8 +16,9 @@ mode=$2
 repo_root=$(CDPATH=; cd -- "$(dirname -- "$0")/../.." && pwd)
 evidence_dir="$repo_root/docs/evidence/android"
 aosp_shell=${AOSP_SHELL:-bash}
-aosp_product=${AOSP_PRODUCT:-openagent_ai_soc-userdebug}
+aosp_product=${AOSP_PRODUCT:-openagent_ai_soc-trunk_staging-userdebug}
 aosp_target_product=${AOSP_TARGET_PRODUCT:-openagent_ai_soc}
+aosp_make_args=${AOSP_MAKE_ARGS:-}
 aosp_cuttlefish_args=${AOSP_CUTTLEFISH_ARGS:---cpus=4 --memory_mb=8192 --gpu_mode=none}
 aosp_cuttlefish_launcher=${AOSP_CUTTLEFISH_LAUNCHER:-}
 aosp_adb_timeout_seconds=${AOSP_ADB_TIMEOUT_SECONDS:-180}
@@ -114,14 +115,14 @@ case "$mode" in
 			"$evidence_dir/openagent_ai_soc_vendorimage.log" \
 			"m vendorimage" \
 			compat_only \
-			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
+			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" AOSP_MAKE_ARGS="$aosp_make_args" "$aosp_shell" -lc '
 				source build/envsetup.sh &&
 				lunch "$AOSP_PRODUCT" >/dev/null &&
-				m vendorimage &&
+				m ${AOSP_MAKE_ARGS:-} vendorimage &&
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
 				find "$product_out" -maxdepth 2 \( -name vendor.img -o -name installed-files-vendor.txt \) -print &&
-				grep -R -n -I "openagent_e1.xml" device/openagent "$product_out" 2>/dev/null &&
-				grep -R -n -I "vendor.e1_npu.ready=0" device/openagent "$product_out" 2>/dev/null
+				grep -R -n -I "openagent_e1.xml" device/openagent "$product_out/vendor/etc/vintf" 2>/dev/null &&
+				grep -R -n -I "vendor.e1_npu.ready=0" device/openagent "$product_out/vendor/build.prop" "$product_out/vendor/etc/init" 2>/dev/null
 			'
 		;;
 	checkvintf)
@@ -131,11 +132,11 @@ case "$mode" in
 			"$evidence_dir/openagent_ai_soc_checkvintf.log" \
 			"checkvintf openagent_ai_soc" \
 			compat_only \
-			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
+			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" AOSP_MAKE_ARGS="$aosp_make_args" "$aosp_shell" -lc '
 				source build/envsetup.sh &&
 				lunch "$AOSP_PRODUCT" >/dev/null &&
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
-				manifest=$(find "$product_out" -name openagent_e1.xml -print -quit 2>/dev/null) &&
+				manifest=$(find "$product_out/vendor/etc/vintf" \( -name openagent_e1.xml -o -name manifest.xml \) -print -quit 2>/dev/null) &&
 				echo "TARGET_PRODUCT=$AOSP_TARGET_PRODUCT" &&
 				echo "openagent_e1.xml=$manifest" &&
 				[ -n "$manifest" ] &&
@@ -149,15 +150,15 @@ case "$mode" in
 			"$evidence_dir/openagent_ai_soc_sepolicy_build.log" \
 			"m vendor_sepolicy.cil selinux_policy" \
 			compat_only \
-			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
+			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" AOSP_MAKE_ARGS="$aosp_make_args" "$aosp_shell" -lc '
 				source build/envsetup.sh &&
 				lunch "$AOSP_PRODUCT" >/dev/null &&
-				m vendor_sepolicy.cil selinux_policy &&
+				m ${AOSP_MAKE_ARGS:-} vendor_sepolicy.cil selinux_policy &&
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
 				echo "SEPOLICY_TARGETS=vendor_sepolicy.cil selinux_policy" &&
 				find "$product_out" -name vendor_sepolicy.cil -o -name selinux_policy 2>/dev/null &&
-				grep -R -n -I "e1_npu_device" device/openagent "$product_out" 2>/dev/null &&
-				grep -R -n -I "hal_e1_npu_default" device/openagent "$product_out" 2>/dev/null
+				grep -R -n -I "e1_npu_device" device/openagent "$product_out/vendor/etc/selinux" "$product_out/obj/ETC/vendor_sepolicy.cil_intermediates" 2>/dev/null &&
+				grep -R -n -I "hal_e1_npu_default" device/openagent "$product_out/vendor/etc/selinux" "$product_out/obj/ETC/vendor_sepolicy.cil_intermediates" 2>/dev/null
 			'
 		;;
 	selinux-neverallow)
@@ -167,13 +168,13 @@ case "$mode" in
 			"$evidence_dir/openagent_ai_soc_selinux_neverallow.log" \
 			"m sepolicy_neverallows" \
 			compat_only \
-			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" "$aosp_shell" -lc '
+			env AOSP_PRODUCT="$aosp_product" AOSP_TARGET_PRODUCT="$aosp_target_product" AOSP_MAKE_ARGS="$aosp_make_args" "$aosp_shell" -lc '
 				source build/envsetup.sh &&
 				lunch "$AOSP_PRODUCT" >/dev/null &&
-				m sepolicy_neverallows &&
+				m ${AOSP_MAKE_ARGS:-} sepolicy_neverallows &&
 				product_out="out/target/product/$AOSP_TARGET_PRODUCT" &&
 				echo "SEPOLICY_TARGET=sepolicy_neverallows" &&
-				grep -R -n -I "e1_npu" device/openagent "$product_out" 2>/dev/null
+				grep -R -n -I "e1_npu" device/openagent "$product_out/vendor/etc/selinux" "$product_out/obj/ETC/vendor_sepolicy.cil_intermediates" 2>/dev/null
 			'
 		;;
 	cts-vts-plan)

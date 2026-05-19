@@ -54,7 +54,7 @@ a 2028 phone-class application processor, the CPU/AP workstream must provide:
 | Cache and coherency | cache hierarchy evidence covering I-cache, D-cache, shared-cache or LLC policy, line size, maintenance operations, DMA/NPU coherency contract, stress tests, and MPKI/counter evidence. |
 | MMU | Supported virtual-memory modes such as Sv39 or stronger, TLB behavior, page-table walk behavior, shootdown path, fault precision, and Linux `CONFIG_MMU` boot evidence. |
 | Boot | Reset ROM, OpenSBI, U-Boot or documented bootloader equivalent, generated DTS hash, Linux initramfs, Android userspace plan, and serial transcripts from the selected AP target. |
-| Benchmarks | CoreMark/MHz, STREAM, `lmbench` bandwidth/latency, `fio`, selected SPEC-like kernels, run count, clocks, memory config, thermal state, power method, and raw artifacts. |
+| Benchmarks | CoreMark/MHz, STREAM, `lmbench` bandwidth/latency, `fio`, selected SPEC-like kernels, run count, clocks, memory config, thermal state, power method, process_14a_corner_benchmark_derate_evidence, and raw artifacts. |
 | Android and product | CTS/VTS/userspace evidence, scheduler/thermal integration, security/debug lifecycle, and phone-board evidence before compatibility or product claims. |
 
 Until all of those gates pass, the allowed claim is only "generated Rocket
@@ -90,7 +90,7 @@ generated or wrapped CPU/AP target and must include the listed markers.
 | `build/evidence/cpu_ap/openagent_e1_linux_boot.log` | Linux early console, generated DTS hash, memory node, CPU node, timer node, interrupt-controller node, UART node, initramfs start, and e1 MMIO smoke result. |
 | `build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log` | Illegal-instruction trap with `mcause`, `mepc`, and `mtval`; load/store/fetch access-fault traps; `mtime`/`mtimecmp` timer interrupt; software interrupt through `msip`; external interrupt claim/complete; return path through `mret` or `sret` as appropriate. |
 | `build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log` | ISA profile, `misa`, `riscv_hwprobe`, required base extension visibility, Sv39 or stronger MMU evidence, I-cache/D-cache/L2 cache parameters, cache-line size, TLB behavior, and page-table evidence. |
-| `build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log` | Benchmark report SHA-256, claim level, CoreMark/MHz, STREAM Triad, `lat_mem_rd`, `fio`, CPU frequency, run count, thermal state, and power method. |
+| `build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log` | Benchmark report SHA-256, claim level, CoreMark/MHz, STREAM Triad, `lat_mem_rd`, `fio`, CPU frequency, run count, thermal state, power method, process effects contract, worst process corner, frequency derate, and pdk signoff claim=none. |
 
 ## Exact Linux-Capable Gate States
 

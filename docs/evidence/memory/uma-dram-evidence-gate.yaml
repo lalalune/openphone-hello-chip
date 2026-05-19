@@ -61,6 +61,9 @@ bandwidth_latency_evidence_contract:
     - schema
     - target_id
     - capture_utc
+    - process_effects_contract
+    - process_corner_count
+    - worst_process_corner
     - memory_type
     - capacity_gib
     - clock_state
@@ -76,11 +79,14 @@ bandwidth_latency_evidence_contract:
     - contended_cpu_latency_ns
     - display_underflow_count
     - dma_copy_bandwidth_gbps
+    - worst_process_corner_sustained_bandwidth_gbps
+    - worst_process_corner_p95_random_read_latency_ns
   invalid_evidence:
     - Host benchmark results.
     - Simulator wall-clock timing.
     - AXI-Lite SRAM model cycle counts.
     - Generated memmap, DTS, FIRRTL, or Verilog source without a real target run.
+    - Process-corner derates without the docs/spec-db/process-14a-effects.yaml contract hash.
 
 current_actual_capability:
   reset_rom: contract_identity_rom_and_separate_minimal_rv64_scaffold_only

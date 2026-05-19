@@ -27,6 +27,31 @@ REQUIRED_KERNEL_KEYS = {
     "observed_tops",
 }
 REQUIRED_PRECISIONS = {"INT4", "INT8", "FP16", "BF16", "FP8"}
+REQUIRED_PROCESS_CORNERS = {
+    "14a_tt_0p70v_25c_frontside_pdn",
+    "14a_ss_0p63v_105c_frontside_pdn",
+    "14a_ff_0p77v_0c_frontside_pdn",
+    "14a_bspdn_follow_on_hot_ir_em_stress",
+}
+REQUIRED_PROCESS_CORNER_KEYS = {
+    "name",
+    "voltage_v",
+    "temperature_c",
+    "frequency_derate",
+    "interconnect_rc_derate",
+    "dynamic_power_scale",
+    "leakage_power_scale",
+    "thermal_margin_derate",
+    "effective_clock_hz",
+    "effective_dma_bytes_per_cycle",
+    "dense_int8_peak_tops",
+    "min_observed_tops",
+    "max_observed_tops",
+    "min_utilization_percent",
+    "kernels",
+    "claim_boundary",
+    "release_use",
+}
 
 
 def main() -> int:
@@ -99,6 +124,17 @@ def main() -> int:
             errors.append("model hash must be sha256 hex")
         if not isinstance(model.get("bytes"), int) or model.get("bytes", 0) <= 0:
             errors.append("model hash must include positive byte size")
+    process_contract = (
+        artifacts.get("process_effects_contract") if isinstance(artifacts, dict) else None
+    )
+    if not isinstance(process_contract, dict):
+        errors.append("scale simulator must capture process effects contract hash")
+    else:
+        if process_contract.get("path") != "docs/spec-db/process-14a-effects.yaml":
+            errors.append("process contract hash path must identify process-14a-effects.yaml")
+        sha = process_contract.get("sha256")
+        if not isinstance(sha, str) or len(sha) != 64:
+            errors.append("process contract hash must be sha256 hex")
 
     kernels = data.get("kernels")
     if not isinstance(kernels, list) or len(kernels) < 3:
@@ -130,6 +166,63 @@ def main() -> int:
                 value = kernel.get(field)
                 if not isinstance(value, (int, float)) or isinstance(value, bool) or value <= 0:
                     errors.append(f"kernels[{index}].{field} must be positive numeric")
+
+    corners = data.get("process_corners")
+    if not isinstance(corners, list) or len(corners) < len(REQUIRED_PROCESS_CORNERS):
+        errors.append("scale simulator must report required 14A process corners")
+    else:
+        names = {corner.get("name") for corner in corners if isinstance(corner, dict)}
+        missing_corners = sorted(REQUIRED_PROCESS_CORNERS - names)
+        if missing_corners:
+            errors.append(f"process_corners missing: {', '.join(missing_corners)}")
+        for index, corner in enumerate(corners):
+            if not isinstance(corner, dict):
+                errors.append(f"process_corners[{index}] must be an object")
+                continue
+            missing_keys = sorted(REQUIRED_PROCESS_CORNER_KEYS - set(corner))
+            if missing_keys:
+                errors.append(f"process_corners[{index}] missing keys: {', '.join(missing_keys)}")
+            for field in (
+                "voltage_v",
+                "frequency_derate",
+                "interconnect_rc_derate",
+                "dynamic_power_scale",
+                "leakage_power_scale",
+                "thermal_margin_derate",
+                "dense_int8_peak_tops",
+                "min_observed_tops",
+                "max_observed_tops",
+                "min_utilization_percent",
+            ):
+                value = corner.get(field)
+                if not isinstance(value, (int, float)) or isinstance(value, bool) or value <= 0:
+                    errors.append(f"process_corners[{index}].{field} must be positive numeric")
+            for field in ("temperature_c", "effective_clock_hz", "effective_dma_bytes_per_cycle"):
+                value = corner.get(field)
+                if not isinstance(value, int) or isinstance(value, bool):
+                    errors.append(f"process_corners[{index}].{field} must be an integer")
+            if (
+                corner.get("release_use")
+                != "prohibited_until_pdk_extracted_timing_power_thermal_signoff"
+            ):
+                errors.append(f"process_corners[{index}] must remain prohibited for release use")
+            if "not_pdk_signoff" not in str(corner.get("claim_boundary", "")):
+                errors.append(f"process_corners[{index}] claim boundary must block PDK signoff use")
+            corner_kernels = corner.get("kernels")
+            if not isinstance(corner_kernels, list) or len(corner_kernels) < 3:
+                errors.append(f"process_corners[{index}].kernels must include modeled kernels")
+
+    summary = data.get("summary")
+    if isinstance(summary, dict):
+        if summary.get("process_corner_count") != len(corners or []):
+            errors.append("summary.process_corner_count must match process_corners length")
+        if summary.get("worst_process_corner") not in REQUIRED_PROCESS_CORNERS:
+            errors.append("summary.worst_process_corner must identify a required process corner")
+        if (
+            summary.get("process_corner_claim_boundary")
+            != "modeled_derates_only_not_14a_pdk_or_signoff_evidence"
+        ):
+            errors.append("summary must keep process corners as modeled-only evidence")
 
     return report(errors)
 

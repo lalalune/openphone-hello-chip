@@ -7,6 +7,9 @@ if ! command -v make >/dev/null 2>&1; then
 fi
 
 REPO_ROOT="$(CDPATH=; cd -- "$(dirname "$0")/.." && pwd)"
+if [ -d "$REPO_ROOT/external/oss-cad-suite/bin" ]; then
+    PATH="$REPO_ROOT/external/oss-cad-suite/bin:$PATH"
+fi
 
 if [ -n "${PYTHON:-}" ]; then
     PYTHON_BIN="$PYTHON"

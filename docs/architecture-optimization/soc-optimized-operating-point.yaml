@@ -1,0 +1,69 @@
+schema: openagent.soc_optimized_operating_point_work_order.v1
+status: modeled_recommendation_release_blocked
+claim_boundary: >
+  This work order records the best local modeled CPU+NPU operating point found
+  by the deterministic 14A sweep. It is not RTL, PDK, post-route, AOSP, silicon,
+  or sustained measured evidence.
+source_artifacts:
+  optimizer_report: benchmarks/results/soc-optimized-operating-point.json
+  baseline_sweep_report: benchmarks/results/soc-thermal-sweep.json
+  optimizer_command: make soc-optimization
+  checker_command: make soc-optimization
+  test_command: make soc-optimization-test
+  process_effects_contract: docs/spec-db/process-14a-effects.yaml
+selected_modeled_point:
+  cpu_cores: 2
+  cpu_base_frequency_hz: 3200000000
+  cpu_base_ipc: 1.8
+  cpu_base_power_w: 1.8
+  npu_base_tops: 38.0
+  npu_base_power_w: 1.4
+  memory_sustained_gbps: 200.0
+  ambient_c: 25.0
+optimized_summary:
+  no_modeled_throttle: true
+  max_die_temp_c: 84.41283040000002
+  max_total_power_w: 5.0153799999999995
+  min_bandwidth_margin_gbps: 2.0
+  min_composite_perf_per_w: 0.6187419293625411
+  min_npu_int8_tops: 21.0672
+  process_corner_count: 4
+  scenario_count: 3
+  worst_efficiency_corner: 14a_ss_0p63v_105c_frontside_pdn
+  worst_efficiency_scenario: sustained_npu_camera_display
+  worst_thermal_corner: 14a_bspdn_follow_on_hot_ir_em_stress
+  worst_thermal_scenario: sustained_npu_camera_display
+baseline_delta:
+  baseline_had_modeled_throttle: true
+  optimized_has_modeled_throttle: false
+  max_die_c_delta: -44.8403472
+  max_power_w_delta: -3.760139999999999
+  min_bandwidth_margin_gbps_delta: 61.599999999999994
+  min_composite_perf_per_w_ratio: 1.7910097599102732
+design_deltas_required_before_claim:
+  - id: cpu_power_budget
+    modeled_target: 1.8 W CPU/AP active budget at the selected 2-core scalable point.
+    implementation_dependency: Replace tiny CPU scaffold with generated Linux-capable AP and DVFS/power-state evidence.
+    release_blocker: cpu_ap_completion_gate
+  - id: npu_perf_per_w_budget
+    modeled_target: 38.0 dense INT8 base TOPS at 1.4 W NPU active budget.
+    implementation_dependency: Add measured NPU datapath, compiler/runtime coverage, NNAPI proof, and calibrated power trace.
+    release_blocker: sustained_power_thermal_evidence_check
+  - id: memory_bandwidth_budget
+    modeled_target: 200.0 GB/s sustained memory bandwidth for no-throttle CPU+NPU+display/camera scenarios.
+    implementation_dependency: Add LPDDR-class controller/PHY, UMA/coherency, QoS, IOMMU/SMMU, and contended Android traces.
+    release_blocker: memory_uma_claim_gate
+  - id: thermal_budget
+    modeled_target: worst modeled die temperature <= 95 C across all 14A process corners.
+    implementation_dependency: Correlate activity, package, board, enclosure, and chamber traces from the selected target.
+    release_blocker: sustained_power_thermal_evidence_check
+  - id: process_corner_budget
+    modeled_target: no modeled throttle across four required 14A corners.
+    implementation_dependency: Replace planning derates with selected PDK libraries, extracted parasitics, IR/EM, STA, and thermal signoff.
+    release_blocker: pd_signoff_release_check
+forbidden_release_use_until:
+  - cpu_ap_completion_gate passes with real AP transcripts.
+  - aosp_simulator_completion_gate passes with local simulator evidence.
+  - sustained_power_thermal_evidence_check passes with measured aligned traces.
+  - memory_uma_claim_gate is replaced by measured LPDDR/UMA/IOMMU/QoS evidence.
+  - pd_signoff_release_check passes with extracted 14A PDK timing, power, and thermal data.

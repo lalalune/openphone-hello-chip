@@ -1,4 +1,4 @@
-service vendor.hwcomposer-2-4 /vendor/bin/hw/android.hardware.graphics.composer@2.4-service.openphone_ai_soc
+service vendor.hwcomposer-2-4 /vendor/bin/hw/android.hardware.graphics.composer@2.4-service.openagent_ai_soc
     interface android.hardware.graphics.composer@2.4::IComposer default
     class hal animation
     user system

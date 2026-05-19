@@ -26,12 +26,15 @@ REQUIRED_METRICS = {
     "contended_cpu_latency_ns",
     "display_underflow_count",
     "dma_copy_bandwidth_gbps",
+    "worst_process_corner_sustained_bandwidth_gbps",
+    "worst_process_corner_p95_random_read_latency_ns",
 }
 REQUIRED_REJECTION_KEYS = {
     "host_benchmark",
     "simulator_wall_clock",
     "axi_lite_sram_model_cycle_count",
     "generated_memmap_without_target_run",
+    "process_corner_without_contract_hash",
 }
 
 
@@ -118,6 +121,41 @@ def validate_template(errors: list[str]) -> None:
             not missing, "memory evidence template missing metrics: " + ", ".join(missing), errors
         )
 
+    process = at(report, ("process_corners",))
+    require(
+        isinstance(process, dict),
+        "memory evidence template missing process_corners",
+        errors,
+    )
+    if isinstance(process, dict):
+        contract = process.get("process_effects_contract")
+        require(
+            isinstance(contract, dict),
+            "memory evidence template missing process_effects_contract",
+            errors,
+        )
+        if isinstance(contract, dict):
+            require(
+                contract.get("path") == "docs/spec-db/process-14a-effects.yaml",
+                "memory evidence template must bind to docs/spec-db/process-14a-effects.yaml",
+                errors,
+            )
+            require(
+                contract.get("sha256") == "__REQUIRED_SHA256__",
+                "memory evidence template must require process effects contract sha256",
+                errors,
+            )
+        require(
+            process.get("worst_process_corner") == "__REQUIRED_14A_CORNER_ID__",
+            "memory evidence template must require worst 14A process corner id",
+            errors,
+        )
+        require(
+            process.get("pdk_signoff_claim") == "none",
+            "memory evidence template must make no PDK signoff claim",
+            errors,
+        )
+
     rejections = at(report, ("negative_evidence_rejection",))
     require(
         isinstance(rejections, dict),
@@ -161,6 +199,46 @@ def validate_real_report(path: Path, errors: list[str]) -> None:
         f"{rel}: simulator wall-clock results are invalid",
         errors,
     )
+
+    process = at(data, ("process_corners",))
+    require(isinstance(process, dict), f"{rel}: process_corners must be an object", errors)
+    if isinstance(process, dict):
+        contract = process.get("process_effects_contract")
+        require(
+            isinstance(contract, dict),
+            f"{rel}: process_effects_contract must be an object",
+            errors,
+        )
+        if isinstance(contract, dict):
+            require(
+                contract.get("path") == "docs/spec-db/process-14a-effects.yaml",
+                f"{rel}: process_effects_contract path must bind to 14A effects contract",
+                errors,
+            )
+            require(
+                isinstance(contract.get("sha256"), str)
+                and re.fullmatch(r"[0-9a-f]{64}", contract["sha256"]) is not None,
+                f"{rel}: process_effects_contract sha256 must be lowercase hex",
+                errors,
+            )
+        require(
+            isinstance(process.get("process_corner_count"), int)
+            and not isinstance(process.get("process_corner_count"), bool)
+            and process["process_corner_count"] > 0,
+            f"{rel}: process_corner_count must be a positive integer",
+            errors,
+        )
+        require(
+            isinstance(process.get("worst_process_corner"), str)
+            and process["worst_process_corner"].startswith("14a_"),
+            f"{rel}: worst_process_corner must name a 14A corner",
+            errors,
+        )
+        require(
+            process.get("pdk_signoff_claim") == "none",
+            f"{rel}: pdk_signoff_claim must remain none",
+            errors,
+        )
 
     memory_type = at(data, ("memory_config", "memory_type"))
     require(

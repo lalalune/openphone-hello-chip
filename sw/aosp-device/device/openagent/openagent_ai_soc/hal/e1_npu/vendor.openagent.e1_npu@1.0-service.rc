@@ -1,13 +1,13 @@
-service vendor.hello_npu /vendor/bin/hw/vendor.openphone.hello_npu@1.0-service
-    interface vendor.openphone.hello_npu@1.0::IHelloNpu default
+service vendor.e1_npu /vendor/bin/hw/vendor.openagent.e1_npu@1.0-service
+    interface vendor.openagent.e1_npu@1.0::IE1Npu default
     class hal
     user system
     group system
     disabled
     oneshot
 
-on property:vendor.hello_npu.ready=1
-    start vendor.hello_npu
+on property:vendor.e1_npu.ready=1
+    start vendor.e1_npu
 
-on property:vendor.hello_npu.ready=0
-    stop vendor.hello_npu
+on property:vendor.e1_npu.ready=0
+    stop vendor.e1_npu

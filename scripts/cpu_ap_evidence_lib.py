@@ -271,6 +271,7 @@ def validate_evidence_manifest(manifest: dict[str, Any], errors: list[str]) -> N
             "mmu_page_table_and_tlb_evidence",
             "sustained_boot_and_benchmark_evidence",
             "power_thermal_voltage_frequency_evidence",
+            "process_14a_corner_benchmark_derate_evidence",
             "android_cts_vts_and_userspace_evidence",
         }
         found_phone_items = policy.get("phone_2028_claim_requires", [])

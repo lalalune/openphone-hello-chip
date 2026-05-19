@@ -1,4 +1,4 @@
-# Initial Android fstab scaffold for openphone_ai_soc.
+# Initial Android fstab scaffold for openagent_ai_soc.
 # Cuttlefish integration may override block devices during simulator bring-up.
 # AVB/A-B/recovery/OTA flags are not evidence of AVB keys, rollback indexes,
 # recovery behavior, update success, or secure flashing.

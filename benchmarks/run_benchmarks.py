@@ -74,7 +74,17 @@ E1_NPU_REQUIRED_CAPTURE_COMMANDS = {
     ),
     "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace",
 }
-REAL_METADATA_SECTIONS = ("software", "clocks", "memory", "thermal", "power", "calibration")
+PROCESS_EFFECTS_CONTRACT_PATH = "docs/spec-db/process-14a-effects.yaml"
+PROCESS_PDK_SIGNOFF_PASSED = "pdk_extracted_timing_power_thermal_signoff_passed"
+REAL_METADATA_SECTIONS = (
+    "software",
+    "clocks",
+    "memory",
+    "thermal",
+    "power",
+    "process",
+    "calibration",
+)
 REAL_METADATA_REQUIRED_FIELDS: dict[str, dict[str, Any]] = {
     "software": {
         "os": str,
@@ -108,6 +118,14 @@ REAL_METADATA_REQUIRED_FIELDS: dict[str, dict[str, Any]] = {
         "measurement_method": str,
         "sample_count": int,
         "averaging_window_seconds": (int, float),
+    },
+    "process": {
+        "node": str,
+        "pdk": str,
+        "process_effects_contract": dict,
+        "process_corner_count": int,
+        "worst_process_corner": str,
+        "pdk_signoff_claim": str,
     },
     "calibration": {
         "status": str,
@@ -905,6 +923,7 @@ def parse_metrics(bench: dict[str, Any], output: str) -> tuple[str | None, dict[
             return None, {}
         return "openagent_npu_scale_sim_v1", {
             "kernel_count": int(summary.get("kernel_count", 0)),
+            "process_corner_count": int(summary.get("process_corner_count", 0)),
             "dense_int8_peak_tops": float(config.get("dense_int8_peak_tops", 0.0)),
             "int8_macs_per_cycle": int(config.get("int8_macs_per_cycle", 0)),
             "dma_queue_depth": int(config.get("dma_queue_depth", 0)),
@@ -915,6 +934,9 @@ def parse_metrics(bench: dict[str, Any], output: str) -> tuple[str | None, dict[
             "min_observed_tops": float(summary.get("min_observed_tops", 0.0)),
             "max_observed_tops": float(summary.get("max_observed_tops", 0.0)),
             "min_utilization_percent": float(summary.get("min_utilization_percent", 0.0)),
+            "worst_process_corner_min_observed_tops": float(
+                summary.get("worst_process_corner_min_observed_tops", 0.0)
+            ),
         }
 
     if name == "coremark":
@@ -1045,6 +1067,77 @@ def metadata_blockers(report: dict[str, Any], bench: dict[str, Any]) -> list[dic
                         "kind": "metadata",
                         "reason": "blocked_metadata_field",
                         "resolution": f"Replace {section}.{field} with measured target evidence in --metadata JSON.",
+                    }
+                )
+        if section == "process" and isinstance(data, dict):
+            contract = data.get("process_effects_contract")
+            if not isinstance(contract, dict):
+                blockers.append(
+                    {
+                        "name": "process.process_effects_contract",
+                        "kind": "metadata",
+                        "reason": "missing_process_effects_contract",
+                        "resolution": f"Bind process metadata to {PROCESS_EFFECTS_CONTRACT_PATH} with its sha256.",
+                    }
+                )
+            else:
+                path = contract.get("path")
+                digest = contract.get("sha256")
+                if path != PROCESS_EFFECTS_CONTRACT_PATH:
+                    blockers.append(
+                        {
+                            "name": "process.process_effects_contract.path",
+                            "kind": "metadata",
+                            "reason": "wrong_process_effects_contract",
+                            "resolution": f"Set process.process_effects_contract.path to {PROCESS_EFFECTS_CONTRACT_PATH}.",
+                        }
+                    )
+                if not isinstance(digest, str) or SHA256_RE.fullmatch(digest) is None:
+                    blockers.append(
+                        {
+                            "name": "process.process_effects_contract.sha256",
+                            "kind": "metadata",
+                            "reason": "missing_process_effects_contract_hash",
+                            "resolution": "Record the sha256 of the process effects contract used for this benchmark run.",
+                        }
+                    )
+            count = data.get("process_corner_count")
+            node = data.get("node")
+            if not isinstance(node, str) or "14A" not in node:
+                blockers.append(
+                    {
+                        "name": "process.node",
+                        "kind": "metadata",
+                        "reason": "wrong_process_node",
+                        "resolution": "Bind benchmark metadata to the 14A target process node.",
+                    }
+                )
+            if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
+                blockers.append(
+                    {
+                        "name": "process.process_corner_count",
+                        "kind": "metadata",
+                        "reason": "invalid_process_corner_count",
+                        "resolution": "Record the number of 14A process corners evaluated for this benchmark.",
+                    }
+                )
+            worst = data.get("worst_process_corner")
+            if not isinstance(worst, str) or not worst.startswith("14a_"):
+                blockers.append(
+                    {
+                        "name": "process.worst_process_corner",
+                        "kind": "metadata",
+                        "reason": "invalid_worst_process_corner",
+                        "resolution": "Record the worst 14A process corner that limits this benchmark result.",
+                    }
+                )
+            if data.get("pdk_signoff_claim") != PROCESS_PDK_SIGNOFF_PASSED:
+                blockers.append(
+                    {
+                        "name": "process.pdk_signoff_claim",
+                        "kind": "metadata",
+                        "reason": "missing_pdk_signoff",
+                        "resolution": "Use benchmark results for 2028/14A claims only after extracted PDK timing, power, and thermal signoff passes.",
                     }
                 )
     calibration = report.get("calibration")
@@ -1271,6 +1364,7 @@ def parse_openagent_npu_scale_sim(output: str) -> dict[str, Any]:
     return {
         "benchmark_success_allowed": True,
         "kernel_count": int(summary.get("kernel_count", 0)),
+        "process_corner_count": int(summary.get("process_corner_count", 0)),
         "dense_int8_peak_tops": float(config.get("dense_int8_peak_tops", 0.0)),
         "int8_macs_per_cycle": int(config.get("int8_macs_per_cycle", 0)),
         "dma_queue_depth": int(config.get("dma_queue_depth", 0)),
@@ -1281,6 +1375,9 @@ def parse_openagent_npu_scale_sim(output: str) -> dict[str, Any]:
         "min_observed_tops": float(summary.get("min_observed_tops", 0.0)),
         "max_observed_tops": float(summary.get("max_observed_tops", 0.0)),
         "min_utilization_percent": float(summary.get("min_utilization_percent", 0.0)),
+        "worst_process_corner_min_observed_tops": float(
+            summary.get("worst_process_corner_min_observed_tops", 0.0)
+        ),
     }
 
 
@@ -1416,6 +1513,43 @@ def validate_report(report: dict[str, Any]) -> list[str]:
                     errors.append(f"real report metadata {section}.{field} must be {type_name}")
                 elif isinstance(value, str) and not value.strip():
                     errors.append(f"real report metadata {section}.{field} must be non-empty")
+            if section == "process":
+                process = report[section]
+                contract = process.get("process_effects_contract")
+                if not isinstance(contract, dict):
+                    errors.append(
+                        "real report metadata process.process_effects_contract must be object"
+                    )
+                else:
+                    if contract.get("path") != PROCESS_EFFECTS_CONTRACT_PATH:
+                        errors.append(
+                            "real report metadata process.process_effects_contract.path must be "
+                            + PROCESS_EFFECTS_CONTRACT_PATH
+                        )
+                    digest = contract.get("sha256")
+                    if not isinstance(digest, str) or SHA256_RE.fullmatch(digest) is None:
+                        errors.append(
+                            "real report metadata process.process_effects_contract.sha256 must be lowercase hex sha256"
+                        )
+                count = process.get("process_corner_count")
+                node = process.get("node")
+                if not isinstance(node, str) or "14A" not in node:
+                    errors.append(
+                        "real report metadata process.node must identify the 14A target node"
+                    )
+                if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
+                    errors.append(
+                        "real report metadata process.process_corner_count must be positive integer"
+                    )
+                worst = process.get("worst_process_corner")
+                if not isinstance(worst, str) or not worst.startswith("14a_"):
+                    errors.append(
+                        "real report metadata process.worst_process_corner must name a 14A corner"
+                    )
+                if process.get("pdk_signoff_claim") != PROCESS_PDK_SIGNOFF_PASSED:
+                    errors.append(
+                        "real report metadata process.pdk_signoff_claim must record passed PDK extracted timing/power/thermal signoff"
+                    )
 
     platform_obj = report.get("platform", {})
     for field in ("name", "revision", "source_tree_sha", "host", "host_system"):

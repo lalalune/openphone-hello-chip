@@ -8,7 +8,7 @@ $initrd?=@build/initramfs/openphone_tier2.cpio.gz
 $dtb?=@build/dts/openphone_hello_cpu.dtb
 
 mach create "openphone-hello"
-machine LoadPlatformDescription @sim/renode/openphone_hello.repl
+machine LoadPlatformDescription @sim/renode/openagent_e1.repl
 
 showAnalyzer sysbus.uart0
 
