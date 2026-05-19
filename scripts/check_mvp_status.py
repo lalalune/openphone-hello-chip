@@ -309,10 +309,10 @@ def formal_status() -> Status:
     if all(path.is_file() for path in fallback_logs):
         return Status(
             "formal",
-            PASS,
-            "generated Yosys formal fallback logs present",
-            "none",
-            "generated_artifact",
+            BLOCK,
+            "generated Yosys formal fallback logs present; strict release requires SymbiYosys",
+            "make formal-strict",
+            "formal_fallback",
         )
     if tool_path("sby", "yosys"):
         return Status(
@@ -350,6 +350,45 @@ def qemu_status() -> Status:
 
 
 def renode_status() -> Status:
+    status_path = ROOT / "build/renode/openphone_hello_status.json"
+    transcript = ROOT / "build/renode/openphone_hello_uart.transcript"
+    if status_path.is_file():
+        try:
+            data = json.loads(status_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return Status(
+                "renode",
+                FAIL,
+                f"{rel(status_path)} is invalid JSON",
+                "make renode-check",
+                "schema_fail",
+            )
+        status = str(data.get("status", "")).upper()
+        boundary = str(data.get("claim_boundary", ""))
+        if status == PASS and transcript.is_file() and "qemu-virt" in boundary:
+            return Status(
+                "renode",
+                PASS,
+                f"{rel(status_path)} records PASS qemu-virt reference smoke",
+                "none",
+                "generated_artifact",
+            )
+        if status == "BLOCKED":
+            return Status(
+                "renode",
+                BLOCK,
+                str(data.get("detail", "renode blocked"))[:220],
+                "make renode-check",
+                "tool_blocker",
+            )
+        if status == FAIL:
+            return Status(
+                "renode",
+                FAIL,
+                str(data.get("detail", "renode failed"))[:220],
+                "make renode-check",
+                "test_fail",
+            )
     return status_check(
         "renode",
         ["scripts/run_renode.sh", "--check"],
@@ -442,6 +481,24 @@ def benchmark_status() -> Status:
     )
 
 
+def minimum_target_status() -> Status:
+    status = status_check(
+        "minimum-linux-npu-target",
+        [sys.executable, "scripts/check_minimum_linux_npu_target.py"],
+        "STATUS: PASS minimum_linux_npu_target",
+        "make minimum-linux-npu-target-strict",
+    )
+    if status.status == BLOCK and status.evidence_class == "scaffold_only":
+        return Status(
+            status.subsystem,
+            BLOCK,
+            status.evidence,
+            status.next_step,
+            "target_blocker",
+        )
+    return status
+
+
 def product_status() -> Status:
     result = subprocess.run(
         [sys.executable, "scripts/product_check.py"],
@@ -485,6 +542,11 @@ def collect_statuses() -> list[Status]:
             [sys.executable, "scripts/check_platform_contract.py"],
             "make platform-contract-check",
         ),
+        command_status(
+            "linux-boot-prerequisites",
+            [sys.executable, "scripts/check_linux_hardware_contract_gate.py"],
+            "make linux-hardware-contract-gate",
+        ),
         software_bsp_status(),
         command_status(
             "real-world-release-gates",
@@ -520,6 +582,13 @@ def collect_statuses() -> list[Status]:
         formal_status(),
         qemu_status(),
         renode_status(),
+        status_check(
+            "npu-ml-proof",
+            [sys.executable, "scripts/check_mvp_npu_ml_evidence.py"],
+            "STATUS: PASS mvp.npu_ml_smoke",
+            "make mvp-npu-ml-evidence-check",
+        ),
+        minimum_target_status(),
         command_status(
             "pd-contract",
             [sys.executable, "scripts/check_pd_preflight.py"],

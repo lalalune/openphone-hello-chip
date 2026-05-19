@@ -332,6 +332,24 @@
             "reset": "0x00000000"
           },
           {
+            "offset": "0x68",
+            "name": "DESC_BYTES_WRITTEN",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x6C",
+            "name": "DESC_READ_BEATS",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
+            "offset": "0x70",
+            "name": "DESC_WRITE_BEATS",
+            "access": "RO",
+            "reset": "0x00000000"
+          },
+          {
             "offset": "0x80",
             "name": "SCRATCH0",
             "access": "RW",

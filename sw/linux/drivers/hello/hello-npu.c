@@ -147,13 +147,12 @@ static long hello_npu_run_gemm_s8(struct hello_npu *npu, unsigned long arg)
 	b_bytes = gemm.k * gemm.n;
 	c_base = (a_bytes + b_bytes + 3) & ~3u;
 	c_bytes = gemm.m * gemm.n * sizeof(__s32);
-	if (c_base + c_bytes > 64)
+	if (c_base + c_bytes > HELLO_NPU_SCRATCH_BYTES)
 		return -EINVAL;
 
 	mutex_lock(&npu->lock);
 	writel(HELLO_NPU_CTRL_DONE | HELLO_NPU_CTRL_ERROR,
 	       npu->regs + HELLO_NPU_CTRL_STATUS_OFFSET);
-	writel(1, npu->regs + HELLO_NPU_PERF_ERRORS_OFFSET);
 	for (i = 0; i < HELLO_NPU_SCRATCH_BYTES; i += 4)
 		writel(0, npu->regs + HELLO_NPU_SCRATCH0_OFFSET + i);
 

@@ -12,6 +12,12 @@ sw/buildroot/scripts/import-buildroot-external.sh
 sw/buildroot/configs/openphone_hello_defconfig
 sw/buildroot/board/openphone/hello/linux.fragment
 sw/buildroot/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke
+sw/buildroot/package/hello-mmio-smoke/Config.in
+sw/buildroot/package/hello-mmio-smoke/hello-mmio-smoke.mk
+sw/buildroot/package/hello-mmio-smoke/src/hello-mmio-smoke.c
+sw/buildroot/package/hello-npu-ml-smoke/Config.in
+sw/buildroot/package/hello-npu-ml-smoke/hello-npu-ml-smoke.mk
+sw/buildroot/package/hello-npu-ml-smoke/src/hello-npu-ml-smoke.c
 serial console
 initramfs
 hello NPU userspace test
@@ -42,7 +48,7 @@ buildroot: scaffold audit
   dependency blocker: external Buildroot checkout and external Linux kernel tarball/tree
   status: clear
 buildroot BSP check failed:
-  - buildroot BSP BLOCKED: missing evidence for external Buildroot image build plus hello MMIO smoke transcript: docs/evidence/buildroot/openphone_hello_defconfig.log, docs/evidence/buildroot/openphone_hello_image_manifest.txt, docs/evidence/buildroot/hello-mmio-smoke.log
+  - buildroot BSP BLOCKED: missing evidence for external Buildroot image build plus hello MMIO and hello NPU ML smoke transcripts: docs/evidence/buildroot/openphone_hello_defconfig.log, docs/evidence/buildroot/openphone_hello_image_manifest.txt, docs/evidence/buildroot/hello-mmio-smoke.log, docs/evidence/buildroot/hello-npu-ml-smoke.log
 ```
 
 Dependency blocker: a real Buildroot image requires an external Buildroot
@@ -56,6 +62,15 @@ Evidence intake is defined by
 not enough: the transcript must include the `openphone-evidence` header/footer,
 the exact command marker, and the target-specific pass markers. Templates,
 substitute-only logs, failed transcripts, and too-small files are rejected.
+
+Environment readiness can be checked without creating evidence logs:
+
+```sh
+python3 scripts/check_software_bsp.py external-preflight buildroot \
+  --buildroot /path/to/buildroot \
+  --target-host root@TARGET \
+  --write-report
+```
 
 ## External Buildroot import
 
@@ -87,9 +102,15 @@ sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot defconfig
 sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot image-manifest
 HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' \
   sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke
+HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' \
+  sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke
 make software-bsp-evidence-check
 ```
 
 The `image-manifest` mode records SHA-256 hashes for files already present in
 `output/images`; it fails if no image build exists. The `smoke` mode fails
-unless `HELLO_SMOKE_CMD` exits zero on the external target.
+unless `HELLO_SMOKE_CMD` exits zero on the external target. The `ml-smoke` mode
+is separate and fails unless `HELLO_NPU_ML_SMOKE_CMD` exits zero and the target
+transcript includes `hello-npu-ml-smoke: PASS`,
+`workload=gemm_s8_int8_2x2x3`, `/dev/hello-npu`, and
+`claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark`.

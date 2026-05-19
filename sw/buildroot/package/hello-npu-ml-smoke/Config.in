@@ -2,11 +2,7 @@ config BR2_PACKAGE_HELLO_NPU_ML_SMOKE
 	bool "hello-npu-ml-smoke"
 	depends on BR2_USE_MMU
 	help
-	  Target-side /dev/hello-npu smoke for the first Buildroot rootfs.
-	  It submits a deterministic tiny GEMM-style NPU job through the Linux
-	  ioctl ABI and prints a bounded pass marker for evidence capture.
+	  Target-side /dev/hello-npu GEMM_S8 smoke. This is a deterministic
+	  Linux driver/runtime check and rejects CPU-only fallback.
 
-	  This is not NNAPI, Android, benchmark, or accelerator performance
-	  evidence.
-
-	  https://github.com/openphone/openphone-ai-soc
+	  It is not NNAPI, Android HAL, or hardware benchmark evidence.

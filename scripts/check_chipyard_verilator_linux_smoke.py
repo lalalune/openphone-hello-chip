@@ -25,6 +25,7 @@ SIM_DIR = CHECKOUT / "sims/verilator"
 OUT_DIR = ROOT / "build/chipyard/openphone_rocket"
 REPORT = OUT_DIR / "verilator-linux-smoke.json"
 LOG = OUT_DIR / "verilator-linux-smoke.log"
+LOCK_DIR = OUT_DIR / "verilator-linux-smoke.lock"
 CONFIG = "OpenPhoneRocketConfig"
 CONFIG_PACKAGE = "openphone"
 PAYLOAD_ENV = "CHIPYARD_LINUX_BINARY"
@@ -36,8 +37,21 @@ REQUIRED_GENERATED_ARTIFACTS = (
     OUT_DIR / "OpenPhoneRocketConfig.manifest.json",
 )
 REQUIRED_LOG_MARKERS = ("OpenSBI", "Linux version")
-OPENSBI_MARKERS = ("OpenSBI", "SBI specification", "Domain0 Next Address")
-LINUX_MARKERS = ("Linux version", "Kernel command line:", "Freeing unused kernel")
+OPENSBI_MARKERS = ("OpenSBI", "SBI specification", "Domain0 Next Address", "Boot HART ID")
+OPENSBI_ACCEPTANCE_MARKERS = ("SBI specification", "Domain0 Next Address", "Boot HART ID")
+LINUX_MARKERS = (
+    "Linux version",
+    "Kernel command line:",
+    "Freeing unused kernel",
+    "Run /init as init process",
+    "initramfs",
+)
+LINUX_ACCEPTANCE_MARKERS = (
+    "Kernel command line:",
+    "Freeing unused kernel",
+    "Run /init as init process",
+    "initramfs",
+)
 PROGRESS_MARKERS = (
     "SimDRAM loaded ELF entry=",
     "SimDRAM loading ELF ",
@@ -200,7 +214,9 @@ def simulator_artifact_metadata() -> dict[str, object]:
                     machine, f"em_{machine}"
                 )
                 if host_system != "Linux":
-                    candidate["host_blocker"] = f"ELF simulator requires Linux host, got {host_system}"
+                    candidate["host_blocker"] = (
+                        f"ELF simulator requires Linux host, got {host_system}"
+                    )
                 elif machine == 62 and host_machine not in {"x86_64", "amd64"}:
                     candidate["host_blocker"] = (
                         f"ELF x86_64 simulator requires x86_64 host, got {host_machine}"
@@ -221,11 +237,15 @@ def simulator_artifact_metadata() -> dict[str, object]:
 def simulator_artifact_blockers(metadata: dict[str, object]) -> list[str]:
     blockers: list[str] = []
     candidates = metadata.get("candidates")
-    existing = [
-        candidate
-        for candidate in candidates
-        if isinstance(candidate, dict) and bool(candidate.get("exists"))
-    ] if isinstance(candidates, list) else []
+    existing = (
+        [
+            candidate
+            for candidate in candidates
+            if isinstance(candidate, dict) and bool(candidate.get("exists"))
+        ]
+        if isinstance(candidates, list)
+        else []
+    )
     if not existing:
         blockers.append(
             "missing generated simulator artifact: expected one of "
@@ -237,6 +257,18 @@ def simulator_artifact_blockers(metadata: dict[str, object]) -> list[str]:
             + ", ".join(str(candidate.get("path")) for candidate in existing)
         )
     return blockers
+
+
+def has_marker_group(text: str, required: tuple[str, ...], any_of: tuple[str, ...]) -> bool:
+    return all(marker in text for marker in required) and any(marker in text for marker in any_of)
+
+
+def has_accepted_opensbi_markers(text: str) -> bool:
+    return has_marker_group(text, ("OpenSBI",), OPENSBI_ACCEPTANCE_MARKERS)
+
+
+def has_accepted_linux_markers(text: str) -> bool:
+    return has_marker_group(text, ("Linux version",), LINUX_ACCEPTANCE_MARKERS)
 
 
 def remove_path(path: Path) -> None:
@@ -269,6 +301,46 @@ def remove_path(path: Path) -> None:
     else:
         with contextlib.suppress(FileNotFoundError):
             path.unlink()
+
+
+def active_lock_owner() -> int | None:
+    pid_file = LOCK_DIR / "pid"
+    if not pid_file.is_file():
+        return None
+    try:
+        pid = int(pid_file.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return None
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return None
+    return pid
+
+
+def repair_incomplete_attempt() -> int:
+    if not LOG.is_file():
+        print("STATUS: PASS chipyard.verilator_linux_smoke.incomplete_attempt - no smoke log")
+        return 0
+    log_metadata = parse_log_metadata()
+    log_text = LOG.read_text(encoding="utf-8", errors="replace")
+    if "openphone-evidence: raw_transcript_begin" not in log_text or log_metadata.get(
+        "raw_transcript_closed"
+    ):
+        print("STATUS: PASS chipyard.verilator_linux_smoke.incomplete_attempt - log is complete")
+        return 0
+    owner = active_lock_owner()
+    if owner is not None:
+        print("STATUS: BLOCKED chipyard.verilator_linux_smoke.incomplete_attempt")
+        print(f"  - active smoke runner still owns lock: pid={owner}")
+        return 2
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    archived = LOG.with_name(f"{LOG.stem}.interrupted-{timestamp}{LOG.suffix}")
+    LOG.replace(archived)
+    print("STATUS: REPAIR chipyard.verilator_linux_smoke.incomplete_attempt")
+    print(f"  archived: {rel(archived)}")
+    print("  next: rerun scripts/run_chipyard_openphone_linux_smoke.sh for a complete transcript")
+    return 0
 
 
 def active_chipyard_containers() -> list[dict[str, str]]:
@@ -352,7 +424,9 @@ def repair_stale_generated_paths() -> int:
         print("STATUS: BLOCKED chipyard.verilator_generated_paths")
         print(f"  - {exc}")
         print("  next: wait for active Chipyard Docker/simulator jobs to finish, then rerun")
-        print("    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated")
+        print(
+            "    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated"
+        )
         return 2
     print(f"  removing: {rel(GENERATED_SIMULATOR)}")
     try:
@@ -361,7 +435,9 @@ def repair_stale_generated_paths() -> int:
         print("STATUS: BLOCKED chipyard.verilator_generated_paths")
         print(f"  - {exc}")
         print("  next: wait for active Chipyard Docker/simulator jobs to finish, then rerun")
-        print("    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated")
+        print(
+            "    python3 scripts/check_chipyard_verilator_linux_smoke.py --repair-stale-generated"
+        )
         return 2
     print("  next: rerun the Chipyard make target so VTestDriver.mk is regenerated on this host")
     return 0
@@ -384,6 +460,7 @@ def parse_log_metadata() -> dict[str, object]:
         "raw_transcript_closed": False,
         "lines_after_raw_transcript_end": 0,
         "fatal_errors": [],
+        "exceptions": [],
         "sim_failures": [],
         "simdram_entry": None,
         "simdram_load_range": None,
@@ -439,6 +516,14 @@ def parse_log_metadata() -> dict[str, object]:
             fatal_errors = metadata["fatal_errors"]
             if isinstance(fatal_errors, list):
                 fatal_errors.append(line.strip())
+        if (
+            "Exception in thread" in line
+            or line.strip().startswith("Caused by:")
+            or "NoSuchFileException" in line
+        ):
+            exceptions = metadata["exceptions"]
+            if isinstance(exceptions, list):
+                exceptions.append(line.strip())
         if "*** FAILED ***" in line:
             sim_failures = metadata["sim_failures"]
             if isinstance(sim_failures, list):
@@ -520,15 +605,25 @@ def classify_smoke_progress(
             "stage": "no_run",
             "next_step": "run scripts/run_chipyard_openphone_linux_smoke.sh with a real OpenSBI/Linux payload",
         }
-    if any(marker in log_text for marker in LINUX_MARKERS):
+    if has_accepted_linux_markers(log_text):
         return {
             "stage": "linux_boot",
             "next_step": "capture the complete generated-AP Linux boot transcript",
         }
-    if any(marker in log_text for marker in OPENSBI_MARKERS):
+    if "Linux version" in log_text:
+        return {
+            "stage": "linux_banner_only",
+            "next_step": "continue until Linux command line/initramfs markers appear",
+        }
+    if has_accepted_opensbi_markers(log_text):
         return {
             "stage": "opensbi_boot",
             "next_step": "continue the smoke until the Linux kernel banner appears",
+        }
+    if "OpenSBI" in log_text:
+        return {
+            "stage": "opensbi_banner_only",
+            "next_step": "continue until OpenSBI handoff markers and the Linux banner appear",
         }
     if instruction_trace.get("bootrom_to_payload_handoff"):
         return {
@@ -608,7 +703,14 @@ def main() -> int:
             "Chipyard build regenerates host-correct absolute paths"
         ),
     )
+    parser.add_argument(
+        "--repair-incomplete-attempt",
+        action="store_true",
+        help="archive an interrupted smoke log only when no smoke runner owns the lock",
+    )
     args = parser.parse_args()
+    if args.repair_incomplete_attempt:
+        return repair_incomplete_attempt()
     if args.repair_stale_generated:
         return repair_stale_generated_paths()
 
@@ -677,6 +779,10 @@ def main() -> int:
         if isinstance(fatal_errors, list):
             for fatal_error in fatal_errors:
                 blockers.append(f"{rel(LOG)} records build fatal error: {fatal_error}")
+        exceptions = log_metadata.get("exceptions")
+        if isinstance(exceptions, list):
+            for exception in exceptions:
+                blockers.append(f"{rel(LOG)} records generator exception: {exception}")
         sim_failures = log_metadata.get("sim_failures")
         if isinstance(sim_failures, list):
             for sim_failure in sim_failures:
@@ -719,6 +825,16 @@ def main() -> int:
         for marker in REQUIRED_LOG_MARKERS:
             if marker not in log_text:
                 blockers.append(f"{rel(LOG)} lacks required marker: {marker}")
+        if "OpenSBI" in log_text and not has_accepted_opensbi_markers(log_text):
+            blockers.append(
+                f"{rel(LOG)} has an OpenSBI banner but lacks accepted OpenSBI handoff markers: "
+                + ", ".join(OPENSBI_ACCEPTANCE_MARKERS)
+            )
+        if "Linux version" in log_text and not has_accepted_linux_markers(log_text):
+            blockers.append(
+                f"{rel(LOG)} has a Linux banner but lacks accepted Linux boot markers: "
+                + ", ".join(LINUX_ACCEPTANCE_MARKERS)
+            )
 
     progress = classify_smoke_progress(log_text, instruction_trace, log_metadata)
     if blockers:

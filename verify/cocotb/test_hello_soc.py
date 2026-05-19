@@ -207,7 +207,7 @@ async def npu_descriptor_streams_tensor_from_dram(dut):
             int.from_bytes(tensor[index * 4 : index * 4 + 4], "little"),
         )
 
-    await write32(dut, 0x8000_0100, 8 | (1 << 8) | (12 << 24))
+    await write32(dut, 0x8000_0100, 0x8000_0000 | 8 | (1 << 8) | (12 << 24))
     await write32(dut, 0x8000_0104, 0x8000_0200)
     await write32(dut, 0x8000_0108, 0)
     await write32(dut, 0x8000_010C, 0)
@@ -226,6 +226,9 @@ async def npu_descriptor_streams_tensor_from_dram(dut):
     assert await read32(dut, 0x1002_0048) == 1
     assert await read32(dut, 0x1002_004C) == 0x2
     assert await read32(dut, 0x1002_0064) == 28
+    assert await read32(dut, 0x1002_0068) == 0
+    assert await read32(dut, 0x1002_006C) == 7
+    assert await read32(dut, 0x1002_0070) == 0
 
     observed = []
     for row in range(2):

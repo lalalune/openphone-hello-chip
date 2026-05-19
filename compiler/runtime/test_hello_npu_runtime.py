@@ -3,6 +3,7 @@ from hello_npu_runtime import (
     HelloNpuRuntime,
     NpuDescriptorSubmission,
     NpuRuntimeError,
+    NpuStreamDescriptor,
     NpuTimeoutError,
     golden_gemm_s8,
 )
@@ -294,11 +295,55 @@ def test_descriptor_submission_requires_descriptor_completion_proof():
 def test_stream_descriptor_word0_packing_and_validation():
     word0 = HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 12)
 
-    assert word0 == HelloNpuRuntime.OP_GEMM_S8 | (1 << 8) | (12 << 24)
+    assert word0 == (
+        HelloNpuRuntime.DESC_FLAG_VALID_OWNER | HelloNpuRuntime.OP_GEMM_S8 | (1 << 8) | (12 << 24)
+    )
+    assert (
+        HelloNpuRuntime.pack_stream_descriptor_word0(
+            HelloNpuRuntime.OP_GEMM_S8,
+            0,
+            12,
+            writeback_request=True,
+        )
+        & HelloNpuRuntime.DESC_FLAG_WRITEBACK_REQUEST
+    )
+    assert NpuStreamDescriptor(
+        HelloNpuRuntime.OP_GEMM_S8,
+        source_addr=0x8000_0200,
+        scratch_offset=0,
+        byte_count=12,
+    ).words() == (word0, 0x8000_0200, 0, 0)
     with pytest.raises(ValueError, match="scratch offset"):
         HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 2, 12)
     with pytest.raises(ValueError, match="byte count"):
         HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 13)
+
+
+def test_descriptor_counters_expose_read_writeback_boundary():
+    runtime, mmio = make_runtime()
+    mmio.regs.update(
+        {
+            runtime.DESC_STATUS: runtime.DESC_STATUS_DONE,
+            runtime.DESC_HEAD: 3,
+            runtime.DESC_TAIL: 3,
+            runtime.DESC_TIMEOUT_COUNT: 0,
+            runtime.DESC_BYTES_READ: 28,
+            runtime.DESC_BYTES_WRITTEN: 0,
+            runtime.DESC_READ_BEATS: 7,
+            runtime.DESC_WRITE_BEATS: 0,
+        }
+    )
+
+    assert runtime.descriptor_counters() == {
+        "status": runtime.DESC_STATUS_DONE,
+        "head": 3,
+        "tail": 3,
+        "timeout_count": 0,
+        "bytes_read": 28,
+        "bytes_written": 0,
+        "read_beats": 7,
+        "write_beats": 0,
+    }
 
 
 def test_precision_matrix_reports_supported_and_blocked_states_without_overclaiming():

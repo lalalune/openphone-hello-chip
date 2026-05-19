@@ -12,6 +12,7 @@ HELLO_NPU_ML_SMOKE_LICENSE_FILES = LICENSE
 
 define HELLO_NPU_ML_SMOKE_BUILD_CMDS
 	$(TARGET_CC) $(TARGET_CFLAGS) -Wall -Wextra -O2 \
+		-I$(BR2_EXTERNAL_OPENPHONE_HELLO_PATH)/../linux/drivers/hello \
 		-o $(@D)/hello-npu-ml-smoke $(@D)/hello-npu-ml-smoke.c
 endef
 

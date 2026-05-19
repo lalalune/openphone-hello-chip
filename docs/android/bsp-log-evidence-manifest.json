@@ -97,6 +97,42 @@
         "VTS passed"
       ]
     },
+    "docs/evidence/buildroot/hello-npu-ml-smoke.log": {
+      "blocker_code": "missing_buildroot_hello_npu_ml_smoke_log",
+      "claim_boundary": "driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
+      "producer_command": "/usr/bin/hello-npu-ml-smoke --device /dev/hello-npu",
+      "capture_hint": "prepend EXTERNAL_TREE or TARGET, COMMAND, START_UTC, END_UTC, RESULT, then append the target-side hello-npu-ml-smoke transcript from the built Buildroot rootfs",
+      "required_metadata": [
+        "EXTERNAL_TREE=",
+        "COMMAND=",
+        "START_UTC=",
+        "END_UTC=",
+        "RESULT="
+      ],
+      "required_any": [
+        "hello-npu-ml-smoke: PASS",
+        "HELLO_NPU_ML_SMOKE_PASS"
+      ],
+      "required_all": [
+        "workload=gemm_s8_int8_2x2x3",
+        "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
+        "/dev/hello-npu"
+      ],
+      "forbidden_any": [
+        "FAIL",
+        "SKIP",
+        "placeholder",
+        "No such file or directory"
+      ],
+      "forbidden_claims": [
+        "NNAPI acceleration",
+        "Android compatible",
+        "hardware benchmark",
+        "TOPS",
+        "CTS passed",
+        "VTS passed"
+      ]
+    },
     "docs/evidence/linux/openphone_hello_kernel_build.log": {
       "blocker_code": "missing_linux_kernel_build_log",
       "claim_boundary": "external_kernel_build_only_not_boot_evidence",
@@ -193,6 +229,72 @@
       ],
       "forbidden_claims": [
         "booted Android",
+        "Android compatible",
+        "CTS passed",
+        "VTS passed"
+      ]
+    },
+    "docs/evidence/linux/opensbi_openphone_build.log": {
+      "blocker_code": "missing_opensbi_build_log",
+      "claim_boundary": "external_opensbi_build_only_not_linux_or_android_boot_evidence",
+      "producer_command": "OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build",
+      "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, then append the verbatim external OpenSBI build transcript",
+      "required_metadata": [
+        "EXTERNAL_TREE=",
+        "COMMAND=",
+        "START_UTC=",
+        "END_UTC=",
+        "RESULT="
+      ],
+      "required_any": [
+        "FW_DYNAMIC",
+        "fw_dynamic",
+        "firmware/fw_dynamic"
+      ],
+      "required_all": [
+        "OpenSBI"
+      ],
+      "forbidden_any": [
+        "Error 1",
+        "No rule to make target",
+        "FAILED",
+        "placeholder"
+      ],
+      "forbidden_claims": [
+        "Linux booted",
+        "Android compatible",
+        "CTS passed",
+        "VTS passed"
+      ]
+    },
+    "docs/evidence/linux/opensbi_fw_dynamic_handoff.log": {
+      "blocker_code": "missing_opensbi_handoff_log",
+      "claim_boundary": "external_opensbi_fw_dynamic_handoff_only_not_linux_or_android_boot_evidence",
+      "producer_command": "OPENPHONE_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff",
+      "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, then append the external simulator or board UART transcript for the fw_dynamic handoff",
+      "required_metadata": [
+        "EXTERNAL_TREE=",
+        "COMMAND=",
+        "START_UTC=",
+        "END_UTC=",
+        "RESULT="
+      ],
+      "required_any": [
+        "Next Address",
+        "Domain0 Next Address",
+        "Boot HART"
+      ],
+      "required_all": [
+        "OpenSBI",
+        "fw_dynamic"
+      ],
+      "forbidden_any": [
+        "Kernel panic",
+        "FAILED",
+        "timeout",
+        "placeholder"
+      ],
+      "forbidden_claims": [
         "Android compatible",
         "CTS passed",
         "VTS passed"

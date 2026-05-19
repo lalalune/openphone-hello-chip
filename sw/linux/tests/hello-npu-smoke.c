@@ -22,14 +22,41 @@ static void print_matrix(const int32_t *c)
 	printf("[[%d,%d],[%d,%d]]", c[0], c[1], c[2], c[3]);
 }
 
+static int run_dot_smoke(int fd)
+{
+	struct hello_npu_cmd cmd;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = HELLO_NPU_OP_DOT4_S8;
+	cmd.a = 0x04fd0201u;
+	cmd.b = 0x08f70605u;
+	cmd.acc = 11;
+
+	if (ioctl(fd, HELLO_NPU_IOC_RUN_CMD, &cmd) < 0) {
+		fprintf(stderr, "HELLO_NPU_IOC_RUN_CMD: %s\n", strerror(errno));
+		return 3;
+	}
+	if (cmd.result != 70) {
+		fprintf(stderr, "DOT4_S8 mismatch: got=%u expected=70 status=0x%08x\n",
+			cmd.result, cmd.status);
+		return 4;
+	}
+
+	printf("openphone-evidence: workload=dot4_s8 scalar_result=%u status=0x%08x\n",
+	       cmd.result, cmd.status);
+	return 0;
+}
+
 static int run_smoke(const char *device)
 {
 	static const int32_t expected[] = { -44, 8, 139, -54 };
+	struct hello_npu_contract contract;
 	struct hello_npu_gemm_s8 gemm;
 	struct hello_npu_counters counters;
 	unsigned int i;
 	int fd;
 
+	memset(&contract, 0, sizeof(contract));
 	memset(&gemm, 0, sizeof(gemm));
 	memset(&counters, 0, sizeof(counters));
 	gemm.m = 2;
@@ -55,10 +82,29 @@ static int run_smoke(const char *device)
 		return 2;
 	}
 
+	if (ioctl(fd, HELLO_NPU_IOC_GET_CONTRACT, &contract) < 0) {
+		fprintf(stderr, "HELLO_NPU_IOC_GET_CONTRACT: %s\n", strerror(errno));
+		close(fd);
+		return 3;
+	}
+	if (contract.version != 1 || contract.npu_base != 0x10020000u ||
+	    contract.scratch_bytes != HELLO_NPU_SCRATCH_BYTES) {
+		fprintf(stderr, "contract mismatch: version=%u npu_base=0x%08x scratch=%u\n",
+			contract.version, contract.npu_base, contract.scratch_bytes);
+		close(fd);
+		return 3;
+	}
+
+	i = run_dot_smoke(fd);
+	if (i) {
+		close(fd);
+		return i;
+	}
+
 	if (ioctl(fd, HELLO_NPU_IOC_RUN_GEMM_S8, &gemm) < 0) {
 		fprintf(stderr, "HELLO_NPU_IOC_RUN_GEMM_S8: %s\n", strerror(errno));
 		close(fd);
-		return 3;
+		return 5;
 	}
 
 	for (i = 0; i < 4; i++) {
@@ -66,7 +112,7 @@ static int run_smoke(const char *device)
 			fprintf(stderr, "GEMM_S8 mismatch at C[%u]: got=%d expected=%d\n",
 				i, gemm.c[i], expected[i]);
 			close(fd);
-			return 4;
+			return 6;
 		}
 	}
 
@@ -83,9 +129,8 @@ static int run_smoke(const char *device)
 	printf(" cycles=%u macs=%u ops=%u errors=%u unsupported_ops=%u ",
 	       counters.perf_cycles, counters.perf_macs, counters.perf_ops,
 	       counters.perf_errors, counters.perf_unsupported_ops);
-	printf("desc_bytes_read=%u desc_bytes_written=%u desc_read_beats=%u desc_write_beats=%u ",
-	       counters.desc_bytes_read, counters.desc_bytes_written,
-	       counters.desc_read_beats, counters.desc_write_beats);
+	printf("desc_bytes_read=%u desc_timeout_count=%u ",
+	       counters.desc_bytes_read, counters.desc_timeout_count);
 	printf("status=0x%08x descriptor_submit_ioctl=0x%lx ",
 	       gemm.status, (unsigned long)HELLO_NPU_IOC_SUBMIT_DESCRIPTORS);
 	printf("claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark\n");

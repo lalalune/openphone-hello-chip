@@ -18,10 +18,25 @@ runtime command inputs. This prints commands only; it does not create evidence:
 python3 scripts/check_software_bsp.py capture-plan all \
   --buildroot /abs/path/to/buildroot \
   --linux /abs/path/to/linux \
+  --opensbi /abs/path/to/opensbi \
   --aosp /abs/path/to/aosp \
   --target-host root@TARGET \
+  --opensbi-handoff-cmd '/exact/qemu-or-renode fw_dynamic handoff command' \
   --qemu-smoke-cmd '/exact/qemu-system-riscv64 smoke command' \
   --renode-smoke-cmd '/exact/renode smoke command'
+```
+
+Check the local environment and discovered external trees without creating
+evidence logs:
+
+```sh
+python3 scripts/check_software_bsp.py external-preflight all \
+  --linux /abs/path/to/linux \
+  --opensbi /abs/path/to/opensbi \
+  --buildroot /abs/path/to/buildroot \
+  --target-host root@TARGET \
+  --opensbi-handoff-cmd '/exact/qemu-or-renode fw_dynamic handoff command' \
+  --write-report
 ```
 
 Run the fail-closed evidence gate after importing real external logs:
@@ -43,6 +58,8 @@ sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot defconfig
 sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot image-manifest
 HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' \
   sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke
+HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' \
+  sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke
 python3 scripts/check_software_bsp.py buildroot --require-evidence
 ```
 
@@ -51,9 +68,20 @@ python3 scripts/check_software_bsp.py buildroot --require-evidence
 ```sh
 sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux kernel-build
 sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux dtb-check
-HELLO_SMOKE_CMD='ssh root@TARGET /tmp/hello-mmio-smoke' \
+HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke' \
   sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke
 python3 scripts/check_software_bsp.py linux --require-evidence
+```
+
+## OpenSBI
+
+```sh
+sw/opensbi/scripts/import-opensbi-platform.sh --check /path/to/opensbi
+OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' \
+  docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build
+OPENPHONE_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' \
+  docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff
+python3 scripts/check_software_bsp.py opensbi --require-evidence
 ```
 
 ## AOSP

@@ -23,6 +23,18 @@ if [ ! -f "$linux/Kconfig" ] || [ ! -d "$linux/drivers" ] || [ ! -d "$linux/arch
 	exit 1
 fi
 
+ensure_line() {
+	file=$1
+	line=$2
+	if [ ! -f "$file" ]; then
+		echo "error: cannot update missing external file $file" >&2
+		exit 1
+	fi
+	if ! grep -Fqx "$line" "$file"; then
+		printf '\n%s\n' "$line" >> "$file"
+	fi
+}
+
 printf 'Import commands:\n'
 printf '  mkdir -p %s/drivers/misc/openphone-hello %s/arch/riscv/boot/dts/openphone %s/Documentation/devicetree/bindings/openphone %s/kernel/configs\n' "$linux" "$linux" "$linux" "$linux"
 printf '  rsync -a %s/drivers/hello/ %s/drivers/misc/openphone-hello/\n' "$bsp" "$linux"
@@ -38,9 +50,10 @@ printf '  drivers/misc/Makefile: obj-$(CONFIG_OPENPHONE_HELLO_BSP) += openphone-
 printf '  arch/riscv/boot/dts/Makefile: subdir-y += openphone\n'
 printf 'Capture real evidence back in this repository:\n'
 printf '  (cd %s && make ARCH=riscv openphone_hello.config olddefconfig)\n' "$linux"
+printf '  python3 %s/scripts/check_linux_external_bsp.py %s\n' "$repo_root" "$linux"
 printf '  %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s kernel-build\n' "$repo_root" "$linux"
 printf '  %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s dtb-check\n' "$repo_root" "$linux"
-printf '  HELLO_SMOKE_CMD='\''ssh root@TARGET /usr/bin/hello-npu-smoke --device /dev/hello-npu'\'' %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s smoke\n' "$repo_root" "$linux"
+printf '  HELLO_SMOKE_CMD='\''ssh root@TARGET /usr/bin/hello-mmio-smoke'\'' %s/sw/linux/scripts/capture-linux-bsp-evidence.sh %s smoke\n' "$repo_root" "$linux"
 
 if [ "$check_only" -eq 0 ]; then
 	mkdir -p \
@@ -55,6 +68,9 @@ if [ "$check_only" -eq 0 ]; then
 		"$linux/Documentation/devicetree/bindings/openphone/"
 	cp "$generated/hello_platform_contract.h" "$linux/drivers/misc/openphone-hello/hello_platform_contract.h"
 	cp "$bsp/configs/openphone_hello.fragment" "$linux/kernel/configs/openphone_hello.config"
+	ensure_line "$linux/drivers/misc/Kconfig" 'source "drivers/misc/openphone-hello/Kconfig"'
+	ensure_line "$linux/drivers/misc/Makefile" 'obj-$'"(CONFIG_OPENPHONE_HELLO_BSP)"' += openphone-hello/'
+	ensure_line "$linux/arch/riscv/boot/dts/Makefile" 'subdir-y += openphone'
 	printf 'Imported OpenPhone Linux BSP files into the external kernel tree.\n'
 fi
 
@@ -85,5 +101,5 @@ if [ "$check_only" -eq 1 ]; then
 		exit 1
 	fi
 	echo "STATUS: PASS linux.import-check - external Linux checkout shape and repo BSP inputs are present"
-	echo "STATUS: BLOCKED linux.build-evidence - run external kernel Image/dtbs/modules build and archive docs/evidence/linux/*.log"
+	echo "STATUS: BLOCKED linux.build-evidence - run scripts/check_linux_external_bsp.py and the external kernel/Image/DTB capture commands"
 fi

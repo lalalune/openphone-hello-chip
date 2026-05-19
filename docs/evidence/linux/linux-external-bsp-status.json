@@ -1,12 +1,12 @@
 {
   "blockers": [
     {
-      "detail": "run import command before kernel-build or dtb-check evidence capture",
-      "id": "external_linux_bsp_not_imported"
-    },
-    {
       "detail": "set CROSS_COMPILE=... or install a riscv64 Linux compiler",
       "id": "riscv_cross_compiler_missing"
+    },
+    {
+      "detail": "GNU Make 3.81",
+      "id": "gnu_make_too_old_or_missing"
     },
     {
       "detail": "docs/evidence/linux/openphone_hello_kernel_build.log",
@@ -26,96 +26,84 @@
     "linux_dtb_check": {
       "blocked_marker": "docs/evidence/linux/openphone_hello_dtb_check.log.BLOCKED",
       "path": "docs/evidence/linux/openphone_hello_dtb_check.log",
-      "reason": "reason: dtbs_check has not been run against sw/linux/dts/openphone-hello-soc.dtsi",
+      "reason": "reason: external/linux exists and has imported the OpenPhone hello DTS/bindings, but host tools cannot run dtbs_check and no PASS transcript has been captured.",
       "state": "blocked"
     },
     "linux_kernel_build": {
       "blocked_marker": "docs/evidence/linux/openphone_hello_kernel_build.log.BLOCKED",
       "path": "docs/evidence/linux/openphone_hello_kernel_build.log",
-      "reason": "reason: no external Linux kernel checkout has imported sw/linux/drivers/openphone/ and produced a build log",
+      "reason": "reason: external/linux exists and has imported the OpenPhone hello BSP, but host tools cannot run the kernel build and no PASS transcript has been captured.",
       "state": "blocked"
     },
     "linux_mmio_smoke": {
       "blocked_marker": "docs/evidence/linux/hello-mmio-smoke.log.BLOCKED",
       "path": "docs/evidence/linux/hello-mmio-smoke.log",
-      "reason": "reason: no boot transcript of a kernel built from sw/linux/drivers/openphone/ exists; cannot capture /dev/hello-npu and DMA sysfs probe output yet",
+      "reason": "reason: no boot transcript of an imported OpenPhone hello kernel/rootfs exists, so /dev/hello-npu and DMA sysfs smoke output cannot be captured.",
       "state": "blocked"
     }
   },
   "imported_bsp": {
-    "missing_optional": [
-      "board_dts_makefile",
-      "npu_binding",
-      "dma_binding",
-      "display_binding"
-    ],
-    "missing_required": [
-      "driver_kconfig",
-      "driver_makefile",
-      "npu_driver",
-      "dma_driver",
-      "platform_header",
-      "board_dts"
-    ],
+    "missing_optional": [],
+    "missing_required": [],
     "optional": {
       "board_dts_makefile": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openphone/Makefile"
       },
       "display_binding": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openphone/openphone,hello-display.yaml"
       },
       "dma_binding": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openphone/openphone,hello-dma.yaml"
       },
       "npu_binding": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml"
       }
     },
     "required": {
       "board_dts": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openphone/openphone-hello.dts"
       },
       "dma_driver": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/hello-dma.c"
       },
       "driver_kconfig": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/Kconfig"
       },
       "driver_makefile": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/Makefile"
       },
       "npu_driver": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/hello-npu.c"
       },
       "platform_header": {
-        "exists": false,
-        "is_file": false,
+        "exists": true,
+        "is_file": true,
         "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/hello_platform_contract.h"
       }
     },
-    "status": "not_imported",
+    "status": "imported",
     "text_checks": {
-      "drivers_misc_kconfig_sources_openphone": false,
-      "drivers_misc_makefile_links_openphone": false,
-      "riscv_dts_makefile_links_openphone": false
+      "drivers_misc_kconfig_sources_openphone": true,
+      "drivers_misc_makefile_links_openphone": true,
+      "riscv_dts_makefile_links_openphone": true
     }
   },
   "linux_tree": "/Users/shawwalters/Desktop/npu_experiment/external/linux",
@@ -134,6 +122,8 @@
     "cross_compile": "",
     "dtc": "/opt/homebrew/bin/dtc",
     "make": "/usr/bin/make",
+    "make_version": "GNU Make 3.81",
+    "make_version_ok": false,
     "riscv_compiler": ""
   }
 }

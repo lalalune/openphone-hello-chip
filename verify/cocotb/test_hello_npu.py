@@ -360,7 +360,7 @@ async def npu_descriptor_fetch_launches_scalar_op_and_advances_tail(dut):
         descriptor_read_responder(
             dut,
             {
-                0x4000: 0x0000_0000,  # ADD
+                0x4000: 0x8000_0000,  # valid owner, ADD
                 0x4004: 7,
                 0x4008: 11,
                 0x400C: 0,
@@ -381,6 +381,10 @@ async def npu_descriptor_fetch_launches_scalar_op_and_advances_tail(dut):
     assert await read_reg(dut, 0x11) == 1
     assert await read_reg(dut, 0x12) == 1
     assert await read_reg(dut, 0x13) == 0x2
+    assert await read_reg(dut, 0x19) == 16
+    assert await read_reg(dut, 0x1A) == 0
+    assert await read_reg(dut, 0x1B) == 4
+    assert await read_reg(dut, 0x1C) == 0
     assert await read_reg(dut, 0x16) == 1
     assert await read_reg(dut, 0x17) == 0
 
@@ -400,7 +404,11 @@ async def npu_descriptor_streams_tensor_tile_into_scratchpad_and_runs_gemm(dut):
         for index in range(3)
     }
     descriptor = {
-        0x4000: HelloNpuRuntime.OP_GEMM_S8 | (1 << 8) | (0 << 16) | (len(tensor) << 24),
+        0x4000: 0x8000_0000
+        | HelloNpuRuntime.OP_GEMM_S8
+        | (1 << 8)
+        | (0 << 16)
+        | (len(tensor) << 24),
         0x4004: 0x5000,
         0x4008: 0,
         0x400C: 0,
@@ -424,6 +432,9 @@ async def npu_descriptor_streams_tensor_tile_into_scratchpad_and_runs_gemm(dut):
     assert await read_reg(dut, 0x12) == 1
     assert await read_reg(dut, 0x13) == 0x2
     assert await read_reg(dut, 0x19) == 28
+    assert await read_reg(dut, 0x1A) == 0
+    assert await read_reg(dut, 0x1B) == 7
+    assert await read_reg(dut, 0x1C) == 0
     assert await read_reg(dut, 0x15) == 12
     assert await read_reg(dut, 0x17) == 0
 
@@ -440,6 +451,55 @@ async def npu_descriptor_streams_tensor_tile_into_scratchpad_and_runs_gemm(dut):
         for row in range(2)
     ]
     assert observed == golden_gemm_s8(a, b)
+
+
+@cocotb.test()
+async def npu_descriptor_requires_valid_owner_bit_and_rejects_writeback_request(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    await reset(dut)
+
+    reader = cocotb.start_soon(
+        descriptor_read_responder(
+            dut,
+            {
+                0x4000: 0x0000_0000,  # missing valid owner bit
+                0x4004: 7,
+                0x4008: 11,
+                0x400C: 0,
+                0x4010: 0xC000_0000,  # valid owner + unsupported writeback request, ADD
+                0x4014: 7,
+                0x4018: 11,
+                0x401C: 0,
+            },
+        )
+    )
+
+    await write_reg(dut, 0x10, 0x4000)
+    await write_reg(dut, 0x11, 1)
+    await write_reg(dut, 0x12, 0)
+    await write_reg(dut, 0x0C, 1)
+    await write_reg(dut, 0x03, 1)
+
+    assert await poll_done(dut, cycles=64) == 0x6
+    desc_status = await read_reg(dut, 0x13)
+    assert (desc_status & 0xFF) == 0x44
+    assert await read_reg(dut, 0x12) == 0
+    assert await read_reg(dut, 0x1A) == 0
+    assert await read_reg(dut, 0x1C) == 0
+
+    await write_reg(dut, 0x03, 2)
+    await write_reg(dut, 0x12, 1)
+    await write_reg(dut, 0x11, 2)
+    await write_reg(dut, 0x03, 1)
+
+    assert await poll_done(dut, cycles=64) == 0x6
+    reader.kill()
+    desc_status = await read_reg(dut, 0x13)
+    assert (desc_status & 0xFF) == 0x84
+    assert ((desc_status >> 9) & 0x7) == 1
+    assert await read_reg(dut, 0x12) == 1
+    assert await read_reg(dut, 0x1A) == 0
+    assert await read_reg(dut, 0x1C) == 0
 
 
 @cocotb.test()
@@ -500,16 +560,40 @@ async def npu_runtime_abi_sequence_matches_rtl_and_writes_coverage(dut):
         "gemm_shapes": [{"m": 2, "n": 2, "k": 3}],
         "status_bits": ["busy", "done", "error"],
         "descriptor_queue": {
-            "registers": ["DESC_BASE", "DESC_HEAD", "DESC_TAIL", "DESC_STATUS", "CMD_PARAM"],
+            "registers": [
+                "DESC_BASE",
+                "DESC_HEAD",
+                "DESC_TAIL",
+                "DESC_STATUS",
+                "CMD_PARAM",
+                "DESC_BYTES_READ",
+                "DESC_BYTES_WRITTEN",
+                "DESC_READ_BEATS",
+                "DESC_WRITE_BEATS",
+            ],
             "descriptor_fetch_launches_scalar": True,
+            "descriptor_streams_gemm_s8": True,
+            "descriptor_bytes_read_covered": True,
+            "descriptor_read_beats_covered": True,
+            "descriptor_write_counters_remain_zero_without_writeback": True,
             "missing_descriptor_response_times_out": True,
             "empty_queue_rejects": True,
             "unaligned_base_rejects": True,
             "pending_depth_bits": "DESC_STATUS[21:19]",
             "pending_depth_semantics": "(DESC_HEAD - DESC_TAIL) modulo 8; 0 is empty, not a full-ring encoding",
             "dma_backed_tensor_execution": False,
+            "valid_owner_bit_required": True,
+            "writeback_request_fails_closed": True,
         },
-        "perf_counters": ["unsupported_ops", "cycles", "macs", "ops", "errors"],
+        "perf_counters": [
+            "unsupported_ops",
+            "cycles",
+            "macs",
+            "ops",
+            "errors",
+            "desc_read_beats",
+            "desc_write_beats",
+        ],
         "proof_boundary": {
             "nnapi_acceleration": False,
             "phone_class_tops": False,

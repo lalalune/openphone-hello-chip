@@ -75,6 +75,30 @@ def main() -> int:
             required_tokens=("STATUS SUBSYSTEM", "BLOCK"),
         ),
         Check(
+            name="minimum Linux plus NPU target reports blocked without external boot proof",
+            command=["python3", "scripts/check_minimum_linux_npu_target.py"],
+            expected_codes={0},
+            required_tokens=("STATUS: BLOCKED minimum_linux_npu_target",),
+        ),
+        Check(
+            name="minimum Linux plus NPU strict gate blocks missing boot proof",
+            command=["python3", "scripts/check_minimum_linux_npu_target.py", "--strict"],
+            expected_codes={2},
+            required_tokens=("STATUS: BLOCKED minimum_linux_npu_target",),
+        ),
+        Check(
+            name="linux boot artifact strict gate blocks placeholder evidence",
+            command=["python3", "scripts/check_linux_boot_artifacts.py", "--require-pass"],
+            expected_codes={2},
+            required_tokens=("linux boot artifacts: BLOCKED",),
+        ),
+        Check(
+            name="local NPU ML smoke proof regenerates deterministic evidence",
+            command=["python3", "scripts/check_mvp_npu_ml_evidence.py", "--run"],
+            expected_codes={0},
+            required_tokens=("STATUS: PASS mvp.npu_ml_smoke",),
+        ),
+        Check(
             name="product release blocks unfinished hardware evidence",
             command=["python3", "scripts/product_check.py", "--release"],
             expected_codes={1},

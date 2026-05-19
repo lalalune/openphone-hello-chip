@@ -15,6 +15,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs/evidence/linux/openphone-linux-boot-artifacts.json"
 LOCATOR = ROOT / "scripts/locate_chipyard_linux_payload.py"
+REPORT = ROOT / "build/reports/linux_boot_artifacts.json"
 
 
 def rel(path: Path) -> str:
@@ -151,9 +152,7 @@ def build_report() -> dict[str, Any]:
     manifest = load_manifest()
     forbidden = [str(item) for item in manifest.get("forbidden_strings", [])]
     preflight = [
-        preflight_status(spec)
-        for spec in manifest.get("preflight", [])
-        if isinstance(spec, dict)
+        preflight_status(spec) for spec in manifest.get("preflight", []) if isinstance(spec, dict)
     ]
     payload_locator = payload_locator_status()
     artifacts = [
@@ -223,6 +222,8 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     report = build_report()
+    REPORT.parent.mkdir(parents=True, exist_ok=True)
+    REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:

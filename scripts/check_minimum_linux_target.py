@@ -87,6 +87,14 @@ def load_json(path: Path) -> dict[str, Any]:
 def check_evidence(path: Path) -> dict[str, Any]:
     blocked = path.with_suffix(path.suffix + ".BLOCKED")
     if path.is_file() and path.stat().st_size > 0:
+        text = read(path)
+        if "openphone-evidence: status=PASS" not in text:
+            return {
+                "status": "blocked",
+                "path": rel(path),
+                "bytes": path.stat().st_size,
+                "reason": "missing openphone-evidence: status=PASS",
+            }
         return {"status": "present", "path": rel(path), "bytes": path.stat().st_size}
     if blocked.is_file():
         text = read(blocked).strip()

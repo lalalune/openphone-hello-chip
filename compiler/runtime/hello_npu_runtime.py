@@ -49,6 +49,34 @@ class NpuDescriptorSubmission:
     timeout_polls: int = 1024
 
 
+@dataclass(frozen=True)
+class NpuStreamDescriptor:
+    """Four-word local RTL descriptor used by the prototype stream path."""
+
+    opcode: int
+    source_addr: int
+    scratch_offset: int
+    byte_count: int
+    op_b: int = 0
+    acc: int = 0
+    valid_owner: bool = True
+    writeback_request: bool = False
+
+    def words(self) -> tuple[int, int, int, int]:
+        return (
+            HelloNpuRuntime.pack_stream_descriptor_word0(
+                self.opcode,
+                self.scratch_offset,
+                self.byte_count,
+                valid_owner=self.valid_owner,
+                writeback_request=self.writeback_request,
+            ),
+            self.source_addr & 0xFFFF_FFFF,
+            self.op_b & 0xFFFF_FFFF,
+            self.acc & 0xFFFF_FFFF,
+        )
+
+
 class NpuRuntimeError(RuntimeError):
     def __init__(self, message: str, status: NpuRuntimeStatus):
         super().__init__(message)
@@ -87,6 +115,9 @@ class HelloNpuRuntime:
     PERF_ERRORS = 0x1002_005C
     DESC_TIMEOUT_COUNT = 0x1002_0060
     DESC_BYTES_READ = 0x1002_0064
+    DESC_BYTES_WRITTEN = 0x1002_0068
+    DESC_READ_BEATS = 0x1002_006C
+    DESC_WRITE_BEATS = 0x1002_0070
     SCRATCH = 0x1002_0080
     SCRATCH_BYTES = 64
 
@@ -106,7 +137,11 @@ class HelloNpuRuntime:
     DESC_STATUS_TIMEOUT = 0x8
     DESC_STATUS_MEM_ERROR = 0x10
     DESC_STATUS_STREAM_ERROR = 0x20
+    DESC_STATUS_OWNER_ERROR = 0x40
+    DESC_STATUS_WRITEBACK_UNSUPPORTED = 0x80
     DESC_FLAG_STREAM_TO_SCRATCH = 1 << 8
+    DESC_FLAG_WRITEBACK_REQUEST = 1 << 30
+    DESC_FLAG_VALID_OWNER = 1 << 31
 
     PRECISION_MATRIX = (
         NpuPrecisionSupport(
@@ -223,6 +258,18 @@ class HelloNpuRuntime:
     def precision_matrix(self) -> list[dict[str, str]]:
         return [entry.as_dict() for entry in self.PRECISION_MATRIX]
 
+    def descriptor_counters(self) -> dict[str, int]:
+        return {
+            "status": self.read32(self.DESC_STATUS),
+            "head": self.read32(self.DESC_HEAD),
+            "tail": self.read32(self.DESC_TAIL),
+            "timeout_count": self.read32(self.DESC_TIMEOUT_COUNT),
+            "bytes_read": self.read32(self.DESC_BYTES_READ),
+            "bytes_written": self.read32(self.DESC_BYTES_WRITTEN),
+            "read_beats": self.read32(self.DESC_READ_BEATS),
+            "write_beats": self.read32(self.DESC_WRITE_BEATS),
+        }
+
     def submit_descriptors(self, submission: NpuDescriptorSubmission) -> NpuRuntimeStatus:
         """Program the RTL descriptor ring and wait for hardware completion proof."""
         if submission.base & 0x3:
@@ -260,7 +307,15 @@ class HelloNpuRuntime:
         return runtime_status
 
     @classmethod
-    def pack_stream_descriptor_word0(cls, opcode: int, scratch_offset: int, byte_count: int) -> int:
+    def pack_stream_descriptor_word0(
+        cls,
+        opcode: int,
+        scratch_offset: int,
+        byte_count: int,
+        *,
+        valid_owner: bool = True,
+        writeback_request: bool = False,
+    ) -> int:
         """Pack descriptor word 0 for memory-to-scratchpad prefetch plus command launch."""
         if opcode < 0 or opcode > 0xF:
             raise ValueError("descriptor opcode must fit in 4 bits")
@@ -270,12 +325,17 @@ class HelloNpuRuntime:
             raise ValueError("descriptor byte count must be a positive aligned value below 64")
         if scratch_offset + byte_count > cls.SCRATCH_BYTES:
             raise ValueError("descriptor stream exceeds 64-byte NPU scratchpad")
-        return (
+        word0 = (
             (opcode & 0xF)
             | cls.DESC_FLAG_STREAM_TO_SCRATCH
             | ((scratch_offset & 0x3F) << 16)
             | ((byte_count & 0x3F) << 24)
         )
+        if writeback_request:
+            word0 |= cls.DESC_FLAG_WRITEBACK_REQUEST
+        if valid_owner:
+            word0 |= cls.DESC_FLAG_VALID_OWNER
+        return word0
 
     def write_scratch(self, offset: int, data: bytes):
         if offset < 0 or offset + len(data) > self.SCRATCH_BYTES:

@@ -56,7 +56,10 @@ def main() -> int:
         errors.append(
             "claim boundary must restrict our-chip OS boot claims to generated AP evidence"
         )
-    if "minimum Linux+NPU target may be claimed only when minimum_linux_npu_target_claim is true" not in boundary:
+    if (
+        "minimum Linux+NPU target may be claimed only when minimum_linux_npu_target_claim is true"
+        not in boundary
+    ):
         errors.append("claim boundary must restrict minimum Linux+NPU target claims")
     if data.get("strongest_attempted") != "os_boot":
         errors.append("strongest_attempted must record os_boot")
