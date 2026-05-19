@@ -7,7 +7,7 @@ Scope: `rtl/cpu/**`, CPU-facing contract tests, and project CPU/AP status.
 ## Current Local Artifact
 
 The only in-repo executable CPU artifact is
-`rtl/cpu/hello_cpu_subsystem_stub.sv`. Despite the legacy module name, it is a
+`rtl/cpu/e1_cpu_subsystem_stub.sv`. Despite the legacy module name, it is a
 tiny hand-written RV-style contract CPU, not a Linux-capable application
 processor.
 
@@ -45,15 +45,15 @@ measurement, Android userspace evidence, and silicon/board evidence.
 ## Selected Open CPU/AP Path
 
 The selected path is a generated Chipyard Rocket RV64GC subsystem. The selection
-is pinned in `generators/chipyard/openphone-rocket-manifest.json`:
+is pinned in `generators/chipyard/openagent-rocket-manifest.json`:
 
 - Chipyard `1.13.0`, commit
   `69eba860a352343e4ac6b6df0f3638a79a86ec78`,
 - single Rocket RV64GC hart for first AP integration,
-- project config name `OpenPhoneRocketConfig`,
-- production wrapper name `openphone_rocket_ap`,
+- project config name `OpenAgentRocketConfig`,
+- production wrapper name `openagent_rocket_ap`,
 - generated import manifest expected at
-  `build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`.
+  `build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json`.
 
 No generated Chipyard/Rocket RTL, simulator, DTS, firmware image, or boot log is
 present in this repository yet. Therefore the CPU/AP path is blocked on external
@@ -74,16 +74,16 @@ generator integration, not on more hand-written tiny-CPU expansion.
   and benchmark markers.
 - `make cpu-ap-completion-gate` stays blocked until the selected manifest makes
   a real AP claim and the generated artifacts plus transcripts validate.
-- `sw/platform/hello_platform_contract.json` must remain `has_cpu=false` until
+- `sw/platform/e1_platform_contract.json` must remain `has_cpu=false` until
   generated CPU/AP artifacts and boot evidence exist.
 
 Current missing evidence paths:
 
-- `build/evidence/cpu_ap/openphone_hello_opensbi_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_linux_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log`
-- `build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log`
-- `build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log`
+- `build/evidence/cpu_ap/openagent_e1_opensbi_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_linux_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log`
+- `build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log`
+- `build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log`
 
 Next CPU/AP commands:
 

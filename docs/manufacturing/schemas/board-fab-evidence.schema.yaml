@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://openphone.example/schemas/board-fab-evidence.schema.yaml
+$id: https://openagent.example/schemas/board-fab-evidence.schema.yaml
 title: Board fabrication evidence record
 type: object
 required:

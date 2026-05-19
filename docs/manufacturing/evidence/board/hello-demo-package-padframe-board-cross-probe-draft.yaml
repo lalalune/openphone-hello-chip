@@ -1,4 +1,4 @@
-schema: openphone.package_padframe_board_cross_probe.local_draft.v1
+schema: openagent.package_padframe_board_cross_probe.local_draft.v1
 status: draft
 release_use: prohibited
 board_revision: r0-nonrelease
@@ -6,10 +6,10 @@ review_date: 2026-05-18
 reviewer: local board/package preflight
 disposition: blocked_for_release
 scope:
-  package_pinout: package/hello-demo-pinout.yaml
-  padframe_contract: pd/padframe/hello_demo_padframe.yaml
-  board_cross_probe: docs/board/kicad/hello-demo/package-pinout-cross-probe.yaml
-  kicad_project: board/kicad/hello-demo
+  package_pinout: package/e1-demo-pinout.yaml
+  padframe_contract: pd/padframe/e1_demo_padframe.yaml
+  board_cross_probe: docs/board/kicad/e1-demo/package-pinout-cross-probe.yaml
+  kicad_project: board/kicad/e1-demo
 local_readiness:
   package_pin_count:
     expected: 64
@@ -22,9 +22,9 @@ local_readiness:
   kicad_source:
     status: draft_present
     files:
-      - board/kicad/hello-demo/hello-demo.kicad_sch
-      - board/kicad/hello-demo/hello-demo.kicad_pcb
-      - board/kicad/hello-demo/hello_demo_planning.pretty/hello_demo_qfn64_planning.kicad_mod
+      - board/kicad/e1-demo/e1-demo.kicad_sch
+      - board/kicad/e1-demo/e1-demo.kicad_pcb
+      - board/kicad/e1-demo/e1_demo_planning.pretty/e1_demo_qfn64_planning.kicad_mod
 release_blockers:
   - Package pinout is a non-release planning contract, not vendor package evidence.
   - Padframe contract has no foundry IO-cell, ESD, corner-cell, DRC, or LVS signoff.

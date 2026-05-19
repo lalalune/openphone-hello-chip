@@ -1,4 +1,4 @@
-# Hello demo preliminary ULX3S 85F ECP5 constraint scaffold.
+# E1 demo preliminary ULX3S 85F ECP5 constraint scaffold.
 #
 # This file is deliberately not sufficient for bitstream release. It records
 # a defensible first-pass mapping against the public ULX3S v2.x.x/v3.0.x LPF
@@ -138,7 +138,7 @@ IOBUF   PORT "TEST_MODE" IO_TYPE=LVCMOS33 PULLMODE=DOWN;
 # Final constraints must place these on a 1.8 V capable bank or use level
 # translation. Do not assign RF, antenna, or module analog pins here.
 # Reserved digital host signals, not assigned to package sites in this
-# hello-demo LPF: WIFI_SDIO_CLK, WIFI_SDIO_CMD, WIFI_SDIO_D0, WIFI_SDIO_D1,
+# e1-demo LPF: WIFI_SDIO_CLK, WIFI_SDIO_CMD, WIFI_SDIO_D0, WIFI_SDIO_D1,
 # WIFI_SDIO_D2, WIFI_SDIO_D3, WIFI_EN, WIFI_RST_N, WIFI_HOST_WAKE, WIFI_IRQ,
 # BT_UART_TX, BT_UART_RX, BT_UART_CTS_N, BT_UART_RTS_N. These are a 1.8 V
 # external-module contract only until the board revision, bank voltage,
@@ -158,7 +158,7 @@ FREQUENCY PORT "CLK_IN" 25 MHz;
 LOCATE COMP "RST_N" SITE "D6";
 IOBUF PORT "RST_N" IO_TYPE=LVCMOS33 PULLMODE=UP DRIVE=4;
 
-# GPIO demo outputs: map the hello-demo GPIO bus to the 8 blink LEDs.
+# GPIO demo outputs: map the e1-demo GPIO bus to the 8 blink LEDs.
 LOCATE COMP "GPIO[0]" SITE "B2";
 LOCATE COMP "GPIO[1]" SITE "C2";
 LOCATE COMP "GPIO[2]" SITE "C1";
@@ -222,7 +222,7 @@ IOBUF PORT "IRQ_NPU" IO_TYPE=LVCMOS33 PULLMODE=NONE DRIVE=4;
 IOBUF PORT "IRQ_VSYNC" IO_TYPE=LVCMOS33 PULLMODE=NONE DRIVE=4;
 
 # Reserved test/JTAG-like user signals. These are not the ECP5 configuration
-# JTAG TAP; they are hello_chip_top user ports kept observable on header pins.
+# JTAG TAP; they are e1_chip_top user ports kept observable on header pins.
 LOCATE COMP "TEST_MODE" SITE "E8"; # SW1
 LOCATE COMP "JTAG_TCK" SITE "C4";  # gp[10]
 LOCATE COMP "JTAG_TMS" SITE "B4";  # gn[10]

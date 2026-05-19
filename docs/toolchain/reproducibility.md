@@ -1,6 +1,6 @@
 # Toolchain reproducibility policy
 
-This document is the source of truth for how the hello-chip toolchain is
+This document is the source of truth for how the e1-chip toolchain is
 pinned. Every external dependency that affects RTL generation, simulation,
 synthesis, or physical design must be referenced by an immutable identifier
 (image digest, git commit SHA, or version-pinned lockfile entry).
@@ -87,7 +87,7 @@ in the toolchain workstream gap log).
 
 ## CI evidence
 
-`.github/workflows/ci.yml` uploads `build/reports/` as a `hello-chip-regression`
+`.github/workflows/ci.yml` uploads `build/reports/` as a `e1-chip-regression`
 artifact (`continue-on-error: true` to keep the upload non-fatal). The
 artifact must contain at least:
 

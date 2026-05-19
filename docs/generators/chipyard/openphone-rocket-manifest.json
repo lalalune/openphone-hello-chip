@@ -1,5 +1,5 @@
 {
-  "schema": "openphone.cpu_ap_generator_manifest.v1",
+  "schema": "openagent.cpu_ap_generator_manifest.v1",
   "status": "selected_not_generated",
   "chipyard": {
     "repo": "https://github.com/ucb-bar/chipyard.git",
@@ -13,13 +13,13 @@
     "core": "Rocket",
     "isa": "RV64GC",
     "harts": 1,
-    "config_name": "OpenPhoneRocketConfig",
-    "package_name": "openphone",
-    "top_wrapper": "openphone_rocket_ap",
+    "config_name": "OpenAgentRocketConfig",
+    "package_name": "openagent",
+    "top_wrapper": "openagent_rocket_ap",
     "config_sources": [
       {
-        "source": "docs/generators/chipyard/openphone/src/main/scala/openphone/OpenPhoneRocketConfig.scala",
-        "checkout_destination": "generators/chipyard/src/main/scala/openphone/OpenPhoneRocketConfig.scala"
+        "source": "docs/generators/chipyard/openagent/src/main/scala/openagent/OpenAgentRocketConfig.scala",
+        "checkout_destination": "generators/chipyard/src/main/scala/openagent/OpenAgentRocketConfig.scala"
       }
     ],
     "claim_level": "initial_linux_bringup_only",
@@ -44,31 +44,31 @@
     ]
   },
   "required_platform_blocks": {
-    "reset": "Boot ROM or firmware entry at the hello-chip reset vector",
+    "reset": "Boot ROM or firmware entry at the e1-chip reset vector",
     "timer_software_interrupts": "CLINT or ACLINT-compatible mtime/mtimecmp/msip",
     "external_interrupts": "PLIC-compatible external interrupt controller",
     "console": "UART with Linux earlycon binding",
     "dram": "DRAM model sized for OpenSBI plus Linux initramfs smoke",
     "mmio": [
-      "hello DMA",
-      "hello NPU",
-      "hello display",
-      "hello peripherals"
+      "e1 DMA",
+      "e1 NPU",
+      "e1 display",
+      "e1 peripherals"
     ]
   },
   "expected_generated_artifacts": [
-    "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
-    "build/chipyard/openphone_rocket/generated-src",
-    "build/chipyard/openphone_rocket/openphone-hello.dts",
-    "build/chipyard/openphone_rocket/openphone_rocket_ap.v",
-    "build/chipyard/openphone_rocket/simulator"
+    "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json",
+    "build/chipyard/openagent_rocket/generated-src",
+    "build/chipyard/openagent_rocket/openagent-e1.dts",
+    "build/chipyard/openagent_rocket/openagent_rocket_ap.v",
+    "build/chipyard/openagent_rocket/simulator"
   ],
   "required_evidence": [
-    "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-    "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-    "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-    "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
-    "build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log"
+    "build/evidence/cpu_ap/openagent_e1_opensbi_boot.log",
+    "build/evidence/cpu_ap/openagent_e1_linux_boot.log",
+    "build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log",
+    "build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log",
+    "build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log"
   ],
   "target_delta_manifest": "docs/evidence/cpu-ap-2028-target-deltas.json",
   "roadmap_manifest": "docs/evidence/cpu-ap-roadmap.json",

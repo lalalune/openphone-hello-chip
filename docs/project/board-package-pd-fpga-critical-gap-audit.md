@@ -9,11 +9,11 @@ The current tree is a contract scaffold, not a release-ready board, package, tap
 
 ## Placeholder package and padframe artifacts
 
-- `package/hello-demo-pinout.yaml` declares `package: qfn64_placeholder` and notes that real foundry pad cells, ESD rules, package data, and bond diagrams must replace it before fabrication.
-- `docs/package/hello-demo-package.md` is explicitly a placeholder QFN64-style planning document and states that it is not a foundry-approved package.
-- `docs/package/hello-demo-pad-ring.md` states that RTL does not instantiate foundry pad cells; ESD and corner pads are delegated to a future shuttle/package flow.
-- `pd/padframe/hello_demo_padframe.yaml` has `status: contract_scaffold`, with release gates blocked for padframe, package, and board fabrication.
-- `docs/pd/padframe/hello_demo_padframe.md` is a planning contract, not foundry IO-ring release evidence.
+- `package/e1-demo-pinout.yaml` declares `package: qfn64_placeholder` and notes that real foundry pad cells, ESD rules, package data, and bond diagrams must replace it before fabrication.
+- `docs/package/e1-demo-package.md` is explicitly a placeholder QFN64-style planning document and states that it is not a foundry-approved package.
+- `docs/package/e1-demo-pad-ring.md` states that RTL does not instantiate foundry pad cells; ESD and corner pads are delegated to a future shuttle/package flow.
+- `pd/padframe/e1_demo_padframe.yaml` has `status: contract_scaffold`, with release gates blocked for padframe, package, and board fabrication.
+- `docs/pd/padframe/e1_demo_padframe.md` is a planning contract, not foundry IO-ring release evidence.
 
 Required closure:
 
@@ -27,20 +27,20 @@ Required closure:
 
 - The package pinout assigns logical chip pins to placeholder package pin numbers and board nets, but those assignments are not backed by package-vendor or foundry bonding data.
 - Pins `NC1` through `NC11` are intentionally no-connect package positions and have no functional assignment.
-- The FPGA constraint skeleton `board/fpga/constraints/hello_demo_ulx3s.lpf` lists required logical ports only in comments. There are no active `LOCATE COMP` package-pin assignments.
-- `board/fpga/hello_demo_fpga.yaml` records `board.exact_revision: unassigned` and keeps `bitstream_release_blocked_until_pins_assigned: true`.
-- WiFi adapter names are documented as a future external-module surface in the FPGA LPF comments but are not assigned in the current hello-demo package pinout or FPGA target.
+- The FPGA constraint skeleton `board/fpga/constraints/e1_demo_ulx3s.lpf` lists required logical ports only in comments. There are no active `LOCATE COMP` package-pin assignments.
+- `board/fpga/e1_demo_fpga.yaml` records `board.exact_revision: unassigned` and keeps `bitstream_release_blocked_until_pins_assigned: true`.
+- WiFi adapter names are documented as a future external-module surface in the FPGA LPF comments but are not assigned in the current e1-demo package pinout or FPGA target.
 
 Required closure:
 
-- Select an exact FPGA board revision and assign every `hello_chip_top` external signal to physical FPGA package pins.
+- Select an exact FPGA board revision and assign every `e1_chip_top` external signal to physical FPGA package pins.
 - Replace LPF comments with concrete `LOCATE COMP`, `IOBUF`, and clock constraints.
 - Verify reset polarity, oscillator frequency, IO bank voltages, and debug host wiring on hardware.
 - Decide whether each no-connect package pin remains NC in the released package or is repurposed with package and board evidence.
 
 ## Missing KiCad and board fabrication artifacts
 
-Only `docs/board/kicad/hello-demo/fab-notes.md` exists under the KiCad project directory. The following release artifacts are missing:
+Only `docs/board/kicad/e1-demo/fab-notes.md` exists under the KiCad project directory. The following release artifacts are missing:
 
 - `*.kicad_pro`
 - `*.kicad_sch`
@@ -128,7 +128,7 @@ Required closure:
 
 `scripts/check_fpga_target.py` validates the current scaffold contract, but it is not a bitstream release check. The release blockers are:
 
-- `board/fpga/hello_demo_fpga.yaml` has `status: scaffold`.
+- `board/fpga/e1_demo_fpga.yaml` has `status: scaffold`.
 - `board.exact_revision` is `unassigned`.
 - `constraints.bitstream_release_blocked_until_pins_assigned` is `true`.
 - The LPF contains no active package-pin assignments.
@@ -139,7 +139,7 @@ Required closure:
 
 Required closure:
 
-- Add a release-target FPGA manifest or update `hello_demo_fpga.yaml` only after exact hardware is selected.
+- Add a release-target FPGA manifest or update `e1_demo_fpga.yaml` only after exact hardware is selected.
 - Add concrete LPF constraints and a bitstream build transcript.
 - Archive nextpnr/ecppack logs and timing results.
 - Keep `product-check` failing until the bitstream release blocker is removed with evidence.

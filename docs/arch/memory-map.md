@@ -1,6 +1,6 @@
 # Memory map
 
-All addresses are byte addresses. The hello chip uses a single-cycle MMIO request interface. Only word-aligned accesses in the first 256 bytes of each 4 KiB region are implemented in the current RTL. Nonzero `addr[11:8]`, unaligned accesses, and unknown regions return `0xDEAD_BEEF` at the top-level decode.
+All addresses are byte addresses. The e1 chip uses a single-cycle MMIO request interface. Only word-aligned accesses in the first 256 bytes of each 4 KiB region are implemented in the current RTL. Nonzero `addr[11:8]`, unaligned accesses, and unknown regions return `0xDEAD_BEEF` at the top-level decode.
 
 | Region | Base | Size | Purpose |
 | --- | ---: | ---: | --- |
@@ -13,7 +13,7 @@ All addresses are byte addresses. The hello chip uses a single-cycle MMIO reques
 
 ## Linux-capable AXI-Lite scaffold map
 
-The CPU/interconnect scaffold is separate from the hello-chip debug MMIO path. It uses AXI-Lite-style channels and establishes the future software contract. The hello-chip top now exposes a small debug-visible DRAM aperture for DMA integration, while the Linux-capable scaffold keeps its own AXI-Lite DRAM model:
+The CPU/interconnect scaffold is separate from the e1-chip debug MMIO path. It uses AXI-Lite-style channels and establishes the future software contract. The e1-chip top now exposes a small debug-visible DRAM aperture for DMA integration, while the Linux-capable scaffold keeps its own AXI-Lite DRAM model:
 
 | Region | Base | Size | Purpose |
 | --- | ---: | ---: | --- |
@@ -28,7 +28,7 @@ The `256 MiB` row is the software-visible aperture contract, not implemented cap
 The Linux-capable scaffold routes DMA master traffic only to the DRAM model. DMA access attempts outside the DRAM aperture must fail with a memory error and must not update MMIO targets. This is a local containment check, not an IOMMU or coherency implementation.
 
 The map is also not a complete boot-memory map. The current reset ROM entry is
-the hello-chip identity ROM, and no boot SRAM region, ROM-to-SRAM copy contract,
+the e1-chip identity ROM, and no boot SRAM region, ROM-to-SRAM copy contract,
 DRAM initialization sequence, or OpenSBI memory-discovery handoff is implemented
 in this map. Those rows must be added before Linux boot-memory readiness can be
 claimed.

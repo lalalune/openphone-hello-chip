@@ -6,32 +6,32 @@
       "evidence": [
         {
           "artifact": "Buildroot defconfig transcript",
-          "path": "docs/evidence/buildroot/openphone_hello_defconfig.log",
+          "path": "docs/evidence/buildroot/openagent_e1_defconfig.log",
           "capture_command": "sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot defconfig",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=buildroot artifact=openphone_hello_defconfig",
-            "openphone-evidence: command=make BR2_EXTERNAL=",
-            "openphone-evidence: started_utc=",
-            "openphone_hello_defconfig",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=buildroot artifact=openagent_e1_defconfig",
+            "openagent-evidence: command=make BR2_EXTERNAL=",
+            "openagent-evidence: started_utc=",
+            "openagent_e1_defconfig",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
         },
         {
           "artifact": "Buildroot image manifest",
-          "path": "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
+          "path": "docs/evidence/buildroot/openagent_e1_image_manifest.txt",
           "capture_command": "sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot image-manifest",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=buildroot artifact=openphone_hello_image_manifest",
-            "openphone-evidence: command=find output/images",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=buildroot artifact=openagent_e1_image_manifest",
+            "openagent-evidence: command=find output/images",
+            "openagent-evidence: started_utc=",
             "output/images",
             "sha256",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "at_least_one": [
             [
@@ -44,37 +44,37 @@
         },
         {
           "artifact": "Buildroot runtime MMIO smoke",
-          "path": "docs/evidence/buildroot/hello-mmio-smoke.log",
-          "capture_command": "HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke",
+          "path": "docs/evidence/buildroot/e1-mmio-smoke.log",
+          "capture_command": "E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-mmio-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=buildroot artifact=hello-mmio-smoke",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
-            "hello-mmio-smoke",
-            "/dev/hello-npu",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=buildroot artifact=e1-mmio-smoke",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
+            "e1-mmio-smoke",
+            "/dev/e1-npu",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
         },
         {
-          "artifact": "Buildroot target hello-npu ML smoke",
-          "path": "docs/evidence/buildroot/hello-npu-ml-smoke.log",
-          "capture_command": "HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
+          "artifact": "Buildroot target e1-npu ML smoke",
+          "path": "docs/evidence/buildroot/e1-npu-ml-smoke.log",
+          "capture_command": "E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-npu-ml-smoke --device /dev/e1-npu' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
           "claim_boundary": "driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
           "min_bytes": 180,
           "required_strings": [
-            "openphone-evidence: target=buildroot artifact=hello-npu-ml-smoke",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
-            "hello-npu-ml-smoke: PASS",
+            "openagent-evidence: target=buildroot artifact=e1-npu-ml-smoke",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
+            "e1-npu-ml-smoke: PASS",
             "workload=gemm_s8_int8_2x2x3",
             "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
-            "/dev/hello-npu",
-            "HELLO_NPU_ML_SMOKE_PASS",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "/dev/e1-npu",
+            "E1_NPU_ML_SMOKE_PASS",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py buildroot --require-evidence"
         }
@@ -84,48 +84,48 @@
       "evidence": [
         {
           "artifact": "Linux kernel build transcript",
-          "path": "docs/evidence/linux/openphone_hello_kernel_build.log",
+          "path": "docs/evidence/linux/openagent_e1_kernel_build.log",
           "capture_command": "sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux kernel-build",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
-            "openphone-evidence: command=make ARCH=riscv",
-            "openphone-evidence: started_utc=",
-            "CONFIG_OPENPHONE_HELLO",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=linux artifact=openagent_e1_kernel_build",
+            "openagent-evidence: command=make ARCH=riscv",
+            "openagent-evidence: started_utc=",
+            "CONFIG_OPENAGENT_E1",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py linux --require-evidence"
         },
         {
           "artifact": "Linux DTB validation transcript",
-          "path": "docs/evidence/linux/openphone_hello_dtb_check.log",
+          "path": "docs/evidence/linux/openagent_e1_dtb_check.log",
           "capture_command": "sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux dtb-check",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=linux artifact=openphone_hello_dtb_check",
-            "openphone-evidence: command=make ARCH=riscv",
-            "openphone-evidence: started_utc=",
-            "openphone-hello",
-            "openphone,hello-npu",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=linux artifact=openagent_e1_dtb_check",
+            "openagent-evidence: command=make ARCH=riscv",
+            "openagent-evidence: started_utc=",
+            "openagent-e1",
+            "openagent,e1-npu",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py linux --require-evidence"
         },
         {
           "artifact": "Linux runtime MMIO smoke",
-          "path": "docs/evidence/linux/hello-mmio-smoke.log",
-          "capture_command": "HELLO_SMOKE_CMD='ssh root@TARGET /tmp/hello-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke",
+          "path": "docs/evidence/linux/e1-mmio-smoke.log",
+          "capture_command": "E1_SMOKE_CMD='ssh root@TARGET /tmp/e1-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=linux artifact=hello-mmio-smoke",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
-            "HELLO_NPU_BASE=0x10020000",
-            "/dev/hello-npu",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=linux artifact=e1-mmio-smoke",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
+            "E1_NPU_BASE=0x10020000",
+            "/dev/e1-npu",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py linux --require-evidence"
         }
@@ -134,35 +134,35 @@
     "opensbi": {
       "evidence": [
         {
-          "artifact": "OpenSBI OpenPhone build transcript",
-          "path": "docs/evidence/linux/opensbi_openphone_build.log",
-          "capture_command": "OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build",
+          "artifact": "OpenSBI OpenAgent build transcript",
+          "path": "docs/evidence/linux/opensbi_openagent_build.log",
+          "capture_command": "OPENAGENT_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=opensbi artifact=opensbi_openphone_build",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=opensbi artifact=opensbi_openagent_build",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "OpenSBI",
             "fw_dynamic",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py opensbi --require-evidence"
         },
         {
           "artifact": "OpenSBI fw_dynamic handoff transcript",
           "path": "docs/evidence/linux/opensbi_fw_dynamic_handoff.log",
-          "capture_command": "OPENPHONE_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff",
+          "capture_command": "OPENAGENT_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=opensbi artifact=opensbi_fw_dynamic_handoff",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=opensbi artifact=opensbi_fw_dynamic_handoff",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "OpenSBI",
             "fw_dynamic",
             "Next Address",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py opensbi --require-evidence"
         }
@@ -171,34 +171,34 @@
     "u-boot": {
       "evidence": [
         {
-          "artifact": "U-Boot OpenPhone build transcript",
-          "path": "docs/evidence/linux/u_boot_openphone_build.log",
-          "capture_command": "OPENPHONE_UBOOT_CMD='make openphone_defconfig && make' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot build",
+          "artifact": "U-Boot OpenAgent build transcript",
+          "path": "docs/evidence/linux/u_boot_openagent_build.log",
+          "capture_command": "OPENAGENT_UBOOT_CMD='make openagent_defconfig && make' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot build",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=u-boot artifact=u_boot_openphone_build",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=u-boot artifact=u_boot_openagent_build",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "U-Boot",
             "u-boot.bin",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py u-boot --require-evidence"
         },
         {
           "artifact": "U-Boot OpenSBI boot-chain transcript",
           "path": "docs/evidence/linux/u_boot_opensbi_boot_chain.log",
-          "capture_command": "OPENPHONE_UBOOT_BOOT_CMD='/path/to/qemu-or-renode boot command' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot boot-chain",
+          "capture_command": "OPENAGENT_UBOOT_BOOT_CMD='/path/to/qemu-or-renode boot command' sw/u-boot/capture-u-boot-evidence.sh /path/to/u-boot boot-chain",
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=u-boot artifact=u_boot_opensbi_boot_chain",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=u-boot artifact=u_boot_opensbi_boot_chain",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "OpenSBI",
             "U-Boot",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py u-boot --require-evidence"
         }
@@ -208,21 +208,21 @@
       "evidence": [
         {
           "artifact": "AOSP lunch transcript",
-          "path": "docs/evidence/android/openphone_ai_soc_lunch.log",
+          "path": "docs/evidence/android/openagent_ai_soc_lunch.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp lunch",
           "external_artifacts": [
             "build/envsetup.sh",
-            "device/openphone/openphone_ai_soc/AndroidProducts.mk"
+            "device/openagent/openagent_ai_soc/AndroidProducts.mk"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=openphone_ai_soc_lunch",
-            "openphone-evidence: command=lunch openphone_ai_soc-userdebug",
-            "openphone-evidence: started_utc=",
-            "openphone_ai_soc-userdebug",
-            "TARGET_PRODUCT=openphone_ai_soc",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=aosp artifact=openagent_ai_soc_lunch",
+            "openagent-evidence: command=lunch openagent_ai_soc-userdebug",
+            "openagent-evidence: started_utc=",
+            "openagent_ai_soc-userdebug",
+            "TARGET_PRODUCT=openagent_ai_soc",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
@@ -235,22 +235,22 @@
         },
         {
           "artifact": "AOSP vendorimage transcript",
-          "path": "docs/evidence/android/openphone_ai_soc_vendorimage.log",
+          "path": "docs/evidence/android/openagent_ai_soc_vendorimage.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp vendorimage",
           "external_artifacts": [
-            "out/target/product/openphone_ai_soc/vendor.img",
-            "out/target/product/openphone_ai_soc/installed-files-vendor.txt",
-            "out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml"
+            "out/target/product/openagent_ai_soc/vendor.img",
+            "out/target/product/openagent_ai_soc/installed-files-vendor.txt",
+            "out/target/product/openagent_ai_soc/vendor/etc/vintf/manifest/openagent_e1.xml"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=openphone_ai_soc_vendorimage",
-            "openphone-evidence: command=m vendorimage",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=aosp artifact=openagent_ai_soc_vendorimage",
+            "openagent-evidence: command=m vendorimage",
+            "openagent-evidence: started_utc=",
             "vendor.img",
             "installed-files-vendor.txt",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
@@ -263,21 +263,21 @@
         },
         {
           "artifact": "AOSP VINTF transcript",
-          "path": "docs/evidence/android/openphone_ai_soc_checkvintf.log",
+          "path": "docs/evidence/android/openagent_ai_soc_checkvintf.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp checkvintf",
           "external_artifacts": [
-            "out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml",
-            "out/target/product/openphone_ai_soc/vendor.img"
+            "out/target/product/openagent_ai_soc/vendor/etc/vintf/manifest/openagent_e1.xml",
+            "out/target/product/openagent_ai_soc/vendor.img"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=openphone_ai_soc_checkvintf",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=aosp artifact=openagent_ai_soc_checkvintf",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "checkvintf",
-            "openphone_ai_soc",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent_ai_soc",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
@@ -292,21 +292,21 @@
         },
         {
           "artifact": "AOSP SELinux policy build transcript",
-          "path": "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
+          "path": "docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp sepolicy-build",
           "external_artifacts": [
-            "out/target/product/openphone_ai_soc/obj/ETC/vendor_sepolicy.cil_intermediates/vendor_sepolicy.cil",
-            "out/target/product/openphone_ai_soc/obj/ETC/sepolicy_intermediates/sepolicy"
+            "out/target/product/openagent_ai_soc/obj/ETC/vendor_sepolicy.cil_intermediates/vendor_sepolicy.cil",
+            "out/target/product/openagent_ai_soc/obj/ETC/sepolicy_intermediates/sepolicy"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=openphone_ai_soc_sepolicy_build",
-            "openphone-evidence: command=m vendor_sepolicy.cil selinux_policy",
-            "openphone-evidence: started_utc=",
-            "hello_npu_device",
-            "hal_hello_npu_default",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=aosp artifact=openagent_ai_soc_sepolicy_build",
+            "openagent-evidence: command=m vendor_sepolicy.cil selinux_policy",
+            "openagent-evidence: started_utc=",
+            "e1_npu_device",
+            "hal_e1_npu_default",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
@@ -321,19 +321,19 @@
         },
         {
           "artifact": "AOSP SELinux neverallow transcript",
-          "path": "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
+          "path": "docs/evidence/android/openagent_ai_soc_selinux_neverallow.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp selinux-neverallow",
           "external_artifacts": [
-            "out/target/product/openphone_ai_soc/obj/FAKE/sepolicy_neverallows_intermediates"
+            "out/target/product/openagent_ai_soc/obj/FAKE/sepolicy_neverallows_intermediates"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=openphone_ai_soc_selinux_neverallow",
-            "openphone-evidence: command=m sepolicy_neverallows",
-            "openphone-evidence: started_utc=",
-            "hello_npu",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: target=aosp artifact=openagent_ai_soc_selinux_neverallow",
+            "openagent-evidence: command=m sepolicy_neverallows",
+            "openagent-evidence: started_utc=",
+            "e1_npu",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
@@ -348,7 +348,7 @@
         },
         {
           "artifact": "AOSP CTS/VTS scope intake transcript",
-          "path": "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+          "path": "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cts-vts-plan",
           "external_artifacts": [
             "out/host/linux-x86/cts",
@@ -357,15 +357,15 @@
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=openphone_ai_soc_cts_vts_plan",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=aosp artifact=openagent_ai_soc_cts_vts_plan",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "CTS_SCOPE=smoke_only",
             "VTS_SCOPE=vintf_selinux_hal_manager_only",
             "EXCLUDED_MODULES=",
             "RESULT_DIR=",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
@@ -381,29 +381,29 @@
           "claim_boundary": "virtual_device_smoke_only_not_boot_or_compatibility_evidence",
           "capture_command": "sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp cuttlefish-smoke",
           "external_artifacts": [
-            "out/target/product/openphone_ai_soc/vendor.img",
+            "out/target/product/openagent_ai_soc/vendor.img",
             "Cuttlefish instance adb transport"
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=cuttlefish_riscv64_smoke",
-            "openphone-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=aosp artifact=cuttlefish_riscv64_smoke",
+            "openagent-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "launch_cvd",
             "adb shell",
             "ro.product.cpu.abi=riscv64",
-            "openphone_ai_soc",
+            "openagent_ai_soc",
             "sys.boot_completed=1",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
             "shell-only success",
             "boot timeout",
             "adb: device offline",
-            "Android booted on hello_soc",
+            "Android booted on e1_soc",
             "Android compatible",
             "CDD compliant",
             "CTS passed",
@@ -421,14 +421,14 @@
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=qemu_riscv64_smoke",
-            "openphone-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=aosp artifact=qemu_riscv64_smoke",
+            "openagent-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "qemu-system-riscv64",
-            "openphone_ai_soc",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent_ai_soc",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [
@@ -444,8 +444,8 @@
           ]
         },
         {
-          "artifact": "AOSP Renode hello_soc smoke transcript",
-          "path": "docs/evidence/android/renode_hello_soc_smoke.log",
+          "artifact": "AOSP Renode e1_soc smoke transcript",
+          "path": "docs/evidence/android/renode_e1_soc_smoke.log",
           "claim_boundary": "virtual_device_smoke_only_not_boot_or_compatibility_evidence",
           "capture_command": "AOSP_RENODE_SMOKE_COMMAND='/exact/renode smoke command' sw/aosp-device/capture-aosp-evidence.sh /path/to/aosp renode-smoke",
           "external_artifacts": [
@@ -454,14 +454,14 @@
           ],
           "min_bytes": 160,
           "required_strings": [
-            "openphone-evidence: target=aosp artifact=renode_hello_soc_smoke",
-            "openphone-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
-            "openphone-evidence: command=",
-            "openphone-evidence: started_utc=",
+            "openagent-evidence: target=aosp artifact=renode_e1_soc_smoke",
+            "openagent-evidence: claim_boundary=virtual_device_smoke_only_not_boot_or_compatibility_evidence",
+            "openagent-evidence: command=",
+            "openagent-evidence: started_utc=",
             "renode",
-            "openphone_ai_soc",
-            "openphone-evidence: ended_utc=",
-            "openphone-evidence: status=PASS"
+            "openagent_ai_soc",
+            "openagent-evidence: ended_utc=",
+            "openagent-evidence: status=PASS"
           ],
           "validation_command": "python3 scripts/check_software_bsp.py aosp --require-evidence",
           "forbidden_strings": [

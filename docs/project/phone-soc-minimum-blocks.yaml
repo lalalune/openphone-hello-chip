@@ -1,19 +1,19 @@
-schema: openphone.phone_soc_minimum_blocks.v1
+schema: openagent.phone_soc_minimum_blocks.v1
 status: pre_hardware_release_blocked
 claim_boundary: >
   This inventory describes the minimum block set for an Android-capable RISC-V
   AI phone SoC. Repo-local artifacts are architecture contracts and scaffolds
   unless an evidence gate says otherwise.
 source_contracts:
-  platform_contract: sw/platform/hello_platform_contract.json
+  platform_contract: sw/platform/e1_platform_contract.json
   rtl_gap_work_order: verify/rtl_gap_work_order.yaml
   software_bsp_gate: scripts/check_software_bsp.py
 release_claim_policy:
   android_boot_claim_requires:
     - make software-bsp-evidence-check
-    - docs/evidence/android/openphone_ai_soc_lunch.log
-    - docs/evidence/android/openphone_ai_soc_vendorimage.log
-    - docs/evidence/android/openphone_ai_soc_checkvintf.log
+    - docs/evidence/android/openagent_ai_soc_lunch.log
+    - docs/evidence/android/openagent_ai_soc_vendorimage.log
+    - docs/evidence/android/openagent_ai_soc_checkvintf.log
     - docs/evidence/android/cuttlefish_riscv64_boot.log
   wifi_claim_requires:
     - docs/manufacturing/real-world-verification-gaps.yaml#wifi_bluetooth_gnss_nfc_stack
@@ -45,7 +45,7 @@ phone_soc_blocks:
       - debug and trace policy
     current_repo_artifacts:
       - docs/arch/cpu-subsystem.md
-      - rtl/cpu/hello_cpu_subsystem_stub.sv
+      - rtl/cpu/e1_cpu_subsystem_stub.sv
       - verify/cocotb/test_tiny_cpu_execution.py
     current_status: blocked_contract_model_only
     closure_gate: executable Linux/OpenSBI boot transcript on selected CPU integration
@@ -64,7 +64,7 @@ phone_soc_blocks:
       - lifecycle state machine
     current_repo_artifacts:
       - docs/arch/security.md
-      - rtl/bootrom/hello_bootrom.sv
+      - rtl/bootrom/e1_bootrom.sv
     current_status: blocked_placeholder_contract
     closure_gate: secure boot and debug-lock fail-closed evidence
     evidence_required:
@@ -82,8 +82,8 @@ phone_soc_blocks:
       - carveout and dma-buf allocation policy
     current_repo_artifacts:
       - docs/arch/memory-subsystem.md
-      - rtl/memory/hello_axi_lite_dram.sv
-      - rtl/top/hello_soc_top.sv
+      - rtl/memory/e1_axi_lite_dram.sv
+      - rtl/top/e1_soc_top.sv
     current_status: blocked_sram_backed_axi_lite_model
     closure_gate: UMA coherency/IOMMU/QoS validation report
     evidence_required:
@@ -101,8 +101,8 @@ phone_soc_blocks:
       - arbitration and QoS controls
     current_repo_artifacts:
       - docs/arch/interconnect.md
-      - rtl/interconnect/hello_axi_lite_interconnect.sv
-      - rtl/interconnect/hello_linux_soc_contract.sv
+      - rtl/interconnect/e1_axi_lite_interconnect.sv
+      - rtl/interconnect/e1_linux_soc_contract.sv
     current_status: blocked_axi_lite_scaffold
     closure_gate: generated address-map equivalence and fabric protocol proof
     evidence_required:
@@ -120,7 +120,7 @@ phone_soc_blocks:
       - performance and fallback counters
     current_repo_artifacts:
       - docs/arch/npu.md
-      - rtl/npu/hello_npu.sv
+      - rtl/npu/e1_npu.sv
       - benchmarks/configs/benchmark_plan.json
     current_status: blocked_mmio_tiny_gemm_only
     closure_gate: AI throughput evidence with fallback accounting
@@ -139,8 +139,8 @@ phone_soc_blocks:
       - underflow and vsync reporting
     current_repo_artifacts:
       - docs/arch/display.md
-      - rtl/display/hello_display.sv
-      - sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml
+      - rtl/display/e1_display.sv
+      - sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml
     current_status: blocked_scanout_scaffold_no_gpu
     closure_gate: SurfaceFlinger/HWC/display pipeline transcript
     evidence_required:
@@ -160,7 +160,7 @@ phone_soc_blocks:
       - docs/arch/wifi.md
       - package/wifi-external-interface.yaml
       - package/wifi/murata-1dx-sdio.yaml
-      - sw/linux/dts/openphone-hello.dts
+      - sw/linux/dts/openagent-e1.dts
     current_status: blocked_external_module_contract_only
     closure_gate: WiFi/Bluetooth enumeration and traffic transcript
     evidence_required:
@@ -196,7 +196,7 @@ phone_soc_blocks:
       - board fabrication and first-article limits
     current_repo_artifacts:
       - pd/signoff/manifest.yaml
-      - docs/package/hello-demo-package.md
+      - docs/package/e1-demo-package.md
       - docs/manufacturing/release-manifest.yaml
     current_status: blocked_planning_artifacts_only
     closure_gate: make pd-signoff-check and release manifest unblock

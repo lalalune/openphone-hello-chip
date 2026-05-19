@@ -20,5 +20,5 @@ GCC 16 (C23 made `bool` a keyword and OpenSBI's `sbi_types.h` typedefs it).
     docker run --rm -v $PWD:/work -w /work riscv64/ubuntu:24.04 \
       bash -c "apt-get update && apt-get install -y gcc-riscv64-linux-gnu make git && \
                CROSS_COMPILE=riscv64-linux-gnu- bash scripts/build/build_opensbi_qemu.sh"
-- **For the openphone platform** specifically, see
-  `sw/opensbi/platform/openphone/README.md` (scaffolded on ws/renode-tier2-our-map).
+- **For the openagent platform** specifically, see
+  `sw/opensbi/platform/openagent/README.md` (scaffolded on ws/renode-tier2-our-map).

@@ -2,7 +2,7 @@
 
 Status: BLOCKED for production secure boot.
 
-This repository currently contains a hello-chip identity ROM, not a secure boot
+This repository currently contains a e1-chip identity ROM, not a secure boot
 implementation. The ROM exposes the platform contract words `OPSO`, `CHIP`,
 contract version `1`, and a boot-vector placeholder. It has no firmware
 authentication or lifecycle enforcement.
@@ -11,8 +11,8 @@ authentication or lifecycle enforcement.
 
 | Surface | Local evidence | Security result |
 |---|---|---|
-| Boot ROM identity words | `rtl/bootrom/hello_bootrom.sv` and platform-contract checks | Contract ROM only; not a trust anchor. |
-| Boot ROM write behavior | `verify/cocotb/test_hello_lifecycle.py` writes ROM offsets and verifies reads stay fixed | Negative evidence that the current ROM is immutable through the MMIO path. |
+| Boot ROM identity words | `rtl/bootrom/e1_bootrom.sv` and platform-contract checks | Contract ROM only; not a trust anchor. |
+| Boot ROM write behavior | `verify/cocotb/test_e1_lifecycle.py` writes ROM offsets and verifies reads stay fixed | Negative evidence that the current ROM is immutable through the MMIO path. |
 | Lifecycle state | No lifecycle RTL, registers, pins, or reset straps | BLOCKED. |
 | eFuse/OTP | No fuse macro, fuse shadow registers, or provisioning flow | BLOCKED. |
 | Root key material | No key hash, public key, certificate chain, or device-unique key source | BLOCKED. |

@@ -47,7 +47,7 @@ stream
 lmbench bw_mem
 lmbench lat_mem_rd
 fio sequential/random profiles
-tflite benchmark_model with CPU and hello NPU shim
+tflite benchmark_model with CPU and e1 NPU shim
 selected CTS/VTS host-side smoke tests
 ```
 

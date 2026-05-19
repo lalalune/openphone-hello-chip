@@ -1,4 +1,4 @@
-schema: openphone.cpu_ap_integration_work_order.v1
+schema: openagent.cpu_ap_integration_work_order.v1
 as_of: 2026-05-17
 status: fail_closed_no_linux_capable_ap
 purpose: >
@@ -22,15 +22,15 @@ candidate_paths:
     source: https://chipyard.readthedocs.io/
     rationale: Mature open-source RISC-V SoC generator path with Rocket/BOOM ecosystem and FireSim trajectory.
     local_work:
-      - Define a minimal Rocket-based config matching the OpenPhone memory map.
+      - Define a minimal Rocket-based config matching the OpenAgent memory map.
       - Export generated Verilog and platform metadata into an isolated generated-artifact path.
-      - Compare generated DTS/interrupt/memory map against sw/platform/hello_platform_contract.json.
+      - Compare generated DTS/interrupt/memory map against sw/platform/e1_platform_contract.json.
     blocked_until:
       - Toolchain install is pinned.
       - Generated RTL provenance is archived.
       - Firmware and Linux boot evidence exists.
   - id: keep_tiny_cpu_contract_only
-    source: repo-local rtl/cpu/hello_cpu_subsystem_stub.sv
+    source: repo-local rtl/cpu/e1_cpu_subsystem_stub.sv
     rationale: Useful for local bus, trap-negative, and scaffold checks while AP work remains blocked.
     local_work:
       - Expand unsupported instruction tests.
@@ -39,17 +39,17 @@ candidate_paths:
     blocked_until:
       - Never sufficient for Linux/Android AP claims.
 required_evidence:
-  - path: build/evidence/cpu_ap/openphone_hello_opensbi_boot.log
+  - path: build/evidence/cpu_ap/openagent_e1_opensbi_boot.log
     required_markers:
       - OpenSBI
-      - OpenPhone
+      - OpenAgent
       - platform timer
-  - path: build/evidence/cpu_ap/openphone_hello_linux_boot.log
+  - path: build/evidence/cpu_ap/openagent_e1_linux_boot.log
     required_markers:
       - Linux version
       - Freeing unused kernel memory
-      - hello-mmio-smoke PASS
-  - path: build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log
+      - e1-mmio-smoke PASS
+  - path: build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log
     required_markers:
       - machine timer interrupt
       - external interrupt

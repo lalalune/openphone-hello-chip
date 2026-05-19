@@ -1,20 +1,20 @@
 # Renode qemu-virt reference target
 
 Renode is a qemu-virt software reference only tier. The checked-in reference by
-itself is not boot evidence for the qemu-virt path and is not the hello-chip
-hardware ABI. In short, this is not the hello-chip hardware ABI.
+itself is not boot evidence for the qemu-virt path and is not the e1-chip
+hardware ABI. In short, this is not the e1-chip hardware ABI.
 
 The platform in this directory mirrors enough of the qemu-virt reference shape
 for early firmware bring-up experiments: an RV64 CPU, RAM at `0x8000_0000`, and
-a UART at `0x1000_0000`. The hello-chip ABI remains the CPU-less debug/MMIO
-contract in `sw/platform/hello_platform_contract.json`; the overlapping
-`0x1000_0000` qemu-virt UART address must not be treated as the hello
+a UART at `0x1000_0000`. The e1-chip ABI remains the CPU-less debug/MMIO
+contract in `sw/platform/e1_platform_contract.json`; the overlapping
+`0x1000_0000` qemu-virt UART address must not be treated as the e1
 peripheral-control block in software that targets real hardware.
 
 `scripts/run_renode.sh --check` is fail-closed. It checks that the platform,
 documentation, and `sim/renode/expected_serial_banner.txt` match the qemu-virt
 contract, then runs the executable preflight. Missing `renode` or missing
-`build/qemu/hello_qemu_firmware.elf` reports `STATUS: BLOCKED` unless
+`build/qemu/e1_qemu_firmware.elf` reports `STATUS: BLOCKED` unless
 `REQUIRE_RENODE=1` is set. When both are present, check mode runs Renode for a
 bounded interval and only passes if the captured output contains the expected
 serial banner. Install Renode from the official packages, confirm the executable
@@ -34,7 +34,7 @@ scripts/run_renode.sh --check --transcript path/to/real-renode-serial.log
 ```
 
 Transcript intake also runs the local Renode preflight and checks for
-`build/qemu/hello_qemu_firmware.elf`. A copied banner in a text file is not
+`build/qemu/e1_qemu_firmware.elf`. A copied banner in a text file is not
 enough on its own: if `renode` is missing, `renode --version` cannot run, or the
 firmware ELF is absent, intake remains `STATUS: BLOCKED`.
 
@@ -43,13 +43,13 @@ The expected UART banner contract is:
 documentation match the qemu-virt contract, then reports executable smoke as
 `STATUS: BLOCKED` unless a real Renode serial transcript path exists. The
 expected UART transcript artifact is
-`build/renode/openphone_hello_uart.transcript`, the expected smoke manifest
-artifact is `build/renode/openphone_hello_smoke.json`, and the QEMU reference
+`build/renode/openagent_e1_uart.transcript`, the expected smoke manifest
+artifact is `build/renode/openagent_e1_smoke.json`, and the QEMU reference
 transcript artifact is `build/reports/qemu_smoke.log`. A future passing smoke
-must load `build/qemu/hello_qemu_firmware.elf` and capture the UART banner:
+must load `build/qemu/e1_qemu_firmware.elf` and capture the UART banner:
 
 ```text
-openphone hello qemu
+openagent e1 qemu
 ```
 
 Passing bounded check or intake archives `build/reports/renode_smoke.log` and

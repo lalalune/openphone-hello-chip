@@ -2,12 +2,12 @@
 
 This document is a requirements gate, not implementation evidence. The current
 repo-local executable CPU path is the tiny contract model in
-`rtl/cpu/hello_cpu_subsystem_stub.sv`; it is useful for fetch/execute and bus
+`rtl/cpu/e1_cpu_subsystem_stub.sv`; it is useful for fetch/execute and bus
 bring-up, but it is not a Linux-capable hart.
 
 It also separates two targets that must not be conflated:
 
-- `OpenPhoneRocketConfig` is the first generated RV64GC Linux bring-up path.
+- `OpenAgentRocketConfig` is the first generated RV64GC Linux bring-up path.
 - A 2028 phone-class application processor is blocked until separate AP
   topology, ISA, cache/MMU, benchmark, power/thermal, Android, and silicon
   evidence exists.
@@ -20,18 +20,18 @@ It also separates two targets that must not be conflated:
 | Boot | Focused cocotb wrapper preloads DRAM and releases reset at `0x8000_0000`. |
 | Interrupts | Timer, software, and external IRQ levels are reflected through `irq_pending`; no trap entry occurs. |
 | Memory | AXI-Lite DRAM aperture is sufficient for tiny programs and contract tests only. |
-| Linux/AP claims | Blocked. QEMU and Renode remain software-reference targets, not hello-chip hardware proof. |
+| Linux/AP claims | Blocked. QEMU and Renode remain software-reference targets, not e1-chip hardware proof. |
 
 ## Selected AP Path
 
-`generators/chipyard/openphone-rocket-manifest.json` pins the selected generated
+`generators/chipyard/openagent-rocket-manifest.json` pins the selected generated
 AP path:
 
 - Chipyard `1.13.0` at commit
   `69eba860a352343e4ac6b6df0f3638a79a86ec78`.
 - Single Rocket RV64GC hart for the first AP integration.
-- Project config name `OpenPhoneRocketConfig`.
-- Production wrapper name `openphone_rocket_ap`.
+- Project config name `OpenAgentRocketConfig`.
+- Production wrapper name `openagent_rocket_ap`.
 
 The local tiny CPU must not be expanded into a Linux AP. It remains a contract
 test scaffold until generated Rocket/Chipyard artifacts and evidence replace or
@@ -77,7 +77,7 @@ least:
   instruction, load/store/fetch access fault, timer interrupt, software
   interrupt, and external interrupt.
 - Reset handoff from ROM or firmware entry, with a checked serial transcript
-  proving OpenSBI reaches the next boot stage on the hello-chip memory map.
+  proving OpenSBI reaches the next boot stage on the e1-chip memory map.
 
 ## Required Evidence Artifacts
 
@@ -86,19 +86,19 @@ generated or wrapped CPU/AP target and must include the listed markers.
 
 | Artifact | Required markers |
 | --- | --- |
-| `build/evidence/cpu_ap/openphone_hello_opensbi_boot.log` | Reset PC, hart ID, `misa`, `mstatus`, `mtvec`, timer source, interrupt controller, UART console, DRAM base/size, and OpenSBI next-stage handoff. |
-| `build/evidence/cpu_ap/openphone_hello_linux_boot.log` | Linux early console, generated DTS hash, memory node, CPU node, timer node, interrupt-controller node, UART node, initramfs start, and hello MMIO smoke result. |
-| `build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log` | Illegal-instruction trap with `mcause`, `mepc`, and `mtval`; load/store/fetch access-fault traps; `mtime`/`mtimecmp` timer interrupt; software interrupt through `msip`; external interrupt claim/complete; return path through `mret` or `sret` as appropriate. |
-| `build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log` | ISA profile, `misa`, `riscv_hwprobe`, required base extension visibility, Sv39 or stronger MMU evidence, I-cache/D-cache/L2 cache parameters, cache-line size, TLB behavior, and page-table evidence. |
-| `build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log` | Benchmark report SHA-256, claim level, CoreMark/MHz, STREAM Triad, `lat_mem_rd`, `fio`, CPU frequency, run count, thermal state, and power method. |
+| `build/evidence/cpu_ap/openagent_e1_opensbi_boot.log` | Reset PC, hart ID, `misa`, `mstatus`, `mtvec`, timer source, interrupt controller, UART console, DRAM base/size, and OpenSBI next-stage handoff. |
+| `build/evidence/cpu_ap/openagent_e1_linux_boot.log` | Linux early console, generated DTS hash, memory node, CPU node, timer node, interrupt-controller node, UART node, initramfs start, and e1 MMIO smoke result. |
+| `build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log` | Illegal-instruction trap with `mcause`, `mepc`, and `mtval`; load/store/fetch access-fault traps; `mtime`/`mtimecmp` timer interrupt; software interrupt through `msip`; external interrupt claim/complete; return path through `mret` or `sret` as appropriate. |
+| `build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log` | ISA profile, `misa`, `riscv_hwprobe`, required base extension visibility, Sv39 or stronger MMU evidence, I-cache/D-cache/L2 cache parameters, cache-line size, TLB behavior, and page-table evidence. |
+| `build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log` | Benchmark report SHA-256, claim level, CoreMark/MHz, STREAM Triad, `lat_mem_rd`, `fio`, CPU frequency, run count, thermal state, and power method. |
 
 ## Exact Linux-Capable Gate States
 
 `docs/evidence/cpu-ap-evidence-manifest.json` is the source of truth for the
 current gate states. Every gate below is intentionally `blocked` until its
 evidence path exists, is bound to
-`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`, and the
-archived transcript ends with `openphone-evidence: status=PASS`.
+`build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json`, and the
+archived transcript ends with `openagent-evidence: status=PASS`.
 
 | Gate | Evidence required before PASS |
 | --- | --- |
@@ -110,7 +110,7 @@ archived transcript ends with `openphone-evidence: status=PASS`.
 | `uart_console` | UART console path visible to firmware and Linux early console. |
 | `dtb_linux_boot_contract` | Generated DTS with CPU, memory, timer, interrupt-controller, UART, and chosen stdout nodes. |
 | `opensbi_handoff` | OpenSBI transcript reaching the next-stage handoff on the selected memory map. |
-| `linux_initramfs_smoke` | Linux early console, initramfs start, and hello MMIO smoke result from the generated AP target. |
+| `linux_initramfs_smoke` | Linux early console, initramfs start, and e1 MMIO smoke result from the generated AP target. |
 
 `docs/evidence/linux-hardware-contract-gate.yaml` adds a local fail-closed
 scaffold gate for the RTL CPU, memory, interrupt, timer, and UART paths. Its
@@ -128,7 +128,7 @@ bounded attempt log at `build/reports/qemu_os_boot_attempt.log` may be
 Chipyard/Rocket AP gate.
 
 Generated DTS, memmap, regmap, or Verilog files under
-`build/chipyard/openphone_rocket` are also not sufficient by themselves. Run
+`build/chipyard/openagent_rocket` are also not sufficient by themselves. Run
 `python3 scripts/check_chipyard_generated_linux_contract.py` to audit their
 Linux launch shape; a structural DTS pass only means the generated AP exposes
 the expected CPU, memory, CLINT, PLIC, UART, ROM, and boot-address nodes.
@@ -153,8 +153,8 @@ Prepare the external generated AP path:
 make chipyard-external-generation-plan
 python3 scripts/check_chipyard_import_preflight.py --require-checkout
 python3 scripts/check_chipyard_verilator_preflight.py
-scripts/run_chipyard_openphone_verilator.sh
-python3 scripts/generate_chipyard_openphone.py
+scripts/run_chipyard_openagent_verilator.sh
+python3 scripts/generate_chipyard_openagent.py
 make chipyard-generated-check
 make cpu-ap-dts-audit chipyard-generated-linux-contract-check
 ```
@@ -173,7 +173,7 @@ python3 scripts/capture_cpu_ap_evidence.py hashes
 ```
 # Linux-Capable CPU Contract
 
-`rtl/cpu/hello_cpu_subsystem_stub.sv` is a tiny executable contract model. It
+`rtl/cpu/e1_cpu_subsystem_stub.sv` is a tiny executable contract model. It
 is useful for fetch/execute, bus, and negative trap tests, but it is not a
 Linux-capable application processor.
 

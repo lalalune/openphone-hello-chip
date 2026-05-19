@@ -1,60 +1,60 @@
 kicad-cli path: /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli
 10.0.2
 
-$ kicad-cli sch erc --format report --severity-all --output board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
+$ kicad-cli sch erc --format report --severity-all --output board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt board/kicad/e1-demo/e1-demo.kicad_sch
 Found 38 violations
-Saved ERC Report to board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt
+Saved ERC Report to board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt
 exit_status=0
 
-$ kicad-cli pcb drc --format report --severity-all --output board/reports/fab/hello-demo-2026-05-17/hello-demo-drc-report.txt board/kicad/hello-demo/hello-demo.kicad_pcb
+$ kicad-cli pcb drc --format report --severity-all --output board/reports/fab/e1-demo-2026-05-17/e1-demo-drc-report.txt board/kicad/e1-demo/e1-demo.kicad_pcb
 Found 0 violations
 Found 0 unconnected items
-Saved DRC Report to board/reports/fab/hello-demo-2026-05-17/hello-demo-drc-report.txt
+Saved DRC Report to board/reports/fab/e1-demo-2026-05-17/e1-demo-drc-report.txt
 exit_status=0
 
-$ kicad-cli pcb export gerbers --output board/reports/fab/hello-demo-2026-05-17/gerbers --layers F.Cu\,B.Cu\,F.Mask\,B.Mask\,F.Silkscreen\,B.Silkscreen\,F.Paste\,B.Paste\,F.Fab\,B.Fab\,Edge.Cuts --include-border-title board/kicad/hello-demo/hello-demo.kicad_pcb
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-F_Cu.gtl'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-B_Cu.gbl'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-F_Paste.gtp'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-B_Paste.gbp'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-F_Silkscreen.gto'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-B_Silkscreen.gbo'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-F_Mask.gts'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-B_Mask.gbs'.
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/gerbers/hello-demo-Edge_Cuts.gm1'.
+$ kicad-cli pcb export gerbers --output board/reports/fab/e1-demo-2026-05-17/gerbers --layers F.Cu\,B.Cu\,F.Mask\,B.Mask\,F.Silkscreen\,B.Silkscreen\,F.Paste\,B.Paste\,F.Fab\,B.Fab\,Edge.Cuts --include-border-title board/kicad/e1-demo/e1-demo.kicad_pcb
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-F_Cu.gtl'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-B_Cu.gbl'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-F_Paste.gtp'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-B_Paste.gbp'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-F_Silkscreen.gto'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-B_Silkscreen.gbo'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-F_Mask.gts'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-B_Mask.gbs'.
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/gerbers/e1-demo-Edge_Cuts.gm1'.
 exit_status=0
 
-$ kicad-cli pcb export drill --output board/reports/fab/hello-demo-2026-05-17/drill --generate-map --generate-report --report-path board/reports/fab/hello-demo-2026-05-17/drill/hello-demo-drill-report.txt board/kicad/hello-demo/hello-demo.kicad_pcb
-Created file 'board/reports/fab/hello-demo-2026-05-17/drill/hello-demo.drl'
-Created file 'board/reports/fab/hello-demo-2026-05-17/drill/hello-demo-drl_map.pdf'.
+$ kicad-cli pcb export drill --output board/reports/fab/e1-demo-2026-05-17/drill --generate-map --generate-report --report-path board/reports/fab/e1-demo-2026-05-17/drill/e1-demo-drill-report.txt board/kicad/e1-demo/e1-demo.kicad_pcb
+Created file 'board/reports/fab/e1-demo-2026-05-17/drill/e1-demo.drl'
+Created file 'board/reports/fab/e1-demo-2026-05-17/drill/e1-demo-drl_map.pdf'.
 Done.
 exit_status=0
 
-$ kicad-cli sch export bom --output board/reports/fab/hello-demo-2026-05-17/hello-demo-bom.csv board/kicad/hello-demo/hello-demo.kicad_sch
-Wrote bill of materials to 'board/reports/fab/hello-demo-2026-05-17/hello-demo-bom.csv'.
+$ kicad-cli sch export bom --output board/reports/fab/e1-demo-2026-05-17/e1-demo-bom.csv board/kicad/e1-demo/e1-demo.kicad_sch
+Wrote bill of materials to 'board/reports/fab/e1-demo-2026-05-17/e1-demo-bom.csv'.
 exit_status=0
 
-$ kicad-cli pcb export pos --format csv --units mm --side both --output board/reports/fab/hello-demo-2026-05-17/hello-demo-position.csv board/kicad/hello-demo/hello-demo.kicad_pcb
-Wrote position data to 'board/reports/fab/hello-demo-2026-05-17/hello-demo-position.csv'.
+$ kicad-cli pcb export pos --format csv --units mm --side both --output board/reports/fab/e1-demo-2026-05-17/e1-demo-position.csv board/kicad/e1-demo/e1-demo.kicad_pcb
+Wrote position data to 'board/reports/fab/e1-demo-2026-05-17/e1-demo-position.csv'.
 exit_status=0
 
-$ kicad-cli pcb export pdf --output board/reports/fab/hello-demo-2026-05-17/pdf --layers F.Fab\,B.Fab\,Edge.Cuts --mode-multipage --include-border-title board/kicad/hello-demo/hello-demo.kicad_pcb
-Failed to create file 'board/reports/fab/hello-demo-2026-05-17/pdf'.
-Failed to create file 'board/reports/fab/hello-demo-2026-05-17/pdf'.
-Failed to create file 'board/reports/fab/hello-demo-2026-05-17/pdf'.
+$ kicad-cli pcb export pdf --output board/reports/fab/e1-demo-2026-05-17/pdf --layers F.Fab\,B.Fab\,Edge.Cuts --mode-multipage --include-border-title board/kicad/e1-demo/e1-demo.kicad_pcb
+Failed to create file 'board/reports/fab/e1-demo-2026-05-17/pdf'.
+Failed to create file 'board/reports/fab/e1-demo-2026-05-17/pdf'.
+Failed to create file 'board/reports/fab/e1-demo-2026-05-17/pdf'.
 Done.
 exit_status=2
 
-$ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli pcb export pdf --output board/reports/fab/hello-demo-2026-05-17/pdf/hello-demo-fab-drawing.pdf --layers F.Fab\,B.Fab\,Edge.Cuts --mode-multipage --include-border-title board/kicad/hello-demo/hello-demo.kicad_pcb 
-Plotted to 'board/reports/fab/hello-demo-2026-05-17/pdf/hello-demo-fab-drawing.pdf'.
+$ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli pcb export pdf --output board/reports/fab/e1-demo-2026-05-17/pdf/e1-demo-fab-drawing.pdf --layers F.Fab\,B.Fab\,Edge.Cuts --mode-multipage --include-border-title board/kicad/e1-demo/e1-demo.kicad_pcb
+Plotted to 'board/reports/fab/e1-demo-2026-05-17/pdf/e1-demo-fab-drawing.pdf'.
 Done.
 exit_status=0
 
-$ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli sch erc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
+$ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli sch erc --output board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt board/kicad/e1-demo/e1-demo.kicad_sch
 Found 38 violations
-Saved ERC Report to board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt
+Saved ERC Report to board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt
 exit_status=0
 
-$ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli sch erc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
+$ /Volumes/KiCad/KiCad/KiCad.app/Contents/MacOS/kicad-cli sch erc --output board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt board/kicad/e1-demo/e1-demo.kicad_sch
 ERC rerun after documentation-only root cleanup
 exit_status=0

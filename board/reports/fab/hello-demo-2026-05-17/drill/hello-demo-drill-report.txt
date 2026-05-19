@@ -1,4 +1,4 @@
-Drill report for hello-demo.kicad_pcb
+Drill report for e1-demo.kicad_pcb
 Created on 2026-05-17T17:58:31
 
 Copper Layer Stackup:
@@ -7,7 +7,7 @@ Copper Layer Stackup:
     L2 :  B.Cu                      back
 
 
-Drill file 'hello-demo.drl' contains
+Drill file 'e1-demo.drl' contains
     plated through holes:
     =============================================================
 

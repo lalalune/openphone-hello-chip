@@ -1,8 +1,8 @@
-Hello demo FPGA build report
+E1 demo FPGA build report
 Generated: 2026-05-18T03:48:12Z
-Top:       hello_fpga_smoke_top
+Top:       e1_fpga_smoke_top
 Device:    ECP5 85k CABGA381 speed 6
-Bitstream: /Users/shawwalters/Desktop/npu_experiment/build/fpga/hello_demo/hello_fpga_smoke_top.bit
+Bitstream: /Users/shawwalters/Desktop/npu_experiment/build/fpga/e1_demo/e1_fpga_smoke_top.bit
 
 --- nextpnr utilization (tail) ---
 Info:    routing  1.50  1.50 Net DBG_ADDR[1]$TRELLIS_IO_IN (60,0) -> (58,2)
@@ -31,7 +31,7 @@ Info:      logic  0.24  2.48 Source GPIO_LUT4_Z_3.F
 Info:    routing  3.35  5.82 Net GPIO[3]$TRELLIS_IO_OUT (5,4) -> (0,38)
 Info:                          Sink GPIO[3]$tr_io.I
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:22.24-22.28
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:22.24-22.28
 Info: 0.76 ns logic, 5.06 ns routing
 
 Info: Max frequency for clock '$glbnet$CLK_IN$TRELLIS_IO_IN': 295.42 MHz (PASS at 25.00 MHz)

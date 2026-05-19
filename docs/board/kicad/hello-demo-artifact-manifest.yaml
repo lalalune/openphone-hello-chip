@@ -1,14 +1,14 @@
-schema: openphone.kicad_artifact_manifest.v1
-board: hello-demo
+schema: openagent.kicad_artifact_manifest.v1
+board: e1-demo
 status: release_blocked
-kicad_project_dir: board/kicad/hello-demo
+kicad_project_dir: board/kicad/e1-demo
 fab_report_dir: board/reports/fab
-command_capture_doc: docs/board/kicad/hello-demo-commands.md
+command_capture_doc: docs/board/kicad/e1-demo-commands.md
 source_inputs:
-  package_pinout: package/hello-demo-pinout.yaml
-  package_contract: docs/package/hello-demo-package.md
-  pad_ring_contract: docs/package/hello-demo-pad-ring.md
-  fab_notes: docs/board/kicad/hello-demo/fab-notes.md
+  package_pinout: package/e1-demo-pinout.yaml
+  package_contract: docs/package/e1-demo-package.md
+  pad_ring_contract: docs/package/e1-demo-pad-ring.md
+  fab_notes: docs/board/kicad/e1-demo/fab-notes.md
 blocked_until:
   - Package vendor drawing, land-pattern data, material constraints, and revision checksum are archived.
   - Foundry/package bond diagram maps die pads to package pins.
@@ -18,11 +18,11 @@ blocked_until:
   - Assembly-house DFM and board-house fabrication notes approval are archived.
 required_artifacts:
   sources:
-    - board/kicad/hello-demo/*.kicad_pro
-    - board/kicad/hello-demo/*.kicad_sch
-    - board/kicad/hello-demo/*.kicad_pcb
-    - board/kicad/hello-demo/*.kicad_sym
-    - board/kicad/hello-demo/*.pretty/*.kicad_mod
+    - board/kicad/e1-demo/*.kicad_pro
+    - board/kicad/e1-demo/*.kicad_sch
+    - board/kicad/e1-demo/*.kicad_pcb
+    - board/kicad/e1-demo/*.kicad_sym
+    - board/kicad/e1-demo/*.pretty/*.kicad_mod
   fabrication_outputs:
     - board/reports/fab/erc*.txt
     - board/reports/fab/drc*.txt

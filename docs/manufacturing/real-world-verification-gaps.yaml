@@ -195,7 +195,7 @@ gaps:
     evidence_manifest: docs/manufacturing/release-manifest.yaml
     local_check: scripts/check_kicad_artifacts.py
     required_evidence:
-      - KiCad project, schematic (5-page hierarchy), and PCB files checked in under board/kicad/hello-demo.
+      - KiCad project, schematic (5-page hierarchy), and PCB files checked in under board/kicad/e1-demo.
       - Headless ERC, DRC, plot, Gerber, drill, BOM, and position export transcripts.
 
   - id: footprint_source_checksum

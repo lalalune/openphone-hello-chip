@@ -1,6 +1,6 @@
 # NPU command ABI
 
-The hello NPU is a small synthesizable datapath behind a single-cycle MMIO
+The e1 NPU is a small synthesizable datapath behind a single-cycle MMIO
 control interface. Software programs operands, selects an opcode, starts the
 command, then polls `CTRL_STATUS.done` or waits for `irq_npu`.
 
@@ -131,11 +131,11 @@ path. Descriptors with `writeback_request` set are rejected before launch, and
 
 ## Evidence gates
 
-Before any `hello-npu` benchmark is treated as accelerator evidence, the report
+Before any `e1-npu` benchmark is treated as accelerator evidence, the report
 must include:
 
 - exact model SHA-256 and Android/Linux target identity,
-- NNAPI accelerator query showing `hello-npu`,
+- NNAPI accelerator query showing `e1-npu`,
 - total/delegated NNAPI node count, zero CPU fallback, and zero unsupported ops,
 - precision actually used by the delegate,
 - dataflow name and description from the measured path,

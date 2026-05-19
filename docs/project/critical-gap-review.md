@@ -22,7 +22,7 @@ silicon package, and not yet a manufacturable board.
 
 The current concrete baseline is:
 
-- a debug-MMIO hello-chip RTL path with cocotb, Verilator, synthesis, and formal
+- a debug-MMIO e1-chip RTL path with cocotb, Verilator, synthesis, and formal
   evidence,
 - a separate Linux-capable AXI-Lite contract wrapper,
 - software BSP and AOSP skeletons tied to the platform contract,
@@ -38,12 +38,12 @@ Open gaps:
 
 | Gap | Current evidence | Why it matters | Completion criteria |
 |---|---|---|---|
-| Linux-capable CPU is absent | `rtl/cpu/hello_cpu_subsystem_stub.sv`, `docs/arch/cpu-subsystem.md` | The tiny execution path is not RV64GC Linux-capable: no MMU, CSR/trap model, atomics, privilege modes, cache, or timer interrupts. | Bootable CPU integration contract exists and passes cocotb plus firmware smoke, or the repo imports a pinned external CPU generator with a reproducible build log. |
-| Pad-level top and Linux scaffold are split | `rtl/top/hello_chip_top.sv`, `rtl/interconnect/hello_linux_soc_contract.sv` | The chip top validates debug MMIO, while the Linux scaffold validates a different integration shape. | A named top-level integration choice exists with a gate that proves which target is the prototype. |
-| Shared memory is only a small model | `rtl/top/hello_soc_top.sv`, `rtl/memory/hello_axi_lite_dram.sv` | There is no LPDDR boundary, burst AXI, cache hierarchy, coherency, IOMMU, or QoS. | Memory hierarchy plan is represented in machine-readable contract and at least one burst-capable fabric or explicit blocked gate exists. |
-| DMA is not a production DMA engine | `rtl/dma/hello_dma.sv` | It has useful command-state behavior, but no descriptor rings, scatter/gather, IOMMU isolation, interrupts per queue, or real software ABI. | Descriptor contract, error model, and protocol assertions exist; cocotb covers alignment, partial strobes, errors, and backpressure. |
-| Display is not a phone display pipeline | `rtl/display/hello_display.sv` | Current scanout is timing/test-pattern oriented and lacks DSI, panel init, FIFO, underrun handling, composition, rotation, color, and DRM/KMS contract depth. | Framebuffer fetch, underflow status, format coverage, and driver-facing register tests pass. |
-| NPU is a scalar/tile demonstrator | `rtl/npu/hello_npu.sv`, `docs/arch/npu.md` | It is not a tensor subsystem: no command queue, scratchpad management, compiler ABI, DMA descriptors, NNAPI delegate, or memory protection. | A versioned NPU command ABI, runtime smoke, and operator coverage report exist. |
+| Linux-capable CPU is absent | `rtl/cpu/e1_cpu_subsystem_stub.sv`, `docs/arch/cpu-subsystem.md` | The tiny execution path is not RV64GC Linux-capable: no MMU, CSR/trap model, atomics, privilege modes, cache, or timer interrupts. | Bootable CPU integration contract exists and passes cocotb plus firmware smoke, or the repo imports a pinned external CPU generator with a reproducible build log. |
+| Pad-level top and Linux scaffold are split | `rtl/top/e1_chip_top.sv`, `rtl/interconnect/e1_linux_soc_contract.sv` | The chip top validates debug MMIO, while the Linux scaffold validates a different integration shape. | A named top-level integration choice exists with a gate that proves which target is the prototype. |
+| Shared memory is only a small model | `rtl/top/e1_soc_top.sv`, `rtl/memory/e1_axi_lite_dram.sv` | There is no LPDDR boundary, burst AXI, cache hierarchy, coherency, IOMMU, or QoS. | Memory hierarchy plan is represented in machine-readable contract and at least one burst-capable fabric or explicit blocked gate exists. |
+| DMA is not a production DMA engine | `rtl/dma/e1_dma.sv` | It has useful command-state behavior, but no descriptor rings, scatter/gather, IOMMU isolation, interrupts per queue, or real software ABI. | Descriptor contract, error model, and protocol assertions exist; cocotb covers alignment, partial strobes, errors, and backpressure. |
+| Display is not a phone display pipeline | `rtl/display/e1_display.sv` | Current scanout is timing/test-pattern oriented and lacks DSI, panel init, FIFO, underrun handling, composition, rotation, color, and DRM/KMS contract depth. | Framebuffer fetch, underflow status, format coverage, and driver-facing register tests pass. |
+| NPU is a scalar/tile demonstrator | `rtl/npu/e1_npu.sv`, `docs/arch/npu.md` | It is not a tensor subsystem: no command queue, scratchpad management, compiler ABI, DMA descriptors, NNAPI delegate, or memory protection. | A versioned NPU command ABI, runtime smoke, and operator coverage report exist. |
 | Security subsystem is documentation-only | `docs/arch/security.md` | No ROM verification, fuses, lifecycle states, key ladder, TRNG, debug authentication, or secure update. | Security lifecycle state machine and fail-closed debug policy are implemented or explicitly blocked by a checked gate. |
 
 Immediate work orders:
@@ -61,19 +61,19 @@ Open gaps:
 
 | Gap | Current evidence | Why it matters | Completion criteria |
 |---|---|---|---|
-| QEMU is a qemu-virt reference path | `scripts/run_qemu.sh`, `docs/sim/qemu/README.md` | Passing qemu-virt proves software plumbing, not the hello-chip hardware ABI. | `make qemu-check` reports PASS only with serial transcript and compiled firmware, otherwise BLOCK with exact missing tool or artifact. |
-| Renode does not model hello hardware | `sim/renode/openphone_hello.repl`, `docs/sim/renode/README.md` | It models a generic CPU/RAM/UART shape, not the current MMIO map. | Renode check is either a real model with transcript or explicitly blocked as non-evidence. |
+| QEMU is a qemu-virt reference path | `scripts/run_qemu.sh`, `docs/sim/qemu/README.md` | Passing qemu-virt proves software plumbing, not the e1-chip hardware ABI. | `make qemu-check` reports PASS only with serial transcript and compiled firmware, otherwise BLOCK with exact missing tool or artifact. |
+| Renode does not model e1 hardware | `sim/renode/openagent_e1.repl`, `docs/sim/renode/README.md` | It models a generic CPU/RAM/UART shape, not the current MMIO map. | Renode check is either a real model with transcript or explicitly blocked as non-evidence. |
 | OpenSBI/U-Boot are not integrated | `docs/sw/opensbi/README.md`, `docs/sw/u-boot/README.md` | Android/Linux AP bring-up needs a real boot chain. | Pinned build recipe, config fragments, and transcript exist for a bootable target. |
-| Linux DTS is not a bootable platform | `sw/linux/dts/openphone-hello.dts` | It lacks a complete real RISC-V AP platform with CPU, timer, UART, memory, and usable interrupt topology for Linux boot. | DTS compiles in an external kernel tree and a boot transcript or blocked-gate report is archived. |
-| Linux drivers are scaffold-only | `sw/linux/drivers/hello/**` | Drivers name the ABI, but there is no proven kernel build, device-node access, or runtime hardware smoke. | External kernel import script builds modules and runs `hello-mmio-smoke` against a real or emulated device. |
+| Linux DTS is not a bootable platform | `sw/linux/dts/openagent-e1.dts` | It lacks a complete real RISC-V AP platform with CPU, timer, UART, memory, and usable interrupt topology for Linux boot. | DTS compiles in an external kernel tree and a boot transcript or blocked-gate report is archived. |
+| Linux drivers are scaffold-only | `sw/linux/drivers/e1/**` | Drivers name the ABI, but there is no proven kernel build, device-node access, or runtime hardware smoke. | External kernel import script builds modules and runs `e1-mmio-smoke` against a real or emulated device. |
 | AOSP device tree is not boot proof | `sw/aosp-device/**`, `docs/android/riscv-bringup.md` | Product files and HAL manifests exist, but no `lunch`, build transcript, Cuttlefish launch, SELinux log, CTS/VTS subset, or HAL binary proof is present. | AOSP import script produces a buildable target or reports blocked dependencies; logs are archived. |
-| Android HALs are stubs | `manifest.xml`, `init.openphone.rc`, `sepolicy/hello_npu.te` | The manifest references a future `hello_npu` service; no implemented service, AIDL interface, or fail-closed behavior is proven. | HAL service compiles, fails closed when `/dev/hello-npu` is absent, and has a host/unit test. |
+| Android HALs are stubs | `manifest.xml`, `init.openagent.rc`, `sepolicy/e1_npu.te` | The manifest references a future `e1_npu` service; no implemented service, AIDL interface, or fail-closed behavior is proven. | HAL service compiles, fails closed when `/dev/e1-npu` is absent, and has a host/unit test. |
 
 Immediate work orders:
 
 1. Split scaffold checks from executable boot checks everywhere they are currently mixed.
 2. Make QEMU status parsing fail-closed and archive serial output when tools exist.
-3. Generate Linux/AOSP include or DTS fragments from `sw/platform/hello_platform_contract.json`.
+3. Generate Linux/AOSP include or DTS fragments from `sw/platform/e1_platform_contract.json`.
 4. Add a fail-closed NPU HAL skeleton or remove any manifest claim that implies it exists.
 
 ## Workstream C: Physical Design, Package, FPGA, Board
@@ -85,11 +85,11 @@ Open gaps:
 | Gap | Current evidence | Why it matters | Completion criteria |
 |---|---|---|---|
 | No real PD run artifacts | `pd/signoff/manifest.yaml`, `pd/openlane/config*.json` | There is no final GDS, DEF, netlist, SDC, clean DRC/LVS/antenna/STA, utilization, congestion, timing-corner, or tool-version evidence. | `make pd-signoff-check` passes against one real run directory and blocked gates are cleared only by evidence. |
-| Package is a placeholder | `docs/package/hello-demo-package.md`, `package/hello-demo-pinout.yaml` | QFN64 planning data is not a foundry or package-vendor drawing. | Vendor package drawing, footprint source, bond diagram, and package electrical model are archived. |
-| Padframe is a contract scaffold | `pd/padframe/hello_demo_padframe.yaml` | No foundry IO cells, ESD clamps, corner cells, power domains, pad-ring DRC/LVS, or bonding strategy. | Padframe-inclusive design passes checks with selected IO library and release evidence. |
-| Board is not manufacturable | `docs/board/README.md`, `docs/board/kicad/hello-demo/fab-notes.md` | No real KiCad project, stackup, footprint, BOM, decap plan, DFM review, SI/PI review, or test-point plan. | Board release manifest references checked schematic/PCB/fab outputs and DFM signoff. |
-| Board is not manufacturable | `board/README.md`, `docs/board/kicad/hello-demo/fab-notes.md` | No real KiCad project, stackup, footprint, BOM, decap plan, DFM review, SI/PI review, or test-point plan. | Board release manifest references checked schematic/PCB/fab outputs and DFM signoff. |
-| FPGA bitstream is blocked | `board/fpga/hello_demo_fpga.yaml`, `constraints/hello_demo_ulx3s.lpf` | Board revision and pins are intentionally unassigned; no nextpnr/ecppack/timing evidence. | Exact board revision, IO standards, pins, bitstream build, timing report, and bring-up transcript exist. |
+| Package is a placeholder | `docs/package/e1-demo-package.md`, `package/e1-demo-pinout.yaml` | QFN64 planning data is not a foundry or package-vendor drawing. | Vendor package drawing, footprint source, bond diagram, and package electrical model are archived. |
+| Padframe is a contract scaffold | `pd/padframe/e1_demo_padframe.yaml` | No foundry IO cells, ESD clamps, corner cells, power domains, pad-ring DRC/LVS, or bonding strategy. | Padframe-inclusive design passes checks with selected IO library and release evidence. |
+| Board is not manufacturable | `docs/board/README.md`, `docs/board/kicad/e1-demo/fab-notes.md` | No real KiCad project, stackup, footprint, BOM, decap plan, DFM review, SI/PI review, or test-point plan. | Board release manifest references checked schematic/PCB/fab outputs and DFM signoff. |
+| Board is not manufacturable | `board/README.md`, `docs/board/kicad/e1-demo/fab-notes.md` | No real KiCad project, stackup, footprint, BOM, decap plan, DFM review, SI/PI review, or test-point plan. | Board release manifest references checked schematic/PCB/fab outputs and DFM signoff. |
+| FPGA bitstream is blocked | `board/fpga/e1_demo_fpga.yaml`, `constraints/e1_demo_ulx3s.lpf` | Board revision and pins are intentionally unassigned; no nextpnr/ecppack/timing evidence. | Exact board revision, IO standards, pins, bitstream build, timing report, and bring-up transcript exist. |
 | Power and thermal are estimates | `docs/manufacturing/real-world-verification-gaps.yaml` | No post-route power, IR/EM, PDN, current-limit, thermal, or bench measurements. | Current budgets and stop conditions are enforced in release manifest and first-article procedure. |
 
 Immediate work orders:

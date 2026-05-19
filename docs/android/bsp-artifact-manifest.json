@@ -1,10 +1,10 @@
 {
-  "schema": "openphone.android_bsp_artifact_manifest.v1",
+  "schema": "openagent.android_bsp_artifact_manifest.v1",
   "claim_boundary": "host_checkable_manifest_only_not_boot_evidence",
   "targets": {
     "buildroot": {
       "external_tree": "Buildroot checkout, not vendored in this repository",
-      "source_command": "make BR2_EXTERNAL=/path/to/OpenPhone-AI-SoC/sw/buildroot openphone_hello_defconfig && make BR2_EXTERNAL=/path/to/OpenPhone-AI-SoC/sw/buildroot",
+      "source_command": "make BR2_EXTERNAL=/path/to/OpenAgent-AI-SoC/sw/buildroot openagent_e1_defconfig && make BR2_EXTERNAL=/path/to/OpenAgent-AI-SoC/sw/buildroot",
       "required_outputs": [
         "output/images/Image",
         "output/images/rootfs.ext2",
@@ -12,32 +12,32 @@
         "output/build/linux-*/.config"
       ],
       "required_repo_evidence": [
-        "docs/evidence/buildroot/openphone_hello_defconfig.log",
-        "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
-        "docs/evidence/buildroot/hello-mmio-smoke.log",
-        "docs/evidence/buildroot/hello-npu-ml-smoke.log"
+        "docs/evidence/buildroot/openagent_e1_defconfig.log",
+        "docs/evidence/buildroot/openagent_e1_image_manifest.txt",
+        "docs/evidence/buildroot/e1-mmio-smoke.log",
+        "docs/evidence/buildroot/e1-npu-ml-smoke.log"
       ],
-      "minimum_claim_to_clear_block": "external Buildroot build completed and runtime hello-mmio-smoke plus hello-npu-ml-smoke transcripts captured"
+      "minimum_claim_to_clear_block": "external Buildroot build completed and runtime e1-mmio-smoke plus e1-npu-ml-smoke transcripts captured"
     },
     "linux": {
-      "external_tree": "Linux kernel checkout with sw/linux imported under drivers/misc/openphone-hello",
+      "external_tree": "Linux kernel checkout with sw/linux imported under drivers/misc/openagent-e1",
       "source_command": "make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- Image dtbs modules",
       "required_outputs": [
         "arch/riscv/boot/Image",
-        "arch/riscv/boot/dts/openphone/openphone-hello.dtb",
-        "drivers/misc/openphone-hello/hello-npu.ko",
-        "drivers/misc/openphone-hello/hello-dma.ko",
+        "arch/riscv/boot/dts/openagent/openagent-e1.dtb",
+        "drivers/misc/openagent-e1/e1-npu.ko",
+        "drivers/misc/openagent-e1/e1-dma.ko",
         "System.map"
       ],
       "required_repo_evidence": [
-        "docs/evidence/linux/openphone_hello_kernel_build.log",
-        "docs/evidence/linux/openphone_hello_dtb_check.log",
-        "docs/evidence/linux/hello-mmio-smoke.log"
+        "docs/evidence/linux/openagent_e1_kernel_build.log",
+        "docs/evidence/linux/openagent_e1_dtb_check.log",
+        "docs/evidence/linux/e1-mmio-smoke.log"
       ],
       "minimum_claim_to_clear_block": "external Linux kernel build, DTB validation, module artifacts, and runtime smoke transcript captured"
     },
     "opensbi": {
-      "external_tree": "OpenSBI checkout with optional sw/opensbi/platform/openphone imported under platform/openphone",
+      "external_tree": "OpenSBI checkout with optional sw/opensbi/platform/openagent imported under platform/openagent",
       "source_command": "make PLATFORM=generic FW_DYNAMIC=y and an exact external QEMU/Renode/board fw_dynamic handoff command",
       "required_outputs": [
         "build/platform/generic/firmware/fw_dynamic.bin",
@@ -45,32 +45,32 @@
         "external boot or simulator UART transcript containing OpenSBI fw_dynamic handoff"
       ],
       "required_repo_evidence": [
-        "docs/evidence/linux/opensbi_openphone_build.log",
+        "docs/evidence/linux/opensbi_openagent_build.log",
         "docs/evidence/linux/opensbi_fw_dynamic_handoff.log"
       ],
       "minimum_claim_to_clear_block": "external OpenSBI build and fw_dynamic handoff transcript captured"
     },
     "aosp": {
-      "external_tree": "AOSP checkout with sw/aosp-device imported to device/openphone/openphone_ai_soc",
-      "source_command": "source build/envsetup.sh && lunch openphone_ai_soc-userdebug && m vendorimage vendor_sepolicy.cil sepolicy_neverallows && checkvintf",
+      "external_tree": "AOSP checkout with sw/aosp-device imported to device/openagent/openagent_ai_soc",
+      "source_command": "source build/envsetup.sh && lunch openagent_ai_soc-userdebug && m vendorimage vendor_sepolicy.cil sepolicy_neverallows && checkvintf",
       "required_outputs": [
-        "out/target/product/openphone_ai_soc/vendor.img",
-        "out/target/product/openphone_ai_soc/installed-files-vendor.txt",
-        "out/target/product/openphone_ai_soc/vendor/etc/vintf/manifest/openphone_hello.xml",
-        "out/target/product/openphone_ai_soc/obj/ETC/vendor_sepolicy.cil_intermediates/vendor_sepolicy.cil",
+        "out/target/product/openagent_ai_soc/vendor.img",
+        "out/target/product/openagent_ai_soc/installed-files-vendor.txt",
+        "out/target/product/openagent_ai_soc/vendor/etc/vintf/manifest/openagent_e1.xml",
+        "out/target/product/openagent_ai_soc/obj/ETC/vendor_sepolicy.cil_intermediates/vendor_sepolicy.cil",
         "out/host/linux-x86/cts",
         "out/host/linux-x86/vts"
       ],
       "required_repo_evidence": [
-        "docs/evidence/android/openphone_ai_soc_lunch.log",
-        "docs/evidence/android/openphone_ai_soc_vendorimage.log",
-        "docs/evidence/android/openphone_ai_soc_checkvintf.log",
-        "docs/evidence/android/openphone_ai_soc_sepolicy_build.log",
-        "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log",
-        "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log",
+        "docs/evidence/android/openagent_ai_soc_lunch.log",
+        "docs/evidence/android/openagent_ai_soc_vendorimage.log",
+        "docs/evidence/android/openagent_ai_soc_checkvintf.log",
+        "docs/evidence/android/openagent_ai_soc_sepolicy_build.log",
+        "docs/evidence/android/openagent_ai_soc_selinux_neverallow.log",
+        "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log",
         "docs/evidence/android/cuttlefish_riscv64_smoke.log",
         "docs/evidence/android/qemu_riscv64_smoke.log",
-        "docs/evidence/android/renode_hello_soc_smoke.log"
+        "docs/evidence/android/renode_e1_soc_smoke.log"
       ],
       "virtual_device_smoke_schema": "docs/android/boot-transcript.schema.json",
       "minimum_claim_to_clear_block": "external AOSP lunch, vendorimage, VINTF, SELinux, CTS/VTS scope-intake, and virtual-device smoke transcripts captured without claiming Android boot or Android compatibility"

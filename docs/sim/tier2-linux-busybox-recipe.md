@@ -1,10 +1,10 @@
 # Tier 2: Linux + Busybox boot on `qemu-system-riscv64 -M virt`
 
-Canonical "smallest Linux that reaches a shell" recipe for the OpenPhone hello
+Canonical "smallest Linux that reaches a shell" recipe for the OpenAgent e1
 chip. Tier 2 is purely a software milestone (QEMU `virt` machine, OpenSBI
 default firmware, busybox initramfs). Tier 3 (Renode) and Tier 4 (Verilator)
 will reuse the same kernel `Image` and initramfs with our SoC memory map
-(`sw/linux/dts/openphone-hello-qemu.dts`).
+(`sw/linux/dts/openagent-e1-qemu.dts`).
 
 ## Status (2026-05-18)
 
@@ -13,8 +13,8 @@ will reuse the same kernel `Image` and initramfs with our SoC memory map
   - `scripts/build/build_initramfs.sh`
   - `scripts/sim/run_qemu_tier2.sh`
   - `scripts/sim/run_qemu_tier2_check.py` (30s timeout, asserts banner + prompt)
-  - `sw/linux/configs/openphone_tier2_qemu_defconfig`
-  - `sw/linux/dts/openphone-hello-qemu.dts` (for Renode/Verilator)
+  - `sw/linux/configs/openagent_tier2_qemu_defconfig`
+  - `sw/linux/dts/openagent-e1-qemu.dts` (for Renode/Verilator)
 - **Build blocked on macOS host (this machine)**: only the bare-metal
   `riscv64-elf-*` (newlib) toolchain is installed via Homebrew. The Linux
   kernel and a glibc-static busybox require `riscv64-linux-gnu-gcc`
@@ -59,7 +59,7 @@ Both ignored via existing `external/` entry in `.gitignore`.
 cd external/linux
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig
 ./scripts/kconfig/merge_config.sh -m .config \
-    ../../sw/linux/configs/openphone_tier2_qemu_defconfig
+    ../../sw/linux/configs/openagent_tier2_qemu_defconfig
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- olddefconfig
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j"$(nproc)" Image
 ls -lh arch/riscv/boot/Image
@@ -82,12 +82,12 @@ file busybox
 ```sh
 # From repo root:
 bash scripts/build/build_initramfs.sh external/busybox/busybox
-ls -lh build/initramfs/openphone_tier2.cpio.gz
+ls -lh build/initramfs/openagent_tier2.cpio.gz
 # Expected: ~600 KiB - 1.1 MiB.
 ```
 
 The script creates `/init`, `/bin/sh -> /bin/busybox`, mounts proc/sys/devtmpfs,
-prints `openphone tier2: linux booted`, then execs `/bin/sh`.
+prints `openagent tier2: linux booted`, then execs `/bin/sh`.
 
 ## Step 5: Boot
 
@@ -108,7 +108,7 @@ OpenSBI v1.x
 Linux version 6.6.0 (... riscv64-linux-gnu-gcc ...)
 ...
 Run /init as init process
-openphone tier2: linux booted
+openagent tier2: linux booted
 / #
 ```
 
@@ -120,10 +120,10 @@ QEMU `-machine virt` hard-codes UART at `0x10000000`. Our SoC uses
 1. Build a DTB from our overlay:
    ```sh
    mkdir -p build/dts
-   dtc -I dts -O dtb -o build/dts/openphone-hello-qemu.dtb \
-       sw/linux/dts/openphone-hello-qemu.dts
+   dtc -I dts -O dtb -o build/dts/openagent-e1-qemu.dtb \
+       sw/linux/dts/openagent-e1-qemu.dts
    ```
-2. Pass `-dtb build/dts/openphone-hello-qemu.dtb` to QEMU (or load from
+2. Pass `-dtb build/dts/openagent-e1-qemu.dtb` to QEMU (or load from
    Renode `.resc` / Verilator bootrom).
 3. Kernel config keeps `CONFIG_OF=y` and does not embed a built-in DTB so the
    externally-supplied tree wins.
@@ -139,7 +139,7 @@ DTS and `sw/opensbi/` platform fragments.
 # After toolchain + sources are in place, from repo root:
 ( cd external/linux && \
   make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig && \
-  ./scripts/kconfig/merge_config.sh -m .config ../../sw/linux/configs/openphone_tier2_qemu_defconfig && \
+  ./scripts/kconfig/merge_config.sh -m .config ../../sw/linux/configs/openagent_tier2_qemu_defconfig && \
   make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- olddefconfig && \
   make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j"$(nproc)" Image )
 

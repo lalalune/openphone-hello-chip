@@ -7,7 +7,7 @@ only advance when the gate passes.
 |---|---|---|---|
 | SOTA references | `docs/spec-db/**` | `make project-plan-check` | Source-linked reference database for SoC design budgets. |
 | Benchmarking | `docs/benchmarks/**`, future `benchmarks/**` | report schema exists | Runnable CPU, memory, storage, AI, and Android smoke harnesses. |
-| Open RTL | `rtl/**`, `verify/**`, `sim/**`, `pd/**` | `make smoke` | `hello_soc` evidence plus Chipyard Rocket baseline plan. |
+| Open RTL | `rtl/**`, `verify/**`, `sim/**`, `pd/**` | `make smoke` | `e1_soc` evidence plus Chipyard Rocket baseline plan. |
 | Android | `sw/aosp-device/**`, `docs/android/**` | `make aosp-bsp-check` | Simulator recipe and contract-tied HAL/device stubs. |
 | Linux/BSP | `sw/linux/**`, `sw/buildroot/**` | `make software-bsp-check` | Linux smoke path for MMIO, DMA, NPU, display stubs. |
 | Board/package | `board/**`, `package/**`, `pd/padframe/**` | `make product-check` | Conservative debug-first board/package release notes. |

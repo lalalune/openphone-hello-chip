@@ -1,8 +1,8 @@
 {
-  "schema": "openphone.cpu_ap_2028_target_deltas.v1",
+  "schema": "openagent.cpu_ap_2028_target_deltas.v1",
   "claim_boundary": "current_repo_is_tiny_cpu_scaffold_plus_pinned_single_rocket_import_plan",
   "current_capability": {
-    "rtl_path": "rtl/cpu/hello_cpu_subsystem_stub.sv",
+    "rtl_path": "rtl/cpu/e1_cpu_subsystem_stub.sv",
     "claim": "tiny_rv_contract_scaffold_only",
     "linux_capable": false,
     "phone_class": false,
@@ -26,7 +26,7 @@
     ]
   },
   "selected_next_step": {
-    "manifest": "generators/chipyard/openphone-rocket-manifest.json",
+    "manifest": "generators/chipyard/openagent-rocket-manifest.json",
     "purpose": "linux_bringup_ap_import_evidence",
     "phone_class_completion": false,
     "generator": "Chipyard",
@@ -35,10 +35,10 @@
     "core": "Rocket",
     "isa": "RV64GC",
     "harts": 1,
-    "config": "OpenPhoneRocketConfig",
+    "config": "OpenAgentRocketConfig",
     "required_before_linux_claim": [
       "pinned Chipyard checkout with recursive submodule SHAs",
-      "generated OpenPhoneRocketConfig import manifest",
+      "generated OpenAgentRocketConfig import manifest",
       "generated AP Verilog wrapper",
       "generated DTS",
       "built simulator",

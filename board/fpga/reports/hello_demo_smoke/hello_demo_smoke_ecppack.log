@@ -1,4 +1,4 @@
-ecppack command: ecppack --compress build/fpga/hello_demo/hello_fpga_smoke_top.config build/fpga/hello_demo/hello_fpga_smoke_top.bit
+ecppack command: ecppack --compress build/fpga/e1_demo/e1_fpga_smoke_top.config build/fpga/e1_demo/e1_fpga_smoke_top.bit
 status: passed
-bitstream: board/fpga/build/hello_demo_smoke/hello_fpga_smoke_top.bit
+bitstream: board/fpga/build/e1_demo_smoke/e1_fpga_smoke_top.bit
 sha256: 44e7273426059a14cd4738d95c8fe10a91e1232c461febd767b9bc0a9ebb125f

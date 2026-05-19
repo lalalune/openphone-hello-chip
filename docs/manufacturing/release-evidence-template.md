@@ -38,9 +38,9 @@ build/release/<RELEASE_ID>/
 The top-level `manifest.yaml` must include at minimum:
 
 ```yaml
-release_id: <string>             # e.g. openphone_hello_demo_<UTC timestamp>
+release_id: <string>             # e.g. openagent_e1_demo_<UTC timestamp>
 release_date: <ISO-8601>
-chip: openphone_hello_demo
+chip: openagent_e1_demo
 
 pdk:
   name: <Sky130|GF180MCU|SG13G2|...>
@@ -78,11 +78,11 @@ package:
 bonding:
   diagram: package/bonding-diagram.pdf
   worksheet: package/bonding-worksheet.csv
-  csv: package/bonding/hello_demo_bonding.csv
+  csv: package/bonding/e1_demo_bonding.csv
   bonding_house: <vendor name>
 
 ibis:
-  model: package/ibis/openphone_hello_demo.ibs
+  model: package/ibis/openagent_e1_demo.ibs
   corner_count: <N>
 
 board:

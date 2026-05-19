@@ -1,4 +1,4 @@
-work_order: hello_demo_physical_product_closure
+work_order: e1_demo_physical_product_closure
 status: release_blocked
 source_gap_manifest: docs/manufacturing/real-world-verification-gaps.yaml
 evidence_root: docs/manufacturing/evidence
@@ -19,7 +19,7 @@ claim_policy:
     - Factory test ready.
 global_acceptance:
   - Every item below maps to a release-blocking gap in docs/manufacturing/real-world-verification-gaps.yaml.
-  - Evidence must be archived under docs/manufacturing/evidence, pd/signoff, pd/openlane/runs, runs, board/reports, package/models, or board/kicad/hello-demo as appropriate.
+  - Evidence must be archived under docs/manufacturing/evidence, pd/signoff, pd/openlane/runs, runs, board/reports, package/models, or board/kicad/e1-demo as appropriate.
   - Vendor, foundry, board-house, assembly-house, or lab evidence must identify source, revision, date, owner, and input artifact checksum.
   - Local generated evidence must include command transcript, tool versions, input revisions, and pass/fail criteria.
   - Any non-clean report must have a signed waiver naming the violated rule, measured value, limit, affected net or shape, risk, owner, and expiry condition.
@@ -45,9 +45,9 @@ evidence_capture_work_orders:
     gate: board_fabrication_release
     owner: fpga_closure
     local_command_ids:
-      - hello_demo_fpga_bitstream_evidence.bitstream_release.synth
-      - hello_demo_fpga_bitstream_evidence.bitstream_release.place_route
-      - hello_demo_fpga_bitstream_evidence.bitstream_release.pack
+      - e1_demo_fpga_bitstream_evidence.bitstream_release.synth
+      - e1_demo_fpga_bitstream_evidence.bitstream_release.place_route
+      - e1_demo_fpga_bitstream_evidence.bitstream_release.pack
     manifest: board/fpga/artifact-manifest.yaml
     output_roots:
       - board/fpga/build/
@@ -58,13 +58,13 @@ evidence_capture_work_orders:
     gate: board_fabrication_release
     owner: board_closure
     local_command_ids:
-      - hello_demo_kicad_board_evidence.kicad_cli_outputs.erc
-      - hello_demo_kicad_board_evidence.kicad_cli_outputs.drc
-      - hello_demo_kicad_board_evidence.kicad_cli_outputs.gerbers
-      - hello_demo_kicad_board_evidence.kicad_cli_outputs.drill
-      - hello_demo_kicad_board_evidence.kicad_cli_outputs.bom
-      - hello_demo_kicad_board_evidence.kicad_cli_outputs.position
-    manifest: board/kicad/hello-demo/artifact-manifest.yaml
+      - e1_demo_kicad_board_evidence.kicad_cli_outputs.erc
+      - e1_demo_kicad_board_evidence.kicad_cli_outputs.drc
+      - e1_demo_kicad_board_evidence.kicad_cli_outputs.gerbers
+      - e1_demo_kicad_board_evidence.kicad_cli_outputs.drill
+      - e1_demo_kicad_board_evidence.kicad_cli_outputs.bom
+      - e1_demo_kicad_board_evidence.kicad_cli_outputs.position
+    manifest: board/kicad/e1-demo/artifact-manifest.yaml
     output_roots:
       - board/reports/fab/
     blocked_until:
@@ -249,8 +249,8 @@ items:
       - first-article-bench-current-limits
       - fuse-regulator-thermal-current-limit-review
     evidence_paths:
-      - docs/board/kicad/hello-demo/fab-notes.md
-      - docs/manufacturing/hello-demo-checklist.md
+      - docs/board/kicad/e1-demo/fab-notes.md
+      - docs/manufacturing/e1-demo-checklist.md
       - docs/manufacturing/evidence/lab/
     acceptance_criteria:
       - Bring-up plan names initial, idle, active, and hard-stop current limits for VDDCORE and VDDIO.
@@ -277,7 +277,7 @@ items:
       - vendor-derived-footprint
       - pin1-courtyard-paste-mask-assembly-review
     evidence_paths:
-      - board/kicad/hello-demo/
+      - board/kicad/e1-demo/
       - docs/manufacturing/evidence/board/
     acceptance_criteria:
       - Symbol and footprint are generated or reviewed from the package vendor drawing, not from placeholder QFN assumptions.
@@ -291,7 +291,7 @@ items:
       - released-kicad-pcb
       - erc-drc-gerber-drill-bom-position-transcripts
     evidence_paths:
-      - board/kicad/hello-demo/
+      - board/kicad/e1-demo/
       - board/reports/fab/
     acceptance_criteria:
       - KiCad project includes schematic, PCB, libraries, netlist, and fabrication outputs from the selected footprint.
@@ -317,7 +317,7 @@ items:
       - fabrication-notes-approval
     evidence_paths:
       - docs/manufacturing/evidence/dfm/
-      - docs/board/kicad/hello-demo/fab-notes.md
+      - docs/board/kicad/e1-demo/fab-notes.md
     acceptance_criteria:
       - Assembly review covers package, stencil, paste aperture, reflow, inspection, rework, panelization, and component availability constraints.
       - Board vendor approval passes only when it names fabrication notes revision and any accepted exceptions; the DFM result is clean or waived.

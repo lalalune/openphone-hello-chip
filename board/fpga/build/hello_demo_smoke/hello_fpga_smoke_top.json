@@ -21734,10 +21734,10 @@
         }
       }
     },
-    "hello_fpga_smoke_top": {
+    "e1_fpga_smoke_top": {
       "attributes": {
         "top": "00000000000000000000000000000001",
-        "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:6.1-74.10"
+        "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:6.1-74.10"
       },
       "ports": {
         "CLK_IN": {
@@ -21857,7 +21857,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
           },
           "port_directions": {
             "CE": "input",
@@ -21888,7 +21888,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
           },
           "port_directions": {
             "CE": "input",
@@ -22762,7 +22762,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
           },
           "port_directions": {
             "CE": "input",
@@ -22968,7 +22968,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
           },
           "port_directions": {
             "CE": "input",
@@ -23049,7 +23049,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:73.163-73.222"
           },
           "port_directions": {
             "CE": "input",
@@ -23152,7 +23152,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -23253,7 +23253,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -23354,7 +23354,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -23408,7 +23408,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -23794,7 +23794,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -23836,7 +23836,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -23878,7 +23878,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -23920,7 +23920,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -23965,7 +23965,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -23994,7 +23994,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24020,7 +24020,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24065,7 +24065,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24094,7 +24094,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24120,7 +24120,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24165,7 +24165,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24194,7 +24194,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24220,7 +24220,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24265,7 +24265,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24294,7 +24294,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24320,7 +24320,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24365,7 +24365,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24394,7 +24394,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24420,7 +24420,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24465,7 +24465,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24491,7 +24491,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24536,7 +24536,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24565,7 +24565,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24591,7 +24591,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24636,7 +24636,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24665,7 +24665,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24691,7 +24691,7 @@
           },
           "attributes": {
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4"
           },
           "port_directions": {
             "A0": "input",
@@ -24736,7 +24736,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24765,7 +24765,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24794,7 +24794,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24823,7 +24823,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24877,7 +24877,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24906,7 +24906,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24935,7 +24935,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24964,7 +24964,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -24993,7 +24993,7 @@
           "attributes": {
             "always_ff": "00000000000000000000000000000001",
             "module_not_derived": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:36.5-57.8|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/cells_map_trellis.v:63.157-63.208"
           },
           "port_directions": {
             "CLK": "input",
@@ -25014,21 +25014,21 @@
           "hide_name": 0,
           "bits": [ 2 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:7.24-7.30"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:7.24-7.30"
           }
         },
         "DBG_ADDR": {
           "hide_name": 0,
           "bits": [ 7, 8, 9, 10 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:13.24-13.32"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:13.24-13.32"
           }
         },
         "DBG_LAUNCH": {
           "hide_name": 0,
           "bits": [ 5 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:11.24-11.34"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:11.24-11.34"
           }
         },
         "DBG_LAUNCH_LUT4_C_Z": {
@@ -25049,7 +25049,7 @@
           "hide_name": 0,
           "bits": [ 15, 16, 17, 18 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:15.24-15.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:15.24-15.33"
           }
         },
         "DBG_RDATA_L6MUX21_Z_1_D0": {
@@ -25315,21 +25315,21 @@
           "hide_name": 0,
           "bits": [ 4 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:16.24-16.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:16.24-16.33"
           }
         },
         "DBG_VALID": {
           "hide_name": 0,
           "bits": [ 4 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:10.24-10.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:10.24-10.33"
           }
         },
         "DBG_WDATA": {
           "hide_name": 0,
           "bits": [ 11, 12, 13, 14 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:14.24-14.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:14.24-14.33"
           }
         },
         "DBG_WDATA_TRELLIS_FF_DI_Q": {
@@ -25344,7 +25344,7 @@
           "hide_name": 0,
           "bits": [ 6 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:12.24-12.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:12.24-12.33"
           }
         },
         "DBG_WRITE_LUT4_B_D": {
@@ -25365,7 +25365,7 @@
           "hide_name": 0,
           "bits": [ 23, 24, 25, 26, 23, 24, 25, 26 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:22.24-22.28"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:22.24-22.28"
           }
         },
         "GPIO_LUT4_Z_2_C": {
@@ -25402,7 +25402,7 @@
           "hide_name": 0,
           "bits": [ 20 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:19.24-19.31"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:19.24-19.31"
           }
         },
         "IRQ_DMA_LUT4_D_Z": {
@@ -25423,7 +25423,7 @@
           "hide_name": 0,
           "bits": [ 21 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:20.24-20.31"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:20.24-20.31"
           }
         },
         "IRQ_NPU_LUT4_D_Z": {
@@ -25444,7 +25444,7 @@
           "hide_name": 0,
           "bits": [ 19 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:18.24-18.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:18.24-18.33"
           }
         },
         "IRQ_TIMER_LUT4_D_Z": {
@@ -25465,7 +25465,7 @@
           "hide_name": 0,
           "bits": [ 22 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:21.24-21.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:21.24-21.33"
           }
         },
         "IRQ_VSYNC_LUT4_A_Z": {
@@ -25479,7 +25479,7 @@
           "hide_name": 0,
           "bits": [ 28 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:25.24-25.32"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:25.24-25.32"
           }
         },
         "JTAG_TCK_LUT4_D_Z": {
@@ -25493,7 +25493,7 @@
           "hide_name": 0,
           "bits": [ 30 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:27.24-27.32"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:27.24-27.32"
           }
         },
         "JTAG_TDI_LUT4_B_Z": {
@@ -25536,14 +25536,14 @@
           "hide_name": 0,
           "bits": [ 31 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:28.24-28.32"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:28.24-28.32"
           }
         },
         "JTAG_TMS": {
           "hide_name": 0,
           "bits": [ 29 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:26.24-26.32"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:26.24-26.32"
           }
         },
         "JTAG_TMS_LUT4_B_Z": {
@@ -25557,7 +25557,7 @@
           "hide_name": 0,
           "bits": [ 3 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:8.24-8.29"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:8.24-8.29"
           }
         },
         "RST_N_LUT4_D_Z": {
@@ -25570,7 +25570,7 @@
           "hide_name": 0,
           "bits": [ 27 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:24.24-24.33"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:24.24-24.33"
           }
         },
         "TEST_MODE_LUT4_D_Z": {
@@ -25591,7 +25591,7 @@
           "hide_name": 0,
           "bits": [ 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 93, 89, 86, 92 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:31.18-31.27",
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:31.18-31.27",
             "unused_bits": "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19"
           }
         },
@@ -25600,7 +25600,7 @@
           "bits": [ 103 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_COUT": {
@@ -25608,7 +25608,7 @@
           "bits": [ 104 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13",
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13",
             "unused_bits": "0 "
           }
         },
@@ -25617,7 +25617,7 @@
           "bits": [ 159, 145, 153, 154, 134, 135, 129, 130, 124, 125, 119, 120, 114, 115, 157, 158, 149, 150, 139, 140, 108, 109, 105, 106 ],
           "attributes": {
             "force_downto": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:34.26-34.27"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:34.26-34.27"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_1_B0": {
@@ -25637,7 +25637,7 @@
           "bits": [ 112 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_2_B0": {
@@ -25657,7 +25657,7 @@
           "bits": [ 118 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_3_B0": {
@@ -25677,7 +25677,7 @@
           "bits": [ 123 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_4_B0": {
@@ -25697,7 +25697,7 @@
           "bits": [ 128 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_5_B0": {
@@ -25717,7 +25717,7 @@
           "bits": [ 107 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_6_B1": {
@@ -25731,7 +25731,7 @@
           "bits": [ 143 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_6_S0": {
@@ -25758,7 +25758,7 @@
           "bits": [ 138 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_8_B0": {
@@ -25778,7 +25778,7 @@
           "bits": [ 133 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_9_B0": {
@@ -25798,7 +25798,7 @@
           "bits": [ 148 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_CCU2C_S1_B0": {
@@ -25818,7 +25818,7 @@
           "bits": [ 113 ],
           "attributes": {
             "abc9_carry": "00000000000000000000000000000001",
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4|/Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13"
           }
         },
         "counter_q_CCU2C_B1_S1_LUT4_Z_D": {
@@ -25834,7 +25834,7 @@
           "hide_name": 0,
           "bits": [ 180, 181, 182, 183, 180, 181, 182, 183 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:32.18-32.24",
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:32.18-32.24",
             "unused_bits": "0 1 2 3 4 5 6 7"
           }
         },
@@ -25842,7 +25842,7 @@
           "hide_name": 0,
           "bits": [ 22, 21, 20, 19 ],
           "attributes": {
-            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:33.18-33.23"
+            "src": "/Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:33.18-33.23"
           }
         }
       }

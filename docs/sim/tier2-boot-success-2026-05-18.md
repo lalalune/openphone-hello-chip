@@ -26,7 +26,7 @@ make tier2-boot        # invokes scripts/sim/run_qemu_tier2_check.py
 [    0.961912] Run /init as init process
 
 ===============================
-openphone tier2: linux booted
+openagent tier2: linux booted
 ===============================
 Linux (none) 6.6.0-dirty #1 SMP Tue May 19 02:08:44 UTC 2026 riscv64 GNU/Linux
 ~ #
@@ -40,10 +40,10 @@ Linux (none) 6.6.0-dirty #1 SMP Tue May 19 02:08:44 UTC 2026 riscv64 GNU/Linux
   (avoids the bare-elf binutils `-pie` blocker described in
   `docs/sim/tier1-opensbi-macos-blocker.md`).
 - Address map is QEMU virt's default (UART 0x10000000). The follow-up Renode
-  step (`sim/renode/openphone_hello.repl`) rebinds to our platform contract
+  step (`sim/renode/openagent_e1.repl`) rebinds to our platform contract
   addresses (UART 0x10001000, CLINT 0x02000000, PLIC 0x0C000000).
 - This is the **software** Tier 2 milestone. The **hardware** Tier 4 milestone
   is booting this same Image+initramfs on the Verilator-compiled
-  OpenPhoneRocketConfig Rocket simulator inside our SoC top-level wrapper —
+  OpenAgentRocketConfig Rocket simulator inside our SoC top-level wrapper —
   blocked on Linux x86_64 build host for Chipyard (see
   `docs/sim/verilator-rocket-bootstrap-status.md`).

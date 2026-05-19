@@ -1,10 +1,10 @@
-# Hello demo package contract
+# E1 demo package contract
 
 Evidence class: `non_release_demo_planning`
 Release use: `prohibited`
 Planning revision: `2026-05-17-r0`
 
-The demo board target uses `hello_demo_qfn64_planning_r0`, a local QFN64-style
+The demo board target uses `e1_demo_qfn64_planning_r0`, a local QFN64-style
 planning contract for KiCad symbol work, FPGA harness mapping, and first-article
 procedure drafting. It defines a specific demo package envelope, pin numbering
 rule, rail budget scaffold, and board-net map.
@@ -16,7 +16,7 @@ archived with immutable revisions or SHA-256 checksums.
 
 ## Local planning package
 
-- Package ID: `hello_demo_qfn64_planning_r0`.
+- Package ID: `e1_demo_qfn64_planning_r0`.
 - Package family: QFN-style local planning envelope, 64 perimeter pins.
 - Body envelope: `9.0 mm x 9.0 mm`, `0.50 mm` nominal pitch, top-view
   counterclockwise numbering, 16 pins per side.
@@ -37,7 +37,7 @@ archived with immutable revisions or SHA-256 checksums.
 - Reserved debug: `TEST_MODE` plus JTAG pins for debug or scan planning only.
 
 The machine-readable source of truth is
-`package/hello-demo-pinout.yaml`.
+`package/e1-demo-pinout.yaml`.
 
 ## Board and FPGA planning use
 
@@ -46,7 +46,7 @@ net classes, connector planning, and cross-probe checks. It must not create a
 fabrication-ready footprint, paste layer, courtyard, assembly drawing, Gerbers,
 or purchase package from this file.
 
-FPGA work may use the same signal names for the `hello_demo_fpga` target:
+FPGA work may use the same signal names for the `e1_demo_fpga` target:
 `CLK_IN`, `RST_N`, debug/MMIO, GPIO, IRQ, `TEST_MODE`, and JTAG. Bitstream
 release remains blocked until a concrete FPGA board revision, final LPF, timing
 report, packed bitstream, and tool-version archive are checked in by the board

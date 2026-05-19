@@ -87,8 +87,8 @@ also enforced by `scripts/check_pd_signoff.py`.
 
 ## Padframe-inclusive run
 
-The standard signoff above is for the padless macro `hello_soc_top`. The
-padframe-inclusive top `hello_chip_top` requires a SEPARATE run with its own
+The standard signoff above is for the padless macro `e1_soc_top`. The
+padframe-inclusive top `e1_chip_top` requires a SEPARATE run with its own
 `<RUN_ID>` directory under the same conventions. The padframe-inclusive run
 adds:
 
@@ -116,4 +116,4 @@ include:
 - `pd/signoff/manifest.yaml` - machine-readable artifact gate.
 - `docs/pd/pad-cell-selection-criteria.md` - PDK eligibility matrix.
 - `docs/manufacturing/release-evidence-template.md` - parent release manifest.
-- `docs/tapeout-checklist/hello-chip.md` - human review checklist.
+- `docs/tapeout-checklist/e1-chip.md` - human review checklist.

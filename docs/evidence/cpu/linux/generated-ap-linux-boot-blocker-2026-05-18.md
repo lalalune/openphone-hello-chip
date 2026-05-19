@@ -2,7 +2,7 @@
 
 Status: blocked, fail-closed.
 
-Scope: generated Chipyard `OpenPhoneRocketConfig` AP Linux boot evidence for
+Scope: generated Chipyard `OpenAgentRocketConfig` AP Linux boot evidence for
 `scripts/check_minimum_linux_npu_target.py`.
 
 ## What Passed
@@ -23,23 +23,23 @@ CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 \
 CHIPYARD_LINUX_SMOKE_CLEAN=1 \
 CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS=600 \
 CHIPYARD_LINUX_SMOKE_JOBS=1 \
-scripts/run_chipyard_openphone_linux_smoke.sh
+scripts/run_chipyard_openagent_linux_smoke.sh
 ```
 
 The current Docker wrapper seeds both expected boot ROM images into the generated
 target directory before Chipyard elaboration:
 
 ```text
-openphone-evidence: seeded_bootrom=/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig/bootrom.rv64.img
-openphone-evidence: seeded_bootrom=/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig/bootrom.rv32.img
+openagent-evidence: seeded_bootrom=/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig/bootrom.rv64.img
+openagent-evidence: seeded_bootrom=/work/external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig/bootrom.rv32.img
 ```
 
 ## Current Blocker
 
 The smoke transcript is complete but not boot evidence:
 
-- Transcript: `build/chipyard/openphone_rocket/verilator-linux-smoke.log`
-- Report: `build/chipyard/openphone_rocket/verilator-linux-smoke.json`
+- Transcript: `build/chipyard/openagent_rocket/verilator-linux-smoke.log`
+- Report: `build/chipyard/openagent_rocket/verilator-linux-smoke.json`
 - Exit code: `137`
 - Missing required markers: `OpenSBI`, `Linux version`
 - Instruction trace is stale relative to the current smoke log.
@@ -47,7 +47,7 @@ The smoke transcript is complete but not boot evidence:
 During this pass, multiple detached Chipyard Docker runners were active and
 writing the same generated tree. They were stopped to avoid corrupting the
 generated evidence state. No active
-`openphone/chipyard-openphone-minimal-amd64:1.13.0` containers remained after
+`openagent/chipyard-openagent-minimal-amd64:1.13.0` containers remained after
 the stop.
 
 ## Exact Next Action
@@ -55,12 +55,12 @@ the stop.
 Run one generated-AP smoke job at a time, with no parallel Chipyard Docker jobs:
 
 ```sh
-docker ps --filter ancestor=openphone/chipyard-openphone-minimal-amd64:1.13.0
+docker ps --filter ancestor=openagent/chipyard-openagent-minimal-amd64:1.13.0
 CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 \
 CHIPYARD_LINUX_SMOKE_CLEAN=1 \
 CHIPYARD_LINUX_SMOKE_TIMEOUT_SECONDS=1200 \
 CHIPYARD_LINUX_SMOKE_JOBS=1 \
-scripts/run_chipyard_openphone_linux_smoke.sh
+scripts/run_chipyard_openagent_linux_smoke.sh
 eval "$(python3 scripts/locate_chipyard_linux_payload.py --export-env)"
 CHIPYARD_ALLOW_CONTAINER_GENERATED_PATHS=1 \
 python3 scripts/check_chipyard_verilator_linux_smoke.py

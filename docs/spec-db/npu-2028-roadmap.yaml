@@ -1,7 +1,7 @@
-schema: openphone.npu_2028_roadmap.v1
+schema: openagent.npu_2028_roadmap.v1
 as_of: 2026-05-17
 target_spec: docs/spec-db/npu-2028-target.yaml
-runtime_contract: docs/spec-db/hello-npu-runtime-contract.json
+runtime_contract: docs/spec-db/e1-npu-runtime-contract.json
 claim_boundary: roadmap_phase_gates_only_no_android_boot_or_phone_class_accelerator_claim
 
 current_phase: L0_MMIO_PROTOTYPE
@@ -16,7 +16,7 @@ phase_order:
 phases:
   - id: L0_MMIO_PROTOTYPE
     status: current_limited
-    objective: Keep the tiny hello_npu GEMM/runtime ABI honest and locally testable.
+    objective: Keep the tiny e1_npu GEMM/runtime ABI honest and locally testable.
     required_capabilities:
       - scalar_mmio_ops
       - DOT4_S8
@@ -27,7 +27,7 @@ phases:
     measurable_gates:
       - metric: runtime_contract_checker
         required: pass
-        evidence: scripts/check_hello_npu_runtime_contract.py
+        evidence: scripts/check_e1_npu_runtime_contract.py
       - metric: npu_2028_target_checker
         required: pass
         evidence: scripts/check_npu_2028_targets.py
@@ -36,16 +36,16 @@ phases:
         evidence: verify/verilator/test_npu_gemm.cpp
       - metric: scratchpad_bytes
         required: 64
-        evidence: docs/spec-db/hello-npu-runtime-contract.json
+        evidence: docs/spec-db/e1-npu-runtime-contract.json
       - metric: gemm_s8_max_m
         required: 3
-        evidence: docs/spec-db/hello-npu-runtime-contract.json
+        evidence: docs/spec-db/e1-npu-runtime-contract.json
       - metric: gemm_s8_max_n
         required: 3
-        evidence: docs/spec-db/hello-npu-runtime-contract.json
+        evidence: docs/spec-db/e1-npu-runtime-contract.json
       - metric: gemm_s8_max_k
         required: 7
-        evidence: docs/spec-db/hello-npu-runtime-contract.json
+        evidence: docs/spec-db/e1-npu-runtime-contract.json
     blocked_claims:
       - Android NNAPI acceleration
       - phone-class TOPS
@@ -71,28 +71,28 @@ phases:
         evidence: docs/arch/npu.md
       - metric: descriptor_submission_smoke
         required: pass
-        evidence: compiler/runtime/test_hello_npu_runtime_sim.py
+        evidence: compiler/runtime/test_e1_npu_runtime_sim.py
       - metric: descriptor_timeout_error_status
         required: pass
-        evidence: compiler/runtime/test_hello_npu_runtime_sim.py
+        evidence: compiler/runtime/test_e1_npu_runtime_sim.py
       - metric: dma_tensor_streaming_trace
         required: pass
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: dma_trace_bytes_read
         required: greater_than_0
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: dma_trace_bytes_written
         required: greater_than_0
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: perf_counter_dma_bytes_read
         required: greater_than_0
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: perf_counter_dma_bytes_written
         required: greater_than_0
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: unsupported_ops_for_descriptor_smoke
         required: 0
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
     blocked_claims:
       - NNAPI delegate acceleration
       - model compiler coverage
@@ -120,13 +120,13 @@ phases:
         evidence: docs/npu/2028-targets.md
       - metric: observed_macs_per_cycle_min
         required: 128
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: perf_counter_cycles_macs_ops_errors
         required: pass
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: cpu_fallback_percent
         required: 0
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
     blocked_claims:
       - multi_tile_throughput
       - sustained_phone_power
@@ -159,7 +159,7 @@ phases:
         evidence: docs/spec-db/npu-2028-target.yaml
       - metric: queue_fairness_and_qos_trace
         required: pass
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
     blocked_claims:
       - Android production accelerator
       - public benchmark leadership
@@ -178,28 +178,28 @@ phases:
     measurable_gates:
       - metric: android_proof_manifest_template
         required: blocked_template_with_status_and_sha256_fields
-        evidence: docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json
+        evidence: docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json
       - metric: vts_result
         required: pass
-        evidence: docs/evidence/android/hello-npu/vts-result.json
+        evidence: docs/evidence/android/e1-npu/vts-result.json
       - metric: cts_result
         required: pass
-        evidence: docs/evidence/android/hello-npu/cts-result.json
+        evidence: docs/evidence/android/e1-npu/cts-result.json
       - metric: aidl_hal_service_declared
         required: pass
-        evidence: docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json
+        evidence: docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json
       - metric: selinux_fail_closed_policy
         required: pass
-        evidence: docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json
-      - metric: nnapi_accelerator_query_hello_npu
+        evidence: docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json
+      - metric: nnapi_accelerator_query_e1_npu
         required: pass
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: unsupported_operator_percent_max
         required: 1
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: cpu_fallback_percent_max
         required: 1
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
     blocked_claims:
       - 2028 phone-class performance
       - MLPerf Mobile result
@@ -234,15 +234,15 @@ phases:
         evidence: docs/spec-db/npu-2028-target.yaml
       - metric: benchmark_model_hashes_present
         required: pass
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: benchmark_transcript_hashes_present
         required: pass
-        evidence: benchmarks/capabilities/hello_npu_nnapi.proof.json
+        evidence: benchmarks/capabilities/e1_npu_nnapi.proof.json
       - metric: power_thermal_manifest_template
         required: blocked_template_with_status_and_sha256_fields
-        evidence: docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json
+        evidence: docs/benchmarks/capabilities/e1_npu_power_thermal_manifest.template.json
       - metric: power_thermal_trace_present
         required: pass
-        evidence: docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json
+        evidence: docs/benchmarks/capabilities/e1_npu_power_thermal_manifest.template.json
     blocked_claims:
       - none_without_all_phase_gates_and_artifacts

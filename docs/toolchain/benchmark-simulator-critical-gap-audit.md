@@ -17,8 +17,8 @@ Scope: `benchmarks/**`, `sim/**`, `scripts/check_tools.sh`, `scripts/run_qemu.sh
 
 Machine-readable status sources now include:
 
-- `scripts/check_tools.sh --json`, schema `openphone.tool_status.v1`.
-- `benchmarks/run_benchmarks.py plan|run`, schema `openphone.benchmark_run.v1`.
+- `scripts/check_tools.sh --json`, schema `openagent.tool_status.v1`.
+- `benchmarks/run_benchmarks.py plan|run`, schema `openagent.benchmark_run.v1`.
 - `scripts/run_qemu.sh --check`, `STATUS: PASS|BLOCKED|FAIL qemu.*` stage lines.
 - `scripts/run_renode.sh --check`, `STATUS: PASS|BLOCKED|FAIL renode.*` stage lines.
 
@@ -33,7 +33,7 @@ Machine-readable status sources now include:
 | fio sequential read | `fio`; target filesystem/device identity; JSON parser is not required by config yet. | `planned_missing_deps` when `fio` is absent. | Install target fio, switch configs to JSON output, and record target storage topology. |
 | fio random read/write | `fio`; target filesystem/device identity; JSON parser is not required by config yet. | `planned_missing_deps` when `fio` is absent. | Same as sequential read; include random workload parameters in report metadata. |
 | TFLite CPU | `benchmark_model`; `benchmarks/models/mobile_smoke.tflite`; pinned model SHA-256. | `blocked` while the model is absent or placeholder-sized; may also report missing `benchmark_model`. | Generate or supply redistributable `.tflite`, pin SHA-256, and archive benchmark_model build provenance. |
-| TFLite hello NPU | `benchmark_model` with NNAPI; `mobile_smoke.tflite`; real `hello-npu` NNAPI delegate/accelerator. | `blocked` while model is absent; `planned_missing_deps` for binary in dry-run. | Add model, NNAPI delegate evidence, accelerator name validation, and parser for latency output. |
+| TFLite e1 NPU | `benchmark_model` with NNAPI; `mobile_smoke.tflite`; real `e1-npu` NNAPI delegate/accelerator. | `blocked` while model is absent; `planned_missing_deps` for binary in dry-run. | Add model, NNAPI delegate evidence, accelerator name validation, and parser for latency output. |
 | MLPerf Mobile | External checkout, APK/runner, datasets, Android target, device shell path. | Documentation only; not represented in `benchmark_plan.json`. | Add an external-run manifest before accepting MLPerf numbers. |
 
 The benchmark harness correctly refuses to mark a result `passed` if required
@@ -46,10 +46,10 @@ metadata.
 
 | Area | Current behavior | Risk | Required unblock |
 | --- | --- | --- | --- |
-| QEMU target | `scripts/run_qemu.sh` builds and runs a qemu-virt RISC-V firmware, not hello-chip hardware. | A qemu-virt serial banner can be mistaken for hello-chip boot evidence. | Keep docs and status lines saying `software reference only`; archive the ELF and transcript only as software-reference evidence. |
+| QEMU target | `scripts/run_qemu.sh` builds and runs a qemu-virt RISC-V firmware, not e1-chip hardware. | A qemu-virt serial banner can be mistaken for e1-chip boot evidence. | Keep docs and status lines saying `software reference only`; archive the ELF and transcript only as software-reference evidence. |
 | QEMU non-strict check | Missing RISC-V compiler or `qemu-system-riscv64` reports `BLOCKED` and exits 0 unless `REQUIRE_QEMU=1`. | CI smoke can stay green while executable QEMU evidence is absent. | Use `make qemu-check-strict` for release gates. |
 | QEMU fake test path | `scripts/test_qemu_smoke_status.py` injects fake compiler/QEMU binaries to test status handling. | Fake PASS could be misread as simulator evidence if logs are reused. | Treat it only as unit coverage for status transitions; never archive it as boot proof. |
-| Renode scaffold | `sim/renode/openphone_hello.repl` and `.resc` model the qemu-virt memory/UART map. | It is not a real hello hardware model and the interactive `.resc` is not boot evidence by itself. | Add a bounded transcript capture and hardware-map model before using Renode as boot evidence. |
+| Renode scaffold | `sim/renode/openagent_e1.repl` and `.resc` model the qemu-virt memory/UART map. | It is not a real e1 hardware model and the interactive `.resc` is not boot evidence by itself. | Add a bounded transcript capture and hardware-map model before using Renode as boot evidence. |
 | Renode non-strict check | Missing `renode`, missing firmware, or missing real transcript intake reports `BLOCKED` and exits 0 unless `REQUIRE_RENODE=1`; `scripts/run_renode.sh --check --transcript PATH` only passes after archiving a transcript containing the expected banner. | Smoke can pass only with semantic scaffold coverage plus an explicitly supplied transcript; the transcript still must come from a real Renode run. | Use `make renode-check-strict` for release gates and archive `build/reports/renode_smoke.manifest` with any real transcript evidence. |
 | Verilator/cocotb fallback | RTL tests are real fast-path checks, but they do not validate QEMU/Renode software boot. | Passing RTL smoke can be overclaimed as system software readiness. | Keep software/simulator claims tied to their own status artifacts. |
 
@@ -58,7 +58,7 @@ metadata.
 | Gate | Non-strict behavior | Strict behavior |
 | --- | --- | --- |
 | `scripts/check_tools.sh` | Prints `PASS`, `BLOCK`, and `FAIL`; exits 0 unless required fast-path tools/packages are missing and `--strict` is set. | `scripts/check_tools.sh --strict` exits 1 on missing required fast-path tools or Python packages. |
-| `scripts/check_tools.sh --json` | Emits `openphone.tool_status.v1` with per-tool `status`, `tier`, `gate`, `required`, and `path_or_status`. | Combine with `--strict` to preserve the same exit policy. |
+| `scripts/check_tools.sh --json` | Emits `openagent.tool_status.v1` with per-tool `status`, `tier`, `gate`, `required`, and `path_or_status`. | Combine with `--strict` to preserve the same exit policy. |
 | `benchmarks/run_benchmarks.py plan` / `--dry-run` | Writes a dry-run report with `planned`, `planned_missing_deps`, or `blocked`. | `--strict-missing` exits 2 when any dependency or release-blocking asset is absent. |
 | `benchmarks/run_benchmarks.py run` | Skips blocked/missing workloads by recording `blocked` or `missing_dependencies`; real command failures exit 1. | `--strict-missing` exits 2 for missing deps/assets and 1 for real failures. |
 | `make qemu-check` | Semantic failures fail; missing compiler/QEMU is `BLOCKED` and exits 0. | `make qemu-check-strict` sets `REQUIRE_QEMU=1` and exits 2 on blocked executable smoke. |

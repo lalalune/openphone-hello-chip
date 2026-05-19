@@ -1,4 +1,4 @@
-schema: openphone.mobile_sota_reference.v1
+schema: openagent.mobile_sota_reference.v1
 as_of: 2026-05-17
 purpose: >
   Reference targets for architecture budgets and benchmark comparisons.
@@ -294,7 +294,7 @@ open_source_chip_and_ip_references:
     blocker:
       - 130 nm research-class performance is orders away from flagship mobile; useful for flow realism, not SOTA phone parity.
 
-openphone_v0_targets:
+openagent_v0_targets:
   architecture_budget:
     cpu: "Linux-capable RV64 application cores first; Android usability second; flagship parity is non-v0."
     memory: "Model cache and DRAM behavior; do not claim LPDDR5X-class until real PHY and board exist."

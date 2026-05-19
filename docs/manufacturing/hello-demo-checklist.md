@@ -1,4 +1,4 @@
-# Hello demo manufacturing checklist
+# E1 demo manufacturing checklist
 
 This checklist is for the simple demo chip/board product slice.
 

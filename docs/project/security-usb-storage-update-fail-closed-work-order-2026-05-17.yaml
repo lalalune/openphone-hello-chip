@@ -1,4 +1,4 @@
-schema: openphone.security_usb_storage_update_fail_closed_work_order.v1
+schema: openagent.security_usb_storage_update_fail_closed_work_order.v1
 status: fail_closed_work_order
 date: 2026-05-17
 claim_boundary: >
@@ -9,9 +9,9 @@ claim_boundary: >
 source_files:
   - docs/arch/security.md
   - docs/arch/boot.md
-  - rtl/bootrom/hello_bootrom.sv
-  - sw/bootrom/hello_qemu_firmware.S
-  - sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone
+  - rtl/bootrom/e1_bootrom.sv
+  - sw/bootrom/e1_qemu_firmware.S
+  - sw/aosp-device/device/openagent/openagent_ai_soc/fstab.openagent
   - docs/sw/aosp-device/README.md
   - docs/manufacturing/real-world-verification-gaps.yaml
 domains:

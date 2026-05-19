@@ -1,6 +1,6 @@
 {
-  "schema": "openphone.qemu_virt_linux_payload_plan.v1",
-  "claim_boundary": "qemu_virt_prebuilt_payload_only_not_hello_hardware",
+  "schema": "openagent.qemu_virt_linux_payload_plan.v1",
+  "claim_boundary": "qemu_virt_prebuilt_payload_only_not_e1_hardware",
   "status": "reference_boot_passed_when_build_reports_manifest_status_pass",
   "source": {
     "distribution": "Debian",
@@ -30,11 +30,11 @@
   "required_real_outputs": [
     "build/qemu/linux_payload/debian-installer-riscv64-20260517T000000Z/manifest.json",
     "build/reports/qemu_os_boot_attempt.log with STATUS: PASS qemu.os_boot output",
-    "build/reports/qemu_os_boot_attempt.json with claim_boundary=qemu_virt_reference_only_not_hello_chip_rtl"
+    "build/reports/qemu_os_boot_attempt.json with claim_boundary=qemu_virt_reference_only_not_e1_chip_rtl"
   ],
   "smallest_next_external_import_step": {
     "target": "linux",
-    "reason": "Buildroot needs a kernel tree that already contains the OpenPhone BSP; OpenSBI and U-Boot need a CPU-capable SoC handoff.",
+    "reason": "Buildroot needs a kernel tree that already contains the OpenAgent BSP; OpenSBI and U-Boot need a CPU-capable SoC handoff.",
     "local_preflight": "python3 scripts/check_bsp_next_import_step.py",
     "external_preflight": "LINUX_DIR=/path/to/linux python3 scripts/check_bsp_next_import_step.py",
     "external_import_helper": "sw/linux/scripts/import-linux-bsp.sh /path/to/linux",
@@ -44,9 +44,9 @@
     ]
   },
   "not_claimed": [
-    "hello-chip hardware boot",
+    "e1-chip hardware boot",
     "selected AP generated-target boot",
-    "OpenPhone BSP driver runtime proof",
+    "OpenAgent BSP driver runtime proof",
     "Android compatibility"
   ]
 }

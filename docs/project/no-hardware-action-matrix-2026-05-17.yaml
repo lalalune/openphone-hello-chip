@@ -1,4 +1,4 @@
-schema: openphone.no_hardware_action_matrix.v1
+schema: openagent.no_hardware_action_matrix.v1
 as_of: 2026-05-17
 purpose: >
   Exhaustive local work queue for useful work that can be advanced before
@@ -36,7 +36,7 @@ workstreams:
     doable_now:
       - Keep device-tree, BoardConfig, VINTF, fstab, init, SELinux, and HAL declarations syntactically checkable.
       - Add import-checks that reject missing source/prebuilt HALs and separate import success from build evidence.
-      - Define exact evidence logs for lunch, vendorimage, checkvintf, Cuttlefish or equivalent boot, and hello MMIO smoke.
+      - Define exact evidence logs for lunch, vendorimage, checkvintf, Cuttlefish or equivalent boot, and e1 MMIO smoke.
     local_commands:
       - make software-bsp-test
       - make software-bsp-check
@@ -55,7 +55,7 @@ workstreams:
       - make renode-status-test
       - make benchmark-sim-metrics-test
     current_blocker: No Renode CLI, no real Renode transcript/manifest, and no cycle-accurate phone SoC simulator exists.
-    next_artifact: sim/renode/openphone_hello_smoke.schema.json
+    next_artifact: sim/renode/openagent_e1_smoke.schema.json
 
   - id: benchmarks
     owner_scope: Benchmark corpus, parsers, calibration, SOTA comparison

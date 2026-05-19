@@ -1,8 +1,8 @@
-# OpenPhone-AI-SoC v0.1 architecture contract
+# OpenAgent-AI-SoC v0.1 architecture contract
 
-The first executable artifact is `hello_soc`, a tiny pre-tapeout chip used to validate the repository, toolchain, and verification flow.
+The first executable artifact is `e1_soc`, a tiny pre-tapeout chip used to validate the repository, toolchain, and verification flow.
 
-## Hello chip blocks
+## E1 chip blocks
 
 ```text
 boot ROM
@@ -42,8 +42,8 @@ that target. It must not be treated as a 2028 phone-class AP until the CPU/AP
 evidence manifest closes topology, ISA, cache/coherency, MMU, boot, benchmark,
 power/thermal, Android, and silicon gates.
 
-The hello chip keeps the same contract style while making the first end-to-end flow fast enough to run constantly.
+The e1 chip keeps the same contract style while making the first end-to-end flow fast enough to run constantly.
 
 ## Contract scaffold
 
-The Linux-capable CPU/interconnect/interrupt scaffold is not wired into the hello-chip pad-level design yet. It lives under `rtl/cpu`, `rtl/interconnect`, `rtl/memory`, and `rtl/interrupts`, with `hello_linux_soc_contract` serving as the integration wrapper for verification. This keeps the first chip stable while establishing the future CPU, external DRAM controller, interconnect, and interrupt-controller boundary.
+The Linux-capable CPU/interconnect/interrupt scaffold is not wired into the e1-chip pad-level design yet. It lives under `rtl/cpu`, `rtl/interconnect`, `rtl/memory`, and `rtl/interrupts`, with `e1_linux_soc_contract` serving as the integration wrapper for verification. This keeps the first chip stable while establishing the future CPU, external DRAM controller, interconnect, and interrupt-controller boundary.

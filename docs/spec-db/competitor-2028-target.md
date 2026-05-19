@@ -2,7 +2,7 @@
 
 Date: 2026-05-17
 
-Purpose: compare the current OpenPhone RAM/CPU/NPU scaffold against public
+Purpose: compare the current OpenAgent RAM/CPU/NPU scaffold against public
 Snapdragon/Apple/MediaTek/Google-class mobile SoCs, then set a 2028 target
 envelope for an open RISC-V AI phone SoC. This is a planning artifact, not an
 implementation claim.
@@ -15,7 +15,7 @@ implementation claim.
   proof for design signoff.
 - Do not compare TOPS without precision, sparsity, clocks, power, thermal
   state, memory bandwidth, and CPU fallback.
-- Mark any forward-looking 2028 number as an OpenPhone target assumption, not
+- Mark any forward-looking 2028 number as an OpenAgent target assumption, not
   as an observed competitor number.
 
 ## Workstream Breakdown
@@ -25,7 +25,7 @@ implementation claim.
 | RAM / memory | What memory capacity, bandwidth, cache, coherency, and IOMMU envelope is needed for an AI phone AP? | Convert public LPDDR5X-class signals into a 2028 target and list evidence needed before any bandwidth/capacity claim. |
 | CPU | What open RISC-V AP class is needed to be phone-credible versus 2025-2026 flagship Arm/custom cores? | Compare current tiny CPU scaffold to flagship CPU topology and define the minimum Linux-capable RV64GC target. |
 | NPU | What accelerator class is needed for on-device LLM/multimodal workloads? | Compare current MMIO NPU prototype to public low-precision/NPU software signals and define a target envelope. |
-| Evidence / claims | What must stay blocked until silicon/software proof exists? | Separate sourced competitor observations, OpenPhone assumptions, and current repo non-claims. |
+| Evidence / claims | What must stay blocked until silicon/software proof exists? | Separate sourced competitor observations, OpenAgent assumptions, and current repo non-claims. |
 
 ## Sourced Assumptions
 
@@ -68,7 +68,7 @@ backed by real silicon and software evidence.
 
 ## Gap Table
 
-| Area | Current OpenPhone state | 2028 target gap | Blocked claim |
+| Area | Current OpenAgent state | 2028 target gap | Blocked claim |
 | --- | --- | --- | --- |
 | CPU | Tiny executable RISC-V subset over a 32-bit AXI-Lite manager. It fetches, runs a small integer subset, and halts fail-closed. Not Linux-capable. | Missing RV64GC application cores, privilege/CSR/trap model, MMU, caches, atomics, timer/software interrupts, coherent memory, OpenSBI/Linux boot evidence. | No flagship CPU, Android AP, or Linux-capable CPU performance claim. |
 | RAM / memory | SRAM-backed DRAM aperture for tests. Docs reserve `0x8000_0000`; current model is not real DRAM capacity, timing, LPDDR PHY, training, refresh, or bandwidth evidence. | Missing LPDDR-class controller/PHY, 16-24 GB capacity plan, 100+ GB/s bandwidth, cache hierarchy, UMA/coherency, IOMMU, QoS, bandwidth counters, thermal/power evidence. | No LPDDR, RAM capacity, memory bandwidth, UMA, or AI/display contention claim. |
@@ -85,8 +85,8 @@ Target assumptions:
   density in the Snapdragon 8 Elite Gen 5 class, while Tensor/Apple public
   device context is lower.
 - The 120 GB/s sustained and 180 GB/s stretch memory-bandwidth targets are
-  OpenPhone planning assumptions derived from public LPDDR5X-class bandwidths
-  and AI/display concurrency needs; they are not observed hello-chip results.
+  OpenAgent planning assumptions derived from public LPDDR5X-class bandwidths
+  and AI/display concurrency needs; they are not observed e1-chip results.
 - The NPU envelope is aligned with `docs/spec-db/npu-2028-target.yaml`, but
   this artifact keeps CPU and memory targets in the same comparison frame.
 

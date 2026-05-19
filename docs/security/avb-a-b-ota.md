@@ -1,6 +1,6 @@
 # AVB Chain, A/B Slots, OTA, and Recovery
 
-Status: pre-silicon specification. AOSP `fstab.openphone` AVB flags are
+Status: pre-silicon specification. AOSP `fstab.openagent` AVB flags are
 scaffold markers only (per work order). No verified-boot path executes today.
 
 ## 1. A/B slot layout

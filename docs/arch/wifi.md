@@ -1,7 +1,7 @@
 # WiFi external interface contract
 
 The application SoC will attach to an external WiFi/Bluetooth combo module
-rather than implementing RF on die. The hello chip does not bond these pins and
+rather than implementing RF on die. The e1 chip does not bond these pins and
 does not implement the SDIO host controller, Bluetooth transport ownership, or
 firmware driver. This document defines the product-facing digital contract that
 later padframe and board work must preserve.
@@ -28,7 +28,7 @@ later padframe and board work must preserve.
 
 The machine-readable source for this contract is
 `package/wifi-external-interface.yaml`. Its current state is a product scaffold:
-the pins are not bonded in the hello chip, the host controller is not
+the pins are not bonded in the e1 chip, the host controller is not
 implemented, and the OS/firmware driver path is not implemented.
 
 ## Concrete integration slice
@@ -46,7 +46,7 @@ standard `brcmfmac` SDIO WiFi path and `hci_uart_bcm` Bluetooth HCI UART path
 once a real SDIO host, UART, GPIO, pinctrl, clock, and interrupt controller are
 available in the platform. The checked-in DTS and Buildroot fragments carry
 disabled stubs so BSP work can name the intended devices without claiming that
-hello-chip currently has those host peripherals.
+e1-chip currently has those host peripherals.
 
 The evidence path is machine-readable in `package/wifi/evidence-gates.yaml`.
 That manifest is intentionally blocked: it records the host-controller,

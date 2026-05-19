@@ -27,44 +27,44 @@ record_uboot_command() {
 	log=$2
 	command=$3
 	{
-		echo "openphone-evidence: target=u-boot artifact=$artifact"
-		echo "openphone-evidence: command=$command"
-		echo "openphone-evidence: started_utc=$(timestamp_utc)"
-		echo "openphone-evidence: uboot=$uboot"
+		echo "openagent-evidence: target=u-boot artifact=$artifact"
+		echo "openagent-evidence: command=$command"
+		echo "openagent-evidence: started_utc=$(timestamp_utc)"
+		echo "openagent-evidence: uboot=$uboot"
 	} > "$log"
 	set +e
 	(cd "$uboot" && sh -c "$command") >> "$log" 2>&1
 	rc=$?
 	set -e
 	if [ "$rc" -eq 0 ]; then
-		echo "openphone-evidence: status=PASS" >> "$log"
+		echo "openagent-evidence: status=PASS" >> "$log"
 	else
-		echo "openphone-evidence: status=FAIL rc=$rc" >> "$log"
+		echo "openagent-evidence: status=FAIL rc=$rc" >> "$log"
 	fi
-	echo "openphone-evidence: ended_utc=$(timestamp_utc)" >> "$log"
+	echo "openagent-evidence: ended_utc=$(timestamp_utc)" >> "$log"
 	exit "$rc"
 }
 
 case "$mode" in
 	build)
-		if [ -z "${OPENPHONE_UBOOT_CMD:-}" ]; then
-			echo "error: set OPENPHONE_UBOOT_CMD to the external U-Boot build command" >&2
+		if [ -z "${OPENAGENT_UBOOT_CMD:-}" ]; then
+			echo "error: set OPENAGENT_UBOOT_CMD to the external U-Boot build command" >&2
 			exit 2
 		fi
 		record_uboot_command \
-			u_boot_openphone_build \
-			"$evidence_dir/u_boot_openphone_build.log" \
-			"$OPENPHONE_UBOOT_CMD"
+			u_boot_openagent_build \
+			"$evidence_dir/u_boot_openagent_build.log" \
+			"$OPENAGENT_UBOOT_CMD"
 		;;
 	boot-chain)
-		if [ -z "${OPENPHONE_UBOOT_BOOT_CMD:-}" ]; then
-			echo "error: set OPENPHONE_UBOOT_BOOT_CMD to the external boot-chain command" >&2
+		if [ -z "${OPENAGENT_UBOOT_BOOT_CMD:-}" ]; then
+			echo "error: set OPENAGENT_UBOOT_BOOT_CMD to the external boot-chain command" >&2
 			exit 2
 		fi
 		record_uboot_command \
 			u_boot_opensbi_boot_chain \
 			"$evidence_dir/u_boot_opensbi_boot_chain.log" \
-			"$OPENPHONE_UBOOT_BOOT_CMD"
+			"$OPENAGENT_UBOOT_BOOT_CMD"
 		;;
 	*)
 		echo "error: unknown mode $mode" >&2

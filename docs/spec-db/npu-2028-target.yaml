@@ -1,4 +1,4 @@
-schema: openphone.npu_2028_target.v1
+schema: openagent.npu_2028_target.v1
 as_of: 2026-05-17
 target_year: 2028
 target_class: performance_heavy_android_phone_ap
@@ -154,7 +154,7 @@ workload_targets:
 
 current_repo_classification:
   level: L0_RTL_UNIT
-  current_block: rtl/npu/hello_npu.sv
+  current_block: rtl/npu/e1_npu.sv
   implemented_now:
     - scalar_integer_ops
     - DOT4_S8

@@ -9,7 +9,7 @@ OpenSBI v1.4
         | |
         |_|
 
-Platform Name             : OpenPhone Hello Demo
+Platform Name             : OpenAgent E1 Demo
 Platform Features         : medeleg
 Platform HART Count       : 1
 Platform IPI Device       : aclint-mswi
@@ -59,15 +59,15 @@ Boot HART MIDELEG         : 0x0000000000001666
 Boot HART MEDELEG         : 0x0000000000f0b509
 
 [    0.000000] Linux version 6.8.0 (gcc version 13.2.0 (GCC)) #1 SMP Mon May 13 12:00:00 UTC 2026
-[    0.000000] Machine model: openphone,hello-demo
+[    0.000000] Machine model: openagent,e1-demo
 [    0.000000] SBI specification v2.0 detected
 [    0.000000] SBI implementation ID=0x1 Version=0x10004
 [    0.000000] SBI TIME extension detected
 [    0.000000] SBI IPI extension detected
 [    0.000000] SBI RFENCE extension detected
 [    0.000000] SBI SRST extension detected
-[    0.000000] earlycon: helloUART0 at MMIO 0x0000000010001000 (options '115200n8')
-[    0.000000] printk: legacy bootconsole [helloUART0] enabled
+[    0.000000] earlycon: e1UART0 at MMIO 0x0000000010001000 (options '115200n8')
+[    0.000000] printk: legacy bootconsole [e1UART0] enabled
 [    0.000000] efi: UEFI not found.
 [    0.000000] OF: fdt: Ignoring memory range 0x80000000 - 0x80200000
 [    0.000000] Zone ranges:
@@ -80,7 +80,7 @@ Boot HART MEDELEG         : 0x0000000000f0b509
 [    0.000000] riscv: ISA extensions imafdc_zicntr_zicsr_zifencei_zihpm_sstc
 [    0.000000] riscv: ELF capabilities imafdc
 [    0.000000] percpu: Embedded 18 pages/cpu s34584 r8192 d31464 u73728
-[    0.000000] Kernel command line: console=helloUART0,115200n8 root=/dev/ram rw earlycon=uart8250,mmio,0x10001000,115200n8 initrd=0x83000000,8M
+[    0.000000] Kernel command line: console=e1UART0,115200n8 root=/dev/ram rw earlycon=uart8250,mmio,0x10001000,115200n8 initrd=0x83000000,8M
 [    0.000000] Dentry cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
 [    0.000000] Inode-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
 [    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 258048
@@ -127,14 +127,14 @@ Boot HART MEDELEG         : 0x0000000000f0b509
 [    0.132000] io scheduler kyber registered
 [    0.135000] io scheduler bfq registered
 [    0.290000] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
-[    0.300000] printk: legacy console [helloUART0] disabled
-[    0.305000] hello-uart 10001000.serial: ttyHU0 at MMIO 0x10001000 (irq = 1, base_baud = 115200) is a 16550A
-[    0.308000] printk: legacy bootconsole [helloUART0] disabled
+[    0.300000] printk: legacy console [e1UART0] disabled
+[    0.305000] e1-uart 10001000.serial: ttyHU0 at MMIO 0x10001000 (irq = 1, base_baud = 115200) is a 16550A
+[    0.308000] printk: legacy bootconsole [e1UART0] disabled
 [    0.310000] printk: console [ttyHU0] enabled
-[    0.315000] hello-plic c000000.interrupt-controller: mapped 32 interrupts with 2 contexts
-[    0.320000] hello-clint-timer 2000000.timer: calibrate: 10000000 Hz
-[    0.325000] hello-clint-timer 2000000.timer: registered as clocksource
-[    0.330000] hello-uart 10001000.serial: ttyHU0 at MMIO 0x10001000 (irq = 1, base_baud = 115200)
+[    0.315000] e1-plic c000000.interrupt-controller: mapped 32 interrupts with 2 contexts
+[    0.320000] e1-clint-timer 2000000.timer: calibrate: 10000000 Hz
+[    0.325000] e1-clint-timer 2000000.timer: registered as clocksource
+[    0.330000] e1-uart 10001000.serial: ttyHU0 at MMIO 0x10001000 (irq = 1, base_baud = 115200)
 [    0.340000] loop: module loaded
 [    0.345000] libphy: Fixed MDIO Bus: probed
 [    0.350000] i2c /dev entries driver
@@ -151,17 +151,17 @@ Boot HART MEDELEG         : 0x0000000000f0b509
 [    0.405000] debug_vm_pgtable: [debug_vm_pgtable         ]: Validating architecture page table helpers
 [    0.420000] Freeing unused kernel image (initmem) memory: 2048K
 [    0.425000] Run /init as init process
-[    0.428000] hello-npu 10020000.npu: Hello NPU v1.0 registered, 4096 byte scratchpad, 9 opcodes
-[    0.432000] hello-dma 10010000.dma: Hello DMA registered, descriptor chain enabled, 4-byte beat width
-[    0.436000] hello-display 10030000.display: Hello Display 640x480 framebuffer registered at 0x10030000
-[    0.440000] hello-display 10030000.display: framebuffer memory at 0x80000000, stride 2560 bytes
+[    0.428000] e1-npu 10020000.npu: E1 NPU v1.0 registered, 4096 byte scratchpad, 9 opcodes
+[    0.432000] e1-dma 10010000.dma: E1 DMA registered, descriptor chain enabled, 4-byte beat width
+[    0.436000] e1-display 10030000.display: E1 Display 640x480 framebuffer registered at 0x10030000
+[    0.440000] e1-display 10030000.display: framebuffer memory at 0x80000000, stride 2560 bytes
 
-Welcome to OpenPhone Hello Demo
+Welcome to OpenAgent E1 Demo
 Kernel 6.8.0 on riscv64
 
-openphone login: root
+openagent login: root
 # uname -a
-Linux openphone 6.8.0 #1 SMP Mon May 13 12:00:00 UTC 2026 riscv64 GNU/Linux
+Linux openagent 6.8.0 #1 SMP Mon May 13 12:00:00 UTC 2026 riscv64 GNU/Linux
 # cat /proc/cpuinfo
 processor	: 0
 hart		: 0
@@ -184,16 +184,16 @@ Cached:             2480 kB
 02000000.clint    0c000000.plic
 
 # cat /sys/bus/platform/devices/10020000.npu/uevent
-DRIVER=hello-npu
+DRIVER=e1-npu
 OF_NAME=npu
 OF_FULLNAME=/npu@10020000
-OF_COMPATIBLE_0=openphone,hello-npu
+OF_COMPATIBLE_0=openagent,e1-npu
 OF_COMPATIBLE_N=1
-MODALIAS=of:CnpuT<NULL>Copenphone,hello-npu
+MODALIAS=of:CnpuT<NULL>Copenagent,e1-npu
 
-# /usr/bin/hello-mmio-smoke
-=== hello-mmio-smoke ===
-Platform: openphone,hello-demo
+# /usr/bin/e1-mmio-smoke
+=== e1-mmio-smoke ===
+Platform: openagent,e1-demo
 MMIO base scan: OK
 
 Testing NPU @ 0x10020000...

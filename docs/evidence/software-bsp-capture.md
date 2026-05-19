@@ -56,9 +56,9 @@ python3 scripts/check_software_bsp.py all --evidence-plan
 ```sh
 sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot defconfig
 sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot image-manifest
-HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' \
+E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-mmio-smoke' \
   sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke
-HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' \
+E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-npu-ml-smoke --device /dev/e1-npu' \
   sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke
 python3 scripts/check_software_bsp.py buildroot --require-evidence
 ```
@@ -68,7 +68,7 @@ python3 scripts/check_software_bsp.py buildroot --require-evidence
 ```sh
 sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux kernel-build
 sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux dtb-check
-HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke' \
+E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-npu-ml-smoke' \
   sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke
 python3 scripts/check_software_bsp.py linux --require-evidence
 ```
@@ -77,9 +77,9 @@ python3 scripts/check_software_bsp.py linux --require-evidence
 
 ```sh
 sw/opensbi/scripts/import-opensbi-platform.sh --check /path/to/opensbi
-OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' \
+OPENAGENT_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' \
   docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build
-OPENPHONE_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' \
+OPENAGENT_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' \
   docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff
 python3 scripts/check_software_bsp.py opensbi --require-evidence
 ```
@@ -102,5 +102,5 @@ python3 scripts/check_software_bsp.py aosp --require-evidence
 ```
 
 The Cuttlefish, CTS, and VTS logs are bounded virtual-device evidence only.
-They do not prove hello_soc hardware boot, CDD compliance, GMS certification,
+They do not prove e1_soc hardware boot, CDD compliance, GMS certification,
 or full Android compatibility.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""OpenPhone benchmark harness.
+"""OpenAgent benchmark harness.
 
 This runner is intentionally conservative: it can plan benchmark commands before
 the tools exist, records missing dependencies and unavailable model assets as
@@ -50,12 +50,12 @@ VALID_RESULT_STATUSES = {
 }
 LOCAL_TOOL_DIRS = ("tools/bin", ".venv/bin")
 HOST_SMOKE_TOOL_DIR = "benchmarks/tools"
-HOST_SMOKE_MARKER = "openphone-host-smoke"
+HOST_SMOKE_MARKER = "openagent-host-smoke"
 HOST_SMOKE_CLAIM_LEVEL = "L2_ARCH_SIM"
 EXECUTABLE_MARKER_READ_BYTES = 256 * 1024
 VALID_PARSERS = {
     "coremark_v1",
-    "openphone_npu_scale_sim_v1",
+    "openagent_npu_scale_sim_v1",
     "stream_v5",
     "lmbench_bw_mem",
     "lmbench_lat_mem_rd",
@@ -64,12 +64,12 @@ VALID_PARSERS = {
     "simulator_metrics_v1",
 }
 VALID_PROVENANCE = {"dry_run", "measured", "simulator", "imported"}
-HELLO_NPU_REQUIRED_CAPTURE_COMMANDS = {
+E1_NPU_REQUIRED_CAPTURE_COMMANDS = {
     "adb_devices": "adb devices",
     "nnapi_accelerator_query": "adb shell cmd neuralnetworks list",
     "benchmark_model_nnapi": (
         "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite "
-        "--use_nnapi=true --nnapi_accelerator_name=hello-npu "
+        "--use_nnapi=true --nnapi_accelerator_name=e1-npu "
         "--enable_op_profiling=true --verbose=true"
     ),
     "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace",
@@ -643,12 +643,12 @@ def capability_artifact_status(artifact: dict[str, Any], root: Path) -> dict[str
         if value in (None, "", [], {}):
             errors.append(f"{field_path} must be present and non-empty")
 
-    if expected_schema == "openphone.hello_npu_nnapi_capability.v1":
+    if expected_schema == "openagent.e1_npu_nnapi_capability.v1":
         capture_commands = dotted_get(data, "capture.commands")
         if not isinstance(capture_commands, dict):
             errors.append("capture.commands must be an object")
         else:
-            for name, command in HELLO_NPU_REQUIRED_CAPTURE_COMMANDS.items():
+            for name, command in E1_NPU_REQUIRED_CAPTURE_COMMANDS.items():
                 if capture_commands.get(name) != command:
                     errors.append(f"capture.commands.{name} must be exactly {command!r}")
 
@@ -896,14 +896,14 @@ def parse_metrics(bench: dict[str, Any], output: str) -> tuple[str | None, dict[
             data = json.loads(output[start:] if start >= 0 else output)
         except json.JSONDecodeError:
             return None, {}
-        if data.get("schema") != "openphone.npu_scale_sim.v1":
+        if data.get("schema") != "openagent.npu_scale_sim.v1":
             return None, {}
         summary = data.get("summary", {})
         config = data.get("config", {})
         kernels = data.get("kernels", [])
         if not isinstance(summary, dict) or not isinstance(config, dict) or not kernels:
             return None, {}
-        return "openphone_npu_scale_sim_v1", {
+        return "openagent_npu_scale_sim_v1", {
             "kernel_count": int(summary.get("kernel_count", 0)),
             "dense_int8_peak_tops": float(config.get("dense_int8_peak_tops", 0.0)),
             "int8_macs_per_cycle": int(config.get("int8_macs_per_cycle", 0)),
@@ -1108,7 +1108,7 @@ def selected_benchmarks(config: dict[str, Any], names: set[str]) -> list[dict[st
 
 def base_report(args: argparse.Namespace, config: dict[str, Any], root: Path) -> dict[str, Any]:
     report: dict[str, Any] = {
-        "schema": "openphone.benchmark_run.v1",
+        "schema": "openagent.benchmark_run.v1",
         "report_id": args.report_id,
         "date_utc": utc_now(),
         "dry_run": args.dry_run,
@@ -1258,10 +1258,10 @@ def parse_simulator_metrics(output: str) -> dict[str, Any]:
     return data
 
 
-def parse_openphone_npu_scale_sim(output: str) -> dict[str, Any]:
+def parse_openagent_npu_scale_sim(output: str) -> dict[str, Any]:
     start = output.find("{")
     data = json.loads(output[start:] if start >= 0 else output)
-    if data.get("schema") != "openphone.npu_scale_sim.v1":
+    if data.get("schema") != "openagent.npu_scale_sim.v1":
         raise ValueError("NPU scale simulator output had an unexpected schema")
     summary = data.get("summary", {})
     config = data.get("config", {})
@@ -1287,7 +1287,7 @@ def parse_openphone_npu_scale_sim(output: str) -> dict[str, Any]:
 def parse_benchmark_output(parser: str, output: str) -> dict[str, Any]:
     parsers = {
         "coremark_v1": parse_coremark,
-        "openphone_npu_scale_sim_v1": parse_openphone_npu_scale_sim,
+        "openagent_npu_scale_sim_v1": parse_openagent_npu_scale_sim,
         "stream_v5": parse_stream,
         "lmbench_bw_mem": parse_lmbench_bw_mem,
         "lmbench_lat_mem_rd": parse_lmbench_lat_mem_rd,
@@ -1386,8 +1386,8 @@ def validate_report(report: dict[str, Any]) -> list[str]:
         elif not isinstance(report[field], expected_type):
             errors.append(f"report.{field} must be {expected_type.__name__}")
 
-    if report.get("schema") != "openphone.benchmark_run.v1":
-        errors.append("report.schema must be openphone.benchmark_run.v1")
+    if report.get("schema") != "openagent.benchmark_run.v1":
+        errors.append("report.schema must be openagent.benchmark_run.v1")
     if report.get("claim_level") not in VALID_CLAIM_LEVELS:
         errors.append("report.claim_level is not a valid claim level")
     has_passed_results = any(
@@ -1481,19 +1481,19 @@ def validate_report(report: dict[str, Any]) -> list[str]:
                     errors.append(
                         f"{prefix} {report.get('claim_level')} passed with non-release dependency {dep.get('name')}"
                     )
-            if result.get("name") == "tflite_hello_npu":
+            if result.get("name") == "tflite_e1_npu":
                 metrics = result.get("metrics")
                 if not isinstance(metrics, dict):
-                    errors.append(f"{prefix} tflite_hello_npu passed without parsed metrics")
+                    errors.append(f"{prefix} tflite_e1_npu passed without parsed metrics")
                 else:
                     if metrics.get("unsupported_op_count") != 0:
-                        errors.append(f"{prefix} tflite_hello_npu must report zero unsupported ops")
+                        errors.append(f"{prefix} tflite_e1_npu must report zero unsupported ops")
                     if metrics.get("cpu_fallback_nodes") != 0:
-                        errors.append(f"{prefix} tflite_hello_npu must report zero CPU fallback")
+                        errors.append(f"{prefix} tflite_e1_npu must report zero CPU fallback")
                     delegated_nodes = metrics.get("nnapi_delegated_nodes")
                     if not isinstance(delegated_nodes, int) or delegated_nodes <= 0:
                         errors.append(
-                            f"{prefix} tflite_hello_npu must report delegated NNAPI nodes"
+                            f"{prefix} tflite_e1_npu must report delegated NNAPI nodes"
                         )
         if status == "blocked" and not (
             result.get("blocked_assets")
@@ -1720,7 +1720,7 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--timeout-seconds", type=int, default=300)
     parser.add_argument("--report-id", default="manual")
-    parser.add_argument("--platform", default="openphone-unknown")
+    parser.add_argument("--platform", default="openagent-unknown")
     parser.add_argument("--platform-revision", default="unknown")
     parser.add_argument("--claim-level", default="L2_ARCH_SIM", choices=sorted(VALID_CLAIM_LEVELS))
     parser.add_argument(

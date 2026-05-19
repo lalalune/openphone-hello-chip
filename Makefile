@@ -4,14 +4,14 @@ PYTHON ?= python3
 VENV := .venv
 VENV_PYTHON := $(VENV)/bin/python
 BENCH_PYTHON := $(if $(wildcard $(VENV_PYTHON)),$(VENV_PYTHON),$(PYTHON))
-RTL_TOP := hello_chip_top
-RTL_SRCS := rtl/top/hello_chip_top.sv rtl/clock/hello_reset_sync.sv rtl/debug/hello_dbg_mmio_bridge.sv rtl/top/hello_soc_top.sv rtl/bootrom/hello_bootrom.sv rtl/dma/hello_dma.sv rtl/npu/hello_npu.sv rtl/display/hello_display.sv rtl/peripherals/hello_peripherals.sv rtl/cpu/hello_cpu_subsystem_stub.sv rtl/interconnect/hello_axi_lite_interconnect.sv rtl/memory/hello_axi_lite_dram.sv rtl/interrupts/hello_interrupt_controller.sv rtl/interconnect/hello_linux_soc_contract.sv
+RTL_TOP := e1_chip_top
+RTL_SRCS := rtl/top/e1_chip_top.sv rtl/clock/e1_reset_sync.sv rtl/debug/e1_dbg_mmio_bridge.sv rtl/top/e1_soc_top.sv rtl/bootrom/e1_bootrom.sv rtl/dma/e1_dma.sv rtl/npu/e1_npu.sv rtl/display/e1_display.sv rtl/peripherals/e1_peripherals.sv rtl/cpu/e1_cpu_subsystem_stub.sv rtl/interconnect/e1_axi_lite_interconnect.sv rtl/memory/e1_axi_lite_dram.sv rtl/interrupts/e1_interrupt_controller.sv rtl/interconnect/e1_linux_soc_contract.sv
 BUILD := build
 
 .PHONY: ci-release-evidence evidence-regression-test formal-fast formal-strict openlane-orchestration-test physical-gates-test pipeline-check-strict strict-release-gate-test
-.PHONY: chipyard-external-generation-plan chipyard-generated-path-check chipyard-generated-path-repair chipyard-import-preflight chipyard-linux-payload-check chipyard-payload-path-check chipyard-generated-ap-boot chipyard-verilator-linux-smoke-test chipyard-verilator-preflight chipyard-verilator-stale-path-repair cpu-ap-capture-plan-shell cpu-ap-capture-wire cpu-ap-capture-wire-preflight cpu-ap-dts-audit linux-boot-artifacts-check cpu-ap-boot-readiness-check minimum-linux-target-check minimum-linux-target-strict mvp-npu-ml-evidence-check minimum-linux-npu-target-check minimum-linux-npu-target-strict hello-npu-linux-smoke-check
+.PHONY: chipyard-external-generation-plan chipyard-generated-path-check chipyard-generated-path-repair chipyard-import-preflight chipyard-linux-payload-check chipyard-payload-path-check chipyard-generated-ap-boot chipyard-verilator-linux-smoke-test chipyard-verilator-preflight chipyard-verilator-stale-path-repair cpu-ap-capture-plan-shell cpu-ap-capture-wire cpu-ap-capture-wire-preflight cpu-ap-dts-audit linux-boot-artifacts-check cpu-ap-boot-readiness-check minimum-linux-target-check minimum-linux-target-strict mvp-npu-ml-evidence-check minimum-linux-npu-target-check minimum-linux-npu-target-strict e1-npu-linux-smoke-check
 
-.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks benchmark-tools benchmark-sim-metrics benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test hello-npu-nnapi-proof-check mvp-status mvp-status-strict mvp-status-json mvp-simulator mvp-simulator-check mvp-simulator-status-test linux-handoff-check chipyard-generator-check chipyard-generated-check chipyard-generated-linux-contract-check chipyard-verilator-linux-smoke-check cpu-ap-scaffold-check cpu-ap-capture-plan cpu-ap-capture-preflight cpu-ap-capture-wire cpu-ap-capture-wire-preflight cpu-ap-evidence-check cpu-ap-evidence-test cpu-ap-completion-gate no-hardware-action-check memory-uma-claim-gate memory-interconnect-contract-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check project-plan-check prototype-status-dashboard-check phone-soc-claim-check product-feature-gates-check product-check product-release-check product-evidence-commands product-resolved-manifest pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check manufacturing-artifacts-check manufacturing-artifacts-release-check kicad-artifacts-check package-artifacts-check fpga-artifacts-check real-world-gates-check antenna-metadata-check antenna-metadata-release-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal synth openlane openlane-smoke openroad qemu renode qemu-check qemu-check-strict qemu-os-check qemu-status-test renode-check renode-check-strict renode-status-test android-sim-boot-check android-sim-status-test aosp-linux-preflight aosp-linux-handoff aosp-linux-handoff-build-only platform-contract-check software-contract-check buildroot-check buildroot-scaffold-check buildroot-import-check linux-bsp-check linux-scaffold-check linux-import-check aosp-bsp-check aosp-scaffold-check aosp-import-check bsp-scaffold-check software-bsp-check software-bsp-scaffold-check software-bsp-external-preflight software-bsp-evidence-check software-bsp-test docs-check tool-versions record-tool-versions pipeline-check archive-check archive-release clean
+.PHONY: venv tools lint lint-fix typecheck analysis verify-all smoke ci-fast ci-local ci-strict ci-pd benchmarks-dry-run benchmarks benchmark-tools benchmark-sim-metrics benchmark-sim-metrics-test benchmark-calibration-test benchmark-parser-test e1-npu-nnapi-proof-check mvp-status mvp-status-strict mvp-status-json mvp-simulator mvp-simulator-check mvp-simulator-status-test linux-handoff-check chipyard-generator-check chipyard-generated-check chipyard-generated-linux-contract-check chipyard-verilator-linux-smoke-check cpu-ap-scaffold-check cpu-ap-capture-plan cpu-ap-capture-preflight cpu-ap-capture-wire cpu-ap-capture-wire-preflight cpu-ap-evidence-check cpu-ap-evidence-test cpu-ap-completion-gate no-hardware-action-check memory-uma-claim-gate memory-interconnect-contract-check npu-2028-target-check npu-runtime-contract-check npu-roadmap-check npu-open-scale-model-check npu-scale-sim-check scale-feasibility-gate verification-maturity-matrix-check project-plan-check prototype-status-dashboard-check phone-soc-claim-check product-feature-gates-check product-check product-release-check product-evidence-commands product-resolved-manifest pinout-check fpga-check fpga-release-check wifi-interface-check padframe-check board-package-evidence-check package-cross-probe-check kicad-artifact-check openlane-run-preflight-check physical-closure-work-order-check manufacturing-artifacts-check manufacturing-artifacts-release-check kicad-artifacts-check package-artifacts-check fpga-artifacts-check real-world-gates-check antenna-metadata-check antenna-metadata-release-check pd-preflight-check pd-contract-check pd-signoff-manifest-check pd-signoff-check bootrom-check rtl-check stub-audit cocotb cocotb-npu cocotb-contract cocotb-cpu verilator formal synth openlane openlane-smoke openroad qemu renode qemu-check qemu-check-strict qemu-os-check qemu-status-test renode-check renode-check-strict renode-status-test android-sim-boot-check android-sim-status-test aosp-linux-preflight aosp-linux-handoff aosp-linux-handoff-build-only platform-contract-check software-contract-check buildroot-check buildroot-scaffold-check buildroot-import-check linux-bsp-check linux-scaffold-check linux-import-check aosp-bsp-check aosp-scaffold-check aosp-import-check bsp-scaffold-check software-bsp-check software-bsp-scaffold-check software-bsp-external-preflight software-bsp-evidence-check software-bsp-test docs-check tool-versions record-tool-versions pipeline-check archive-check archive-release clean
 
 venv:
 	@$(PYTHON) -m venv $(VENV)
@@ -77,8 +77,8 @@ benchmark-calibration-test:
 benchmark-parser-test:
 	@$(PYTHON) scripts/test_benchmark_parsers.py
 
-hello-npu-nnapi-proof-check:
-	@$(PYTHON) scripts/check_hello_npu_nnapi_proof.py --probe-adb
+e1-npu-nnapi-proof-check:
+	@$(PYTHON) scripts/check_e1_npu_nnapi_proof.py --probe-adb
 
 benchmarks:
 	@PATH="$(CURDIR)/$(VENV)/bin:$$PATH" $(BENCH_PYTHON) benchmarks/run_benchmarks.py
@@ -126,8 +126,8 @@ minimum-linux-npu-target-check:
 minimum-linux-npu-target-strict:
 	@$(PYTHON) scripts/check_minimum_linux_npu_target.py --strict
 
-hello-npu-linux-smoke-check:
-	@$(PYTHON) scripts/check_hello_npu_linux_smoke.py
+e1-npu-linux-smoke-check:
+	@$(PYTHON) scripts/check_e1_npu_linux_smoke.py
 
 chipyard-generator-check:
 	@$(PYTHON) scripts/check_chipyard_generator_manifest.py
@@ -151,7 +151,7 @@ chipyard-linux-payload-check:
 	@$(PYTHON) scripts/locate_chipyard_linux_payload.py --require
 
 chipyard-generated-ap-boot:
-	@scripts/run_chipyard_openphone_linux_smoke.sh
+	@scripts/run_chipyard_openagent_linux_smoke.sh
 
 chipyard-generated-path-check:
 	@$(PYTHON) scripts/repair_chipyard_generated_paths.py
@@ -162,8 +162,8 @@ chipyard-generated-path-repair:
 chipyard-external-generation-plan:
 	@printf '%s\n' 'python3 scripts/check_chipyard_import_preflight.py --require-checkout'
 	@printf '%s\n' 'python3 scripts/check_chipyard_verilator_preflight.py'
-	@printf '%s\n' 'scripts/run_chipyard_openphone_verilator.sh'
-	@printf '%s\n' 'python3 scripts/generate_chipyard_openphone.py'
+	@printf '%s\n' 'scripts/run_chipyard_openagent_verilator.sh'
+	@printf '%s\n' 'python3 scripts/generate_chipyard_openagent.py'
 	@printf '%s\n' 'python3 scripts/check_chipyard_generator_manifest.py --require-generated'
 	@printf '%s\n' 'python3 scripts/capture_cpu_ap_evidence.py plan all --format shell'
 	@printf '%s\n' 'scripts/capture_chipyard_linux_evidence.sh preflight'
@@ -221,7 +221,7 @@ npu-2028-target-check:
 	@$(PYTHON) scripts/check_npu_2028_targets.py
 
 npu-runtime-contract-check:
-	@$(PYTHON) scripts/check_hello_npu_runtime_contract.py
+	@$(PYTHON) scripts/check_e1_npu_runtime_contract.py
 
 npu-roadmap-check:
 	@$(PYTHON) scripts/check_npu_roadmap.py
@@ -263,7 +263,7 @@ product-feature-gates-check:
 	@$(PYTHON) scripts/check_product_feature_gates.py
 
 pinout-check:
-	@$(PYTHON) package/scripts/validate_pinout.py package/hello-demo-pinout.yaml
+	@$(PYTHON) package/scripts/validate_pinout.py package/e1-demo-pinout.yaml
 
 fpga-check:
 	@$(PYTHON) scripts/check_fpga_target.py
@@ -299,7 +299,7 @@ manufacturing-artifacts-release-check:
 	@$(PYTHON) scripts/check_manufacturing_artifacts.py --release
 
 kicad-artifacts-check:
-	@$(PYTHON) scripts/check_manufacturing_artifacts.py --manifest board/kicad/hello-demo/artifact-manifest.yaml
+	@$(PYTHON) scripts/check_manufacturing_artifacts.py --manifest board/kicad/e1-demo/artifact-manifest.yaml
 
 package-artifacts-check:
 	@$(PYTHON) scripts/check_manufacturing_artifacts.py --manifest package/artifact-manifest.yaml
@@ -347,13 +347,13 @@ cocotb:
 	@PYTHON=$(VENV_PYTHON) scripts/run_cocotb.sh
 
 cocotb-npu:
-	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_hello_npu COCOTB_TOPLEVEL=hello_npu scripts/run_cocotb.sh
+	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_e1_npu COCOTB_TOPLEVEL=e1_npu scripts/run_cocotb.sh
 
 cocotb-contract:
-	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_cpu_mem_intc_contract COCOTB_TOPLEVEL=hello_linux_soc_contract scripts/run_cocotb.sh
+	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_cpu_mem_intc_contract COCOTB_TOPLEVEL=e1_linux_soc_contract scripts/run_cocotb.sh
 
 cocotb-cpu:
-	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_tiny_cpu_execution COCOTB_TOPLEVEL=hello_tiny_cpu_contract_tb scripts/run_cocotb.sh
+	@PYTHON=$(VENV_PYTHON) COCOTB_MODULE=test_tiny_cpu_execution COCOTB_TOPLEVEL=e1_tiny_cpu_contract_tb scripts/run_cocotb.sh
 
 verilator:
 	@scripts/run_verilator.sh
@@ -520,11 +520,11 @@ archive-check:
 	@$(PYTHON) scripts/check_release_archive.py $(ARCHIVE)
 
 clean:
-	rm -rf $(BUILD) sim_build sim_build_* results reports verify/formal/work verify/cocotb/sim_build verify/cocotb/sim_build_* verify/cocotb/results.xml verify/formal/hello_dbg_mmio_bridge verify/formal/hello_npu verify/formal/hello_dma verify/formal/hello_soc_top
+	rm -rf $(BUILD) sim_build sim_build_* results reports verify/formal/work verify/cocotb/sim_build verify/cocotb/sim_build_* verify/cocotb/results.xml verify/formal/e1_dbg_mmio_bridge verify/formal/e1_npu verify/formal/e1_dma verify/formal/e1_soc_top
 
 # ---------------------------------------------------------------------------
 # Boot pipeline tiers (QEMU virt)
-#   tier0        bare-metal HELLO
+#   tier0        bare-metal E1
 #   tier1        OpenSBI + S-mode payload (BLOCKED on macOS)
 #   tier2-build  build kernel Image + busybox initramfs via docker
 #   tier2-boot   boot Linux + initramfs under qemu-system-riscv64
@@ -532,13 +532,13 @@ clean:
 # ---------------------------------------------------------------------------
 .PHONY: tier0 tier1 tier2 tier2-build tier2-boot boot-pipeline-status
 
-TIER0_ELF    := fw/bare-metal/hello/hello.elf
+TIER0_ELF    := fw/bare-metal/e1/e1.elf
 TIER1_FW     := external/opensbi/build/platform/generic/firmware/fw_payload.elf
 TIER2_KERNEL := build/sim/tier2/Image
-TIER2_INITRD := build/initramfs/openphone_tier2.cpio.gz
+TIER2_INITRD := build/initramfs/openagent_tier2.cpio.gz
 
 tier0:
-	@$(MAKE) -C fw/bare-metal/hello
+	@$(MAKE) -C fw/bare-metal/e1
 	@scripts/sim/run_qemu_baremetal.sh
 
 tier1:

@@ -1,4 +1,4 @@
-# OpenPhone hello demo board
+# OpenAgent e1 demo board
 
 The board target is a contract artifact for first-article bring-up planning, not a manufacturable PCB yet.
 

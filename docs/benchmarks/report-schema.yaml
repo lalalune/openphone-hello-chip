@@ -1,4 +1,4 @@
-schema: openphone.benchmark_report.v1
+schema: openagent.benchmark_report.v1
 format: generated JSON report validated by benchmarks/run_benchmarks.py
 strict_validation_command: python3 benchmarks/run_benchmarks.py validate-report <report.json>
 required_fields:
@@ -158,15 +158,15 @@ validation_rules:
   - FPGA power must not be reported as mobile SoC power.
   - NPU reports must include unsupported op count and CPU fallback percentage.
   - >
-    Hello-NPU NNAPI proof must bind to the exact model SHA-256, report the
+    E1-NPU NNAPI proof must bind to the exact model SHA-256, report the
     expected accelerator name, and show zero CPU fallback plus zero unsupported
-    ops before `tflite_hello_npu` can run as target evidence.
+    ops before `tflite_e1_npu` can run as target evidence.
   - >
-    Hello-NPU NNAPI proof must include claim level, precision, dataflow name,
+    E1-NPU NNAPI proof must include claim level, precision, dataflow name,
     DMA byte counts, delegated and total NNAPI node counts, MACs per inference,
     NPU cycles, NPU clock, observed TOPS, and a MAC/cycle TOPS formula.
   - >
-    Hello-NPU observed TOPS must not exceed the MAC/cycle/NPU-clock derived
+    E1-NPU observed TOPS must not exceed the MAC/cycle/NPU-clock derived
     upper bound apart from rounding slack; simulator wall-clock time and
     marketing TOPS are not accepted.
   - Android reports must separate boot success from CTS/VTS compatibility.
@@ -240,6 +240,6 @@ required_calibration_assets_by_suite:
     - tflite_benchmark_model
     - tflite_model
     - nnapi_driver
-  OpenPhone simulator metrics:
+  OpenAgent simulator metrics:
     - simulator_config
     - simulator_counter_export

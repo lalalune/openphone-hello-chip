@@ -5,7 +5,7 @@ silicon. The finish line is a complete, reproducible prototype package for an
 open Android-capable SoC research platform:
 
 - source-backed SOTA specification database
-- runnable `hello_soc` verification pipeline
+- runnable `e1_soc` verification pipeline
 - Android simulator bring-up path
 - RISC-V physical-board baseline plan
 - open RTL SoC expansion path
@@ -18,7 +18,7 @@ open Android-capable SoC research platform:
 | Workstream | Deliverable | Gate |
 |---|---|---|
 | Specs | `docs/spec-db/mobile-sota-2026.yaml` | source URLs and no pinout-clone claims |
-| RTL | current `hello_soc` passes smoke | `make smoke` |
+| RTL | current `e1_soc` passes smoke | `make smoke` |
 | Verification | cocotb/formal/Verilator evidence | `make ci-fast` where tools exist |
 | Toolchain | `.venv` baseline and tool inventory | `scripts/check_tools.sh` and `scripts/tool_versions.sh` |
 | Android | simulator and AOSP contract doc | `make aosp-bsp-check` |
@@ -32,7 +32,7 @@ open Android-capable SoC research platform:
 | Chipyard | selected baseline config for Rocket/BOOM/CVA6 | bootstrap script or documented blocker |
 | Toolchain | OpenLane2/Chipyard/OSS CAD Suite pin decision | selected tags/SHAs or explicit release blockers |
 | NPU | Gemmini/NVDLA path decision | operator and TFLite/MLPerf subset plan |
-| Software | Linux driver/runtime smoke for hello NPU | deterministic vector test |
+| Software | Linux driver/runtime smoke for e1 NPU | deterministic vector test |
 | Android | HAL stub map and build notes | no undocumented device nodes |
 | Benchmarks | scripts for CoreMark/STREAM/lmbench/fio/TFLite | dry-run or documented missing tool |
 
@@ -82,7 +82,7 @@ board artifacts keep their safety boundaries:
 
 - benchmark reports keep the L0-L6 claim levels and block simulator wall-clock
   comparisons against phone scores,
-- Android bring-up remains tied to `sw/platform/hello_platform_contract.json`
+- Android bring-up remains tied to `sw/platform/e1_platform_contract.json`
   and the `make aosp-bsp-check` evidence path,
 - board and FPGA artifacts remain scaffold-only until board revision, package
   pins, and bitstream release blockers are resolved.

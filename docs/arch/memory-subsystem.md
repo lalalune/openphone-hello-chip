@@ -1,6 +1,6 @@
 # Memory subsystem contract
 
-`rtl/memory/hello_axi_lite_dram.sv` provides the current synthesizable DRAM boundary model. It is a small AXI-Lite SRAM-backed stand-in for an external DRAM controller and PHY.
+`rtl/memory/e1_axi_lite_dram.sv` provides the current synthesizable DRAM boundary model. It is a small AXI-Lite SRAM-backed stand-in for an external DRAM controller and PHY.
 
 ## AXI-Lite behavior
 
@@ -23,9 +23,9 @@ The long-term Linux-capable target reserves `0x8000_0000` and above for system D
 
 The current implementation is 4 KiB of SRAM-backed storage: `1024` 32-bit words behind a single-beat AXI-Lite target. It can validate word alignment, byte strobes, decode containment, and DMA error propagation in local simulation. It cannot establish any phone-class capacity, bandwidth and latency, page-fault, cache-hit, cache-miss, refresh, training, or thermal behavior.
 
-Within `rtl/interconnect/hello_linux_soc_contract.sv`, CPU-side DRAM traffic and the prototype DMA master share the SRAM-backed DRAM model through a fixed CPU-priority mux. That mux is useful for containment tests, but it is not a production fabric, not a QoS arbiter, not a fairness guarantee, and not a cache-coherent fabric.
+Within `rtl/interconnect/e1_linux_soc_contract.sv`, CPU-side DRAM traffic and the prototype DMA master share the SRAM-backed DRAM model through a fixed CPU-priority mux. That mux is useful for containment tests, but it is not a production fabric, not a QoS arbiter, not a fairness guarantee, and not a cache-coherent fabric.
 
-The reset ROM and boot SRAM story is also incomplete. The hello-chip ROM is a
+The reset ROM and boot SRAM story is also incomplete. The e1-chip ROM is a
 contract/identity ROM, while the separate executable RV64 reset scaffold is not
 yet integrated with boot SRAM, DRAM initialization, OpenSBI, or Linux memory
 discovery. A Linux-capable memory system needs an immutable reset path, a

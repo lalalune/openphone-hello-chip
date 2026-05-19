@@ -1,5 +1,5 @@
 Reference,Value,Footprint,Qty,Manufacturer,MPN,Description
-U1,hello_chip_v0,Package_DFN_QFN:QFN-64-1EP_9x9mm_P0.5mm_EP6.5x6.5mm,1,OpenPhone,HELLO-CHIP-V0,RISC-V SoC QFN64 placeholder footprint - derive from vendor pkg drawing before fab
+U1,e1_chip_v0,Package_DFN_QFN:QFN-64-1EP_9x9mm_P0.5mm_EP6.5x6.5mm,1,OpenAgent,E1-CHIP-V0,RISC-V SoC QFN64 placeholder footprint - derive from vendor pkg drawing before fab
 U2,TPS62150RGTR,Package_SON:VQFN-15-1EP_2.5x3.5mm_P0.5mm_EP1.7x2.7mm,1,Texas Instruments,TPS62150RGTR,Buck converter 0.8V/3A adjustable COT 2.25MHz
 U3,TLV74033PDBVR,Package_TO_SOT_SMD:SOT-23-5,1,Texas Instruments,TLV74033PDBVR,LDO 3.3V 300mA fixed SOT-23-5
 U4,TLV74018PDBVR,Package_TO_SOT_SMD:SOT-23-5,1,Texas Instruments,TLV74018PDBVR,LDO 1.8V 300mA fixed SOT-23-5

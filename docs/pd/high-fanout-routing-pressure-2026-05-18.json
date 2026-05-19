@@ -1,7 +1,7 @@
 {
   "run": "pd/openlane/runs/RUN_2026-05-18_05-41-42",
-  "netlist": "pd/openlane/runs/RUN_2026-05-18_05-41-42/final/nl/hello_chip_top.nl.v",
-  "synthesis_json": "pd/openlane/runs/RUN_2026-05-18_05-41-42/06-yosys-synthesis/hello_chip_top.nl.v.json",
+  "netlist": "pd/openlane/runs/RUN_2026-05-18_05-41-42/final/nl/e1_chip_top.nl.v",
+  "synthesis_json": "pd/openlane/runs/RUN_2026-05-18_05-41-42/06-yosys-synthesis/e1_chip_top.nl.v.json",
   "threshold": 100,
   "routed_large_net_warnings": [
     {
@@ -38,7 +38,7 @@
       "aliases": [],
       "load_pins": 4232,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:28.11-28.21",
+      "source": "/work/rtl/top/e1_chip_top.sv:28.11-28.21",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$222428.S",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$222431.S",
@@ -55,7 +55,7 @@
       "aliases": [],
       "load_pins": 4223,
       "driver_pins": 0,
-      "source": "/work/rtl/top/hello_chip_top.sv:4.24-4.30",
+      "source": "/work/rtl/top/e1_chip_top.sv:4.24-4.30",
       "sample_sinks": [
         "$auto$ff.cc:266:slice$26675.CLK",
         "$auto$ff.cc:266:slice$26676.CLK",
@@ -208,7 +208,7 @@
       "aliases": [],
       "load_pins": 105,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$200590.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202070.A1",
@@ -225,7 +225,7 @@
       "aliases": [],
       "load_pins": 104,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$200713.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202073.A1",
@@ -259,7 +259,7 @@
       "aliases": [],
       "load_pins": 103,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201296.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202088.A1",
@@ -276,7 +276,7 @@
       "aliases": [],
       "load_pins": 103,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201342.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202091.A1",
@@ -293,7 +293,7 @@
       "aliases": [],
       "load_pins": 103,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201635.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202115.A1",
@@ -310,7 +310,7 @@
       "aliases": [],
       "load_pins": 102,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$197565.A",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201604.A1",
@@ -327,7 +327,7 @@
       "aliases": [],
       "load_pins": 102,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$200836.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202076.A1",
@@ -344,7 +344,7 @@
       "aliases": [],
       "load_pins": 102,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$200971.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202079.A1",
@@ -361,7 +361,7 @@
       "aliases": [],
       "load_pins": 102,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201663.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202118.A1",
@@ -378,7 +378,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201112.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202082.A1",
@@ -395,7 +395,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201250.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202085.A1",
@@ -412,7 +412,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201385.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202094.A1",
@@ -429,7 +429,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201427.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202097.A1",
@@ -446,7 +446,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201469.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202100.A1",
@@ -463,7 +463,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201503.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202103.A1",
@@ -480,7 +480,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201689.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202121.A1",
@@ -497,7 +497,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201723.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202124.A1",
@@ -514,7 +514,7 @@
       "aliases": [],
       "load_pins": 101,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201752.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202127.A1",
@@ -531,7 +531,7 @@
       "aliases": [],
       "load_pins": 100,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201541.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202106.A1",
@@ -548,7 +548,7 @@
       "aliases": [],
       "load_pins": 100,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201571.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202109.A1",
@@ -565,7 +565,7 @@
       "aliases": [],
       "load_pins": 100,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201909.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202142.A1",
@@ -582,7 +582,7 @@
       "aliases": [],
       "load_pins": 100,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201938.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202145.A1",
@@ -599,7 +599,7 @@
       "aliases": [],
       "load_pins": 100,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$201972.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202148.A1",
@@ -616,7 +616,7 @@
       "aliases": [],
       "load_pins": 100,
       "driver_pins": 1,
-      "source": "/work/rtl/top/hello_chip_top.sv:32.18-32.28",
+      "source": "/work/rtl/top/e1_chip_top.sv:32.18-32.28",
       "sample_sinks": [
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202006.A1",
         "$abc$197552$auto$blifparse.cc:396:parse_blif$202151.A1",

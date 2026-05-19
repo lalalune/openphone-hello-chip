@@ -1,5 +1,5 @@
 {
-  "schema": "openphone.linux_boot_artifacts.v1",
+  "schema": "openagent.linux_boot_artifacts.v1",
   "claim_boundary": "external_chip_or_sim_transcripts_only_not_placeholder_evidence",
   "status": "blocked_until_all_required_artifacts_pass",
   "preflight": [
@@ -15,9 +15,9 @@
       "id": "external_linux_tree",
       "external_paths": [
         {
-          "env": "OPENPHONE_LINUX_TREE",
+          "env": "OPENAGENT_LINUX_TREE",
           "kind": "directory",
-          "description": "external Linux kernel checkout with the OpenPhone BSP imported"
+          "description": "external Linux kernel checkout with the OpenAgent BSP imported"
         }
       ]
     },
@@ -25,7 +25,7 @@
       "id": "external_buildroot_tree",
       "external_paths": [
         {
-          "env": "OPENPHONE_BUILDROOT_TREE",
+          "env": "OPENAGENT_BUILDROOT_TREE",
           "kind": "directory",
           "description": "external Buildroot checkout used to build the initramfs/rootfs"
         }
@@ -35,7 +35,7 @@
       "id": "external_opensbi_tree",
       "external_paths": [
         {
-          "env": "OPENPHONE_OPENSBI_TREE",
+          "env": "OPENAGENT_OPENSBI_TREE",
           "kind": "directory",
           "description": "external OpenSBI checkout used for the selected boot handoff"
         }
@@ -43,73 +43,73 @@
     }
   ],
   "command_plan": [
-    "export OPENPHONE_LINUX_TREE=/path/to/linux",
-    "export OPENPHONE_BUILDROOT_TREE=/path/to/buildroot",
-    "export OPENPHONE_OPENSBI_TREE=/path/to/opensbi",
-    "sw/linux/scripts/import-linux-bsp.sh \"$OPENPHONE_LINUX_TREE\"",
-    "sw/buildroot/scripts/import-buildroot-external.sh \"$OPENPHONE_BUILDROOT_TREE\"",
-    "sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENPHONE_BUILDROOT_TREE\" defconfig",
-    "make -C \"$OPENPHONE_BUILDROOT_TREE\" BR2_EXTERNAL=\"$PWD/sw/buildroot\"",
-    "sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENPHONE_BUILDROOT_TREE\" image-manifest",
-    "cd \"$OPENPHONE_LINUX_TREE\" && make ARCH=riscv openphone_hello.config olddefconfig && cd -",
-    "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" kernel-build",
-    "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" dtb-check",
+    "export OPENAGENT_LINUX_TREE=/path/to/linux",
+    "export OPENAGENT_BUILDROOT_TREE=/path/to/buildroot",
+    "export OPENAGENT_OPENSBI_TREE=/path/to/opensbi",
+    "sw/linux/scripts/import-linux-bsp.sh \"$OPENAGENT_LINUX_TREE\"",
+    "sw/buildroot/scripts/import-buildroot-external.sh \"$OPENAGENT_BUILDROOT_TREE\"",
+    "sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENAGENT_BUILDROOT_TREE\" defconfig",
+    "make -C \"$OPENAGENT_BUILDROOT_TREE\" BR2_EXTERNAL=\"$PWD/sw/buildroot\"",
+    "sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENAGENT_BUILDROOT_TREE\" image-manifest",
+    "cd \"$OPENAGENT_LINUX_TREE\" && make ARCH=riscv openagent_e1.config olddefconfig && cd -",
+    "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" kernel-build",
+    "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" dtb-check",
     "python3 scripts/locate_chipyard_linux_payload.py --require",
-    "CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openphone_linux_smoke.sh",
-    "OPENPHONE_OPENSBI_HANDOFF_CMD='<exact boot command>' docs/sw/opensbi/capture-opensbi-evidence.sh \"$OPENPHONE_OPENSBI_TREE\" handoff",
-    "HELLO_SMOKE_CMD='<target command for /usr/bin/hello-mmio-smoke>' sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" smoke",
+    "CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openagent_linux_smoke.sh",
+    "OPENAGENT_OPENSBI_HANDOFF_CMD='<exact boot command>' docs/sw/opensbi/capture-opensbi-evidence.sh \"$OPENAGENT_OPENSBI_TREE\" handoff",
+    "E1_SMOKE_CMD='<target command for /usr/bin/e1-mmio-smoke>' sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" smoke",
     "make linux-boot-artifacts-check"
   ],
   "artifacts": [
     {
       "id": "kernel_build",
       "artifact_type": "kernel",
-      "path": "docs/evidence/linux/openphone_hello_kernel_build.log",
-      "producer": "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" kernel-build",
-      "unblock_command": "OPENPHONE_LINUX_TREE=/path/to/linux sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" kernel-build",
+      "path": "docs/evidence/linux/openagent_e1_kernel_build.log",
+      "producer": "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" kernel-build",
+      "unblock_command": "OPENAGENT_LINUX_TREE=/path/to/linux sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" kernel-build",
       "required_strings": [
-        "openphone-evidence: target=linux artifact=openphone_hello_kernel_build",
-        "CONFIG_OPENPHONE_HELLO",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: target=linux artifact=openagent_e1_kernel_build",
+        "CONFIG_OPENAGENT_E1",
+        "openagent-evidence: status=PASS"
       ]
     },
     {
       "id": "dtb_check",
       "artifact_type": "dtb",
-      "path": "docs/evidence/linux/openphone_hello_dtb_check.log",
-      "producer": "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" dtb-check",
-      "unblock_command": "OPENPHONE_LINUX_TREE=/path/to/linux sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" dtb-check",
+      "path": "docs/evidence/linux/openagent_e1_dtb_check.log",
+      "producer": "sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" dtb-check",
+      "unblock_command": "OPENAGENT_LINUX_TREE=/path/to/linux sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" dtb-check",
       "required_strings": [
-        "openphone-evidence: target=linux artifact=openphone_hello_dtb_check",
-        "openphone,hello-npu",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: target=linux artifact=openagent_e1_dtb_check",
+        "openagent,e1-npu",
+        "openagent-evidence: status=PASS"
       ]
     },
     {
       "id": "opensbi_handoff",
       "artifact_type": "opensbi",
       "path": "docs/evidence/linux/opensbi_fw_dynamic_handoff.log",
-      "producer": "OPENPHONE_OPENSBI_HANDOFF_CMD='<exact boot command>' docs/sw/opensbi/capture-opensbi-evidence.sh \"$OPENPHONE_OPENSBI_TREE\" handoff",
-      "unblock_command": "OPENPHONE_OPENSBI_TREE=/path/to/opensbi OPENPHONE_OPENSBI_HANDOFF_CMD='<exact boot command>' docs/sw/opensbi/capture-opensbi-evidence.sh \"$OPENPHONE_OPENSBI_TREE\" handoff",
+      "producer": "OPENAGENT_OPENSBI_HANDOFF_CMD='<exact boot command>' docs/sw/opensbi/capture-opensbi-evidence.sh \"$OPENAGENT_OPENSBI_TREE\" handoff",
+      "unblock_command": "OPENAGENT_OPENSBI_TREE=/path/to/opensbi OPENAGENT_OPENSBI_HANDOFF_CMD='<exact boot command>' docs/sw/opensbi/capture-opensbi-evidence.sh \"$OPENAGENT_OPENSBI_TREE\" handoff",
       "required_strings": [
-        "openphone-evidence: target=opensbi artifact=opensbi_fw_dynamic_handoff",
+        "openagent-evidence: target=opensbi artifact=opensbi_fw_dynamic_handoff",
         "OpenSBI",
         "Next Address",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: status=PASS"
       ]
     },
     {
       "id": "serial_boot_log",
       "artifact_type": "boot_log",
-      "path": "docs/evidence/linux/openphone_hello_serial_boot.log",
-      "producer": "CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openphone_linux_smoke.sh",
-      "unblock_command": "python3 scripts/locate_chipyard_linux_payload.py --require && CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openphone_linux_smoke.sh",
+      "path": "docs/evidence/linux/openagent_e1_serial_boot.log",
+      "producer": "CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openagent_linux_smoke.sh",
+      "unblock_command": "python3 scripts/locate_chipyard_linux_payload.py --require && CHIPYARD_LINUX_BINARY=<selected_payload> scripts/run_chipyard_openagent_linux_smoke.sh",
       "required_strings": [
-        "openphone-evidence: target=linux artifact=openphone_hello_serial_boot",
+        "openagent-evidence: target=linux artifact=openagent_e1_serial_boot",
         "OpenSBI",
         "Linux version",
         "Kernel command line:",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: status=PASS"
       ],
       "at_least_one": [
         [
@@ -123,25 +123,25 @@
     {
       "id": "rootfs_initramfs",
       "artifact_type": "rootfs",
-      "path": "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
-      "producer": "sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENPHONE_BUILDROOT_TREE\" image-manifest",
-      "unblock_command": "OPENPHONE_BUILDROOT_TREE=/path/to/buildroot make -C \"$OPENPHONE_BUILDROOT_TREE\" BR2_EXTERNAL=\"$PWD/sw/buildroot\" && sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENPHONE_BUILDROOT_TREE\" image-manifest",
+      "path": "docs/evidence/buildroot/openagent_e1_image_manifest.txt",
+      "producer": "sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENAGENT_BUILDROOT_TREE\" image-manifest",
+      "unblock_command": "OPENAGENT_BUILDROOT_TREE=/path/to/buildroot make -C \"$OPENAGENT_BUILDROOT_TREE\" BR2_EXTERNAL=\"$PWD/sw/buildroot\" && sw/buildroot/scripts/capture-buildroot-evidence.sh \"$OPENAGENT_BUILDROOT_TREE\" image-manifest",
       "required_strings": [
-        "openphone-evidence: target=buildroot artifact=openphone_hello_image_manifest",
+        "openagent-evidence: target=buildroot artifact=openagent_e1_image_manifest",
         "sha256",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: status=PASS"
       ]
     },
     {
-      "id": "hello_mmio_smoke",
+      "id": "e1_mmio_smoke",
       "artifact_type": "smoke_log",
-      "path": "docs/evidence/linux/hello-mmio-smoke.log",
-      "producer": "HELLO_SMOKE_CMD='<target command for /usr/bin/hello-mmio-smoke>' sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" smoke",
-      "unblock_command": "OPENPHONE_LINUX_TREE=/path/to/linux HELLO_SMOKE_CMD='<target command for /usr/bin/hello-mmio-smoke>' sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENPHONE_LINUX_TREE\" smoke",
+      "path": "docs/evidence/linux/e1-mmio-smoke.log",
+      "producer": "E1_SMOKE_CMD='<target command for /usr/bin/e1-mmio-smoke>' sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" smoke",
+      "unblock_command": "OPENAGENT_LINUX_TREE=/path/to/linux E1_SMOKE_CMD='<target command for /usr/bin/e1-mmio-smoke>' sw/linux/scripts/capture-linux-bsp-evidence.sh \"$OPENAGENT_LINUX_TREE\" smoke",
       "required_strings": [
-        "openphone-evidence: target=linux artifact=hello-mmio-smoke",
-        "HELLO_NPU_BASE=0x10020000",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: target=linux artifact=e1-mmio-smoke",
+        "E1_NPU_BASE=0x10020000",
+        "openagent-evidence: status=PASS"
       ]
     }
   ],

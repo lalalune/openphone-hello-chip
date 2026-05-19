@@ -29,8 +29,8 @@ RUN set -eux; \
     fi; \
     rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m venv /opt/openphone-venv
-ENV PATH="/opt/openphone-venv/bin:${PATH}"
+RUN python3 -m venv /opt/openagent-venv
+ENV PATH="/opt/openagent-venv/bin:${PATH}"
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 

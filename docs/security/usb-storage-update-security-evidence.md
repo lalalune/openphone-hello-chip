@@ -4,7 +4,7 @@ Status: BLOCKED for AVB, A/B OTA, recovery, signed update, rollback, and USB PD
 security claims.
 
 This document records evidence requirements only. It does not assert that the
-current hello-chip RTL or Android scaffold implements these surfaces.
+current e1-chip RTL or Android scaffold implements these surfaces.
 
 ## Required Evidence Matrix
 

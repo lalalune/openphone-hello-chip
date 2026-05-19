@@ -1,6 +1,6 @@
-# Physical design signoff — hello chip
+# Physical design signoff — e1 chip
 
-This document covers the full OpenLane 2 PD flow for `hello_chip_top` on SKY130A,
+This document covers the full OpenLane 2 PD flow for `e1_chip_top` on SKY130A,
 the prerequisite environment, how to launch a run, what outputs to expect, and the
 pass criteria for each signoff check.
 
@@ -23,7 +23,7 @@ pass criteria for each signoff check.
 - Thermal evidence for package/board temperature limits, regulator loss, ambient/enclosure assumptions, and first-article stop conditions.
 - Padframe/package evidence for foundry IO/ESD/corner cells, package drawing, bond diagram, and footprint release.
 
-The current `hello_soc_top` can be hardened as a padless macro. A standalone fabricated chip also requires the padframe plan in `docs/pd/padframe/hello_demo_padframe.md`.
+The current `e1_soc_top` can be hardened as a padless macro. A standalone fabricated chip also requires the padframe plan in `docs/pd/padframe/e1_demo_padframe.md`.
 
 The machine-readable artifact gate is `pd/signoff/manifest.yaml`. The per-run manifest schema is `pd/signoff/run-manifest.schema.json`; it is intentionally separate from the repository-level manifest so a selected OpenLane/OpenROAD run can be archived without editing release policy.
 

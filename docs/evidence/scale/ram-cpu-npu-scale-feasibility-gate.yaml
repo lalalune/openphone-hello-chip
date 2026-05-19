@@ -1,4 +1,4 @@
-schema: openphone.scale_feasibility_gate.v1
+schema: openagent.scale_feasibility_gate.v1
 status: 2028_class_claims_blocked_without_evidence
 scope:
   - RAM capacity/bandwidth scaling
@@ -72,8 +72,8 @@ required_evidence_groups:
       - PDN/current, SI/PI, thermal, padframe, package, and board constraints for the scaled design.
     artifact_paths:
       - pd/openlane/runs/scale/signoff-run.yaml
-      - pd/openlane/runs/scale/final/gds/hello_chip_top.gds
-      - pd/openlane/runs/scale/final/def/hello_chip_top.def
+      - pd/openlane/runs/scale/final/gds/e1_chip_top.gds
+      - pd/openlane/runs/scale/final/def/e1_chip_top.def
       - pd/openlane/runs/scale/reports/signoff/scale-sta.rpt
       - pd/openlane/runs/scale/reports/signoff/scale-drc.rpt
       - pd/openlane/runs/scale/reports/signoff/scale-lvs.rpt

@@ -1,9 +1,9 @@
 # Bonding diagram template
 
 This template describes the bonding-diagram package that must accompany any
-fabricated `openphone_hello_demo` die. It is the human-readable companion to
+fabricated `openagent_e1_demo` die. It is the human-readable companion to
 the machine-readable bonding map at
-`package/bonding/hello_demo_bonding.csv`.
+`package/bonding/e1_demo_bonding.csv`.
 
 A bonding diagram is required by the bonding house and by every PCB review.
 Until the package is built, only the die-pad ↔ package-pin ↔ board-net mapping
@@ -14,7 +14,7 @@ them in without losing pin assignments.
 
 A complete bonding diagram release consists of:
 
-1. `package/bonding/hello_demo_bonding.csv` - the canonical pin map, with one
+1. `package/bonding/e1_demo_bonding.csv` - the canonical pin map, with one
    row per die pad. The column contract is fixed (see section 2).
 2. A vendor-provided bonding drawing (PDF or DWG) that shows the die outline,
    pad ring, package leadframe, and every bond wire. Filed under
@@ -27,18 +27,18 @@ A complete bonding diagram release consists of:
 5. A diff against the previous bonding revision when re-releasing.
 
 Until items 2-4 are present, the package release gate in
-`pd/padframe/hello_demo_padframe.yaml` stays blocked.
+`pd/padframe/e1_demo_padframe.yaml` stays blocked.
 
 ## 2. CSV column contract
 
-`package/bonding/hello_demo_bonding.csv` must contain exactly the following
+`package/bonding/e1_demo_bonding.csv` must contain exactly the following
 columns, in this order:
 
 | Column        | Required | Notes                                                                  |
 | ------------- | -------- | ---------------------------------------------------------------------- |
-| `die_pad`     | yes      | Top-level RTL port name from `rtl/top/hello_chip_top.sv` or padframe-only pad name (e.g. `VDDIO0`). |
+| `die_pad`     | yes      | Top-level RTL port name from `rtl/top/e1_chip_top.sv` or padframe-only pad name (e.g. `VDDIO0`). |
 | `package_pin` | yes      | Integer pin number on the QFN64 package (1..64).                       |
-| `board_net`   | yes      | Net name on `board/kicad/hello-demo`. Must match `package/hello-demo-pinout.yaml`. |
+| `board_net`   | yes      | Net name on `board/kicad/e1-demo`. Must match `package/e1-demo-pinout.yaml`. |
 | `type`        | yes      | One of `PWR`, `GND`, `IO`, `RSV`.                                      |
 | `notes`       | no       | Free-form. Use to record drive/pull/Schmitt/clock and wire-length hints.|
 
@@ -46,9 +46,9 @@ Validation rules:
 
 - `package_pin` is unique and contiguous over 1..64.
 - Every row with `type` in {`PWR`, `GND`, `IO`} that names a die pad in
-  `pd/padframe/hello_demo_padframe.yaml` must also appear in `pd/pin_order.cfg`.
+  `pd/padframe/e1_demo_padframe.yaml` must also appear in `pd/pin_order.cfg`.
 - Every row with `type=IO` must correspond to a port in
-  `rtl/top/hello_chip_top.sv`.
+  `rtl/top/e1_chip_top.sv`.
 - `RSV` rows correspond to package pins that are bonded to nothing on the die
   (NC) or reserved for future revisions.
 

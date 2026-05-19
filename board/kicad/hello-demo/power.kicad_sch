@@ -4,10 +4,10 @@
   (generator_version "7.0")
   (paper "A3")
   (title_block
-    (title "Hello Demo - Power")
+    (title "E1 Demo - Power")
     (date "2026-05-17")
     (rev "v0.1")
-    (company "OpenPhone")
+    (company "OpenAgent")
     (comment 1 "Sheet 2: Power regulators and input supply")
     (comment 2 "TPS62150RGTR VDDCORE 0.8V/3A | TLV74033 VDD_3V3 | TLV74018 VDD_1V8")
   )

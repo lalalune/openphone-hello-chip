@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate hello-NPU sustained power/thermal evidence manifests."""
+"""Validate e1-NPU sustained power/thermal evidence manifests."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
-SCHEMA = "openphone.sustained_power_thermal_evidence.v1"
+SCHEMA = "openagent.sustained_power_thermal_evidence.v1"
 ALLOWED_STATUS = {"blocked", "draft_local_evidence", "complete_measured_evidence"}
 MEASURED_SUBSTRATES = {"prototype_silicon", "complete_phone"}
 SHA256_RE = re.compile(r"[0-9a-f]{64}")

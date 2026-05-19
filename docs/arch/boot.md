@@ -1,8 +1,8 @@
 # Boot flow
 
-## Hello chip
+## E1 chip
 
-The hello chip debug-visible boot ROM is an identity/contract ROM used by
+The e1 chip debug-visible boot ROM is an identity/contract ROM used by
 simulation and synthesis checks:
 
 ```text
@@ -12,9 +12,9 @@ simulation and synthesis checks:
 0x0000_000C = boot vector placeholder
 ```
 
-The package-level hello chip still uses the package debug nibble bridge as its board-smoke bus master. The machine-readable software contract is `sw/platform/hello_platform_contract.json`; generated software constants live in `sw/platform/generated/hello_platform_contract.h`.
+The package-level e1 chip still uses the package debug nibble bridge as its board-smoke bus master. The machine-readable software contract is `sw/platform/e1_platform_contract.json`; generated software constants live in `sw/platform/generated/e1_platform_contract.h`.
 
-The CPU subsystem boundary now has a tiny executable RISC-V path for simulation proof. In the focused CPU/contract wrapper, a loader writes a program into the DRAM aperture at `0x8000_0000`, then releases `hello_cpu_subsystem_stub` with `RESET_PC=0x8000_0000`. The CPU fetches from DRAM, executes the minimal integer subset documented in `docs/arch/cpu-subsystem.md`, and halts on `ECALL`.
+The CPU subsystem boundary now has a tiny executable RISC-V path for simulation proof. In the focused CPU/contract wrapper, a loader writes a program into the DRAM aperture at `0x8000_0000`, then releases `e1_cpu_subsystem_stub` with `RESET_PC=0x8000_0000`. The CPU fetches from DRAM, executes the minimal integer subset documented in `docs/arch/cpu-subsystem.md`, and halts on `ECALL`.
 
 `fw/boot-rom` contains a minimal executable RV64 reset scaffold. It starts at
 `0x0000_0000`, sets `mtvec` to a local WFI trap loop, disables machine
@@ -63,14 +63,14 @@ allowed. Android compatibility remains a separate CTS/VTS/userspace gate.
 
 ## Current AP Boot Blockers
 
-The selected AP target is the pinned Chipyard `OpenPhoneRocketConfig` import
-path in `generators/chipyard/openphone-rocket-manifest.json`. It is still
-`selected_not_generated`; `build/chipyard/openphone_rocket/bootstrap-preflight.json`
+The selected AP target is the pinned Chipyard `OpenAgentRocketConfig` import
+path in `generators/chipyard/openagent-rocket-manifest.json`. It is still
+`selected_not_generated`; `build/chipyard/openagent_rocket/bootstrap-preflight.json`
 records that the checkout exists but recursive Chipyard submodules are not
 initialized at the recorded SHAs. Until that preflight passes, the generated AP
 Verilog, simulator, and boot DTS are absent.
 
-`sw/linux/dts/openphone-hello.dts` is a repo-local hello MMIO peripheral source,
+`sw/linux/dts/openagent-e1.dts` is a repo-local e1 MMIO peripheral source,
 not the complete AP boot device tree. It currently compiles with `dtc`, but it
 lacks the boot-critical CPU, memory, CLINT/ACLINT timer, PLIC/interrupt
 controller, and enabled UART console nodes that OpenSBI and Linux need. Audit
@@ -84,7 +84,7 @@ Audit the checked-in peripheral DTS explicitly with:
 
 ```sh
 python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc \
-  --path sw/linux/dts/openphone-hello.dts
+  --path sw/linux/dts/openagent-e1.dts
 ```
 
 Those audits are blockers only; they do not create boot evidence. Real

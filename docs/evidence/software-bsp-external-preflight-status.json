@@ -5,7 +5,7 @@
     "cwd": "/Users/shawwalters/Desktop/npu_experiment",
     "platform": "darwin"
   },
-  "schema": "openphone.software_bsp_external_preflight.v1",
+  "schema": "openagent.software_bsp_external_preflight.v1",
   "status": "BLOCKED",
   "targets": [
     {
@@ -30,8 +30,8 @@
         "sw/buildroot/scripts/import-buildroot-external.sh --check /path/to/buildroot",
         "sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot defconfig",
         "sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot image-manifest",
-        "HELLO_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-mmio-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke",
-        "HELLO_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
+        "E1_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-mmio-smoke' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot smoke",
+        "E1_NPU_ML_SMOKE_CMD='ssh root@TARGET /usr/bin/e1-npu-ml-smoke --device /dev/e1-npu' sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot ml-smoke",
         "python3 scripts/check_software_bsp.py buildroot --require-evidence"
       ],
       "status": "BLOCKED",
@@ -40,8 +40,8 @@
     },
     {
       "blockers": [
-        "external Linux .config missing CONFIG_OPENPHONE_HELLO_NPU; run openphone_hello.config olddefconfig after import",
-        "external Linux .config missing CONFIG_OPENPHONE_HELLO_DMA; run openphone_hello.config olddefconfig after import",
+        "external Linux .config missing CONFIG_OPENAGENT_E1_NPU; run openagent_e1.config olddefconfig after import",
+        "external Linux .config missing CONFIG_OPENAGENT_E1_DMA; run openagent_e1.config olddefconfig after import",
         "missing executable riscv64-linux-gnu-gcc; set CROSS_COMPILE to a usable RISC-V Linux toolchain prefix",
         "GNU Make 3.81; Linux requires GNU Make >= 3.82"
       ],
@@ -62,18 +62,18 @@
           "status": "PASS"
         },
         {
-          "name": "imported OpenPhone Linux driver Kconfig",
-          "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openphone-hello/Kconfig",
+          "name": "imported OpenAgent Linux driver Kconfig",
+          "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/drivers/misc/openagent-e1/Kconfig",
           "status": "PASS"
         },
         {
-          "name": "imported OpenPhone DTS",
-          "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openphone/openphone-hello.dts",
+          "name": "imported OpenAgent DTS",
+          "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/arch/riscv/boot/dts/openagent/openagent-e1.dts",
           "status": "PASS"
         },
         {
-          "name": "imported OpenPhone DT schema",
-          "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openphone/openphone,hello-npu.yaml",
+          "name": "imported OpenAgent DT schema",
+          "path": "/Users/shawwalters/Desktop/npu_experiment/external/linux/Documentation/devicetree/bindings/openagent/openagent,e1-npu.yaml",
           "status": "PASS"
         },
         {
@@ -82,11 +82,11 @@
           "status": "PASS"
         },
         {
-          "name": "CONFIG_OPENPHONE_HELLO_NPU configured",
+          "name": "CONFIG_OPENAGENT_E1_NPU configured",
           "status": "BLOCKED"
         },
         {
-          "name": "CONFIG_OPENPHONE_HELLO_DMA configured",
+          "name": "CONFIG_OPENAGENT_E1_DMA configured",
           "status": "BLOCKED"
         },
         {
@@ -104,7 +104,7 @@
         "sw/linux/scripts/import-linux-bsp.sh --check /Users/shawwalters/Desktop/npu_experiment/external/linux",
         "sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux kernel-build",
         "sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux dtb-check",
-        "HELLO_SMOKE_CMD='ssh root@TARGET /tmp/hello-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux smoke",
+        "E1_SMOKE_CMD='ssh root@TARGET /tmp/e1-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/linux smoke",
         "python3 scripts/check_software_bsp.py linux --require-evidence"
       ],
       "status": "BLOCKED",
@@ -115,7 +115,7 @@
       "blockers": [
         "missing riscv64-unknown-elf-gcc or riscv64-linux-gnu-gcc on PATH",
         "GNU Make 3.81; OpenSBI requires GNU Make >= 3.82",
-        "OPENPHONE_OPENSBI_HANDOFF_CMD is not supplied; handoff capture needs the exact QEMU/Renode/board command"
+        "OPENAGENT_OPENSBI_HANDOFF_CMD is not supplied; handoff capture needs the exact QEMU/Renode/board command"
       ],
       "checks": [
         {
@@ -134,8 +134,8 @@
           "status": "PASS"
         },
         {
-          "name": "optional imported OpenPhone OpenSBI platform",
-          "path": "/Users/shawwalters/Desktop/npu_experiment/external/opensbi/platform/openphone/config.mk",
+          "name": "optional imported OpenAgent OpenSBI platform",
+          "path": "/Users/shawwalters/Desktop/npu_experiment/external/opensbi/platform/openagent/config.mk",
           "status": "PASS"
         },
         {
@@ -150,8 +150,8 @@
       ],
       "commands": [
         "sw/opensbi/scripts/import-opensbi-platform.sh --check /Users/shawwalters/Desktop/npu_experiment/external/opensbi",
-        "OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/opensbi build",
-        "OPENPHONE_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' docs/sw/opensbi/capture-opensbi-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/opensbi handoff",
+        "OPENAGENT_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/opensbi build",
+        "OPENAGENT_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' docs/sw/opensbi/capture-opensbi-evidence.sh /Users/shawwalters/Desktop/npu_experiment/external/opensbi handoff",
         "python3 scripts/check_software_bsp.py opensbi --require-evidence"
       ],
       "status": "BLOCKED",

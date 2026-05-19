@@ -1,4 +1,4 @@
-# hello_chip_top Antenna Metadata Blocker - 2026-05-18
+# e1_chip_top Antenna Metadata Blocker - 2026-05-18
 
 ## Scope
 
@@ -12,7 +12,7 @@ repair/check reports and separate from padframe-inclusive ESD signoff.
 
 ## Findings
 
-OpenLane reports missing antenna metadata on these `hello_chip_top` pins:
+OpenLane reports missing antenna metadata on these `e1_chip_top` pins:
 
 | Direction | Missing metadata | Pins |
 | --- | --- | --- |
@@ -22,11 +22,11 @@ OpenLane reports missing antenna metadata on these `hello_chip_top` pins:
 The generated macro LEF confirms these pins have no corresponding
 `ANTENNAGATEAREA` or `ANTENNADIFFAREA` entries:
 
-`pd/openlane/runs/RUN_2026-05-18_05-41-42/final/lef/hello_chip_top.lef`
+`pd/openlane/runs/RUN_2026-05-18_05-41-42/final/lef/e1_chip_top.lef`
 
 ## Local disposition
 
-No foundry pad cells are instantiated in `rtl/top/hello_chip_top.sv`; the
+No foundry pad cells are instantiated in `rtl/top/e1_chip_top.sv`; the
 current top level is still a padless digital core wrapper. The affected JTAG
 and test inputs are not connected to meaningful internal scan/debug logic in
 the hardened macro, and `JTAG_TDO` is tied off. Adding arbitrary antenna
@@ -37,7 +37,7 @@ The local fix is therefore fail-closed:
 
 - `scripts/check_antenna_metadata.py` records the exact pins reported by
   OpenLane.
-- The default check passes only while `pd/padframe/hello_demo_padframe.yaml`
+- The default check passes only while `pd/padframe/e1_demo_padframe.yaml`
   keeps `padframe_release.blocked: true`.
 - `scripts/check_antenna_metadata.py --release` fails until the warning is
   eliminated or formally dispositioned with real pad-cell evidence.
@@ -47,7 +47,7 @@ The local fix is therefore fail-closed:
 Release remains blocked until one of these is true:
 
 1. Selected foundry IO, ESD, power, ground, corner, and filler pad cells are
-   instantiated around `hello_chip_top`, and padframe-inclusive DRC/LVS/antenna
+   instantiated around `e1_chip_top`, and padframe-inclusive DRC/LVS/antenna
    reports are archived.
 2. The affected top-level wrapper pins are removed from the release top or
    connected to real, tested internal logic such that OpenLane emits valid

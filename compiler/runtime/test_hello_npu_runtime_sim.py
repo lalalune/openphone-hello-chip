@@ -5,14 +5,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from hello_npu_runtime import HelloNpuRuntime, NpuDescriptorSubmission, golden_gemm_s8
+from e1_npu_runtime import E1NpuRuntime, NpuDescriptorSubmission, golden_gemm_s8
 
 
-class HelloNpuMmioSim:
+class E1NpuMmioSim:
     """Tiny behavioral MMIO model for userspace runtime smoke tests."""
 
     def __init__(self):
-        self.runtime = HelloNpuRuntime(self.read32, self.write32)
+        self.runtime = E1NpuRuntime(self.read32, self.write32)
         self.regs: dict[int, int] = {
             self.runtime.CTRL_STATUS: 0,
             self.runtime.PERF_UNSUPPORTED_OPS: 0,
@@ -122,9 +122,9 @@ class HelloNpuMmioSim:
         self.regs[self.runtime.CTRL_STATUS] = 0x2
 
 
-class HelloNpuRuntimeSimTest(unittest.TestCase):
+class E1NpuRuntimeSimTest(unittest.TestCase):
     def test_runtime_gemm_s8_matches_golden_and_reports_perf(self):
-        sim = HelloNpuMmioSim()
+        sim = E1NpuMmioSim()
         a = [[1, -2, 3], [4, 5, -6]]
         b = [[7, -8], [9, 10], [-11, 12]]
 
@@ -141,14 +141,14 @@ class HelloNpuRuntimeSimTest(unittest.TestCase):
         )
 
     def test_runtime_rejects_tiles_outside_local_prototype_limits(self):
-        sim = HelloNpuMmioSim()
+        sim = E1NpuMmioSim()
         with self.assertRaisesRegex(ValueError, "prototype limits"):
             sim.runtime.gemm_s8(
                 [[1, 2, 3, 4, 5, 6, 7, 8]], [[1], [1], [1], [1], [1], [1], [1], [1]]
             )
 
     def test_runtime_descriptor_submission_updates_descriptor_counters(self):
-        sim = HelloNpuMmioSim()
+        sim = E1NpuMmioSim()
 
         status = sim.runtime.submit_descriptors(
             NpuDescriptorSubmission(base=0x2000, head=0, tail=1)
@@ -164,16 +164,16 @@ class HelloNpuRuntimeSimTest(unittest.TestCase):
         self.assertEqual(counters["write_beats"], 0)
 
     def test_runtime_stream_descriptor_word0_sets_owner_and_writeback_bits(self):
-        word0 = HelloNpuRuntime.pack_stream_descriptor_word0(
-            HelloNpuRuntime.OP_GEMM_S8,
+        word0 = E1NpuRuntime.pack_stream_descriptor_word0(
+            E1NpuRuntime.OP_GEMM_S8,
             0,
             12,
             writeback_request=True,
         )
 
-        self.assertTrue(word0 & HelloNpuRuntime.DESC_FLAG_VALID_OWNER)
-        self.assertTrue(word0 & HelloNpuRuntime.DESC_FLAG_WRITEBACK_REQUEST)
-        self.assertTrue(word0 & HelloNpuRuntime.DESC_FLAG_STREAM_TO_SCRATCH)
+        self.assertTrue(word0 & E1NpuRuntime.DESC_FLAG_VALID_OWNER)
+        self.assertTrue(word0 & E1NpuRuntime.DESC_FLAG_WRITEBACK_REQUEST)
+        self.assertTrue(word0 & E1NpuRuntime.DESC_FLAG_STREAM_TO_SCRATCH)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 This note defines the first open RTL path for a Linux-first, Android-capable
 RISC-V SoC prototype. It is scoped to RTL bring-up and simulation. The current
-handwritten `hello_soc` remains the small contract harness; the first Linux-capable
+handwritten `e1_soc` remains the small contract harness; the first Linux-capable
 CPU subsystem should be generated through Chipyard and wrapped behind the same
 memory-map, interrupt, DMA, display, and accelerator contracts.
 
@@ -127,7 +127,7 @@ Expected Android-facing dependencies, deferred until Linux is stable:
 
 ```text
 AOSP riscv64 tree/toolchain selected by the software owner
-device/openphone/openphone_ai_soc board files
+device/openagent/openagent_ai_soc board files
 Linux kernel config with binder, ashmem/memfd replacement path as needed,
   dma-buf, DRM/display, input, block, network, and SELinux support
 Android boot image packaging path
@@ -135,7 +135,7 @@ Android boot image packaging path
 
 ## RTL Integration Plan
 
-1. Keep `rtl/top/hello_soc_top.sv` and `rtl/interconnect/hello_linux_soc_contract.sv`
+1. Keep `rtl/top/e1_soc_top.sv` and `rtl/interconnect/e1_linux_soc_contract.sv`
    as the fast handwritten contract path.
 2. Add generated Chipyard RTL only through a documented generator target that
    records SHAs and config names.
@@ -148,7 +148,7 @@ clock/reset
 UART
 external interrupt lines
 DRAM AXI or TileLink-backed memory port
-MMIO window for hello DMA/NPU/display/peripherals
+MMIO window for e1 DMA/NPU/display/peripherals
 optional RoCC accelerator port for Gemmini configs
 debug/JTAG only after basic boot works
 ```
@@ -182,18 +182,18 @@ make CONFIG=RocketConfig
 Project-specific configs should then be added in Chipyard as:
 
 ```text
-OpenPhoneRocketConfig
-OpenPhoneGemminiRocketConfig
-OpenPhoneBoomConfig, later only
+OpenAgentRocketConfig
+OpenAgentGemminiRocketConfig
+OpenAgentBoomConfig, later only
 ```
 
 Expected first-pass results:
 
 ```text
-Bare-metal UART hello exits or prints expected text
+Bare-metal UART e1 exits or prints expected text
 OpenSBI reaches next boot stage
 Linux kernel reaches early console
-Linux mounts initramfs and runs hello-mmio-smoke
+Linux mounts initramfs and runs e1-mmio-smoke
 IRQ smoke toggles timer/external interrupt path
 DMA/NPU/display MMIO registers are visible from userspace test binaries
 ```
@@ -232,7 +232,7 @@ Add a non-default generated-RTL job once the Chipyard config exists:
 chipyard-elaborate:
   bootstrap external/chipyard from pinned SHA/cache
   source Chipyard environment
-  elaborate OpenPhoneRocketConfig
+  elaborate OpenAgentRocketConfig
   run FIRRTL/Verilog generation
   archive generated config manifest and elaboration logs
 ```
@@ -241,7 +241,7 @@ Add a scheduled or manually triggered simulation job:
 
 ```text
 chipyard-verilator-smoke:
-  build OpenPhoneRocketConfig Verilator simulator
+  build OpenAgentRocketConfig Verilator simulator
   run bare-metal UART smoke
   run OpenSBI + Linux early-boot smoke when image cache is available
   archive UART logs, boot logs, simulator command line, generated DTS
@@ -251,7 +251,7 @@ Add a separate accelerator job after Gemmini is enabled:
 
 ```text
 gemmini-smoke:
-  build OpenPhoneGemminiRocketConfig
+  build OpenAgentGemminiRocketConfig
   build gemmini-rocc-tests baremetal and linux binaries
   run ISA-level Gemmini tests where supported
   run one RTL simulator Gemmini bare-metal test
@@ -380,11 +380,11 @@ performance from bare-metal tests.
 ## Milestones
 
 ```text
-M0: current hello RTL remains green under make ci-fast
-M1: Chipyard checkout pinned and OpenPhoneRocketConfig elaborates
+M0: current e1 RTL remains green under make ci-fast
+M1: Chipyard checkout pinned and OpenAgentRocketConfig elaborates
 M2: Rocket bare-metal UART smoke runs in Verilator
 M3: OpenSBI + Linux early console runs in Verilator
-M4: Linux initramfs runs hello-mmio-smoke against the project MMIO contract
+M4: Linux initramfs runs e1-mmio-smoke against the project MMIO contract
 M5: Gemmini default config runs one bare-metal correctness test
 M6: Gemmini Linux test runs in the same rootfs as the MMIO smoke
 M7: Rocket-only FireSim metasimulation passes

@@ -4,10 +4,10 @@
   (generator_version "7.0")
   (paper "A3")
   (title_block
-    (title "Hello Demo - Debug and IO")
+    (title "E1 Demo - Debug and IO")
     (date "2026-05-17")
     (rev "v0.1")
-    (company "OpenPhone")
+    (company "OpenAgent")
     (comment 1 "Sheet 4: Debug header J1, UART header J2, USB-C J3, test points TP1-TP8")
     (comment 2 "JTAG: TCK TMS TDI TDO  SWD-compatible 10-pin 1.27mm Samtec FTSH-105")
   )

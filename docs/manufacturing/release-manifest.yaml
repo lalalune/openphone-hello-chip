@@ -1,4 +1,4 @@
-release: openphone_hello_demo
+release: openagent_e1_demo
 status: pipeline_scaffold
 real_world_gap_manifest: docs/manufacturing/real-world-verification-gaps.yaml
 physical_closure_work_order: docs/manufacturing/physical-closure-work-order.yaml
@@ -40,65 +40,65 @@ readiness:
     evidence_manifest: pd/signoff/manifest.yaml
 required_artifacts:
   rtl:
-    - rtl/top/hello_chip_top.sv
-    - rtl/debug/hello_dbg_mmio_bridge.sv
-    - rtl/clock/hello_reset_sync.sv
-    - rtl/top/hello_soc_top.sv
-    - rtl/bootrom/hello_bootrom.sv
-    - rtl/peripherals/hello_peripherals.sv
-    - rtl/dma/hello_dma.sv
-    - rtl/npu/hello_npu.sv
-    - rtl/display/hello_display.sv
+    - rtl/top/e1_chip_top.sv
+    - rtl/debug/e1_dbg_mmio_bridge.sv
+    - rtl/clock/e1_reset_sync.sv
+    - rtl/top/e1_soc_top.sv
+    - rtl/bootrom/e1_bootrom.sv
+    - rtl/peripherals/e1_peripherals.sv
+    - rtl/dma/e1_dma.sv
+    - rtl/npu/e1_npu.sv
+    - rtl/display/e1_display.sv
   verification:
-    - verify/cocotb/test_hello_chip.py
-    - verify/formal/hello_dbg_mmio_bridge.sby
-    - verify/formal/hello_dbg_mmio_bridge_formal.sv
-    - verify/formal/hello_soc_top.sby
-    - verify/formal/hello_soc_top_formal.sv
-    - verify/formal/hello_dma.sby
-    - verify/formal/hello_dma_formal.sv
-    - verify/formal/hello_npu.sby
-    - verify/formal/hello_npu_formal.sv
+    - verify/cocotb/test_e1_chip.py
+    - verify/formal/e1_dbg_mmio_bridge.sby
+    - verify/formal/e1_dbg_mmio_bridge_formal.sv
+    - verify/formal/e1_soc_top.sby
+    - verify/formal/e1_soc_top_formal.sv
+    - verify/formal/e1_dma.sby
+    - verify/formal/e1_dma_formal.sv
+    - verify/formal/e1_npu.sby
+    - verify/formal/e1_npu_formal.sv
   product:
-    - package/hello-demo-pinout.yaml
-    - docs/package/hello-demo-package.md
-    - docs/package/hello-demo-pad-ring.md
+    - package/e1-demo-pinout.yaml
+    - docs/package/e1-demo-package.md
+    - docs/package/e1-demo-pad-ring.md
     - package/wifi-external-interface.yaml
     - pd/pin_order.cfg
-    - pd/constraints/hello_soc.sdc
-    - pd/constraints/hello_soc_gf180.sdc
-    - docs/pd/padframe/hello_demo_padframe.md
-    - pd/padframe/hello_demo_padframe.yaml
+    - pd/constraints/e1_soc.sdc
+    - pd/constraints/e1_soc_gf180.sdc
+    - docs/pd/padframe/e1_demo_padframe.md
+    - pd/padframe/e1_demo_padframe.yaml
     - pd/signoff/manifest.yaml
     - docs/board/README.md
     - docs/board/fpga/README.md
-    - board/fpga/hello_demo_fpga.yaml
-    - board/fpga/constraints/hello_demo_ulx3s.lpf
-    - docs/board/kicad/hello-demo/fab-notes.md
-    - docs/board/kicad/hello-demo-artifact-manifest.yaml
-    - docs/board/kicad/hello-demo-commands.md
+    - board/fpga/e1_demo_fpga.yaml
+    - board/fpga/constraints/e1_demo_ulx3s.lpf
+    - docs/board/kicad/e1-demo/fab-notes.md
+    - docs/board/kicad/e1-demo-artifact-manifest.yaml
+    - docs/board/kicad/e1-demo-commands.md
     - package/artifact-manifest.yaml
     - board/README.md
     - docs/board/fpga/README.md
     - board/fpga/artifact-manifest.yaml
-    - board/fpga/hello_demo_fpga.yaml
-    - board/fpga/constraints/hello_demo_ulx3s.lpf
-    - board/kicad/hello-demo/artifact-manifest.yaml
-    - docs/board/kicad/hello-demo/fab-notes.md
+    - board/fpga/e1_demo_fpga.yaml
+    - board/fpga/constraints/e1_demo_ulx3s.lpf
+    - board/kicad/e1-demo/artifact-manifest.yaml
+    - docs/board/kicad/e1-demo/fab-notes.md
     - docs/fw/board-smoke/tests/smoke_plan.md
-    - docs/manufacturing/hello-demo-checklist.md
+    - docs/manufacturing/e1-demo-checklist.md
     - docs/manufacturing/artifact-manifest.yaml
     - docs/manufacturing/real-world-verification-gaps.yaml
     - docs/manufacturing/physical-closure-work-order.yaml
     - docs/manufacturing/product-feature-evidence-manifest.yaml
   generated:
-    - build/netlist/hello_chip_synth.v
-    - build/reports/hello_soc_yosys.log
+    - build/netlist/e1_chip_synth.v
+    - build/reports/e1_soc_yosys.log
     - build/reports/tool_versions.txt
     - build/reports/cocotb/manifest.json
-    - build/reports/cocotb/hello_chip_top_test_hello_chip.xml
-    - build/reports/cocotb/hello_linux_soc_contract_test_cpu_mem_intc_contract.xml
-    - build/reports/cocotb/hello_tiny_cpu_contract_tb_test_tiny_cpu_execution.xml
+    - build/reports/cocotb/e1_chip_top_test_e1_chip.xml
+    - build/reports/cocotb/e1_linux_soc_contract_test_cpu_mem_intc_contract.xml
+    - build/reports/cocotb/e1_tiny_cpu_contract_tb_test_tiny_cpu_execution.xml
 known_waivers:
   - The MVP is a padless digital macro/top wrapper, not a foundry padframe-inclusive standalone chip.
   - OpenLane/OpenROAD signoff artifacts are required before any tapeout claim.

@@ -1,5 +1,5 @@
-schema: openphone.power_thermal_workload_plan.v1
-plan_id: hello-npu-sustained-int8-v1
+schema: openagent.power_thermal_workload_plan.v1
+plan_id: e1-npu-sustained-int8-v1
 status: blocked_until_measured_target_exists
 claim_boundary: no_silicon_power_or_thermal_claims_from_this_plan
 minimum_duration_seconds: 1800
@@ -13,7 +13,7 @@ sample_alignment:
     - frequency_trace
     - workload_transcript
 workloads:
-  - name: hello_npu_nnapi_sustained
+  - name: e1_npu_nnapi_sustained
     intent: sustained_npu_int8_path
     command:
       - adb
@@ -21,12 +21,12 @@ workloads:
       - benchmark_model
       - --graph=/data/local/tmp/mobile_smoke.tflite
       - --use_nnapi=true
-      - --nnapi_accelerator_name=hello-npu
+      - --nnapi_accelerator_name=e1-npu
       - --enable_op_profiling=true
       - --num_threads=1
       - --min_secs=1800
     required_preconditions:
-      - hello-npu accelerator appears in adb shell cmd neuralnetworks list
+      - e1-npu accelerator appears in adb shell cmd neuralnetworks list
       - mobile_smoke.tflite checksum matches the benchmark report
       - CPU fallback percent and unsupported op count are recorded
       - NPU clock, voltage, and throttle state are recorded for the same window
@@ -47,13 +47,13 @@ stop_conditions:
   - benchmark transcript shows CPU fallback for the NPU-path run
   - power, thermal, frequency, and workload timestamps cannot be aligned
 required_outputs:
-  manifest: benchmarks/power/manifests/hello-npu-sustained-capture.<run-id>.json
+  manifest: benchmarks/power/manifests/e1-npu-sustained-capture.<run-id>.json
   checker: benchmarks/power/scripts/check_sustained_run_evidence.py
-  power_trace: docs/manufacturing/evidence/power/hello-npu/power-trace.csv
-  thermal_trace: docs/manufacturing/evidence/thermal/hello-npu/thermal-trace.csv
-  frequency_trace: docs/manufacturing/evidence/power/hello-npu/frequency-trace.csv
-  workload_transcript: docs/manufacturing/evidence/power/hello-npu/workload-transcript.txt
-  calibration_record: docs/manufacturing/evidence/power/hello-npu/power-thermal-calibration.json
+  power_trace: docs/manufacturing/evidence/power/e1-npu/power-trace.csv
+  thermal_trace: docs/manufacturing/evidence/thermal/e1-npu/thermal-trace.csv
+  frequency_trace: docs/manufacturing/evidence/power/e1-npu/frequency-trace.csv
+  workload_transcript: docs/manufacturing/evidence/power/e1-npu/workload-transcript.txt
+  calibration_record: docs/manufacturing/evidence/power/e1-npu/power-thermal-calibration.json
 blocked_release_metrics:
   - sustained_int8_tops
   - average_watts

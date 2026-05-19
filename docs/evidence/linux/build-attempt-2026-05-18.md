@@ -7,7 +7,7 @@ Host: macOS 15 (Darwin 25.2.0), arm64 (Apple Silicon)
 
 Satisfy the BLOCKED evidence markers under `docs/evidence/{linux,buildroot}/`
 by actually building the external Linux kernel with the in-tree
-`sw/linux/drivers/openphone/` drivers and a Buildroot rootfs.
+`sw/linux/drivers/openagent/` drivers and a Buildroot rootfs.
 
 ## Outcome: NOT satisfied on this host
 
@@ -55,33 +55,33 @@ git clone --depth 1 --branch v6.6 https://github.com/torvalds/linux.git external
 cd external/linux
 
 # Inject drivers
-mkdir -p drivers/misc/openphone
-cp -r "$REPO"/sw/linux/drivers/openphone/* drivers/misc/openphone/
+mkdir -p drivers/misc/openagent
+cp -r "$REPO"/sw/linux/drivers/openagent/* drivers/misc/openagent/
 
 # Inject DT bindings for dtbs_check
-mkdir -p Documentation/devicetree/bindings/openphone
-cp "$REPO"/sw/linux/Documentation/devicetree/bindings/openphone/*.yaml \
-   Documentation/devicetree/bindings/openphone/
+mkdir -p Documentation/devicetree/bindings/openagent
+cp "$REPO"/sw/linux/Documentation/devicetree/bindings/openagent/*.yaml \
+   Documentation/devicetree/bindings/openagent/
 
 # Wire Kconfig/Makefile into drivers/misc
-grep -q openphone drivers/misc/Kconfig || \
-  sed -i '/^endmenu/i source "drivers/misc/openphone/Kconfig"' drivers/misc/Kconfig
-grep -q openphone drivers/misc/Makefile || \
-  echo 'obj-y += openphone/' >> drivers/misc/Makefile
+grep -q openagent drivers/misc/Kconfig || \
+  sed -i '/^endmenu/i source "drivers/misc/openagent/Kconfig"' drivers/misc/Kconfig
+grep -q openagent drivers/misc/Makefile || \
+  echo 'obj-y += openagent/' >> drivers/misc/Makefile
 
 # Base + fragment config
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig
 ./scripts/kconfig/merge_config.sh -O . .config \
-    "$REPO"/sw/linux/configs/openphone_hello.fragment
+    "$REPO"/sw/linux/configs/openagent_e1.fragment
 
 # Build
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j"$(nproc)" 2>&1 | \
-    tee "$REPO"/docs/evidence/linux/openphone_hello_kernel_build.log
+    tee "$REPO"/docs/evidence/linux/openagent_e1_kernel_build.log
 
 # dtbs_check
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- dtbs_check \
-    DT_SCHEMA_FILES=Documentation/devicetree/bindings/openphone/ 2>&1 | \
-    tee "$REPO"/docs/evidence/linux/openphone_hello_dtb_check.log
+    DT_SCHEMA_FILES=Documentation/devicetree/bindings/openagent/ 2>&1 | \
+    tee "$REPO"/docs/evidence/linux/openagent_e1_dtb_check.log
 ```
 
 For Buildroot:
@@ -89,15 +89,15 @@ For Buildroot:
 ```
 git clone --depth 1 --branch 2024.02 https://gitlab.com/buildroot.org/buildroot.git external/buildroot
 cd external/buildroot
-make BR2_EXTERNAL="$REPO"/sw/buildroot openphone_hello_defconfig 2>&1 | \
-    tee "$REPO"/docs/evidence/buildroot/openphone_hello_defconfig.log
+make BR2_EXTERNAL="$REPO"/sw/buildroot openagent_e1_defconfig 2>&1 | \
+    tee "$REPO"/docs/evidence/buildroot/openagent_e1_defconfig.log
 make -j"$(nproc)"
 find output/images -maxdepth 1 -type f -print | \
-    tee "$REPO"/docs/evidence/buildroot/openphone_hello_image_manifest.txt
+    tee "$REPO"/docs/evidence/buildroot/openagent_e1_image_manifest.txt
 ```
 
 Boot the produced image under `qemu-system-riscv64 -M virt` (or hardware /
-FPGA) and run `hello-mmio-smoke` to capture the two `hello-mmio-smoke.log`
+FPGA) and run `e1-mmio-smoke` to capture the two `e1-mmio-smoke.log`
 artifacts.
 
 ## Why no kernel checkout was committed

@@ -1,4 +1,4 @@
-schema: openphone.memory_uma_evidence_gate.v1
+schema: openagent.memory_uma_evidence_gate.v1
 status: scaffold_only_real_claims_blocked
 scope:
   - SRAM-backed DRAM model
@@ -86,7 +86,7 @@ current_actual_capability:
   reset_rom: contract_identity_rom_and_separate_minimal_rv64_scaffold_only
   boot_sram: none
   dram_init_or_training: none
-  storage: 1024 32-bit words in rtl/memory/hello_axi_lite_dram.sv
+  storage: 1024 32-bit words in rtl/memory/e1_axi_lite_dram.sv
   usable_rtl_capacity_bytes: 4096
   bus_protocol: single-beat AXI-Lite scaffold
   axi4_or_tilelink_fabric: none
@@ -116,7 +116,7 @@ memory_roadmap_phases:
         pass_criteria: Gate passes while real DRAM, UMA coherency, IOMMU/SMMU, and QoS claims remain blocked.
       - name: rtl_elaboration
         command: make rtl-check
-        pass_criteria: RTL elaborates with hello_axi_lite_dram and hello_linux_soc_contract.
+        pass_criteria: RTL elaborates with e1_axi_lite_dram and e1_linux_soc_contract.
       - name: containment_sim
         command: make cocotb-contract
         pass_criteria: DMA non-DRAM target test and SRAM capacity-boundary test pass when cocotb is available.
@@ -260,10 +260,10 @@ current_scaffold_evidence:
 generated_ap_memory_audit:
   status: generated_source_only_not_boot_evidence
   sources:
-    memmap: build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.memmap.json
-    dts: build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts
-    verilog: build/chipyard/openphone_rocket/openphone_rocket_ap.v
-    fir: build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.fir
+    memmap: build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.memmap.json
+    dts: build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.dts
+    verilog: build/chipyard/openagent_rocket/openagent_rocket_ap.v
+    fir: build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.fir
   linux_usable_ram:
     node: memory@80000000
     base: 0x80000000
@@ -288,7 +288,7 @@ generated_ap_memory_audit:
     - This is generated-source evidence only and is not boot evidence without a built simulator and serial transcript.
     - This is not real DRAM, LPDDR, UMA coherency, cacheability, or Android shared-buffer evidence.
   blockers:
-    - No generated Verilator simulator executable exists under build/chipyard/openphone_rocket/simulator.
+    - No generated Verilator simulator executable exists under build/chipyard/openagent_rocket/simulator.
     - No OpenSBI image or payload placement manifest is bound to the generated AP memory window.
     - No Linux Image/initrd/DTB payload set has been loaded into memory@80000000 for the generated AP.
     - No serial transcript proves OpenSBI or Linux execution from the generated SimDRAM window.
@@ -296,7 +296,7 @@ generated_ap_memory_audit:
 
 target_2028_phone_uma_spec_deltas:
   - id: reset_rom_boot_sram_handoff
-    current: Hello-chip ROM is a contract identity ROM and the executable RV64 reset scaffold is not integrated with DRAM init, boot SRAM, OpenSBI handoff, or Linux memory discovery.
+    current: E1-chip ROM is a contract identity ROM and the executable RV64 reset scaffold is not integrated with DRAM init, boot SRAM, OpenSBI handoff, or Linux memory discovery.
     target: Production reset ROM with immutable entry, boot SRAM, DRAM initialization/training sequence, memory discovery handoff, and OpenSBI payload transition evidence.
     evidence_gate: reset_rom_boot_memory_handoff
   - id: dram_controller_phy
@@ -335,7 +335,7 @@ target_2028_phone_uma_spec_deltas:
 blocked_real_claims:
   - id: reset_rom_boot_memory_handoff
     status: blocked
-    reason: Current hello boot ROM is a contract identity ROM and the executable RV64 reset scaffold does not initialize DRAM, use boot SRAM, or hand off to OpenSBI/Linux.
+    reason: Current e1 boot ROM is a contract identity ROM and the executable RV64 reset scaffold does not initialize DRAM, use boot SRAM, or hand off to OpenSBI/Linux.
     evidence_artifacts:
       - docs/evidence/memory/reset_rom_boot_sram_handoff_report.json
       - docs/evidence/memory/opensbi_dram_handoff_transcript.json
@@ -345,7 +345,7 @@ blocked_real_claims:
       - OpenSBI transcript showing discovered memory size, next-stage handoff, and no use of uninitialized DRAM.
   - id: real_dram_controller_phy
     status: blocked
-    reason: Current RTL uses rtl/memory/hello_axi_lite_dram.sv, a small SRAM-backed AXI-Lite model.
+    reason: Current RTL uses rtl/memory/e1_axi_lite_dram.sv, a small SRAM-backed AXI-Lite model.
     evidence_artifacts:
       - docs/evidence/memory/real_dram_controller_phy_report.json
       - docs/evidence/memory/dram_training_timing_report.json
@@ -441,29 +441,29 @@ blocked_real_claims:
       - Negative tests proving DMA cannot read or mutate timer, software-interrupt, pending, enable, priority, threshold, or claim/complete state.
 
 required_artifact_schemas:
-  docs/evidence/memory/reset_rom_boot_sram_handoff_report.json: openphone.memory.reset_rom_boot_sram_handoff.v1
-  docs/evidence/memory/opensbi_dram_handoff_transcript.json: openphone.memory.opensbi_dram_handoff.v1
-  docs/evidence/memory/real_dram_controller_phy_report.json: openphone.memory.real_dram_controller_phy.v1
-  docs/evidence/memory/dram_training_timing_report.json: openphone.memory.dram_training_timing.v1
-  docs/evidence/memory/cache_hierarchy_report.json: openphone.memory.cache_hierarchy.v1
-  docs/evidence/memory/cache_latency_counter_report.json: openphone.memory.cache_latency_counter.v1
-  docs/evidence/memory/axi_tl_interconnect_contract_report.json: openphone.memory.axi_tl_interconnect_contract.v1
-  docs/evidence/memory/fabric_bridge_ordering_report.json: openphone.memory.fabric_bridge_ordering.v1
-  docs/evidence/memory/cacheability_attribute_map_report.json: openphone.memory.cacheability_attribute_map.v1
-  docs/evidence/memory/noncoherent_dma_sync_abi_report.json: openphone.memory.noncoherent_dma_sync_abi.v1
-  docs/evidence/memory/uma_coherency_report.json: openphone.memory.uma_coherency.v1
-  docs/evidence/memory/shared_buffer_negative_sync_report.json: openphone.memory.shared_buffer_negative_sync.v1
-  docs/evidence/memory/android_dma_buf_coherency_report.json: openphone.memory.android_dma_buf_coherency.v1
-  docs/evidence/memory/android_shared_buffer_fence_report.json: openphone.memory.android_shared_buffer_fence.v1
-  docs/evidence/memory/iommu_fault_injection_report.json: openphone.memory.iommu_fault_injection.v1
-  docs/evidence/memory/dma_isolation_fault_visibility_report.json: openphone.memory.dma_isolation_fault_visibility.v1
-  docs/evidence/memory/memory_qos_report.json: openphone.memory.qos.v1
-  docs/evidence/memory/contended_bandwidth_latency_report.json: openphone.memory.contended_bandwidth_latency.v1
-  docs/evidence/memory/phone_2028_memory_scorecard.json: openphone.memory.phone_2028_scorecard.v1
-  docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json: openphone.memory.lpddr_bandwidth_latency_benchmark.v1
-  docs/evidence/memory/contended_android_memory_trace.json: openphone.memory.contended_android_trace.v1
-  docs/evidence/memory/linux_interrupt_access_map_report.json: openphone.memory.linux_interrupt_access_map.v1
-  docs/evidence/memory/clint_plic_dma_exclusion_report.json: openphone.memory.clint_plic_dma_exclusion.v1
+  docs/evidence/memory/reset_rom_boot_sram_handoff_report.json: openagent.memory.reset_rom_boot_sram_handoff.v1
+  docs/evidence/memory/opensbi_dram_handoff_transcript.json: openagent.memory.opensbi_dram_handoff.v1
+  docs/evidence/memory/real_dram_controller_phy_report.json: openagent.memory.real_dram_controller_phy.v1
+  docs/evidence/memory/dram_training_timing_report.json: openagent.memory.dram_training_timing.v1
+  docs/evidence/memory/cache_hierarchy_report.json: openagent.memory.cache_hierarchy.v1
+  docs/evidence/memory/cache_latency_counter_report.json: openagent.memory.cache_latency_counter.v1
+  docs/evidence/memory/axi_tl_interconnect_contract_report.json: openagent.memory.axi_tl_interconnect_contract.v1
+  docs/evidence/memory/fabric_bridge_ordering_report.json: openagent.memory.fabric_bridge_ordering.v1
+  docs/evidence/memory/cacheability_attribute_map_report.json: openagent.memory.cacheability_attribute_map.v1
+  docs/evidence/memory/noncoherent_dma_sync_abi_report.json: openagent.memory.noncoherent_dma_sync_abi.v1
+  docs/evidence/memory/uma_coherency_report.json: openagent.memory.uma_coherency.v1
+  docs/evidence/memory/shared_buffer_negative_sync_report.json: openagent.memory.shared_buffer_negative_sync.v1
+  docs/evidence/memory/android_dma_buf_coherency_report.json: openagent.memory.android_dma_buf_coherency.v1
+  docs/evidence/memory/android_shared_buffer_fence_report.json: openagent.memory.android_shared_buffer_fence.v1
+  docs/evidence/memory/iommu_fault_injection_report.json: openagent.memory.iommu_fault_injection.v1
+  docs/evidence/memory/dma_isolation_fault_visibility_report.json: openagent.memory.dma_isolation_fault_visibility.v1
+  docs/evidence/memory/memory_qos_report.json: openagent.memory.qos.v1
+  docs/evidence/memory/contended_bandwidth_latency_report.json: openagent.memory.contended_bandwidth_latency.v1
+  docs/evidence/memory/phone_2028_memory_scorecard.json: openagent.memory.phone_2028_scorecard.v1
+  docs/evidence/memory/lpddr_bandwidth_latency_benchmark_report.json: openagent.memory.lpddr_bandwidth_latency_benchmark.v1
+  docs/evidence/memory/contended_android_memory_trace.json: openagent.memory.contended_android_trace.v1
+  docs/evidence/memory/linux_interrupt_access_map_report.json: openagent.memory.linux_interrupt_access_map.v1
+  docs/evidence/memory/clint_plic_dma_exclusion_report.json: openagent.memory.clint_plic_dma_exclusion.v1
 
 claim_rules:
   - The scaffold may be described only as SRAM-backed DMA containment evidence.

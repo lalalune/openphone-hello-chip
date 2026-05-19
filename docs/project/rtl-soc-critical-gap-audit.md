@@ -24,10 +24,10 @@ Open gap categories are `rtl_stub`, `incomplete_subsystem`, `test_gap`, `proof_g
 
 | Gap | Evidence | Blocking interpretation |
 | --- | --- | --- |
-| CPU subsystem is a tiny executable contract model | `rtl/cpu/hello_cpu_subsystem_stub.sv` supports a small unprivileged instruction subset and still carries the `stub` module name. | Lint, synthesis, and cocotb CPU passes do not prove a production RV64 core, privileged mode, MMU/cache, or OS boot path. |
-| Boot ROM is an identity/contract ROM | `rtl/bootrom/hello_bootrom.sv` returns magic/version words and a boot-vector placeholder. | Platform-contract checks do not prove executable reset firmware or OpenSBI handoff. |
-| NPU is a bounded MMIO datapath | `rtl/npu/hello_npu.sv` exposes scalar operations and small scratch GEMM behavior. | NPU tests do not prove accelerator IP, descriptor queues, tensor memory, model execution, or performance. |
-| DRAM is SRAM-backed modeling | `rtl/memory/hello_axi_lite_dram.sv` and `rtl/top/hello_soc_top.sv` use small AXI-Lite/internal memory apertures. | Synthesis and simulation do not prove a DRAM controller, PHY, refresh/timing, ECC, capacity, or Linux memory behavior. |
+| CPU subsystem is a tiny executable contract model | `rtl/cpu/e1_cpu_subsystem_stub.sv` supports a small unprivileged instruction subset and still carries the `stub` module name. | Lint, synthesis, and cocotb CPU passes do not prove a production RV64 core, privileged mode, MMU/cache, or OS boot path. |
+| Boot ROM is an identity/contract ROM | `rtl/bootrom/e1_bootrom.sv` returns magic/version words and a boot-vector placeholder. | Platform-contract checks do not prove executable reset firmware or OpenSBI handoff. |
+| NPU is a bounded MMIO datapath | `rtl/npu/e1_npu.sv` exposes scalar operations and small scratch GEMM behavior. | NPU tests do not prove accelerator IP, descriptor queues, tensor memory, model execution, or performance. |
+| DRAM is SRAM-backed modeling | `rtl/memory/e1_axi_lite_dram.sv` and `rtl/top/e1_soc_top.sv` use small AXI-Lite/internal memory apertures. | Synthesis and simulation do not prove a DRAM controller, PHY, refresh/timing, ECC, capacity, or Linux memory behavior. |
 
 ## Incomplete subsystems
 
@@ -45,18 +45,18 @@ Required closure evidence:
 
 ### Interconnect and memory
 
-`hello_soc_top` routes debug MMIO to fixed windows and a small internal DRAM array. `hello_linux_soc_contract` exercises a CPU-side AXI-Lite contract path to DRAM, DMA MMIO, and interrupt controller, but it is not a complete SoC fabric. It lacks complete target inventory, production arbitration policy, coherency policy, ordering guarantees, and generated address-map binding across RTL and software.
+`e1_soc_top` routes debug MMIO to fixed windows and a small internal DRAM array. `e1_linux_soc_contract` exercises a CPU-side AXI-Lite contract path to DRAM, DMA MMIO, and interrupt controller, but it is not a complete SoC fabric. It lacks complete target inventory, production arbitration policy, coherency policy, ordering guarantees, and generated address-map binding across RTL and software.
 
 Required closure evidence:
 
-- generated address map from `sw/platform/hello_platform_contract.json`,
+- generated address map from `sw/platform/e1_platform_contract.json`,
 - decode-error and backpressure tests for every target,
 - protocol properties for valid-ready stability and response liveness,
 - arbitration coverage across CPU, DMA, display, and any future NPU memory clients.
 
 ### DMA
 
-`rtl/dma/hello_dma.sv` is a word-copy AXI-Lite master with status and error counters. It has useful error behavior for unaligned programming and memory response errors, but it is not proven against a production memory hierarchy, long bursts, coherency, cache interaction, or software performance expectations.
+`rtl/dma/e1_dma.sv` is a word-copy AXI-Lite master with status and error counters. It has useful error behavior for unaligned programming and memory response errors, but it is not proven against a production memory hierarchy, long bursts, coherency, cache interaction, or software performance expectations.
 
 Required closure evidence:
 
@@ -80,7 +80,7 @@ Required closure evidence:
 
 ### Display
 
-`rtl/display/hello_display.sv` now has timing and a top-level SRAM-backed framebuffer read path. It still lacks a production framebuffer client, outstanding read handling, QoS/bandwidth proof, panel PHY/DSI bridge, panel init, color/gamma path, and hardware-in-loop validation.
+`rtl/display/e1_display.sv` now has timing and a top-level SRAM-backed framebuffer read path. It still lacks a production framebuffer client, outstanding read handling, QoS/bandwidth proof, panel PHY/DSI bridge, panel init, color/gamma path, and hardware-in-loop validation.
 
 Required closure evidence:
 
@@ -96,10 +96,10 @@ Required closure evidence:
 | --- | --- | --- |
 | CPU | `make cocotb-cpu` contract test | No compliance suite, privilege tests, interrupt entry/return, exceptions, cache/MMU, or boot transcript. |
 | Interconnect | `make cocotb-contract` directed tests | No reusable AXI-Lite property set, broad stall permutation matrix, or generated-address-map equivalence proof. |
-| DMA | `verify/formal/hello_dma_formal.sv`, cocotb contract tests | Formal depth is shallow and does not prove liveness, full transfer completion, response matching over long transfers, or all backpressure interleavings. |
+| DMA | `verify/formal/e1_dma_formal.sv`, cocotb contract tests | Formal depth is shallow and does not prove liveness, full transfer completion, response matching over long transfers, or all backpressure interleavings. |
 | NPU | cocotb and Verilator directed tests | No machine-readable opcode/shape/error/fallback coverage report. |
 | Display | cocotb directed tests | No dedicated formal timing/read-handshake properties and no real panel validation. |
-| Top | `verify/formal/hello_soc_top_formal.sv` | Shallow structural facts only; does not cover AXI-Lite protocol correctness, reset-domain safety, or complete device behavior. |
+| Top | `verify/formal/e1_soc_top_formal.sv` | Shallow structural facts only; does not cover AXI-Lite protocol correctness, reset-domain safety, or complete device behavior. |
 
 ## Proof gaps
 
@@ -107,9 +107,9 @@ Required closure evidence:
 
 Specific proof gaps:
 
-- no dedicated formal harness for `hello_axi_lite_interconnect`,
-- no dedicated formal harness for `hello_axi_lite_dram`,
-- no dedicated formal harness for `hello_interrupt_controller`,
+- no dedicated formal harness for `e1_axi_lite_interconnect`,
+- no dedicated formal harness for `e1_axi_lite_dram`,
+- no dedicated formal harness for `e1_interrupt_controller`,
 - no dedicated display proof,
 - shallow BMC depths for NPU, DMA, and top,
 - no reset-domain or debug-bridge-to-SoC end-to-end liveness proof.
@@ -120,8 +120,8 @@ Specific proof gaps:
 | --- | --- | --- |
 | `make synth` | Synthesizes the prototype source list, including the tiny CPU stub and small memories. | Prototype synthesis only; not production CPU/memory/IP readiness. |
 | `make formal` | Runs SBY where available, else Yosys fallback unless `REQUIRE_SBY=1`. | Report fallback as structural/SAT fallback, not proof signoff. |
-| `make qemu-check` | Can validate semantic/build scaffolding or report blocked without real QEMU/toolchain. | Not hello-chip boot validation until a contract-compatible model and serial transcript exist. |
-| `make renode-check` | Checks a qemu-virt reference scaffold, not the hello hardware ABI. | Reference scaffold only. |
+| `make qemu-check` | Can validate semantic/build scaffolding or report blocked without real QEMU/toolchain. | Not e1-chip boot validation until a contract-compatible model and serial transcript exist. |
+| `make renode-check` | Checks a qemu-virt reference scaffold, not the e1 hardware ABI. | Reference scaffold only. |
 | `make cocotb` | Directed block/top simulation. | Smoke and contract coverage, not exhaustive subsystem verification. |
 | `make stub-audit` | Ensures gaps stay named and open. | Inventory/gate hygiene, not closure of the gaps themselves. |
 

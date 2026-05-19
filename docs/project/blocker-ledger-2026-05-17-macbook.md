@@ -7,11 +7,11 @@ This ledger records the blockers closed locally on the MacBook and the blockers 
 | Workstream | Evidence | Gate |
 | --- | --- | --- |
 | Benchmark MVP evidence | `benchmarks/results/final-macbook-host-smoke/report.json` is now preferred by the MVP status gate when present. | `make mvp-status` reports `benchmarks` as `PASS`. |
-| KiCad CLI availability | KiCad 10.0.2 was fetched and run from the mounted DMG without requiring privileged install. | `board/reports/fab/hello-demo-2026-05-17/kicad-tool-versions.txt` |
+| KiCad CLI availability | KiCad 10.0.2 was fetched and run from the mounted DMG without requiring privileged install. | `board/reports/fab/e1-demo-2026-05-17/kicad-tool-versions.txt` |
 | KiCad fabrication artifacts | ERC, DRC, Gerbers, drill, BOM, position CSV, fab drawing PDF, and command transcript were generated. | `python3 scripts/check_kicad_artifacts.py` passes. |
-| KiCad root ERC cleanup | Documentation-only top-level planning labels were converted to text, and the regenerated root ERC report now records 0 errors and 0 warnings. | `board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt` |
-| KiCad checksum metadata | Source and CLI-output manifest entries now carry source revision/checksum/tool metadata while remaining `draft`. | `board/kicad/hello-demo/artifact-manifest.yaml` |
-| KiCad manifest bookkeeping | `board/kicad/hello-demo/artifact-manifest.yaml` now tracks generated CLI outputs as draft evidence instead of missing evidence. | `python3 scripts/check_manufacturing_artifacts.py --manifest board/kicad/hello-demo/artifact-manifest.yaml` passes. |
+| KiCad root ERC cleanup | Documentation-only top-level planning labels were converted to text, and the regenerated root ERC report now records 0 errors and 0 warnings. | `board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt` |
+| KiCad checksum metadata | Source and CLI-output manifest entries now carry source revision/checksum/tool metadata while remaining `draft`. | `board/kicad/e1-demo/artifact-manifest.yaml` |
+| KiCad manifest bookkeeping | `board/kicad/e1-demo/artifact-manifest.yaml` now tracks generated CLI outputs as draft evidence instead of missing evidence. | `python3 scripts/check_manufacturing_artifacts.py --manifest board/kicad/e1-demo/artifact-manifest.yaml` passes. |
 | Product scaffold integrity | Non-release product package checks remain consistent with fail-closed release gates. | `make product-check` passes. |
 | Project pipeline | The normal artifact pipeline remains green after the local evidence updates. | `python3 scripts/pipeline_check.py` passes. |
 

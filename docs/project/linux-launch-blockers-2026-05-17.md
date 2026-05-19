@@ -2,7 +2,7 @@
 
 Date: 2026-05-17
 
-Scope: current repository state for launching Linux on the selected OpenPhone
+Scope: current repository state for launching Linux on the selected OpenAgent
 CPU/AP path.
 
 ## Current executable evidence
@@ -23,8 +23,8 @@ The repo can execute bounded firmware smoke paths, but it cannot boot Linux yet.
   payload with an OpenSBI marker before `make chipyard-generated-ap-boot` can
   attempt the generated AP simulator.
 - `make chipyard-generated-ap-boot` is the only repo-local wrapper that may
-  produce `build/chipyard/openphone_rocket/verilator-linux-smoke.log` for a
-  generated OpenPhoneRocketConfig Linux smoke. The log is still only proof after
+  produce `build/chipyard/openagent_rocket/verilator-linux-smoke.log` for a
+  generated OpenAgentRocketConfig Linux smoke. The log is still only proof after
   `scripts/check_chipyard_verilator_linux_smoke.py` finds real OpenSBI and Linux
   markers in that generated-AP transcript.
 
@@ -58,8 +58,8 @@ Required fix:
 
 - Run or reproduce the Chipyard setup flow that creates `external/chipyard/env.sh`
   and a valid RISC-V toolchain environment.
-- Keep the OpenPhone overlay installed at
-  `external/chipyard/generators/chipyard/src/main/scala/openphone/OpenPhoneRocketConfig.scala`.
+- Keep the OpenAgent overlay installed at
+  `external/chipyard/generators/chipyard/src/main/scala/openagent/OpenAgentRocketConfig.scala`.
 - Avoid full recursive setup paths that require inaccessible optional private
   vendor submodules unless those paths are actually needed for Verilator Linux
   bring-up.
@@ -68,9 +68,9 @@ Required fix:
 
 The selected AP path now has generated source artifacts, including:
 
-- `build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.memmap.json`
-- `build/chipyard/openphone_rocket/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig.dts`
-- `build/chipyard/openphone_rocket/openphone_rocket_ap.v`
+- `build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.memmap.json`
+- `build/chipyard/openagent_rocket/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig.dts`
+- `build/chipyard/openagent_rocket/openagent_rocket_ap.v`
 
 The generated memmap/DTS expose `memory@80000000` at `0x80000000`, size
 `0x10000000` / 256 MiB, as the enabled RAM window for OpenSBI/Linux payloads.
@@ -84,7 +84,7 @@ boot transcript exists for this AP path.
 
 Required fix:
 
-- Build the generated `OpenPhoneRocketConfig` Verilator simulator.
+- Build the generated `OpenAgentRocketConfig` Verilator simulator.
 - Locate or build a single-ELF Chipyard Linux payload:
 
 ```sh
@@ -130,7 +130,7 @@ The checked-in scaffold compiles with `dtc`, but it is not a standalone AP boot
 device tree:
 
 ```sh
-python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc --path sw/linux/dts/openphone-hello.dts
+python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc --path sw/linux/dts/openagent-e1.dts
 ```
 
 Current blockers:
@@ -144,18 +144,18 @@ Current blockers:
 Required fix:
 
 - Use the generated Chipyard DTB/DTS as the boot source of truth.
-- Keep `sw/linux/dts/openphone-hello.dts` as a peripheral scaffold only unless it
+- Keep `sw/linux/dts/openagent-e1.dts` as a peripheral scaffold only unless it
   is expanded into a complete boot DTB.
 
 ### 5. CPU/AP evidence is missing
 
 The evidence gate must remain blocked until these real transcripts exist:
 
-- `build/evidence/cpu_ap/openphone_hello_opensbi_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_linux_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log`
-- `build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log`
-- `build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log`
+- `build/evidence/cpu_ap/openagent_e1_opensbi_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_linux_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log`
+- `build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log`
+- `build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log`
 
 Required fix:
 
@@ -196,10 +196,10 @@ Required fix:
 ```sh
 python3 scripts/check_chipyard_import_preflight.py --require-checkout --skip-remote
 cd external/chipyard && ./build-setup.sh --help
-cd external/chipyard/sims/verilator && make CONFIG=OpenPhoneRocketConfig -n
+cd external/chipyard/sims/verilator && make CONFIG=OpenAgentRocketConfig -n
 scripts/run_qemu.sh --check
 scripts/run_qemu.sh --check-os
 REQUIRE_RENODE=1 scripts/run_renode.sh --check
-python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc --path sw/linux/dts/openphone-hello.dts
+python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc --path sw/linux/dts/openagent-e1.dts
 make chipyard-generated-check cpu-ap-evidence-check software-bsp-evidence-check
 ```

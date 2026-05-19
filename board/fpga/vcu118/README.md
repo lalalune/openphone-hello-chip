@@ -7,7 +7,7 @@ Platform decision: see `docs/board/fpga/platform-selection.md`
 ## Purpose
 
 This is the on-prem, owned-hardware path for prototyping the Chipyard-generated
-Rocket + Gemmini SoC. The hello-demo MMIO chip continues to live on the
+Rocket + Gemmini SoC. The e1-demo MMIO chip continues to live on the
 ULX3S/ECP5 path; the VCU118 is reserved for the heavier configuration that
 does not fit on ECP5.
 

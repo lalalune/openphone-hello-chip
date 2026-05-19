@@ -1,6 +1,6 @@
 import pytest
-from hello_npu_runtime import (
-    HelloNpuRuntime,
+from e1_npu_runtime import (
+    E1NpuRuntime,
     NpuDescriptorSubmission,
     NpuRuntimeError,
     NpuStreamDescriptor,
@@ -25,7 +25,7 @@ class FakeMmio:
 
 
 class CommandCompletingMmio(FakeMmio):
-    def __init__(self, runtime_cls=HelloNpuRuntime):
+    def __init__(self, runtime_cls=E1NpuRuntime):
         super().__init__()
         self.runtime_cls = runtime_cls
         self.commands = []
@@ -127,35 +127,35 @@ class CommandCompletingMmio(FakeMmio):
 class RejectingMmio(FakeMmio):
     def write32(self, addr, value):
         super().write32(addr, value)
-        if addr == HelloNpuRuntime.CTRL_STATUS and (value & 0x1):
-            self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x4
+        if addr == E1NpuRuntime.CTRL_STATUS and (value & 0x1):
+            self.regs[E1NpuRuntime.CTRL_STATUS] = 0x4
 
 
 class DescriptorDoneWithoutProofMmio(FakeMmio):
     def write32(self, addr, value):
         super().write32(addr, value)
-        if addr == HelloNpuRuntime.CTRL_STATUS and (value & 0x1):
-            self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x2
-            self.regs[HelloNpuRuntime.DESC_STATUS] = 0
+        if addr == E1NpuRuntime.CTRL_STATUS and (value & 0x1):
+            self.regs[E1NpuRuntime.CTRL_STATUS] = 0x2
+            self.regs[E1NpuRuntime.DESC_STATUS] = 0
 
 
 class DescriptorCompletingMmio(FakeMmio):
     def write32(self, addr, value):
         super().write32(addr, value)
-        if addr == HelloNpuRuntime.CTRL_STATUS and (value & 0x1):
-            self.regs[HelloNpuRuntime.CTRL_STATUS] = 0x2
-            self.regs[HelloNpuRuntime.DESC_STATUS] = HelloNpuRuntime.DESC_STATUS_DONE
-            self.regs[HelloNpuRuntime.DESC_TAIL] = self.regs.get(HelloNpuRuntime.DESC_HEAD, 0)
+        if addr == E1NpuRuntime.CTRL_STATUS and (value & 0x1):
+            self.regs[E1NpuRuntime.CTRL_STATUS] = 0x2
+            self.regs[E1NpuRuntime.DESC_STATUS] = E1NpuRuntime.DESC_STATUS_DONE
+            self.regs[E1NpuRuntime.DESC_TAIL] = self.regs.get(E1NpuRuntime.DESC_HEAD, 0)
 
 
 def make_runtime():
     mmio = FakeMmio()
-    return HelloNpuRuntime(mmio.read32, mmio.write32), mmio
+    return E1NpuRuntime(mmio.read32, mmio.write32), mmio
 
 
 def make_completing_runtime():
     mmio = CommandCompletingMmio()
-    return HelloNpuRuntime(mmio.read32, mmio.write32), mmio
+    return E1NpuRuntime(mmio.read32, mmio.write32), mmio
 
 
 def test_scratch_write_only_touches_overlapped_words_and_preserves_bytes():
@@ -231,7 +231,7 @@ def test_scalar_commands_program_mmio_and_return_completed_results():
 
 def test_scalar_command_reject_and_timeout_paths_fail_closed():
     mmio = RejectingMmio()
-    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+    runtime = E1NpuRuntime(mmio.read32, mmio.write32)
     with pytest.raises(NpuRuntimeError, match="rejected"):
         runtime.add(1, 2)
 
@@ -244,7 +244,7 @@ def test_scalar_command_reject_and_timeout_paths_fail_closed():
 
 def test_descriptor_submission_programs_queue_registers_and_reports_reject_status():
     mmio = RejectingMmio()
-    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+    runtime = E1NpuRuntime(mmio.read32, mmio.write32)
 
     with pytest.raises(NpuRuntimeError, match="descriptor submission rejected") as exc_info:
         runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=1))
@@ -272,7 +272,7 @@ def test_descriptor_submission_rejects_invalid_requests_before_mmio():
 
 def test_descriptor_submission_accepts_hardware_completion_proof():
     mmio = DescriptorCompletingMmio()
-    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+    runtime = E1NpuRuntime(mmio.read32, mmio.write32)
 
     status = runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=3, tail=1))
 
@@ -283,7 +283,7 @@ def test_descriptor_submission_accepts_hardware_completion_proof():
 
 def test_descriptor_submission_requires_descriptor_completion_proof():
     mmio = DescriptorDoneWithoutProofMmio()
-    runtime = HelloNpuRuntime(mmio.read32, mmio.write32)
+    runtime = E1NpuRuntime(mmio.read32, mmio.write32)
 
     with pytest.raises(NpuRuntimeError, match="descriptor submission failed") as exc_info:
         runtime.submit_descriptors(NpuDescriptorSubmission(base=0x2000, head=0, tail=1))
@@ -293,30 +293,30 @@ def test_descriptor_submission_requires_descriptor_completion_proof():
 
 
 def test_stream_descriptor_word0_packing_and_validation():
-    word0 = HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 12)
+    word0 = E1NpuRuntime.pack_stream_descriptor_word0(E1NpuRuntime.OP_GEMM_S8, 0, 12)
 
     assert word0 == (
-        HelloNpuRuntime.DESC_FLAG_VALID_OWNER | HelloNpuRuntime.OP_GEMM_S8 | (1 << 8) | (12 << 24)
+        E1NpuRuntime.DESC_FLAG_VALID_OWNER | E1NpuRuntime.OP_GEMM_S8 | (1 << 8) | (12 << 24)
     )
     assert (
-        HelloNpuRuntime.pack_stream_descriptor_word0(
-            HelloNpuRuntime.OP_GEMM_S8,
+        E1NpuRuntime.pack_stream_descriptor_word0(
+            E1NpuRuntime.OP_GEMM_S8,
             0,
             12,
             writeback_request=True,
         )
-        & HelloNpuRuntime.DESC_FLAG_WRITEBACK_REQUEST
+        & E1NpuRuntime.DESC_FLAG_WRITEBACK_REQUEST
     )
     assert NpuStreamDescriptor(
-        HelloNpuRuntime.OP_GEMM_S8,
+        E1NpuRuntime.OP_GEMM_S8,
         source_addr=0x8000_0200,
         scratch_offset=0,
         byte_count=12,
     ).words() == (word0, 0x8000_0200, 0, 0)
     with pytest.raises(ValueError, match="scratch offset"):
-        HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 2, 12)
+        E1NpuRuntime.pack_stream_descriptor_word0(E1NpuRuntime.OP_GEMM_S8, 2, 12)
     with pytest.raises(ValueError, match="byte count"):
-        HelloNpuRuntime.pack_stream_descriptor_word0(HelloNpuRuntime.OP_GEMM_S8, 0, 13)
+        E1NpuRuntime.pack_stream_descriptor_word0(E1NpuRuntime.OP_GEMM_S8, 0, 13)
 
 
 def test_descriptor_counters_expose_read_writeback_boundary():

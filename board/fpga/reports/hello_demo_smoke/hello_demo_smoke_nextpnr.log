@@ -164,7 +164,7 @@ Info:      logic  0.00  2.07 Source counter_q_CCU2C_B1_S1_CCU2C_S1_6$CCU2_COMB1.
 Info:    routing  0.00  2.07 Net counter_q_CCU2C_B1_S1_CCU2C_S1_6_COUT (6,3) -> (6,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.14 Source counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_COMB0.FCO
@@ -174,7 +174,7 @@ Info:      logic  0.00  2.14 Source counter_q_CCU2C_B1_S1_CCU2C_S1_8$CCU2_COMB1.
 Info:    routing  0.00  2.14 Net counter_q_CCU2C_B1_S1_CCU2C_S1_8_COUT (6,3) -> (6,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.21 Source counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_COMB0.FCO
@@ -184,7 +184,7 @@ Info:      logic  0.00  2.21 Source counter_q_CCU2C_B1_S1_CCU2C_S1_4$CCU2_COMB1.
 Info:    routing  0.00  2.21 Net counter_q_CCU2C_B1_S1_CCU2C_S1_4_COUT (6,3) -> (7,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.28 Source counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_COMB0.FCO
@@ -194,7 +194,7 @@ Info:      logic  0.00  2.28 Source counter_q_CCU2C_B1_S1_CCU2C_S1_3$CCU2_COMB1.
 Info:    routing  0.00  2.28 Net counter_q_CCU2C_B1_S1_CCU2C_S1_3_COUT (7,3) -> (7,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.36 Source counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_COMB0.FCO
@@ -204,7 +204,7 @@ Info:      logic  0.00  2.36 Source counter_q_CCU2C_B1_S1_CCU2C_S1_2$CCU2_COMB1.
 Info:    routing  0.00  2.36 Net counter_q_CCU2C_B1_S1_CCU2C_S1_2_COUT (7,3) -> (7,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.43 Source counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_COMB0.FCO
@@ -214,7 +214,7 @@ Info:      logic  0.00  2.43 Source counter_q_CCU2C_B1_S1_CCU2C_S1_1$CCU2_COMB1.
 Info:    routing  0.00  2.43 Net counter_q_CCU2C_B1_S1_CCU2C_S1_1_COUT (7,3) -> (7,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.50 Source counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_COMB0.FCO
@@ -224,7 +224,7 @@ Info:      logic  0.00  2.50 Source counter_q_CCU2C_B1_S1_CCU2C_S1$CCU2_COMB1.FC
 Info:    routing  0.00  2.50 Net counter_q_CCU2C_B1_S1_CCU2C_S1_COUT (7,3) -> (8,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.57 Source counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_COMB0.FCO
@@ -234,7 +234,7 @@ Info:      logic  0.00  2.57 Source counter_q_CCU2C_B1_S1_CCU2C_S1_9$CCU2_COMB1.
 Info:    routing  0.00  2.57 Net counter_q_CCU2C_B1_S1_CCU2C_S1_9_COUT (8,3) -> (8,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.64 Source counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_COMB0.FCO
@@ -244,7 +244,7 @@ Info:      logic  0.00  2.64 Source counter_q_CCU2C_B1_S1_CCU2C_S1_7$CCU2_COMB1.
 Info:    routing  0.00  2.64 Net counter_q_CCU2C_B1_S1_CCU2C_S1_7_COUT (8,3) -> (8,3)
 Info:                          Sink counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.71 Source counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_COMB0.FCO
@@ -254,7 +254,7 @@ Info:      logic  0.00  2.71 Source counter_q_CCU2C_B1_S1_CCU2C_S1_5$CCU2_COMB1.
 Info:    routing  0.00  2.71 Net counter_q_CCU2C_B1_S1_CCU2C_S1_5_COUT (8,3) -> (8,3)
 Info:                          Sink counter_q_CCU2C_B1_1$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.78 Source counter_q_CCU2C_B1_1$CCU2_COMB0.FCO
@@ -264,7 +264,7 @@ Info:      logic  0.00  2.78 Source counter_q_CCU2C_B1_1$CCU2_COMB1.FCO
 Info:    routing  0.00  2.78 Net counter_q_CCU2C_B1_1_COUT (8,3) -> (9,3)
 Info:                          Sink counter_q_CCU2C_B1$CCU2_COMB0.FCI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
 Info:      logic  0.07  2.85 Source counter_q_CCU2C_B1$CCU2_COMB0.FCO
@@ -274,7 +274,7 @@ Info:      logic  0.40  3.26 Source counter_q_CCU2C_B1$CCU2_COMB1.F
 Info:    routing  0.13  3.38 Net counter_q_CCU2C_B1_S1[23] (9,3) -> (9,3)
 Info:                          Sink counter_q_TRELLIS_FF_Q.DI
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:43.26-43.43
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:43.26-43.43
 Info:                               /Users/shawwalters/Desktop/npu_experiment/external/oss-cad-suite/libexec/../share/yosys/lattice/arith_map_ccu2c.v:34.26-34.27
 Info:      setup  0.00  3.38 Source counter_q_TRELLIS_FF_Q.DI
 Info: 2.16 ns logic, 1.23 ns routing
@@ -300,7 +300,7 @@ Info:      logic  0.24  6.12 Source DBG_RDATA_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.O
 Info:    routing  1.28  7.41 Net DBG_RDATA[0]$TRELLIS_IO_OUT (7,4) -> (15,0)
 Info:                          Sink DBG_RDATA[0]$tr_io.I
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:15.24-15.33
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:15.24-15.33
 Info: 0.88 ns logic, 6.53 ns routing
 
 Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$CLK_IN$TRELLIS_IO_IN':
@@ -332,7 +332,7 @@ Info:      logic  0.24  2.48 Source GPIO_LUT4_Z_3.F
 Info:    routing  3.35  5.82 Net GPIO[3]$TRELLIS_IO_OUT (5,4) -> (0,38)
 Info:                          Sink GPIO[3]$tr_io.I
 Info:                          Defined in:
-Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/hello_fpga_smoke_top.sv:22.24-22.28
+Info:                               /Users/shawwalters/Desktop/npu_experiment/rtl/top/e1_fpga_smoke_top.sv:22.24-22.28
 Info: 0.76 ns logic, 5.06 ns routing
 
 Info: Max frequency for clock '$glbnet$CLK_IN$TRELLIS_IO_IN': 295.42 MHz (PASS at 25.00 MHz)

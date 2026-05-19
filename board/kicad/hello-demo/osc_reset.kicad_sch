@@ -4,10 +4,10 @@
   (generator_version "7.0")
   (paper "A3")
   (title_block
-    (title "Hello Demo - Oscillator and Reset")
+    (title "E1 Demo - Oscillator and Reset")
     (date "2026-05-17")
     (rev "v0.1")
-    (company "OpenPhone")
+    (company "OpenAgent")
     (comment 1 "Sheet 3: SiT8924B 24MHz oscillator + MAX823LEUR+T reset supervisor")
     (comment 2 "CLK_24M → SoC CLK_IN   nRST → SoC RST_N")
   )

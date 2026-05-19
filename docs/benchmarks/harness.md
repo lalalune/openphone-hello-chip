@@ -8,7 +8,7 @@ plus thin runner for the first v0 benchmark set:
 - lmbench `bw_mem`
 - lmbench `lat_mem_rd`
 - fio sequential and random profiles
-- TensorFlow Lite `benchmark_model` on CPU and the future hello NPU path
+- TensorFlow Lite `benchmark_model` on CPU and the future e1 NPU path
 
 It is intentionally safe on a workstation without those tools installed. Planning
 mode reports every command and marks unavailable binaries or blocked model
@@ -33,7 +33,7 @@ Execute available benchmarks:
 ```sh
 python3 benchmarks/run_benchmarks.py run \
   --report-id board-smoke-001 \
-  --platform openphone-hello \
+  --platform openagent-e1 \
   --platform-revision dev-board-a \
   --claim-level L4_DEV_BOARD
 ```
@@ -52,7 +52,7 @@ python3 scripts/check_tflite_cpu_benchmark.py \
   --status-json benchmarks/results/tflite-cpu-readiness/status.json
 ```
 
-Check both TFLite entries, including the hello-npu NNAPI proof gate:
+Check both TFLite entries, including the e1-npu NNAPI proof gate:
 
 ```sh
 python3 scripts/check_tflite_cpu_benchmark.py \
@@ -88,7 +88,7 @@ Install the benchmark tools on the target host or board, then run:
 ```sh
 python3 benchmarks/run_benchmarks.py run \
   --report-id board-smoke-001 \
-  --platform openphone-hello \
+  --platform openagent-e1 \
   --platform-revision dev-board-a \
   --claim-level L4_DEV_BOARD
 ```
@@ -105,7 +105,7 @@ PATH="$PWD/.venv/bin:$PWD/benchmarks/tools:$PATH" \
   .venv/bin/python benchmarks/run_benchmarks.py run \
     --allow-host-smoke-tools \
     --report-id local-host-smoke \
-    --platform openphone-host-smoke \
+    --platform openagent-host-smoke \
     --platform-revision "$(uname -m)" \
     --claim-level L2_ARCH_SIM \
     --bench coremark --bench stream --bench lmbench_bw_mem \
@@ -198,7 +198,7 @@ PATH="$PWD/.venv/bin:$PATH" .venv/bin/python benchmarks/run_benchmarks.py run \
   --bench fio_rand_rw \
   --bench tflite_cpu \
   --report-id local-host-tools-pass \
-  --platform openphone-local-host \
+  --platform openagent-local-host \
   --platform-revision venv-tools \
   --claim-level L2_ARCH_SIM \
   --metadata benchmarks/metadata/local-host-smoke.json \
@@ -208,7 +208,7 @@ PATH="$PWD/.venv/bin:$PATH" .venv/bin/python benchmarks/run_benchmarks.py run \
 The venv tools under `benchmarks/tools/` are host smoke wrappers. They prove the
 harness can execute and parse each benchmark family on this workstation; they
 are not target-board, prototype-silicon, or complete-phone performance evidence.
-`tflite_hello_npu` must still fail until a real `hello-npu` NNAPI path exists,
+`tflite_e1_npu` must still fail until a real `e1-npu` NNAPI path exists,
 and `simulator_arch_metrics` must still reject QEMU liveness-only data as
 calibrated benchmark evidence.
 
@@ -221,7 +221,7 @@ calibrated benchmark evidence.
 | fio sequential read | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-seq-read.fio`. |
 | fio random read/write | `fio` on `PATH` | Install fio from the target OS package manager or cross-build it. The job file is `benchmarks/configs/fio-rand-rw.fio`. |
 | TFLite CPU | `benchmark_model` on `PATH` and `benchmarks/models/mobile_smoke.tflite` | Build TensorFlow Lite's benchmark tool and generate or supply a redistributable smoke model. Do not use proprietary app or vendor models unless the report is kept private and marked accordingly outside this harness. |
-| TFLite hello NPU | NNAPI-capable `benchmark_model`, `benchmarks/models/mobile_smoke.tflite`, and `benchmarks/capabilities/hello_npu_nnapi.proof.json` | Build `benchmark_model` with NNAPI support, generate or supply the smoke model, and run on a platform exposing the `hello-npu` accelerator name. The proof JSON must reference non-empty transcripts with the expected `hello-npu` and NNAPI command markers. Use `docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json` as the job output shape, not as evidence. |
+| TFLite e1 NPU | NNAPI-capable `benchmark_model`, `benchmarks/models/mobile_smoke.tflite`, and `benchmarks/capabilities/e1_npu_nnapi.proof.json` | Build `benchmark_model` with NNAPI support, generate or supply the smoke model, and run on a platform exposing the `e1-npu` accelerator name. The proof JSON must reference non-empty transcripts with the expected `e1-npu` and NNAPI command markers. Use `docs/benchmarks/capabilities/e1_npu_nnapi.proof.template.json` as the job output shape, not as evidence. |
 
 The checked-in `benchmarks/tools/*` commands are host smoke tools for CI and
 developer machines. They intentionally preserve the command names and output
@@ -231,7 +231,7 @@ replace them with target-built upstream binaries and include clock, thermal,
 power, compiler, and platform metadata.
 
 Do not copy or symlink any `benchmarks/tools/*` smoke command into `tools/bin`
-for a strict run. The runner detects the `openphone-host-smoke` provenance
+for a strict run. The runner detects the `openagent-host-smoke` provenance
 marker and treats those shims as missing dependencies unless
 `--allow-host-smoke-tools` is explicitly used.
 
@@ -248,7 +248,7 @@ supplied real binaries and refuses inputs containing the repo host-smoke marker.
 Generated reports include executable SHA-256, size, provenance, and any rejected
 host-smoke candidates in each executable dependency record.
 
-For hello-npu NNAPI evidence, the harness validates the proof JSON schema,
+For e1-npu NNAPI evidence, the harness validates the proof JSON schema,
 accelerator name, transcript presence, and required transcript markers before
 the benchmark can move out of `blocked`. A strict release report that only has
 repo-local smoke tools, an empty proof, or copied template content must stay

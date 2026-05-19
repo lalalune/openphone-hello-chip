@@ -230,7 +230,7 @@ Boot HART MEDELEG           : 0x0000000000f4b509
 [    0.961912] Run /init as init process
 
 ===============================
-openphone tier2: linux booted
+openagent tier2: linux booted
 ===============================
 Linux (none) 6.6.0-dirty #1 SMP Tue May 19 02:08:44 UTC 2026 riscv64 GNU/Linux
 sh: can't access tty; job control turned off

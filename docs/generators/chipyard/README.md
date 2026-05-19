@@ -5,16 +5,16 @@ Linux boot evidence by itself.
 
 The pinned path is Chipyard `1.13.0` at commit
 `69eba860a352343e4ac6b6df0f3638a79a86ec78`, using a single Rocket RV64GC hart
-in a project config named `OpenPhoneRocketConfig`.
+in a project config named `OpenAgentRocketConfig`.
 
 The repo-local config source is:
 
 ```text
-docs/generators/chipyard/openphone/src/main/scala/openphone/OpenPhoneRocketConfig.scala
+docs/generators/chipyard/openagent/src/main/scala/openagent/OpenAgentRocketConfig.scala
 ```
 
 `scripts/bootstrap_chipyard.sh` installs that overlay into the pinned checkout at
-`external/chipyard/generators/chipyard/src/main/scala/openphone/OpenPhoneRocketConfig.scala`.
+`external/chipyard/generators/chipyard/src/main/scala/openagent/OpenAgentRocketConfig.scala`.
 It refuses to overwrite a different file at that destination.
 
 This is a first Linux bring-up target, not a 2028 phone-class AP. Phone-class
@@ -38,14 +38,14 @@ python3 scripts/check_chipyard_import_preflight.py
 ```
 
 Require an already-bootstrapped checkout to match the pinned tag, commit, and
-recursive submodule state, and to contain the installed OpenPhoneRocketConfig
+recursive submodule state, and to contain the installed OpenAgentRocketConfig
 overlay:
 
 ```sh
 python3 scripts/check_chipyard_import_preflight.py --require-checkout
 ```
 
-Check the Chipyard environment needed to build the OpenPhoneRocketConfig
+Check the Chipyard environment needed to build the OpenAgentRocketConfig
 Verilator simulator without modifying the checkout:
 
 ```sh
@@ -57,26 +57,26 @@ When that preflight passes, the expected Verilog generation command is:
 ```sh
 cd external/chipyard/sims/verilator
 source ../../env.sh
-make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone verilog
+make CONFIG=OpenAgentRocketConfig CONFIG_PACKAGE=openagent verilog
 ```
 
 The guarded repo wrapper runs the same preflight first and refuses to invoke
 Chipyard make while setup blockers remain:
 
 ```sh
-scripts/run_chipyard_openphone_verilator.sh
+scripts/run_chipyard_openagent_verilator.sh
 ```
 
 On a Linux host, the bounded one-command path for checkout, Chipyard setup, and
-OpenPhoneRocketConfig Verilog generation is:
+OpenAgentRocketConfig Verilog generation is:
 
 ```sh
 CHIPYARD_RUN_SETUP=1 CHIPYARD_GENERATE_VERILOG=1 scripts/bootstrap_chipyard.sh
 ```
 
 That command pins the checkout, installs only the repo-local
-`OpenPhoneRocketConfig` overlay, runs Chipyard `build-setup.sh`, then invokes
-`scripts/run_chipyard_openphone_verilator.sh verilog`. It exits non-zero if the
+`OpenAgentRocketConfig` overlay, runs Chipyard `build-setup.sh`, then invokes
+`scripts/run_chipyard_openagent_verilator.sh verilog`. It exits non-zero if the
 checkout, submodules, overlay, generated `env.sh`, `RISCV`, Java, Verilator,
 `firtool`, or RISC-V toolchain checks are not ready. A completed Verilog
 generation is generated-collateral evidence only; it is not a Linux boot claim.
@@ -84,29 +84,29 @@ generation is generated-collateral evidence only; it is not a Linux boot claim.
 The explicit external generation sequence is:
 
 ```sh
-cd /path/to/OpenPhone-AI-SoC
+cd /path/to/OpenAgent-AI-SoC
 python3 scripts/check_chipyard_import_preflight.py --require-checkout
 python3 scripts/check_chipyard_verilator_preflight.py
-scripts/run_chipyard_openphone_verilator.sh
-python3 scripts/generate_chipyard_openphone.py
+scripts/run_chipyard_openagent_verilator.sh
+python3 scripts/generate_chipyard_openagent.py
 python3 scripts/check_chipyard_generator_manifest.py --require-generated
 python3 scripts/capture_cpu_ap_evidence.py dts-audit --run-dtc
 python3 scripts/check_chipyard_generated_linux_contract.py
 ```
 
-`scripts/run_chipyard_openphone_verilator.sh` runs the host Chipyard simulator
+`scripts/run_chipyard_openagent_verilator.sh` runs the host Chipyard simulator
 make target after sourcing `external/chipyard/env.sh`:
 
 ```sh
 cd external/chipyard/sims/verilator
 source ../../env.sh
-make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone
+make CONFIG=OpenAgentRocketConfig CONFIG_PACKAGE=openagent
 ```
 
-`python3 scripts/generate_chipyard_openphone.py` imports the generated source
+`python3 scripts/generate_chipyard_openagent.py` imports the generated source
 tree, DTS, Verilog wrapper, simulator executable when present, tool versions,
 submodule status, and SHA-256 values into
-`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`. That
+`build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json`. That
 manifest is required before CPU/AP transcript intake, but it still does not
 claim OpenSBI or Linux boot.
 
@@ -133,10 +133,10 @@ stages separately from pass/fail:
   until transcript intake validates and archives the required logs.
 
 The Linux/amd64 container path uses the pinned local base image and writes the
-full attempt transcript to `build/chipyard/openphone_rocket/docker-verilog-attempt.log`:
+full attempt transcript to `build/chipyard/openagent_rocket/docker-verilog-attempt.log`:
 
 ```sh
-scripts/run_chipyard_openphone_docker.sh
+scripts/run_chipyard_openagent_docker.sh
 ```
 
 The container must still expose the Chipyard build environment: `/opt/conda/bin`
@@ -167,7 +167,7 @@ python3 scripts/capture_cpu_ap_evidence.py intake ap-benchmarks \
 python3 scripts/capture_cpu_ap_evidence.py hashes
 ```
 
-On a Linux host that already has the generated `OpenPhoneRocketConfig`
+On a Linux host that already has the generated `OpenAgentRocketConfig`
 simulator, OpenSBI/Linux payload, and target-side tests, use the guarded capture
 wrapper to run real commands and archive each transcript into the required
 paths:
@@ -175,12 +175,12 @@ paths:
 ```sh
 python3 scripts/capture_cpu_ap_evidence.py template all
 
-export OPENPHONE_GENERATED_MANIFEST=build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json
-export OPENPHONE_OPENSBI_BOOT_CMD='cd external/chipyard/sims/verilator && source ../../env.sh && make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone BINARY=/abs/path/to/opensbi-linux.elf LOADMEM=1 run-binary'
-export OPENPHONE_LINUX_BOOT_CMD='cd external/chipyard/sims/verilator && source ../../env.sh && make CONFIG=OpenPhoneRocketConfig CONFIG_PACKAGE=openphone BINARY=/abs/path/to/opensbi-linux.elf LOADMEM=1 run-binary'
-export OPENPHONE_TRAP_TIMER_IRQ_CMD='/abs/path/to/generated-ap-trap-timer-irq-test'
-export OPENPHONE_ISA_CACHE_MMU_CMD='/abs/path/to/generated-ap-isa-cache-mmu-test'
-export OPENPHONE_AP_BENCHMARKS_CMD='/abs/path/to/generated-ap-benchmark-runner'
+export OPENAGENT_GENERATED_MANIFEST=build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json
+export OPENAGENT_OPENSBI_BOOT_CMD='cd external/chipyard/sims/verilator && source ../../env.sh && make CONFIG=OpenAgentRocketConfig CONFIG_PACKAGE=openagent BINARY=/abs/path/to/opensbi-linux.elf LOADMEM=1 run-binary'
+export OPENAGENT_LINUX_BOOT_CMD='cd external/chipyard/sims/verilator && source ../../env.sh && make CONFIG=OpenAgentRocketConfig CONFIG_PACKAGE=openagent BINARY=/abs/path/to/opensbi-linux.elf LOADMEM=1 run-binary'
+export OPENAGENT_TRAP_TIMER_IRQ_CMD='/abs/path/to/generated-ap-trap-timer-irq-test'
+export OPENAGENT_ISA_CACHE_MMU_CMD='/abs/path/to/generated-ap-isa-cache-mmu-test'
+export OPENAGENT_AP_BENCHMARKS_CMD='/abs/path/to/generated-ap-benchmark-runner'
 
 python3 scripts/locate_chipyard_linux_payload.py --require
 export CHIPYARD_LINUX_BINARY=/abs/path/to/linux-poweroff-bin-nodisk
@@ -197,11 +197,11 @@ The wrapper writes raw command output under
 `build/evidence/cpu_ap/raw/*.raw.log`, then calls
 `scripts/capture_cpu_ap_evidence.py intake ...`. Accepted evidence lands at:
 
-- `build/evidence/cpu_ap/openphone_hello_opensbi_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_linux_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log`
-- `build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log`
-- `build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log`
+- `build/evidence/cpu_ap/openagent_e1_opensbi_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_linux_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log`
+- `build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log`
+- `build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log`
 
 If a command is unset, exits nonzero, or lacks required OpenSBI/Linux/trap/cache
 or benchmark markers, the capture remains blocked or fails and the accepted
@@ -213,14 +213,14 @@ regressions remain reproducible.
 
 ## Local Manifests
 
-- `openphone-rocket-manifest.json` is the repo-local selection gate. It must
+- `openagent-rocket-manifest.json` is the repo-local selection gate. It must
   remain `selected_not_generated` until the generated import manifest,
   simulator run, firmware inputs, and boot/trap evidence exist. Loose generated
-  Verilog, DTS, memmap, or regmap files under `build/chipyard/openphone_rocket`
+  Verilog, DTS, memmap, or regmap files under `build/chipyard/openagent_rocket`
   are useful audit inputs, but they are not chip Linux boot evidence by
   themselves.
 - `import-manifest.template.json` is copied into
-  `build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json` by the
+  `build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json` by the
   eventual generator/import flow, then filled with recursive submodule SHAs,
   command lines, tool versions, the passing bootstrap and Verilator preflight
   reports, artifact paths, artifact SHA-256 values, evidence paths, and evidence
@@ -236,13 +236,13 @@ regressions remain reproducible.
   That log is software-reference evidence only; it cannot close any
   Chipyard/Rocket AP Linux-capable gate.
 - `scripts/run_renode.sh --check` is separate Renode reference-model evidence.
-  It is not QEMU evidence, and it is not generated OpenPhoneRocketConfig
-  Linux/OpenSBI proof unless a real generated hello-chip Renode model and
+  It is not QEMU evidence, and it is not generated OpenAgentRocketConfig
+  Linux/OpenSBI proof unless a real generated e1-chip Renode model and
   transcript gate are added.
 - `make chipyard-generated-ap-boot` runs
-  `scripts/run_chipyard_openphone_linux_smoke.sh`, which appends wrapper
+  `scripts/run_chipyard_openagent_linux_smoke.sh`, which appends wrapper
   metadata and a bounded timeout result to
-  `build/chipyard/openphone_rocket/verilator-linux-smoke.log`. That log still
+  `build/chipyard/openagent_rocket/verilator-linux-smoke.log`. That log still
   passes only when `scripts/check_chipyard_verilator_linux_smoke.py` finds
   OpenSBI and Linux markers from the generated AP simulator.
 - `scripts/check_chipyard_generated_linux_contract.py` audits any generated
@@ -257,12 +257,12 @@ regressions remain reproducible.
 ## First Integration Target
 
 ```text
-OpenPhoneRocketConfig
+OpenAgentRocketConfig
 1x Rocket RV64GC hart
 CLINT/ACLINT-compatible mtime, mtimecmp, and msip
 PLIC-compatible external interrupts
 UART for firmware and Linux early console
 DRAM model sized for OpenSBI + Linux initramfs smoke
-hello DMA/NPU/display/peripheral MMIO attachment points
+e1 DMA/NPU/display/peripheral MMIO attachment points
 generated DTS checked against the platform contract
 ```

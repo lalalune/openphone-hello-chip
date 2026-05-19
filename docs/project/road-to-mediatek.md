@@ -2,12 +2,12 @@
 
 Status: planning paper  
 Date: 2026-05-17  
-Scope: OpenPhone hello-chip to Android-capable AI SoC, FPGA experiment, and tapeout-readiness path.
+Scope: OpenAgent e1-chip to Android-capable AI SoC, FPGA experiment, and tapeout-readiness path.
 
-This is not a completion report. The current repository is still a hello-chip
+This is not a completion report. The current repository is still a e1-chip
 and CPU/AP scaffold. It has useful RTL, BSP, physical-design, package, FPGA,
 KiCad, Android, benchmark, and evidence gates, but it does not yet contain a
-verified Linux or AOSP boot on the OpenPhone simulated chip.
+verified Linux or AOSP boot on the OpenAgent simulated chip.
 
 ## External Reference: Dimensity 9400
 
@@ -19,18 +19,18 @@ certification, manufacturing, and validation infrastructure.
 
 Public Dimensity 9400 capability anchors:
 
-| Area | Public capability | OpenPhone implication |
+| Area | Public capability | OpenAgent implication |
 | --- | --- | --- |
 | Process | TSMC second-generation 3 nm class | Open PDK tapeout experiments will be orders of magnitude behind flagship density and power. Use open PDKs for discipline, not competitive phone silicon. |
-| CPU | Armv9.2 all-big-core design; Cortex-X925 at 3.62 GHz; public claims of higher single/multi-thread performance | OpenPhone needs a real RV64GC Linux-capable AP path first, then an RVA23-class multi-core target, then performance work. The current tiny CPU scaffold is not comparable. |
-| Memory | LPDDR5X-10667 support | OpenPhone must define UMA, coherency, IOMMU, QoS, bandwidth counters, and an LPDDR PHY/IP boundary. The current SRAM/AXI-lite model is not phone-class. |
-| GPU/display | Immortalis-G925 12-core GPU; ray-tracing and power-efficiency claims | OpenPhone v0 should not attempt a flagship GPU. It needs DRM/KMS/framebuffer/HWC first, then a 2D/composition path, then optional open GPU integration. |
-| NPU | 8th generation NPU with agentic AI claims, faster diffusion, faster LLM prompt performance, MLLM token-generation claims, LoRA/on-device training claims | OpenPhone must graduate from MMIO tiny GEMM to descriptor queues, DMA-fed scratchpad, INT8/INT4 tensor tile, compiler/runtime, and Android HAL proof. |
+| CPU | Armv9.2 all-big-core design; Cortex-X925 at 3.62 GHz; public claims of higher single/multi-thread performance | OpenAgent needs a real RV64GC Linux-capable AP path first, then an RVA23-class multi-core target, then performance work. The current tiny CPU scaffold is not comparable. |
+| Memory | LPDDR5X-10667 support | OpenAgent must define UMA, coherency, IOMMU, QoS, bandwidth counters, and an LPDDR PHY/IP boundary. The current SRAM/AXI-lite model is not phone-class. |
+| GPU/display | Immortalis-G925 12-core GPU; ray-tracing and power-efficiency claims | OpenAgent v0 should not attempt a flagship GPU. It needs DRM/KMS/framebuffer/HWC first, then a 2D/composition path, then optional open GPU integration. |
+| NPU | 8th generation NPU with agentic AI claims, faster diffusion, faster LLM prompt performance, MLLM token-generation claims, LoRA/on-device training claims | OpenAgent must graduate from MMIO tiny GEMM to descriptor queues, DMA-fed scratchpad, INT8/INT4 tensor tile, compiler/runtime, and Android HAL proof. |
 | Camera/ISP | Imagiq 1090, HDR zoom, AI-ISP features, 4K60 efficiency claims | v0 must explicitly exclude camera ISP or use an external module/reference board. A real phone roadmap needs CSI/ISP/sensor calibration/Camera HAL. |
 | Audio | Up to six microphone recording path and high-resolution Bluetooth audio claims | v0 needs I2S/audio stub only; phone path needs codec, routing, Audio HAL, latency, power, and acoustic validation. |
 | Display | MiraVision 1090, HDR formats, foldable-display support | v0 needs simple scanout plus HWC path; phone path needs panel bridge/DSI/eDP, color, brightness, vsync, composition, power, and underflow tests. |
-| Cellular | Integrated 3GPP Release-17 5G modem, sub-6 carrier aggregation, DSDA claims | OpenPhone should not build a modem in v0. Use certified external modem modules if making a phone product. |
-| Wi-Fi/Bluetooth | External/new 4 nm Wi-Fi 7/Bluetooth combo chip; tri-band Wi-Fi 7 and up to 7.3 Gbps public data-rate claim | OpenPhone should use an external Wi-Fi/BT module over SDIO/PCIe/UART/USB with firmware and regulatory boundaries. |
+| Cellular | Integrated 3GPP Release-17 5G modem, sub-6 carrier aggregation, DSDA claims | OpenAgent should not build a modem in v0. Use certified external modem modules if making a phone product. |
+| Wi-Fi/Bluetooth | External/new 4 nm Wi-Fi 7/Bluetooth combo chip; tri-band Wi-Fi 7 and up to 7.3 Gbps public data-rate claim | OpenAgent should use an external Wi-Fi/BT module over SDIO/PCIe/UART/USB with firmware and regulatory boundaries. |
 
 Sources: MediaTek Dimensity 9400 product page, AOSP overview, AOSP Cuttlefish
 docs, AMD VCU118 product page, and a 10.6M parameter TinyStories model on
@@ -42,13 +42,13 @@ Hugging Face:
 - [AMD VCU118 evaluation kit](https://www.amd.com/pt/products/adaptive-socs-and-fpgas/evaluation-boards/vcu118.html)
 - [vijaymohan/gpt2-tinystories-from-scratch-10m](https://huggingface.co/vijaymohan/gpt2-tinystories-from-scratch-10m)
 
-## Current OpenPhone State
+## Current OpenAgent State
 
 The current project is best described as an evidence-driven scaffold:
 
 | Area | Current capability | Current blocker |
 | --- | --- | --- |
-| RTL hello chip | Verilator/cocotb/formal-oriented hello-chip modules exist. | It is not an Android-capable application processor. |
+| RTL e1 chip | Verilator/cocotb/formal-oriented e1-chip modules exist. | It is not an Android-capable application processor. |
 | CPU/AP | Docs and generated Chipyard/Rocket artifacts exist in places; local RTL has a tiny CPU scaffold. | No verified RV64GC/OpenSBI/Linux/userspace transcript from the selected AP simulator. |
 | Memory | AXI-lite SRAM/DRAM models and memory contract docs exist. | No real DRAM controller, LPDDR PHY, coherency, cache hierarchy, or IOMMU evidence. |
 | NPU | Tiny MMIO/GEMM/scratchpad prototype and 2028 NPU target docs exist. | No DMA-fed tensor engine, descriptor ABI, compiler backend, Android delegate, or benchmark proof. |
@@ -56,13 +56,13 @@ The current project is best described as an evidence-driven scaffold:
 | Wi-Fi | External module contracts exist. | No SDIO/PCIe enumeration, firmware load, traffic, Android framework, or regulatory evidence. |
 | Linux BSP | DTS, driver, Buildroot, OpenSBI, and U-Boot scaffolds exist. | External tree import/build/runtime evidence is missing. |
 | AOSP BSP | Device tree, init, fstab, VINTF, SELinux, HWC/NPU HAL scaffolds exist. | No vendorimage/checkvintf/SELinux/Cuttlefish/QEMU/Renode strict evidence set. |
-| FPGA | ULX3S hello-demo path and VCU118/FireSim plan exist. | Stage-1 board revision/pins and stage-2 Rocket+Gemmini implementation evidence are incomplete. |
+| FPGA | ULX3S e1-demo path and VCU118/FireSim plan exist. | Stage-1 board revision/pins and stage-2 Rocket+Gemmini implementation evidence are incomplete. |
 | PD/tapeout | OpenLane/OpenROAD configs, signoff manifests, package/padframe docs exist. | No complete GDS/DEF/DRC/LVS/STA/power/congestion release evidence. |
 | Board/package | KiCad planning project and package docs exist. | Package is still placeholder-level; no foundry/package-vendor release or lab validation. |
 
 ## Checklist 1: Run AOSP On Simulated Chip And A Tiny HF Model
 
-Goal: AOSP reaches userspace on a simulator tied to the OpenPhone hardware
+Goal: AOSP reaches userspace on a simulator tied to the OpenAgent hardware
 contract, and a tiny Hugging Face language model runs through a measured CPU or
 NPU path with honest fallback accounting.
 
@@ -99,25 +99,25 @@ NPU path with honest fallback accounting.
 ### D. Linux Bring-Up
 
 - Build RISC-V Linux Image with serial console, earlycon, initramfs, timer,
-  interrupt controller, MMU, tmpfs, devtmpfs, and OpenPhone driver config.
+  interrupt controller, MMU, tmpfs, devtmpfs, and OpenAgent driver config.
 - Build minimal Buildroot initramfs with `/init`, shell, busybox, and
-  `hello-mmio-smoke`.
+  `e1-mmio-smoke`.
 - Verify CPU ISA/profile, cache/MMU behavior, timer IRQ, external IRQ,
   UART console, and memory map.
-- Gate: Linux boots to userspace and runs `hello-mmio-smoke`.
+- Gate: Linux boots to userspace and runs `e1-mmio-smoke`.
 
 Required transcripts:
 
-- `openphone_hello_opensbi_boot.log`
-- `openphone_hello_linux_boot.log`
-- `openphone_hello_trap_timer_irq.log`
-- `openphone_hello_isa_cache_mmu.log`
-- `openphone_hello_ap_benchmarks.log`
+- `openagent_e1_opensbi_boot.log`
+- `openagent_e1_linux_boot.log`
+- `openagent_e1_trap_timer_irq.log`
+- `openagent_e1_isa_cache_mmu.log`
+- `openagent_e1_ap_benchmarks.log`
 
 ### E. Android Reference First, Hardware-ABI Second
 
 - Run AOSP Cuttlefish on Linux with KVM as the fast software reference path.
-- Build `openphone_ai_soc-userdebug` device scaffold in an external AOSP tree.
+- Build `openagent_ai_soc-userdebug` device scaffold in an external AOSP tree.
 - Archive strict logs: lunch, vendorimage, checkvintf, SELinux build,
   neverallow, CTS/VTS plan, Cuttlefish smoke, QEMU smoke, Renode smoke.
 - Only after Linux boots on the AP simulator, attempt Android init/userspace on
@@ -182,7 +182,7 @@ the right host for long Linux RTL simulation under Rosetta.
   - `make mvp-status`
 - Fix stale doc paths after the `docs/` move.
 - Keep all claim gates fail-closed.
-- Run Verilator hello-chip smoke.
+- Run Verilator e1-chip smoke.
 - Run QEMU/Renode firmware smoke where tools are installed.
 - Maintain platform-contract JSON and generated headers/DTS fragments.
 - Edit Android device tree, HAL scaffold, init, fstab, VINTF, and SELinux
@@ -230,7 +230,7 @@ boot evidence. Minimum recommended host: 16-32 cores, 128 GB RAM, 1-2 TB NVMe.
 - Run Renode/QEMU OS smoke.
 - Run AOSP Cuttlefish with KVM. AOSP docs require virtualization/KVM checks for
   Cuttlefish.
-- Build external AOSP tree and `openphone_ai_soc-userdebug` artifacts.
+- Build external AOSP tree and `openagent_ai_soc-userdebug` artifacts.
 - Run `checkvintf`, SELinux policy build, neverallow, and CTS/VTS smoke plans.
 
 ### Linux: Hardware/FPGA
@@ -258,11 +258,11 @@ boot evidence. Minimum recommended host: 16-32 cores, 128 GB RAM, 1-2 TB NVMe.
 
 Prices are planning estimates as of 2026-05-17. Check stock before buying.
 
-### Stage 1: Cheap Open Hello-Demo FPGA
+### Stage 1: Cheap Open E1-Demo FPGA
 
 | Item | Purpose | Estimated cost |
 | --- | --- | ---: |
-| ULX3S 85F | Open-source ECP5 board for hello-demo MMIO path | $155-$250 |
+| ULX3S 85F | Open-source ECP5 board for e1-demo MMIO path | $155-$250 |
 | USB-C/micro-USB cables, known-good data | Power/programming/serial | $20 |
 | PMOD jumper kit / headers | GPIO bring-up | $20-$50 |
 | Logic analyzer, 8-16 channel | UART/SPI/GPIO capture | $15-$200 |
@@ -306,7 +306,7 @@ included Vivado Design Edition voucher.
 
 | Item | Purpose | Estimated cost |
 | --- | --- | ---: |
-| Prototype PCB fabrication/assembly | Hello-demo board | $300-$3,000 |
+| Prototype PCB fabrication/assembly | E1-demo board | $300-$3,000 |
 | Stencils, spare components, fixtures | Assembly/debug | $100-$1,000 |
 | Open MPW shuttle | Sky130/GF180 learning chip | Varies, often subsidized or low thousands |
 | Commercial shuttle + package | More controlled silicon experiment | $10,000-$100,000+ |
@@ -317,16 +317,16 @@ included Vivado Design Edition voucher.
 | Milestone | Definition of done |
 | --- | --- |
 | M0: Honest scaffold | All docs/checks distinguish scaffold from proof; stale paths fixed. |
-| M1: Hello-chip executable | Verilator/QEMU/Renode firmware smoke with transcripts. |
+| M1: E1-chip executable | Verilator/QEMU/Renode firmware smoke with transcripts. |
 | M2: AP simulator generated | Chipyard/Rocket or CVA6 AP manifest, DTS, Verilog, simulator binary. |
 | M3: OpenSBI boot | OpenSBI banner and handoff transcript from AP simulator. |
 | M4: Linux userspace | Kernel/initramfs boots; timer/IRQ/MMU/cache evidence archived. |
 | M5: Android reference | AOSP Cuttlefish riscv64 or selected target reaches userspace with logs. |
-| M6: OpenPhone Android scaffold build | `openphone_ai_soc-userdebug` vendorimage/checkvintf/SELinux evidence. |
-| M7: Android on AP simulator attempt | Android init progress on OpenPhone AP simulator, even if slow. |
+| M6: OpenAgent Android scaffold build | `openagent_ai_soc-userdebug` vendorimage/checkvintf/SELinux evidence. |
+| M7: Android on AP simulator attempt | Android init progress on OpenAgent AP simulator, even if slow. |
 | M8: Tiny model baseline | 10M TinyStories model runs on CPU baseline with reproducible report. |
 | M9: Tiny NPU acceleration | Static INT8/INT4 kernels run on NPU simulator with fallback accounting. |
-| M10: FPGA stage 1 | ULX3S hello-demo bitstream and UART/GPIO evidence. |
+| M10: FPGA stage 1 | ULX3S e1-demo bitstream and UART/GPIO evidence. |
 | M11: FPGA stage 2 | VCU118/FireSim Rocket+NPU prototype boot evidence. |
 | M12: Open PDK GDS | Block-level and top-level OpenLane/OpenROAD reports archived. |
 | M13: Tapeout review | DRC/LVS/STA/power/package/padframe/board blockers resolved or waived. |
@@ -352,10 +352,10 @@ included Vivado Design Edition voucher.
 4. Build OpenSBI and Linux initramfs payloads.
 5. Capture OpenSBI/Linux transcripts.
 6. Run AOSP Cuttlefish riscv64 reference and archive evidence.
-7. Integrate OpenPhone AOSP device scaffold into external AOSP and archive
+7. Integrate OpenAgent AOSP device scaffold into external AOSP and archive
    build/VINTF/SELinux evidence.
 8. Pin and convert the 10.6M TinyStories model.
 9. Build CPU baseline benchmark report.
 10. Add NPU runtime shim with explicit unsupported-op/fallback accounting.
-11. Bring up ULX3S hello-demo bitstream.
+11. Bring up ULX3S e1-demo bitstream.
 12. Start VCU118 or FireSim path only after M4 Linux userspace is stable.

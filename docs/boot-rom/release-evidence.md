@@ -8,10 +8,10 @@ sh fw/boot-rom/build.sh
 
 The build emits:
 
-- `build/boot-rom/hello_reset_rom.elf`
-- `build/boot-rom/hello_reset_rom.bin`
-- `build/boot-rom/hello_reset_rom.hex`
-- `build/boot-rom/hello_reset_rom.manifest.json`
+- `build/boot-rom/e1_reset_rom.elf`
+- `build/boot-rom/e1_reset_rom.bin`
+- `build/boot-rom/e1_reset_rom.hex`
+- `build/boot-rom/e1_reset_rom.manifest.json`
 
 `scripts/check_boot_rom.py` rebuilds these files, verifies the executable
 artifact bounds, and checks that the manifest hashes match the current source,
@@ -25,7 +25,7 @@ QEMU, Renode, Verilator, or hardware.
 
 Remaining release blockers:
 
-- CPU integration must consume `build/boot-rom/hello_reset_rom.hex` or an
+- CPU integration must consume `build/boot-rom/e1_reset_rom.hex` or an
   equivalent generated ROM image.
 - A simulator or hardware transcript must prove the reset vector reaches the ROM
   and either hands off to the configured next-stage address or halts in the WFI

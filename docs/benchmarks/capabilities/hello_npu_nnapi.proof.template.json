@@ -1,17 +1,17 @@
 {
-  "schema": "openphone.hello_npu_nnapi_capability.v1",
+  "schema": "openagent.e1_npu_nnapi_capability.v1",
   "date_utc": "YYYY-MM-DDTHH:MM:SS+00:00",
   "target": "android-device-or-linux-target-name",
   "generated_by": "hardware validation job command or CI job id",
-  "accelerator_name": "hello-npu",
+  "accelerator_name": "e1-npu",
   "capability": {
     "claim_level": "L4_DEV_BOARD",
     "precision": "int8",
     "operator_set": ["CONV_2D", "DEPTHWISE_CONV_2D", "FULLY_CONNECTED"],
-    "contract_source": "sw/platform/hello_platform_contract.json"
+    "contract_source": "sw/platform/e1_platform_contract.json"
   },
   "nnapi": {
-    "accelerator_name": "hello-npu",
+    "accelerator_name": "e1-npu",
     "delegated_node_count": 1,
     "total_node_count": 1,
     "cpu_fallback_percent": 0,
@@ -38,7 +38,7 @@
     "commands": {
       "adb_devices": "adb devices",
       "nnapi_accelerator_query": "adb shell cmd neuralnetworks list",
-      "benchmark_model_nnapi": "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite --use_nnapi=true --nnapi_accelerator_name=hello-npu --enable_op_profiling=true --verbose=true",
+      "benchmark_model_nnapi": "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite --use_nnapi=true --nnapi_accelerator_name=e1-npu --enable_op_profiling=true --verbose=true",
       "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace"
     }
   },
@@ -49,22 +49,22 @@
   },
   "transcripts": {
     "adb_devices": {
-      "path": "docs/evidence/android/hello-npu/adb-devices.log",
+      "path": "docs/evidence/android/e1-npu/adb-devices.log",
       "sha256": "64-character lowercase sha256 of the exact adb devices transcript",
       "bytes": 1
     },
     "nnapi_accelerator_query": {
-      "path": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
+      "path": "docs/evidence/android/e1-npu/nnapi-accelerator-query.log",
       "sha256": "64-character lowercase sha256 of the exact NNAPI query transcript",
       "bytes": 1
     },
     "benchmark_model_nnapi": {
-      "path": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
+      "path": "docs/evidence/android/e1-npu/benchmark-model-nnapi.log",
       "sha256": "64-character lowercase sha256 of the exact benchmark_model transcript",
       "bytes": 1
     },
     "dma_trace": {
-      "path": "docs/evidence/android/hello-npu/dma-trace.log",
+      "path": "docs/evidence/android/e1-npu/dma-trace.log",
       "sha256": "64-character lowercase sha256 of the exact DMA trace transcript",
       "bytes": 1
     }

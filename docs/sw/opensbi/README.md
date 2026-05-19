@@ -2,8 +2,8 @@
 
 The full SoC target should boot through OpenSBI before U-Boot and Linux.
 
-The hello chip currently has no CPU. OpenSBI integration starts once the
-Chipyard/Rocket subsystem exists and `sw/platform/hello_platform_contract.json`
+The e1 chip currently has no CPU. OpenSBI integration starts once the
+Chipyard/Rocket subsystem exists and `sw/platform/e1_platform_contract.json`
 has RAM, UART, timer, interrupt-controller, and boot-handoff entries for a
 CPU-capable target.
 
@@ -18,18 +18,18 @@ Expected output:
 
 ```text
 buildroot BSP check failed:
-  - buildroot BSP BLOCKED: missing evidence for external Buildroot image build plus hello MMIO smoke transcript: docs/evidence/buildroot/openphone_hello_defconfig.log, docs/evidence/buildroot/openphone_hello_image_manifest.txt, docs/evidence/buildroot/hello-mmio-smoke.log
+  - buildroot BSP BLOCKED: missing evidence for external Buildroot image build plus e1 MMIO smoke transcript: docs/evidence/buildroot/openagent_e1_defconfig.log, docs/evidence/buildroot/openagent_e1_image_manifest.txt, docs/evidence/buildroot/e1-mmio-smoke.log
 linux BSP check failed:
-  - linux BSP BLOCKED: missing evidence for external Linux kernel build, DTB validation, and runtime driver smoke transcript: docs/evidence/linux/openphone_hello_kernel_build.log, docs/evidence/linux/openphone_hello_dtb_check.log, docs/evidence/linux/hello-mmio-smoke.log
+  - linux BSP BLOCKED: missing evidence for external Linux kernel build, DTB validation, and runtime driver smoke transcript: docs/evidence/linux/openagent_e1_kernel_build.log, docs/evidence/linux/openagent_e1_dtb_check.log, docs/evidence/linux/e1-mmio-smoke.log
 aosp BSP check failed:
   - aosp BSP BLOCKED: evidence for external AOSP lunch/vendorimage/VINTF logs, Cuttlefish or equivalent boot transcript, and Android compatibility subset transcripts is incomplete or invalid
 opensbi BSP check failed:
   - opensbi BSP BLOCKED: evidence for external OpenSBI build and fw_dynamic handoff transcript is incomplete or invalid
-  - missing docs/evidence/linux/opensbi_openphone_build.log
+  - missing docs/evidence/linux/opensbi_openagent_build.log
   - missing docs/evidence/linux/opensbi_fw_dynamic_handoff.log
 u-boot BSP check failed:
   - u-boot BSP BLOCKED: evidence for external U-Boot build and OpenSBI-to-U-Boot boot-chain transcript is incomplete or invalid
-  - missing docs/evidence/linux/u_boot_openphone_build.log
+  - missing docs/evidence/linux/u_boot_openagent_build.log
   - missing docs/evidence/linux/u_boot_opensbi_boot_chain.log
 boot: scaffold audit
   local command: make software-bsp-check
@@ -46,14 +46,14 @@ documentation-only and must not be treated as boot evidence.
 ## External Evidence Capture
 
 The capture script records `EXTERNAL_TREE`, `COMMAND`, `START_UTC`, `END_UTC`,
-`RESULT`, and the `openphone-evidence` PASS/FAIL envelope. Run it only against
+`RESULT`, and the `openagent-evidence` PASS/FAIL envelope. Run it only against
 a real external OpenSBI checkout and a real simulator or board handoff command:
 
 ```sh
 sw/opensbi/scripts/import-opensbi-platform.sh --check /path/to/opensbi
-OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' \
+OPENAGENT_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' \
   docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build
-OPENPHONE_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' \
+OPENAGENT_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' \
   docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff
 python3 scripts/check_software_bsp.py opensbi --require-evidence
 ```

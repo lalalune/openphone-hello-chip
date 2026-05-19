@@ -1,4 +1,4 @@
-# Hello Demo First-Article Current-Limit Draft
+# E1 Demo First-Article Current-Limit Draft
 
 Status: draft local bring-up plan, not first-article evidence
 Board revision: `r0-nonrelease`

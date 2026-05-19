@@ -1,7 +1,7 @@
 # TH1520 Physical Board Procurement And Test Plan
 
 This plan selects three TH1520 development boards as physical software baselines
-for OpenPhone-AI-SoC: BeagleV-Ahead, Sipeed Lichee Pi 4A, and Milk-V Meles. The
+for OpenAgent-AI-SoC: BeagleV-Ahead, Sipeed Lichee Pi 4A, and Milk-V Meles. The
 goal is not to claim phone-class performance. The goal is to get reproducible
 Linux and Android-adjacent boot, debug, log, and benchmark evidence on real
 quad-core C910 silicon with a TH1520 NPU/GPU/display stack.

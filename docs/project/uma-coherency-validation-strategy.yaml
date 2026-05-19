@@ -1,13 +1,13 @@
-schema: openphone.uma_coherency_validation_strategy.v1
+schema: openagent.uma_coherency_validation_strategy.v1
 status: fail_closed_until_evidence
 scope: CPU, DMA, NPU, display, GPU or 2D engine, and Android userspace sharing one DRAM system.
 current_repo_status:
-  memory_model: rtl/memory/hello_axi_lite_dram.sv
-  top_aperture: rtl/top/hello_soc_top.sv
+  memory_model: rtl/memory/e1_axi_lite_dram.sv
+  top_aperture: rtl/top/e1_soc_top.sv
   limitation: Small SRAM-backed AXI-Lite model; no cache coherency, IOMMU, LPDDR PHY, or QoS implementation.
   executable_local_gate: make memory-interconnect-contract-check
   current_pass_scope:
-    - Address map and decode consistency for the hello-chip debug aperture and Linux-capable scaffold.
+    - Address map and decode consistency for the e1-chip debug aperture and Linux-capable scaffold.
     - AXI-Lite SRAM-backed DRAM model response, alignment, and byte-strobe behavior.
     - CPU/DMA arbitration smoke behavior in the contract wrapper.
   unsupported_claims:

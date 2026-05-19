@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_QEMU_LOG = ROOT / "build/reports/qemu_smoke.log"
 DEFAULT_OUT = ROOT / "benchmarks/results/simulator-arch-metrics.json"
-BANNER = "openphone hello qemu"
+BANNER = "openagent e1 qemu"
 
 
 def parse_args() -> argparse.Namespace:
@@ -49,7 +49,7 @@ def main() -> int:
         raise SystemExit(f"qemu smoke log does not contain required banner: {BANNER}")
 
     data = {
-        "schema": "openphone.simulator_arch_metrics.v1",
+        "schema": "openagent.simulator_arch_metrics.v1",
         "evidence_class": "qemu_virt_liveness_only",
         "claim_boundary": "not_performance_evidence",
         "calibration_status": "uncalibrated",

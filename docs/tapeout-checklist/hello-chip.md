@@ -1,6 +1,6 @@
-# Hello chip tapeout-readiness checklist
+# E1 chip tapeout-readiness checklist
 
-The hello chip is ready as a pipeline milestone when:
+The e1 chip is ready as a pipeline milestone when:
 
 - `pd/signoff/manifest.yaml` records no blocked gates for PD release, tapeout release, or board fabrication release.
 - RTL syntax/elaboration passes.

@@ -1,12 +1,12 @@
-schema: openphone.verification_maturity_matrix.v1
+schema: openagent.verification_maturity_matrix.v1
 status: phase_promotion_blocked_without_evidence
 scope:
-  current_baseline: hello_chip_local_scaffold
+  current_baseline: e1_chip_local_scaffold
   target_scale: 2028_ram_cpu_npu_signoff
 current_phase:
-  id: phase0_hello_chip_scaffold
+  id: phase0_e1_chip_scaffold
   allowed_claims:
-    - Hello-chip RTL unit behavior.
+    - E1-chip RTL unit behavior.
     - Local AXI-Lite contract smoke behavior.
     - NPU instruction-level scaffold behavior.
     - PD input/preflight readiness only.
@@ -100,13 +100,13 @@ phase_promotion_gates:
           - make pd-signoff-check
         artifacts:
           - pd/openlane/runs/phase3_scale/signoff-run.yaml
-          - pd/openlane/runs/phase3_scale/final/gds/hello_chip_top.gds
-          - pd/openlane/runs/phase3_scale/final/def/hello_chip_top.def
+          - pd/openlane/runs/phase3_scale/final/gds/e1_chip_top.gds
+          - pd/openlane/runs/phase3_scale/final/def/e1_chip_top.def
           - pd/openlane/runs/phase3_scale/reports/signoff/phase3_drc.rpt
           - pd/openlane/runs/phase3_scale/reports/signoff/phase3_lvs.rpt
           - pd/openlane/runs/phase3_scale/reports/signoff/phase3_sta.rpt
-          - pd/openlane/runs/phase3_scale/final/spef/hello_chip_top.spef
-          - pd/openlane/runs/phase3_scale/final/sdf/hello_chip_top.sdf
+          - pd/openlane/runs/phase3_scale/final/spef/e1_chip_top.spef
+          - pd/openlane/runs/phase3_scale/final/sdf/e1_chip_top.sdf
           - pd/openlane/runs/phase3_scale/reports/signoff/phase3_corners.yaml
           - pd/openlane/runs/phase3_scale/reports/signoff/tool_versions.txt
         must_cover:
@@ -114,7 +114,7 @@ phase_promotion_gates:
           - GDS, DEF, DRC, LVS, STA, SPEF, SDF, timing corners, and tool versions.
           - Utilization, congestion, density/fill, PDN/current, SI/PI, package, and thermal evidence.
 promotion_rules:
-  - Current hello-chip checks can satisfy only phase0_hello_chip_scaffold.
+  - Current e1-chip checks can satisfy only phase0_e1_chip_scaffold.
   - A phase may be promoted only when status is evidence_passed and every artifact listed for that phase exists as an immutable report from the scaled configuration.
   - Host smoke, dry-run output, preflight output, target-spec documents, and scaffold tests must not promote 2028 RAM/CPU/NPU claims.
   - Earlier phase blockers prevent later phase promotion; later phases cannot be promoted while any earlier phase remains blocked.

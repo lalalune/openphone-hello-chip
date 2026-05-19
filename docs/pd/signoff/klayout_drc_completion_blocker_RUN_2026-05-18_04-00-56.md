@@ -22,7 +22,7 @@
 
 ## Command
 ```text
-klayout -b -zz -r /work/external/pdks/sky130A/libs.tech/klayout/drc/sky130A_mr.drc -rd input=/work/pd/openlane/runs/RUN_2026-05-18_04-00-56/57-magic-streamout/hello_chip_top.gds -rd topcell=hello_chip_top -rd report=/work/pd/openlane/runs/RUN_2026-05-18_04-00-56/64-klayout-drc/reports/drc_violations.klayout.xml -rd feol=true -rd beol=true -rd floating_metal=false -rd offgrid=true -rd seal=true -rd threads=16
+klayout -b -zz -r /work/external/pdks/sky130A/libs.tech/klayout/drc/sky130A_mr.drc -rd input=/work/pd/openlane/runs/RUN_2026-05-18_04-00-56/57-magic-streamout/e1_chip_top.gds -rd topcell=e1_chip_top -rd report=/work/pd/openlane/runs/RUN_2026-05-18_04-00-56/64-klayout-drc/reports/drc_violations.klayout.xml -rd feol=true -rd beol=true -rd floating_metal=false -rd offgrid=true -rd seal=true -rd threads=16
 ```
 
 ## Tail: klayout-drc.log

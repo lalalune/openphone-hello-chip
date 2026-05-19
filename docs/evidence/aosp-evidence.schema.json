@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "aosp-evidence.schema.json",
-  "title": "OpenPhone AOSP external evidence manifest",
+  "title": "OpenAgent AOSP external evidence manifest",
   "type": "object",
   "required": [
     "schema_version",

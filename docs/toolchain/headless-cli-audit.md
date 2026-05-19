@@ -52,5 +52,5 @@ make benchmarks-dry-run
 make software-bsp-check aosp-bsp-check qemu-check renode-check
 make pipeline-check
 make archive-release
-docker run --rm -v "$PWD:/work" -w /work openphone-soc-tools make ci-fast
+docker run --rm -v "$PWD:/work" -w /work openagent-soc-tools make ci-fast
 ```

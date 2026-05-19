@@ -1,10 +1,10 @@
-schema: openphone.ai_accelerator_options.v1
+schema: openagent.ai_accelerator_options.v1
 status: decision_open_fail_closed
 selection_rule: >
   No AI throughput, TOPS, NNAPI, or mobile-AI claim may pass until one option is
   selected and its validation gates are satisfied with runtime evidence.
 options:
-  - id: keep_hello_mmio_npu
+  - id: keep_e1_mmio_npu
     class: repo_local_prototype
     summary: Extend the current MMIO scalar/SIMD/tiny-GEMM datapath.
     advantages:
@@ -77,7 +77,7 @@ options:
     blockers:
       - Not on-die SoC evidence.
       - Requires board interface, firmware, and driver support.
-      - Must be labeled separately from OpenPhone SoC performance.
+      - Must be labeled separately from OpenAgent SoC performance.
     validation_gates:
       - board module integration log
       - runtime accelerator selection log

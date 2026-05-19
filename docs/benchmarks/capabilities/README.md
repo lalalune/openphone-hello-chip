@@ -7,27 +7,27 @@ being mistaken for real target accelerator evidence.
 Local readiness check:
 
 ```sh
-python3 scripts/check_hello_npu_nnapi_proof.py --probe-adb \
-  --status-json benchmarks/results/hello-npu-nnapi-proof/status.json
+python3 scripts/check_e1_npu_nnapi_proof.py --probe-adb \
+  --status-json benchmarks/results/e1-npu-nnapi-proof/status.json
 ```
 
 This command validates the configured proof when it exists and records why the
 current machine cannot produce one when it does not. It does not generate
-`benchmarks/capabilities/hello_npu_nnapi.proof.json`; that file must come from
+`benchmarks/capabilities/e1_npu_nnapi.proof.json`; that file must come from
 the target validation job with the transcripts below.
 
-- `hello_npu_nnapi.proof.json`: present only after an Android/Linux target
-  exposes a real `hello-npu` NNAPI accelerator or delegate and the validation
+- `e1_npu_nnapi.proof.json`: present only after an Android/Linux target
+  exposes a real `e1-npu` NNAPI accelerator or delegate and the validation
   job records the matching transcripts.
-- `docs/benchmarks/capabilities/hello_npu_nnapi.proof.template.json`: copy
+- `docs/benchmarks/capabilities/e1_npu_nnapi.proof.template.json`: copy
   shape for the validation job output. Do not copy it into
   `benchmarks/capabilities/` as evidence; the harness requires real transcript
   files and content markers.
-- `hello_npu_android_proof_manifest.template.json`: Android HAL, VINTF,
+- `e1_npu_android_proof_manifest.template.json`: Android HAL, VINTF,
   SELinux, VTS, CTS, NNAPI query, and fail-closed probe proof gate template.
   Its checked-in status is blocked and its hash fields are placeholders until
   an external AOSP validation job records the real artifacts.
-- `hello_npu_power_thermal_manifest.template.json`: benchmark power, thermal,
+- `e1_npu_power_thermal_manifest.template.json`: benchmark power, thermal,
   frequency, and calibration trace manifest template. Its checked-in status is
   blocked and cannot support sustained perf/W claims until the trace files and
   hashes are filled by a hardware validation job.
@@ -36,19 +36,19 @@ The proof JSON must use this schema:
 
 ```json
 {
-  "schema": "openphone.hello_npu_nnapi_capability.v1",
+  "schema": "openagent.e1_npu_nnapi_capability.v1",
   "date_utc": "2026-05-17T00:00:00+00:00",
   "target": "android-device-or-linux-target-name",
   "generated_by": "validation job command or CI job id",
-  "accelerator_name": "hello-npu",
+  "accelerator_name": "e1-npu",
   "capability": {
     "claim_level": "L4_DEV_BOARD",
     "precision": "int8",
     "operator_set": ["CONV_2D", "DEPTHWISE_CONV_2D", "FULLY_CONNECTED"],
-    "contract_source": "sw/platform/hello_platform_contract.json"
+    "contract_source": "sw/platform/e1_platform_contract.json"
   },
   "nnapi": {
-    "accelerator_name": "hello-npu",
+    "accelerator_name": "e1-npu",
     "delegated_node_count": 1,
     "total_node_count": 1,
     "cpu_fallback_percent": 0,
@@ -75,7 +75,7 @@ The proof JSON must use this schema:
     "commands": {
       "adb_devices": "adb devices",
       "nnapi_accelerator_query": "adb shell cmd neuralnetworks list",
-      "benchmark_model_nnapi": "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite --use_nnapi=true --nnapi_accelerator_name=hello-npu --enable_op_profiling=true --verbose=true",
+      "benchmark_model_nnapi": "adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite --use_nnapi=true --nnapi_accelerator_name=e1-npu --enable_op_profiling=true --verbose=true",
       "dma_trace": "adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace"
     }
   },
@@ -86,22 +86,22 @@ The proof JSON must use this schema:
   },
   "transcripts": {
     "adb_devices": {
-      "path": "docs/evidence/android/hello-npu/adb-devices.log",
+      "path": "docs/evidence/android/e1-npu/adb-devices.log",
       "sha256": "64-character lowercase sha256 of the exact transcript",
       "bytes": 1
     },
     "nnapi_accelerator_query": {
-      "path": "docs/evidence/android/hello-npu/nnapi-accelerator-query.log",
+      "path": "docs/evidence/android/e1-npu/nnapi-accelerator-query.log",
       "sha256": "64-character lowercase sha256 of the exact transcript",
       "bytes": 1
     },
     "benchmark_model_nnapi": {
-      "path": "docs/evidence/android/hello-npu/benchmark-model-nnapi.log",
+      "path": "docs/evidence/android/e1-npu/benchmark-model-nnapi.log",
       "sha256": "64-character lowercase sha256 of the exact transcript",
       "bytes": 1
     },
     "dma_trace": {
-      "path": "docs/evidence/android/hello-npu/dma-trace.log",
+      "path": "docs/evidence/android/e1-npu/dma-trace.log",
       "sha256": "64-character lowercase sha256 of the exact transcript",
       "bytes": 1
     }
@@ -114,20 +114,20 @@ non-empty file with matching `sha256` and `bytes` fields. A blank marker file is
 not accepted by `benchmarks/run_benchmarks.py`.
 
 The proof must also bind to the exact checked-in model SHA-256, report the
-`hello-npu` accelerator name in both the top-level proof and `nnapi` object, and
+`e1-npu` accelerator name in both the top-level proof and `nnapi` object, and
 show zero CPU fallback plus zero unsupported ops. It must also state a real
 target claim level, precision, dataflow, DMA byte counts, MAC count, NPU cycles,
 NPU clock, observed TOPS, and the TOPS formula. Missing, stale, host-only, or
-counter-inconsistent values keep `tflite_hello_npu` blocked.
+counter-inconsistent values keep `tflite_e1_npu` blocked.
 
 The current benchmark plan also validates transcript content before treating
 the proof as available:
 
 - `adb_devices` must contain `device`.
-- `nnapi_accelerator_query` must contain `hello-npu`.
+- `nnapi_accelerator_query` must contain `e1-npu`.
 - `benchmark_model_nnapi` must contain `--use_nnapi=true`,
-  `--nnapi_accelerator_name=hello-npu`, and `NNAPI`.
-- `dma_trace` must contain `hello-npu`, `DMA`, `bytes_read`, and
+  `--nnapi_accelerator_name=e1-npu`, and `NNAPI`.
+- `dma_trace` must contain `e1-npu`, `DMA`, `bytes_read`, and
   `bytes_written`.
 
 These markers are intentionally minimal. They prove the archived logs came from
@@ -138,29 +138,29 @@ the proof JSON to the archived logs.
 Target capture job command set:
 
 ```sh
-scripts/android/capture_hello_npu_nnapi_evidence.sh
+scripts/android/capture_e1_npu_nnapi_evidence.sh
 ```
 
 Equivalent manual command set:
 
 ```sh
-adb devices | tee docs/evidence/android/hello-npu/adb-devices.log
+adb devices | tee docs/evidence/android/e1-npu/adb-devices.log
 adb push benchmarks/models/mobile_smoke.tflite /data/local/tmp/mobile_smoke.tflite
-adb shell cmd neuralnetworks list | tee docs/evidence/android/hello-npu/nnapi-accelerator-query.log
+adb shell cmd neuralnetworks list | tee docs/evidence/android/e1-npu/nnapi-accelerator-query.log
 adb shell benchmark_model --graph=/data/local/tmp/mobile_smoke.tflite \
-  --use_nnapi=true --nnapi_accelerator_name=hello-npu \
+  --use_nnapi=true --nnapi_accelerator_name=e1-npu \
   --enable_op_profiling=true --verbose=true \
-  | tee docs/evidence/android/hello-npu/benchmark-model-nnapi.log
+  | tee docs/evidence/android/e1-npu/benchmark-model-nnapi.log
 adb shell cat /sys/bus/platform/devices/10020000.npu/dma_trace \
-  | tee docs/evidence/android/hello-npu/dma-trace.log
+  | tee docs/evidence/android/e1-npu/dma-trace.log
 ```
 
 Local fail-closed HAL negative evidence can be captured without an Android
 target:
 
 ```sh
-scripts/android/capture_hello_npu_hal_absent_device.sh
-python3 scripts/check_hello_npu_android_proof_manifest.py
+scripts/android/capture_e1_npu_hal_absent_device.sh
+python3 scripts/check_e1_npu_android_proof_manifest.py
 ```
 
 The first command proves only that the host-buildable HAL probe refuses to
@@ -170,8 +170,8 @@ that real Android HAL, CTS, VTS, and NNAPI proof remains blocked. A filled
 manifest must be checked with:
 
 ```sh
-python3 scripts/check_hello_npu_android_proof_manifest.py \
-  --manifest docs/evidence/android/hello-npu/android-proof-manifest.json \
+python3 scripts/check_e1_npu_android_proof_manifest.py \
+  --manifest docs/evidence/android/e1-npu/android-proof-manifest.json \
   --require-pass
 ```
 
@@ -193,4 +193,4 @@ observed_tops <= macs_per_inference * 2 / (npu_cycles / npu_hz) / 1e12
 
 The harness allows only small rounding slack. Do not report 2028-target TOPS
 from marketing math, simulator wall-clock time, or the current scalar
-`hello_npu` RTL.
+`e1_npu` RTL.

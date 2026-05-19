@@ -1,11 +1,11 @@
 {
-  "schema": "openphone.android_bsp_log_evidence_manifest.v1",
+  "schema": "openagent.android_bsp_log_evidence_manifest.v1",
   "claim_boundary": "expected_future_log_markers_only_not_boot_evidence",
   "logs": {
-    "docs/evidence/buildroot/openphone_hello_defconfig.log": {
+    "docs/evidence/buildroot/openagent_e1_defconfig.log": {
       "blocker_code": "missing_buildroot_defconfig_log",
       "claim_boundary": "single_external_build_step_only_not_boot_evidence",
-      "producer_command": "make BR2_EXTERNAL=/path/to/OpenPhone-AI-SoC/sw/buildroot openphone_hello_defconfig",
+      "producer_command": "make BR2_EXTERNAL=/path/to/OpenAgent-AI-SoC/sw/buildroot openagent_e1_defconfig",
       "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, then append the verbatim Buildroot defconfig transcript",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -15,10 +15,10 @@
         "RESULT="
       ],
       "required_any": [
-        "openphone_hello_defconfig"
+        "openagent_e1_defconfig"
       ],
       "required_all": [
-        "BR2_EXTERNAL_OPENPHONE_HELLO_PATH"
+        "BR2_EXTERNAL_OPENAGENT_E1_PATH"
       ],
       "forbidden_any": [
         "No rule to make target",
@@ -33,7 +33,7 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/buildroot/openphone_hello_image_manifest.txt": {
+    "docs/evidence/buildroot/openagent_e1_image_manifest.txt": {
       "blocker_code": "missing_buildroot_image_manifest",
       "claim_boundary": "external_build_outputs_only_not_runtime_or_boot_evidence",
       "producer_command": "find output/images -maxdepth 1 -type f -print",
@@ -50,7 +50,7 @@
         "output/images/rootfs"
       ],
       "required_all": [
-        "openphone_hello"
+        "openagent_e1"
       ],
       "forbidden_any": [
         "placeholder",
@@ -64,10 +64,10 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/buildroot/hello-mmio-smoke.log": {
+    "docs/evidence/buildroot/e1-mmio-smoke.log": {
       "blocker_code": "missing_buildroot_mmio_smoke_log",
       "claim_boundary": "single_runtime_smoke_only_not_linux_or_android_boot_evidence",
-      "producer_command": "/usr/bin/hello-mmio-smoke",
+      "producer_command": "/usr/bin/e1-mmio-smoke",
       "capture_hint": "prepend EXTERNAL_TREE or TARGET, COMMAND, START_UTC, END_UTC, RESULT, then append the runtime smoke transcript from the built image",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -77,12 +77,12 @@
         "RESULT="
       ],
       "required_any": [
-        "hello-mmio-smoke: PASS",
-        "HELLO_MMIO_SMOKE_PASS"
+        "e1-mmio-smoke: PASS",
+        "E1_MMIO_SMOKE_PASS"
       ],
       "required_all": [
-        "HELLO_NPU_BASE",
-        "HELLO_DMA_BASE"
+        "E1_NPU_BASE",
+        "E1_DMA_BASE"
       ],
       "forbidden_any": [
         "FAIL",
@@ -97,11 +97,11 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/buildroot/hello-npu-ml-smoke.log": {
-      "blocker_code": "missing_buildroot_hello_npu_ml_smoke_log",
+    "docs/evidence/buildroot/e1-npu-ml-smoke.log": {
+      "blocker_code": "missing_buildroot_e1_npu_ml_smoke_log",
       "claim_boundary": "driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
-      "producer_command": "/usr/bin/hello-npu-ml-smoke --device /dev/hello-npu",
-      "capture_hint": "prepend EXTERNAL_TREE or TARGET, COMMAND, START_UTC, END_UTC, RESULT, then append the target-side hello-npu-ml-smoke transcript from the built Buildroot rootfs",
+      "producer_command": "/usr/bin/e1-npu-ml-smoke --device /dev/e1-npu",
+      "capture_hint": "prepend EXTERNAL_TREE or TARGET, COMMAND, START_UTC, END_UTC, RESULT, then append the target-side e1-npu-ml-smoke transcript from the built Buildroot rootfs",
       "required_metadata": [
         "EXTERNAL_TREE=",
         "COMMAND=",
@@ -110,13 +110,13 @@
         "RESULT="
       ],
       "required_any": [
-        "hello-npu-ml-smoke: PASS",
-        "HELLO_NPU_ML_SMOKE_PASS"
+        "e1-npu-ml-smoke: PASS",
+        "E1_NPU_ML_SMOKE_PASS"
       ],
       "required_all": [
         "workload=gemm_s8_int8_2x2x3",
         "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
-        "/dev/hello-npu"
+        "/dev/e1-npu"
       ],
       "forbidden_any": [
         "FAIL",
@@ -133,7 +133,7 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/linux/openphone_hello_kernel_build.log": {
+    "docs/evidence/linux/openagent_e1_kernel_build.log": {
       "blocker_code": "missing_linux_kernel_build_log",
       "claim_boundary": "external_kernel_build_only_not_boot_evidence",
       "producer_command": "make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- Image dtbs modules",
@@ -151,8 +151,8 @@
         "CC [M]"
       ],
       "required_all": [
-        "CONFIG_OPENPHONE_HELLO_NPU",
-        "CONFIG_OPENPHONE_HELLO_DMA"
+        "CONFIG_OPENAGENT_E1_NPU",
+        "CONFIG_OPENAGENT_E1_DMA"
       ],
       "forbidden_any": [
         "Error 1",
@@ -167,10 +167,10 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/linux/openphone_hello_dtb_check.log": {
+    "docs/evidence/linux/openagent_e1_dtb_check.log": {
       "blocker_code": "missing_linux_dtb_check_log",
       "claim_boundary": "external_dtb_validation_only_not_boot_evidence",
-      "producer_command": "make ARCH=riscv dtbs_check DT_SCHEMA_FILES=openphone",
+      "producer_command": "make ARCH=riscv dtbs_check DT_SCHEMA_FILES=openagent",
       "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, then append the external dtbs_check transcript",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -182,12 +182,12 @@
       "required_any": [
         "DTC",
         "dtbs_check",
-        "openphone-hello.dtb"
+        "openagent-e1.dtb"
       ],
       "required_all": [
-        "openphone,hello-npu",
-        "openphone,hello-dma",
-        "openphone,hello-display"
+        "openagent,e1-npu",
+        "openagent,e1-dma",
+        "openagent,e1-display"
       ],
       "forbidden_any": [
         "ERROR",
@@ -201,10 +201,10 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/linux/hello-mmio-smoke.log": {
+    "docs/evidence/linux/e1-mmio-smoke.log": {
       "blocker_code": "missing_linux_mmio_smoke_log",
       "claim_boundary": "single_runtime_driver_smoke_only_not_linux_or_android_boot_evidence",
-      "producer_command": "/usr/bin/hello-mmio-smoke",
+      "producer_command": "/usr/bin/e1-mmio-smoke",
       "capture_hint": "prepend EXTERNAL_TREE or TARGET, COMMAND, START_UTC, END_UTC, RESULT, then append the runtime smoke transcript from the external kernel image",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -214,12 +214,12 @@
         "RESULT="
       ],
       "required_any": [
-        "hello-mmio-smoke: PASS",
-        "HELLO_MMIO_SMOKE_PASS"
+        "e1-mmio-smoke: PASS",
+        "E1_MMIO_SMOKE_PASS"
       ],
       "required_all": [
-        "/dev/hello-npu",
-        "hello-dma"
+        "/dev/e1-npu",
+        "e1-dma"
       ],
       "forbidden_any": [
         "FAIL",
@@ -234,10 +234,10 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/linux/opensbi_openphone_build.log": {
+    "docs/evidence/linux/opensbi_openagent_build.log": {
       "blocker_code": "missing_opensbi_build_log",
       "claim_boundary": "external_opensbi_build_only_not_linux_or_android_boot_evidence",
-      "producer_command": "OPENPHONE_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build",
+      "producer_command": "OPENAGENT_OPENSBI_CMD='make PLATFORM=generic FW_DYNAMIC=y' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi build",
       "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, then append the verbatim external OpenSBI build transcript",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -270,7 +270,7 @@
     "docs/evidence/linux/opensbi_fw_dynamic_handoff.log": {
       "blocker_code": "missing_opensbi_handoff_log",
       "claim_boundary": "external_opensbi_fw_dynamic_handoff_only_not_linux_or_android_boot_evidence",
-      "producer_command": "OPENPHONE_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff",
+      "producer_command": "OPENAGENT_OPENSBI_HANDOFF_CMD='/exact/qemu-or-renode fw_dynamic handoff command' docs/sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff",
       "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, then append the external simulator or board UART transcript for the fw_dynamic handoff",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -300,10 +300,10 @@
         "VTS passed"
       ]
     },
-    "docs/evidence/android/openphone_ai_soc_lunch.log": {
+    "docs/evidence/android/openagent_ai_soc_lunch.log": {
       "blocker_code": "missing_aosp_lunch_log",
       "claim_boundary": "external_aosp_product_selection_only_not_boot_or_compatibility_evidence",
-      "producer_command": "source build/envsetup.sh && lunch openphone_ai_soc-userdebug",
+      "producer_command": "source build/envsetup.sh && lunch openagent_ai_soc-userdebug",
       "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, COMPATIBILITY_CLAIM=none, then append the AOSP lunch transcript",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -314,8 +314,8 @@
         "COMPATIBILITY_CLAIM=none"
       ],
       "required_any": [
-        "openphone_ai_soc-userdebug",
-        "TARGET_PRODUCT=openphone_ai_soc"
+        "openagent_ai_soc-userdebug",
+        "TARGET_PRODUCT=openagent_ai_soc"
       ],
       "required_all": [
         "TARGET_ARCH=riscv64"
@@ -334,7 +334,7 @@
         "certified"
       ]
     },
-    "docs/evidence/android/openphone_ai_soc_vendorimage.log": {
+    "docs/evidence/android/openagent_ai_soc_vendorimage.log": {
       "blocker_code": "missing_aosp_vendorimage_log",
       "claim_boundary": "external_aosp_vendorimage_build_only_not_boot_or_compatibility_evidence",
       "producer_command": "m vendorimage",
@@ -352,8 +352,8 @@
         "#### build completed successfully"
       ],
       "required_all": [
-        "openphone_hello.xml",
-        "vendor.hello_npu.ready=0"
+        "openagent_e1.xml",
+        "vendor.e1_npu.ready=0"
       ],
       "forbidden_any": [
         "FAILED:",
@@ -369,10 +369,10 @@
         "certified"
       ]
     },
-    "docs/evidence/android/openphone_ai_soc_checkvintf.log": {
+    "docs/evidence/android/openagent_ai_soc_checkvintf.log": {
       "blocker_code": "missing_aosp_checkvintf_log",
       "claim_boundary": "single_checkvintf_result_only_not_android_compatibility_evidence",
-      "producer_command": "checkvintf against out/target/product/openphone_ai_soc vendor artifacts",
+      "producer_command": "checkvintf against out/target/product/openagent_ai_soc vendor artifacts",
       "capture_hint": "prepend EXTERNAL_TREE, COMMAND, START_UTC, END_UTC, RESULT, COMPATIBILITY_CLAIM=none, then append checkvintf output against the real vendor artifacts",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -387,8 +387,8 @@
         "Compatible"
       ],
       "required_all": [
-        "openphone_hello.xml",
-        "openphone_ai_soc"
+        "openagent_e1.xml",
+        "openagent_ai_soc"
       ],
       "forbidden_any": [
         "INCOMPATIBLE",
@@ -404,7 +404,7 @@
         "CDD compliant"
       ]
     },
-    "docs/evidence/android/openphone_ai_soc_sepolicy_build.log": {
+    "docs/evidence/android/openagent_ai_soc_sepolicy_build.log": {
       "blocker_code": "missing_aosp_sepolicy_build_log",
       "claim_boundary": "expected_future_log_markers_only_not_boot_evidence",
       "producer_command": "m vendor_sepolicy.cil selinux_policy",
@@ -423,8 +423,8 @@
         "#### build completed successfully"
       ],
       "required_all": [
-        "hello_npu_device",
-        "hal_hello_npu_default"
+        "e1_npu_device",
+        "hal_e1_npu_default"
       ],
       "forbidden_any": [
         "neverallow check failed",
@@ -440,7 +440,7 @@
         "certified"
       ]
     },
-    "docs/evidence/android/openphone_ai_soc_selinux_neverallow.log": {
+    "docs/evidence/android/openagent_ai_soc_selinux_neverallow.log": {
       "blocker_code": "missing_aosp_selinux_neverallow_log",
       "claim_boundary": "expected_future_log_markers_only_not_boot_evidence",
       "producer_command": "m sepolicy_neverallows",
@@ -458,7 +458,7 @@
         "#### build completed successfully"
       ],
       "required_all": [
-        "hello_npu"
+        "e1_npu"
       ],
       "forbidden_any": [
         "neverallow check failed",
@@ -474,7 +474,7 @@
         "certified"
       ]
     },
-    "docs/evidence/android/openphone_ai_soc_cts_vts_plan.log": {
+    "docs/evidence/android/openagent_ai_soc_cts_vts_plan.log": {
       "blocker_code": "missing_aosp_cts_vts_intake_log",
       "claim_boundary": "expected_future_log_markers_only_not_boot_evidence",
       "producer_command": "m cts vts && cts-tradefed list modules && vts-tradefed list modules",
@@ -533,7 +533,7 @@
       ],
       "required_all": [
         "ro.product.cpu.abi=riscv64",
-        "openphone_ai_soc"
+        "openagent_ai_soc"
       ],
       "forbidden_any": [
         "boot timeout",
@@ -542,7 +542,7 @@
         "placeholder"
       ],
       "forbidden_claims": [
-        "booted on hello_soc",
+        "booted on e1_soc",
         "Android compatible",
         "CTS passed",
         "VTS passed",
@@ -571,7 +571,7 @@
       ],
       "required_all": [
         "qemu-system-riscv64",
-        "openphone_ai_soc"
+        "openagent_ai_soc"
       ],
       "forbidden_any": [
         "Kernel panic",
@@ -581,17 +581,17 @@
         "placeholder"
       ],
       "forbidden_claims": [
-        "booted on hello_soc",
+        "booted on e1_soc",
         "Android compatible",
         "CTS passed",
         "VTS passed",
         "certified"
       ]
     },
-    "docs/evidence/android/renode_hello_soc_smoke.log": {
+    "docs/evidence/android/renode_e1_soc_smoke.log": {
       "blocker_code": "missing_renode_virtual_device_smoke_log",
       "claim_boundary": "expected_future_log_markers_only_not_boot_evidence",
-      "producer_command": "renode sim/renode/openphone_hello.resc with Android-capable firmware/kernel handoff when available",
+      "producer_command": "renode sim/renode/openagent_e1.resc with Android-capable firmware/kernel handoff when available",
       "capture_hint": "prepend EXTERNAL_TREE or TARGET, COMMAND, START_UTC, END_UTC, RESULT, BOOT_CLAIM=none, COMPATIBILITY_CLAIM=none, SCHEMA=docs/android/boot-transcript.schema.json, then append the complete Renode monitor and UART smoke transcript",
       "required_metadata": [
         "EXTERNAL_TREE=",
@@ -610,7 +610,7 @@
       ],
       "required_all": [
         "renode",
-        "openphone_ai_soc"
+        "openagent_ai_soc"
       ],
       "forbidden_any": [
         "Kernel panic",
@@ -620,7 +620,7 @@
         "placeholder"
       ],
       "forbidden_claims": [
-        "booted on hello_soc",
+        "booted on e1_soc",
         "Android compatible",
         "CTS passed",
         "VTS passed",

@@ -1,6 +1,6 @@
-# Hello SoC floorplan note
+# E1 SoC floorplan note
 
-The hello chip is small enough to run as a flat design. The full project should move to hierarchical hardening:
+The e1 chip is small enough to run as a flat design. The full project should move to hierarchical hardening:
 
 ```text
 npu_tile

@@ -1,6 +1,6 @@
 # CPU subsystem contract
 
-The repository now carries a minimal executable RISC-V CPU path at the former stub boundary, `rtl/cpu/hello_cpu_subsystem_stub.sv`. The module name is intentionally preserved to avoid broad integration churn, but the behavior is no longer quiescent: after reset it fetches 32-bit RISC-V instructions from `RESET_PC` over the existing AXI-Lite manager port, executes a small integer subset, and halts on `ECALL`, illegal instructions, or bus errors.
+The repository now carries a minimal executable RISC-V CPU path at the former stub boundary, `rtl/cpu/e1_cpu_subsystem_stub.sv`. The module name is intentionally preserved to avoid broad integration churn, but the behavior is no longer quiescent: after reset it fetches 32-bit RISC-V instructions from `RESET_PC` over the existing AXI-Lite manager port, executes a small integer subset, and halts on `ECALL`, illegal instructions, or bus errors.
 
 ## Boundary
 
@@ -18,7 +18,7 @@ The CPU issues one aligned 32-bit AXI-Lite transaction at a time. Instruction fe
 
 ## Implemented stepping-stone ISA
 
-This is a tiny RV execution path for hello-chip proof, not a Linux-capable application core.
+This is a tiny RV execution path for e1-chip proof, not a Linux-capable application core.
 
 | Area | Implemented now |
 | --- | --- |
@@ -30,14 +30,14 @@ This is a tiny RV execution path for hello-chip proof, not a Linux-capable appli
 | Halt | `ECALL`/`EBREAK`, illegal instruction, or AXI error response |
 | Interrupts | level inputs are reflected through `irq_pending`; trap entry/CSR handling is not implemented |
 
-The focused simulation wrapper `verify/cocotb/hello_tiny_cpu_contract_tb.sv` resets the CPU at `0x8000_0000`, preloads the DRAM model through a loader AXI-Lite path, then releases the CPU. The cocotb test `verify/cocotb/test_tiny_cpu_execution.py` proves fetch, execute, DRAM store, interrupt-controller MMIO write, halt, and external IRQ reflection.
+The focused simulation wrapper `verify/cocotb/e1_tiny_cpu_contract_tb.sv` resets the CPU at `0x8000_0000`, preloads the DRAM model through a loader AXI-Lite path, then releases the CPU. The cocotb test `verify/cocotb/test_tiny_cpu_execution.py` proves fetch, execute, DRAM store, interrupt-controller MMIO write, halt, and external IRQ reflection.
 
 ## Linux-capable bring-up target
 
 | Contract item | Target |
 | --- | --- |
 | Generator | Chipyard `1.13.0` commit `69eba860a352343e4ac6b6df0f3638a79a86ec78` |
-| Config | `OpenPhoneRocketConfig` |
+| Config | `OpenAgentRocketConfig` |
 | Core | Single Rocket application hart for first integration only |
 | ISA | RV64GC application hart, plus platform-defined management hart if needed |
 | Reset | `reset_pc` points at boot ROM or firmware entry |
@@ -55,7 +55,7 @@ evidence.
 
 The Linux-capable CPU/AP requirements gate is
 `docs/arch/linux-capable-cpu-contract.md`. The generator selection gate is
-`generators/chipyard/openphone-rocket-manifest.json`, checked by
+`generators/chipyard/openagent-rocket-manifest.json`, checked by
 `make chipyard-generator-check`.
 
 Remaining blockers to RV64GC/Linux are CSR/trap machinery, privilege modes, CLINT-compatible timer/software interrupts, PLIC compatibility, atomics, compressed/floating-point extensions, MMU/page-table walks, caches/coherency, wider/high-throughput memory fabric, and a real boot ROM/OpenSBI handoff.

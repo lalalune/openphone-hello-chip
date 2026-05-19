@@ -1,6 +1,6 @@
-# Hello Demo Debug/MMIO Interface
+# E1 Demo Debug/MMIO Interface
 
-`hello_chip_top` exposes a 4-bit package-facing debug interface and translates it into the internal 32-bit MMIO bus.
+`e1_chip_top` exposes a 4-bit package-facing debug interface and translates it into the internal 32-bit MMIO bus.
 
 ## Pins
 

@@ -38,7 +38,7 @@
     "vpwr_worst_ir_drop_v": 8.76137e-05
   },
   "release_use": "prohibited",
-  "schema": "openphone.local_power_estimates.v1",
+  "schema": "openagent.local_power_estimates.v1",
   "source_artifacts": {
     "npu_architecture_benchmark_report": "benchmarks/results/npu-arch-sim-open-2028/report.json",
     "openlane_metrics": "pd/openlane/runs/RUN_2026-05-18_05-41-42/final/metrics.json",

@@ -8,7 +8,7 @@ directory layout that will hold the generated CPU subsystem once it is imported.
 
 v0 CPU subsystem is **Rocket RV64GC, single hart, SV39 MMU, L1 I$ + D$, with
 CLINT and PLIC**. Wrapped in a thin AXI/TileLink adapter to the existing
-`hello_linux_soc_contract` memory and MMIO contract. Rationale lives in
+`e1_linux_soc_contract` memory and MMIO contract. Rationale lives in
 `docs/rtl/open_rtl_prototype_path.md`; this doc is the actionable selection.
 
 | Item | Value | Notes |
@@ -24,13 +24,13 @@ CLINT and PLIC**. Wrapped in a thin AXI/TileLink adapter to the existing
 | Compressed | C extension | Required for OpenSBI/Linux RV64GC payloads. |
 | CLINT | `freechips.rocketchip.devices.tilelink.CLINT` | mtime, mtimecmp, msip per hart. |
 | PLIC | `freechips.rocketchip.devices.tilelink.PLIC` | M+S contexts per hart, >= 8 source IDs reserved. |
-| Boot ROM | Replaced by the generated Rocket BootROM loaded from `fw/boot-rom/hello_boot_rom.bin` | See `docs/arch/boot-rom-spec.md`. |
+| Boot ROM | Replaced by the generated Rocket BootROM loaded from `fw/boot-rom/e1_boot_rom.bin` | See `docs/arch/boot-rom-spec.md`. |
 | Debug | Standard Rocket `DebugModule` (DMI/JTAG) gated by life-cycle policy | See debug-lock policy in boot ROM spec. |
 | External memory port | AXI4 master (via TileLink-to-AXI4 bridge) into `rtl/memory/` | Width 64; adapt to AXI-Lite32 only at the contract boundary for v0 cosim. |
 | External MMIO port | AXI4-Lite master | Routes to existing `0x0C00_0000` (INTC alias) and `0x1001_0000` (DMA) windows. |
 
 The CLINT and PLIC come from the Chipyard/Rocket generator; the existing
-`hello_interrupt_controller` becomes a compatibility shim and will be retired
+`e1_interrupt_controller` becomes a compatibility shim and will be retired
 once the generated PLIC drives the downstream IRQ contract.
 
 ## Upstream pin
@@ -56,36 +56,36 @@ Generator invocation (target, not yet wired into `Makefile`):
 ```sh
 cd external/chipyard
 ./scripts/init-submodules-no-riscv-tools.sh
-make -C sims/verilator CONFIG=OpenPhoneHelloRocketConfig verilog
+make -C sims/verilator CONFIG=OpenAgentE1RocketConfig verilog
 # emit Verilog only; do not run sim from this repo's CI
 ```
 
-`OpenPhoneHelloRocketConfig` is a local config class that lives under
+`OpenAgentE1RocketConfig` is a local config class that lives under
 `rtl/wrappers/chipyard/src/main/scala/`. It composes Chipyard's
-`AbstractConfig` with `WithNBigCores(1)`, the OpenPhone memory map
-(`MemoryBusKey` at `0x8000_0000`), and the OpenPhone MMIO bus
+`AbstractConfig` with `WithNBigCores(1)`, the OpenAgent memory map
+(`MemoryBusKey` at `0x8000_0000`), and the OpenAgent MMIO bus
 (`PeripheryBusKey` carved to expose `0x0C00_0000` and `0x1001_0000`).
 
 ## Wrapper directory layout
 
 All imported/generated artefacts live under `rtl/wrappers/` to keep them
-isolated from the hand-written `hello_*` contract RTL:
+isolated from the hand-written `e1_*` contract RTL:
 
 ```text
 rtl/wrappers/
   README.md                              # provenance + regen instructions
   chipyard/
     src/main/scala/
-      OpenPhoneHelloConfig.scala         # Config class composition
-      OpenPhoneBootROM.scala             # references fw/boot-rom artefact path
+      OpenAgentE1Config.scala         # Config class composition
+      OpenAgentBootROM.scala             # references fw/boot-rom artefact path
     generated/                           # checked-in generated Verilog, machine written
-      OpenPhoneHelloRocketTop.v          # generator output, DO NOT hand-edit
-      OpenPhoneHelloRocketTop.fir        # FIRRTL for re-elaboration
-      OpenPhoneHelloRocketTop.dts        # device tree fragment, checked vs sw/platform
+      OpenAgentE1RocketTop.v          # generator output, DO NOT hand-edit
+      OpenAgentE1RocketTop.fir        # FIRRTL for re-elaboration
+      OpenAgentE1RocketTop.dts        # device tree fragment, checked vs sw/platform
       generated.manifest                 # chipyard SHA, scala/jdk, command, timestamp
     rocket_subsystem_wrapper.sv          # SV wrapper: clocks, resets, AXI bridges
     plic_compat_shim.sv                  # adapts generated PLIC IRQ ID space to existing
-                                         # hello_interrupt_controller register window
+                                         # e1_interrupt_controller register window
     clint_axi_adapter.sv                 # exposes CLINT mtime/mtimecmp to debug-MMIO scan
   README_PROVENANCE.md
 ```
@@ -102,7 +102,7 @@ Each step is a separate logical commit on its own branch off `ws/cpu-boot-spec`:
 1. **Pin upstream.** Fill `TODO_PIN_CHIPYARD_SHA` in this doc, add the
    `git checkout` step to `scripts/bootstrap_chipyard.sh`, and archive
    `build/evidence/cpu_ap/chipyard.sha` + recursive submodule status.
-2. **Add Scala config.** Author `OpenPhoneHelloConfig.scala` under
+2. **Add Scala config.** Author `OpenAgentE1Config.scala` under
    `rtl/wrappers/chipyard/src/main/scala/`. No build wiring yet.
 3. **Add elaboration target.** New `make rocket-elab` runs the Chipyard
    generator and copies output to `rtl/wrappers/chipyard/generated/` along
@@ -110,14 +110,14 @@ Each step is a separate logical commit on its own branch off `ws/cpu-boot-spec`:
    `make ci` until step 6 lands.
 4. **Bridge RTL.** Add `rocket_subsystem_wrapper.sv` to translate the
    generated AXI4 ports to the AXI-Lite32 contract used by
-   `hello_linux_soc_contract`. Width adapters live in this file only.
+   `e1_linux_soc_contract`. Width adapters live in this file only.
 5. **Boot ROM hookup.** Reference the assembled stub from `fw/boot-rom/`
    (see `docs/arch/boot-rom-spec.md`) as the Chipyard `BootROMParams.contentFileName`.
-6. **Verification crossover.** Wire a new cocotb top (`hello_rocket_soc_tb.sv`)
+6. **Verification crossover.** Wire a new cocotb top (`e1_rocket_soc_tb.sv`)
    that drops the wrapper into the contract harness, runs a `wfi` smoke and a
    CLINT timer interrupt smoke, and archives `build/evidence/cpu_ap/rocket_smoke.log`.
-7. **Retire stub alias.** Rename `hello_cpu_subsystem_stub.sv` to
-   `hello_tiny_cpu_contract.sv`; keep a thin alias module under the old name
+7. **Retire stub alias.** Rename `e1_cpu_subsystem_stub.sv` to
+   `e1_tiny_cpu_contract.sv`; keep a thin alias module under the old name
    for one release cycle.
 
 ## Blocking gates (do not flip until evidence exists)

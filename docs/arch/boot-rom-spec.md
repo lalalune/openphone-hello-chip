@@ -1,7 +1,7 @@
 # Boot ROM specification
 
 Status: spec for the v0 boot ROM that lives in `rtl/bootrom/` and `fw/boot-rom/`.
-The current `rtl/bootrom/hello_bootrom.sv` is an identity/contract ROM; this
+The current `rtl/bootrom/e1_bootrom.sv` is an identity/contract ROM; this
 document specifies the executable replacement and the OTP, secure-boot, debug,
 and OpenSBI hand-off contracts around it. Until the executable ROM is wired to
 the production CPU wrapper, treat this document as the contract that any change
@@ -20,7 +20,7 @@ to either side must keep stable.
 The ROM aperture mirrors the Rocket BootROM aperture default so the Chipyard
 generator can be pointed at this binary unmodified via
 `BootROMParams.contentFileName` and `BootROMParams.address = 0x10000` truncated
-to the OpenPhone reset vector.
+to the OpenAgent reset vector.
 
 `reset_pc` exported by the CPU wrapper **must** equal `0x0000_1000`. Any
 divergence is a release blocker.
@@ -137,7 +137,7 @@ before any release claims "debug locked".
 
 ## Cross-references
 
-- RTL aperture: `rtl/bootrom/hello_bootrom.sv` (current identity ROM) and
+- RTL aperture: `rtl/bootrom/e1_bootrom.sv` (current identity ROM) and
   `fw/boot-rom/reset.S` (executable replacement stub).
 - CPU integration: `docs/rtl/cpu-config-selection.md`.
 - Interrupts/CLINT/PLIC: `docs/arch/interrupts.md`.

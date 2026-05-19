@@ -1,12 +1,12 @@
-adapter: hello_demo_wifi_external_module
+adapter: e1_demo_wifi_external_module
 status: constraint_stub_no_physical_pin_assignment
 reference_module: package/wifi/murata-1dx-sdio.yaml
 purpose: >
   Reserve the logical FPGA/package-facing signal names needed to exercise a
   Linux-supported external SDIO WiFi plus UART Bluetooth module on a future
-  hello-demo carrier or mezzanine.
+  e1-demo carrier or mezzanine.
 release_limits:
-  - No RF silicon is present in hello-chip.
+  - No RF silicon is present in e1-chip.
   - No bitstream release is allowed from this stub.
   - Exact FPGA pins, bank voltage, trace lengths, antenna placement, and module
     power tree remain board-revision work.

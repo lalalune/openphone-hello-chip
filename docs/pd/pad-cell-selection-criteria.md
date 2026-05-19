@@ -1,13 +1,13 @@
 # Pad cell selection criteria
 
 This document defines the pad-cell and ESD requirements that any candidate PDK
-must satisfy before the `openphone_hello_demo` chip can be hardened against it.
+must satisfy before the `openagent_e1_demo` chip can be hardened against it.
 It is intentionally foundry-agnostic. A foundry/PDK selection is a separate,
 gated decision tracked in `docs/manufacturing/release-manifest.yaml`.
 
 The padframe contract this matrix has to satisfy is
-`pd/padframe/hello_demo_padframe.yaml`, and the pinout it has to drive is
-`package/hello-demo-pinout.yaml` (64 pins, 3.3 V IO, 1.8 V core).
+`pd/padframe/e1_demo_padframe.yaml`, and the pinout it has to drive is
+`package/e1-demo-pinout.yaml` (64 pins, 3.3 V IO, 1.8 V core).
 
 ## 1. Required pad classes
 
@@ -122,4 +122,4 @@ following must be checked in:
 
 Until those artifacts exist, the `padframe_release`, `package_release`, and
 `board_fabrication_release` gates in
-`pd/padframe/hello_demo_padframe.yaml` remain blocked.
+`pd/padframe/e1_demo_padframe.yaml` remain blocked.

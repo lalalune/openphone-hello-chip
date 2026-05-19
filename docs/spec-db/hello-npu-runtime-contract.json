@@ -1,11 +1,11 @@
 {
-  "schema": "openphone.hello_npu_runtime_contract.v1",
+  "schema": "openagent.e1_npu_runtime_contract.v1",
   "as_of": "2026-05-17",
   "claim_boundary": "prototype_mmio_runtime_contract_only_not_phone_class_ai_accelerator",
   "current_capability": {
     "classification": "L0_RTL_UNIT",
-    "rtl": "rtl/npu/hello_npu.sv",
-    "runtime": "compiler/runtime/hello_npu_runtime.py",
+    "rtl": "rtl/npu/e1_npu.sv",
+    "runtime": "compiler/runtime/e1_npu_runtime.py",
     "software_claim": "MMIO scalar, packed-dot, bounded scratchpad GEMM, and local descriptor-driven DRAM-to-scratchpad tensor prefetch prototype only",
     "not_claimed": [
       "Android NNAPI acceleration",
@@ -146,7 +146,7 @@
     "DMA tensor streaming evidence must include DESC_BYTES_READ from the measured NPU path and explicitly state that writeback DMA is not implemented",
     "Precision support beyond DOT4_S8, DOT8_S4, and GEMM_S8 must remain blocked until the precision matrix and runtime tests identify the measured path",
     "Verilator GEMM smoke test checks unsupported_ops, cycles, macs, ops, and errors counters",
-    "Android HAL/NNAPI acceleration remains blocked without hello_npu_nnapi.proof.json plus VTS/CTS/SELinux evidence",
+    "Android HAL/NNAPI acceleration remains blocked without e1_npu_nnapi.proof.json plus VTS/CTS/SELinux evidence",
     "Benchmark evidence must bind model hashes, transcript hashes, perf counters, DMA traces, and CPU fallback accounting"
   ],
   "target_2028_delta": {

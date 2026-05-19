@@ -1,6 +1,6 @@
 # Display contract
 
-The hello display block is a minimal synthesizable timing, address-generation,
+The e1 display block is a minimal synthesizable timing, address-generation,
 and framebuffer-fetch scaffold. It keeps the existing framebuffer-oriented MMIO
 contract and exposes a narrow read-side client interface that can be coupled to
 DRAM or a verification memory model.
@@ -44,7 +44,7 @@ If an active pixel is not ready, `scan_rgb` is driven black for that pixel and
 `UNDERFLOW_COUNT` increments. Successful active-pixel reads increment
 `FETCHED_PIXEL_COUNT`.
 
-The top-level hello-chip scope connects the framebuffer client to the
+The top-level e1-chip scope connects the framebuffer client to the
 debug-visible SRAM-backed DRAM aperture at `0x8000_0000`. In-aperture aligned
 read addresses return the corresponding framebuffer word; out-of-aperture or
 unaligned active scanout addresses deassert `fb_read_ready`, drive black for
@@ -61,7 +61,7 @@ HWC path.
 
 ## v0 reference panel
 
-The hello chip v0 targets a **720x1280 portrait MIPI-DSI** panel as the
+The e1 chip v0 targets a **720x1280 portrait MIPI-DSI** panel as the
 software-visible reference. The concrete part is the **Raspberry Pi 7" DSI
 Touch Display v1.1-class** module (or any panel compatible with the Linux
 `simple-panel` driver advertising the same timing), chosen because:
@@ -96,7 +96,7 @@ high-level order is:
    `FORMAT = XR24`, then `ENABLE = 1`.
 
 This sequence is the boot-time prerequisite; nothing in the current
-`hello_display` RTL implements the DSI command path. The DSI controller
+`e1_display` RTL implements the DSI command path. The DSI controller
 and its command FIFO are tracked under the
 `display-real-framebuffer-path` gap. Until that lands, the v0 contract
 is exercised in cocotb against a synthetic perfect or starved

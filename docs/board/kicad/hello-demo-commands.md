@@ -1,4 +1,4 @@
-# Hello demo KiCad command capture plan
+# E1 demo KiCad command capture plan
 
 The checked-in KiCad project is a local planning scaffold only. These commands
 are the required headless transcript plan for regenerating ERC, DRC, fabrication,
@@ -13,13 +13,13 @@ current-limit, DFM, and first-article evidence is archived and reviewed.
 
 ```sh
 kicad-cli version
-kicad-cli sch erc --output board/reports/fab/<rev>/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
-kicad-cli pcb drc --output board/reports/fab/<rev>/hello-demo-drc-report.txt board/kicad/hello-demo/hello-demo.kicad_pcb
-kicad-cli pcb export gerbers --output board/reports/fab/<rev>/gerbers board/kicad/hello-demo/hello-demo.kicad_pcb
-kicad-cli pcb export drill --output board/reports/fab/<rev>/drill board/kicad/hello-demo/hello-demo.kicad_pcb
-kicad-cli sch export bom --output board/reports/fab/<rev>/hello-demo-bom.csv board/kicad/hello-demo/hello-demo.kicad_sch
-kicad-cli pcb export pos --output board/reports/fab/<rev>/hello-demo-position.csv board/kicad/hello-demo/hello-demo.kicad_pcb
-kicad-cli pcb export pdf --output board/reports/fab/<rev>/pdf/hello-demo-fab-drawing.pdf board/kicad/hello-demo/hello-demo.kicad_pcb
+kicad-cli sch erc --output board/reports/fab/<rev>/e1-demo-erc-report.txt board/kicad/e1-demo/e1-demo.kicad_sch
+kicad-cli pcb drc --output board/reports/fab/<rev>/e1-demo-drc-report.txt board/kicad/e1-demo/e1-demo.kicad_pcb
+kicad-cli pcb export gerbers --output board/reports/fab/<rev>/gerbers board/kicad/e1-demo/e1-demo.kicad_pcb
+kicad-cli pcb export drill --output board/reports/fab/<rev>/drill board/kicad/e1-demo/e1-demo.kicad_pcb
+kicad-cli sch export bom --output board/reports/fab/<rev>/e1-demo-bom.csv board/kicad/e1-demo/e1-demo.kicad_sch
+kicad-cli pcb export pos --output board/reports/fab/<rev>/e1-demo-position.csv board/kicad/e1-demo/e1-demo.kicad_pcb
+kicad-cli pcb export pdf --output board/reports/fab/<rev>/pdf/e1-demo-fab-drawing.pdf board/kicad/e1-demo/e1-demo.kicad_pcb
 python3 scripts/check_manufacturing_artifacts.py --resolved-manifest build/reports/manufacturing-resolved-artifacts.json
 python3 scripts/run_product_evidence_command.py --list
 ```

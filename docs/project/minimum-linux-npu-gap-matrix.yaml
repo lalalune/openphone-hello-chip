@@ -1,4 +1,4 @@
-schema: openphone.minimum_linux_npu_gap_matrix.v1
+schema: openagent.minimum_linux_npu_gap_matrix.v1
 last_verified_local: "2026-05-18"
 verification_scope:
   owner: worker_d_integration_verification
@@ -18,11 +18,11 @@ commands:
   - command: scripts/run_verilator.sh
     result: pass
     evidence:
-      - hello_chip Verilator smoke passed
+      - e1_chip Verilator smoke passed
       - GEMM_S8 2x2x3 passed
   - command: make npu-runtime-contract-check
     result: pass
-    evidence: hello NPU runtime contract check passed.
+    evidence: e1 NPU runtime contract check passed.
   - command: make linux-boot-artifacts-check
     result: blocked
     evidence: >
@@ -31,9 +31,9 @@ commands:
   - command: python3 scripts/check_linux_boot_artifacts.py
     result: blocked
     evidence:
-      - OPENPHONE_LINUX_TREE is unset.
-      - OPENPHONE_BUILDROOT_TREE is unset.
-      - OPENPHONE_OPENSBI_TREE is unset.
+      - OPENAGENT_LINUX_TREE is unset.
+      - OPENAGENT_BUILDROOT_TREE is unset.
+      - OPENAGENT_OPENSBI_TREE is unset.
       - Required kernel, DTB, OpenSBI handoff, serial boot, rootfs, and MMIO smoke logs are missing with BLOCKED notes.
       - Payload locator found external/chipyard/software/firemarshal/images/firechip/linux-poweroff/linux-poweroff-bin-nodisk.
   - command: make software-bsp-test
@@ -71,14 +71,14 @@ gap_matrix:
   - area: target_side_ml_smoke
     status: blocked
     blocker: >
-      No generated-AP Linux transcript shows /dev/hello-npu or documented
+      No generated-AP Linux transcript shows /dev/e1-npu or documented
       /dev/mem fallback running deterministic GEMM_S8 with PASS markers.
     closing_command: make minimum-linux-npu-target-check
 
 remaining_blockers:
   - Restore or add Makefile wiring for linux-boot-artifacts-check.
-  - Set OPENPHONE_LINUX_TREE, OPENPHONE_BUILDROOT_TREE, and OPENPHONE_OPENSBI_TREE.
+  - Set OPENAGENT_LINUX_TREE, OPENAGENT_BUILDROOT_TREE, and OPENAGENT_OPENSBI_TREE.
   - Capture external kernel build and DTB validation logs.
   - Capture OpenSBI handoff and generated-AP serial Linux boot transcript.
-  - Capture target-side hello-mmio-smoke and hello-npu ML smoke PASS logs.
+  - Capture target-side e1-mmio-smoke and e1-npu ML smoke PASS logs.
   - Run the aggregate minimum Linux+NPU target gate after evidence capture.

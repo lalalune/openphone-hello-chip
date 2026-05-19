@@ -1,6 +1,6 @@
-target: hello_demo_fpga
+target: e1_demo_fpga
 status: scaffold
-rtl_top: hello_chip_top
+rtl_top: e1_chip_top
 family: ecp5
 flow:
   synth: yosys
@@ -9,7 +9,7 @@ flow:
 board:
   class: ulx3s_85f
   selected_demo_board: Radiona/FER ULX3S 85F
-  selected_demo_board_role: stage1_hello_demo_mmio
+  selected_demo_board_role: stage1_e1_demo_mmio
   exact_revision: unassigned
   exact_revision_evidence: unassigned
   ecp5_device: LFE5U-85F-6BG381C
@@ -47,7 +47,7 @@ reserved_inputs:
 reserved_outputs:
   - JTAG_TDO
 constraints:
-  skeleton_lpf: board/fpga/constraints/hello_demo_ulx3s.lpf
+  skeleton_lpf: board/fpga/constraints/e1_demo_ulx3s.lpf
   final_lpf: unassigned
   bitstream_release_blocked_until_pins_assigned: true
   required_locate_assignments: 35

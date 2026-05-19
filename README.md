@@ -1,12 +1,12 @@
-# OpenPhone Hello Chip
+# OpenAgent E1 Chip
 
-This repository is a CLI-first pre-tapeout scaffold for an open RISC-V AI phone SoC. The current executable milestone is a small `hello_soc` pipeline that ties together architecture contracts, RTL, cocotb/formal verification, QEMU/Renode software-facing smoke targets, FPGA/package evidence, and physical-design entry points.
+This repository is a CLI-first pre-tapeout scaffold for an open RISC-V AI phone SoC. The current executable milestone is a small `e1_soc` pipeline that ties together architecture contracts, RTL, cocotb/formal verification, QEMU/Renode software-facing smoke targets, FPGA/package evidence, and physical-design entry points.
 
-The hello chip is not the final phone SoC. It is the smallest end-to-end system used to prove the project conventions, evidence gates, and tool setup before scaling the design.
+The e1 chip is not the final phone SoC. It is the smallest end-to-end system used to prove the project conventions, evidence gates, and tool setup before scaling the design.
 
 ## Repository Layout
 
-- `rtl/`: SystemVerilog RTL for the hello chip, NPU, DMA, display, interconnect, interrupt, memory, and CPU/AP stubs.
+- `rtl/`: SystemVerilog RTL for the e1 chip, NPU, DMA, display, interconnect, interrupt, memory, and CPU/AP stubs.
 - `verify/`: cocotb tests, formal properties, and verification status artifacts.
 - `compiler/runtime/`: Python runtime and simulator-facing NPU contract checks.
 - `fw/`: boot ROM, bare-metal, and OpenSBI payload experiments.
@@ -36,8 +36,8 @@ make smoke
 Docker is the most reproducible starting point for a new machine:
 
 ```sh
-docker build -t openphone-soc-tools .
-docker run --rm -it -v "$PWD:/work" -w /work openphone-soc-tools make smoke
+docker build -t openagent-soc-tools .
+docker run --rm -it -v "$PWD:/work" -w /work openagent-soc-tools make smoke
 ```
 
 Use the Docker path when host package versions are inconvenient or when you need a clean Linux-like environment from macOS.
@@ -108,7 +108,7 @@ make clean                         remove generated local build outputs
 
 ## External Flow Notes
 
-- Chipyard generation and Linux boot smoke flows are wired through `scripts/bootstrap_chipyard.sh`, `scripts/generate_chipyard_openphone.py`, `scripts/run_chipyard_openphone_linux_smoke.sh`, and related `make chipyard-*` targets.
+- Chipyard generation and Linux boot smoke flows are wired through `scripts/bootstrap_chipyard.sh`, `scripts/generate_chipyard_openagent.py`, `scripts/run_chipyard_openagent_linux_smoke.sh`, and related `make chipyard-*` targets.
 - Linux BSP import and evidence capture are under `sw/linux/scripts/` and `docs/sw/linux/`.
 - Buildroot package scaffolds and import checks are under `sw/buildroot/` and `docs/sw/buildroot/`.
 - OpenSBI, U-Boot, boot ROM, and QEMU/Renode boot-tier status are documented under `docs/sw/`, `docs/boot-rom/`, and `docs/sim/`.

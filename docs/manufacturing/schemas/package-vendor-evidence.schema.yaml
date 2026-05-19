@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://openphone.example/schemas/package-vendor-evidence.schema.yaml
+$id: https://openagent.example/schemas/package-vendor-evidence.schema.yaml
 title: Package vendor evidence record
 type: object
 required:

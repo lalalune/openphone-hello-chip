@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from compiler.runtime.hello_npu_scale_model import (  # noqa: E402
+from compiler.runtime.e1_npu_scale_model import (  # noqa: E402
     MIN_REAL_V1,
     OPEN_2028_FIRST,
     OPEN_2028_STRETCH,
@@ -81,7 +81,7 @@ def main() -> int:
     config = CONFIGS[args.config]
     kernels = [metric_entry(config, estimate) for estimate in build_workload(config)]
     report = {
-        "schema": "openphone.npu_scale_sim.v1",
+        "schema": "openagent.npu_scale_sim.v1",
         "config": {
             "name": config.name,
             "tiles": config.tiles,

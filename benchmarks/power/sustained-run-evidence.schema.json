@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "OpenPhone sustained power/thermal evidence manifest",
+  "title": "OpenAgent sustained power/thermal evidence manifest",
   "type": "object",
   "required": [
     "schema",
@@ -16,7 +16,7 @@
   ],
   "properties": {
     "schema": {
-      "const": "openphone.sustained_power_thermal_evidence.v1"
+      "const": "openagent.sustained_power_thermal_evidence.v1"
     },
     "status": {
       "enum": ["blocked", "draft_local_evidence", "complete_measured_evidence"]

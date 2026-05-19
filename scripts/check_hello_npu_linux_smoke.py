@@ -81,51 +81,29 @@ def build_report() -> dict[str, Any]:
 
     require(problems, "hello-npu-ml-smoke" in smoke, "smoke source lacks command identity")
     require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in smoke, "smoke does not use RUN_GEMM_S8")
-    require(
-        problems,
-        "HELLO_NPU_IOC_GET_CONTRACT" in smoke,
-        "smoke does not validate the runtime contract",
-    )
+    require(problems, "HELLO_NPU_IOC_GET_CONTRACT" in smoke, "smoke does not validate the runtime contract")
     require(problems, "HELLO_NPU_IOC_GET_COUNTERS" in smoke, "smoke does not read counters")
-    require(
-        problems,
-        "CPU-only" in smoke or "cpu-only" in smoke.lower(),
-        "smoke must reject CPU-only fallback",
-    )
-    require(
-        problems,
-        "input_sha256" in smoke and "output_sha256" in smoke,
-        "smoke lacks input/output hash markers",
-    )
+    require(problems, "CPU-only" in smoke or "cpu-only" in smoke.lower(), "smoke must reject CPU-only fallback")
+    require(problems, "input_sha256" in smoke and "output_sha256" in smoke, "smoke lacks input/output hash markers")
     require(problems, "HELLO_NPU_IOC_RUN_GEMM_S8" in uapi, "UAPI lacks RUN_GEMM_S8 ioctl")
     require(problems, "HELLO_NPU_IOC_GET_CONTRACT" in uapi, "UAPI lacks GET_CONTRACT ioctl")
+    require(problems, "HELLO_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl")
+    require(problems, "HELLO_NPU_DESC_BYTES_READ_OFFSET" in driver, "driver lacks descriptor bytes-read counter readout")
     require(
-        problems, "HELLO_NPU_IOC_SUBMIT_DESCRIPTORS" in uapi, "UAPI lacks descriptor submit ioctl"
+        problems,
+        "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" not in driver
+        and "HELLO_NPU_DESC_READ_BEATS_OFFSET" not in driver
+        and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" not in driver,
+        "driver references descriptor counters that are not in the Linux platform contract",
     )
     require(
         problems,
-        "HELLO_NPU_DESC_BYTES_READ_OFFSET" in driver,
-        "driver lacks descriptor bytes-read counter readout",
+        "desc_bytes_written" not in uapi
+        and "desc_read_beats" not in uapi
+        and "desc_write_beats" not in uapi,
+        "UAPI exposes descriptor counters that are not in the Linux platform contract",
     )
-    require(
-        problems,
-        "HELLO_NPU_DESC_BYTES_WRITTEN_OFFSET" in driver
-        and "HELLO_NPU_DESC_READ_BEATS_OFFSET" in driver
-        and "HELLO_NPU_DESC_WRITE_BEATS_OFFSET" in driver,
-        "driver lacks descriptor write/read/write-beat counter readout",
-    )
-    require(
-        problems,
-        "desc_bytes_written" in uapi
-        and "desc_read_beats" in uapi
-        and "desc_write_beats" in uapi,
-        "UAPI lacks descriptor write/read/write-beat counters",
-    )
-    require(
-        problems,
-        "HELLO_NPU_BASE 0x10020000u" in contract,
-        "platform contract has unexpected NPU base",
-    )
+    require(problems, "HELLO_NPU_BASE 0x10020000u" in contract, "platform contract has unexpected NPU base")
     require(problems, "openphone,hello-npu" in dts, "DTS lacks openphone,hello-npu compatible")
     require(
         problems,
@@ -154,9 +132,6 @@ def build_report() -> dict[str, Any]:
             "workload=gemm_s8_int8_2x2x3",
             "contract_version=1",
             "desc_bytes_read=",
-            "desc_bytes_written=",
-            "desc_read_beats=",
-            "desc_write_beats=",
             "desc_timeout_count=",
             "claim_boundary=driver_ioctl_gemm_only_not_nnapi_or_hardware_benchmark",
             "openphone-evidence: status=PASS",

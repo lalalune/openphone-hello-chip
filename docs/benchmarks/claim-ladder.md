@@ -69,7 +69,7 @@ Cannot support:
 
 ### L2 — FPGA bitstream
 
-Substrate: hello_soc bitstream on a supported FPGA board (e.g. ULX3S
+Substrate: e1_soc bitstream on a supported FPGA board (e.g. ULX3S
 or FireSim-class). Maps to schema `claim_level: L3_FPGA`. Result
 `provenance` must be `measured`.
 
@@ -128,7 +128,7 @@ Can support:
   on real silicon).
 - CTS / VTS subset pass criteria (per
   `docs/android/cts-vts-smoke-plan.md`).
-- TFLite benchmark_model on CPU and through the hello-NPU NNAPI path,
+- TFLite benchmark_model on CPU and through the e1-NPU NNAPI path,
   with `unsupported_op_count` and `cpu_fallback_percent` required.
 - Sustained workload behavior, app launch latency, and SQLite / fio on
   the production storage stack — when the thermal envelope and power

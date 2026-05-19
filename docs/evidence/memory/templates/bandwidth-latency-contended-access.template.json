@@ -1,5 +1,5 @@
 {
-  "schema": "openphone.memory.bandwidth_latency_contended_access.template.v1",
+  "schema": "openagent.memory.bandwidth_latency_contended_access.template.v1",
   "template_status": "template_only_not_evidence",
   "claim_boundary": "This template is not DRAM, LPDDR, UMA, IOMMU, QoS, Android, or phone-class evidence. A copied report becomes evidence only after every placeholder is replaced with real target measurements and raw artifacts.",
   "report": {

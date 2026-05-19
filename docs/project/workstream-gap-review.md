@@ -25,7 +25,7 @@ No workstream can move to Done unless all applicable gates below are satisfied.
 |---|---|---|
 | Evidence gate | Command transcript, report, log, or generated artifact is checked in or archived with a versioned path. | A passing statement has no artifact path. |
 | Tool gate | Required tools, images, PDKs, external trees, and package versions are pinned by digest, lockfile, tag, SHA, or checksum. | A default branch, floating apt package set, or unrecorded local install is used as release evidence. |
-| Boundary gate | The artifact says whether it proves hello-chip debug MMIO, Linux-capable scaffold behavior, qemu-virt software behavior, FPGA behavior, board behavior, or phone behavior. | QEMU, Renode, docs-only, or scaffold checks are described as hello-chip hardware proof. |
+| Boundary gate | The artifact says whether it proves e1-chip debug MMIO, Linux-capable scaffold behavior, qemu-virt software behavior, FPGA behavior, board behavior, or phone behavior. | QEMU, Renode, docs-only, or scaffold checks are described as e1-chip hardware proof. |
 | Test gate | Unit, formal, integration, or hardware tests cover the claimed behavior and record pass/fail status. | The workstream only has syntax, schema, or existence checks. |
 | Risk gate | Known exclusions and residual blockers are present in `docs/risks/risk-register.md`. | A known non-goal is omitted or softened. |
 | Release gate | `make mvp-status` reports PASS, BLOCK, or FAIL with evidence and the next command. | Status is aspirational or missing a next command. |
@@ -60,7 +60,7 @@ Done means benchmark artifacts support only their declared L0-L6 claim level.
 
 | Gap class | Inventory | Completion criteria | Gate |
 |---|---|---|---|
-| Stub/scaffold | `hello_cpu_subsystem_stub` still names the boundary, while the Linux-capable AXI-Lite scaffold remains separate from pad-level hello chip. | Chosen prototype track is explicit: debug-MMIO demonstrator or Linux-capable scaffold, with integration evidence for that track. | `make rtl-check` plus track gate |
+| Stub/scaffold | `e1_cpu_subsystem_stub` still names the boundary, while the Linux-capable AXI-Lite scaffold remains separate from pad-level e1 chip. | Chosen prototype track is explicit: debug-MMIO demonstrator or Linux-capable scaffold, with integration evidence for that track. | `make rtl-check` plus track gate |
 | Untested | Formal coverage is shallow for AXI-Lite, DRAM, interrupt controller, display, reset, and CPU-contract wrappers. | Protocol assertions or property sets cover those interfaces, with coverage reports archived. | `make formal` / deep formal gate |
 | Untested | NPU, DMA, display, IRQ, and AXI timing behavior need randomized and reference-model coverage. | Coverage summaries name opcodes, MMIO regions, response codes, IRQs, stalls, and reset cases. | `make cocotb` / `make cocotb-contract` |
 | Complete gap | No release-grade CPU/cache/MMU/DRAM-controller path is wired into the pad-level phone-style SoC. | Bootable CPU, memory, timer, interrupt, UART, generated DTS, and boot smoke exist for the Linux-capable track. | Linux scaffold boot gate |
@@ -73,10 +73,10 @@ boundary, not merely source files.
 
 | Gap class | Inventory | Completion criteria | Gate |
 |---|---|---|---|
-| Scaffold | QEMU and Renode target qemu-virt software reference behavior, not the hello-chip hardware ABI. | Docs, scripts, and status output keep qemu-virt proof separate from hello-chip proof. | `make qemu-check renode-check` |
+| Scaffold | QEMU and Renode target qemu-virt software reference behavior, not the e1-chip hardware ABI. | Docs, scripts, and status output keep qemu-virt proof separate from e1-chip proof. | `make qemu-check renode-check` |
 | Stub/scaffold | Buildroot, Linux, OpenSBI, U-Boot, and AOSP paths are repo-local scaffolds around external trees. | Import scripts and external build transcripts prove the real tree builds. | BSP build gates |
-| Untested | Linux drivers and DTS paths need generated contract consumption and runtime smoke against real or emulated device nodes. | DTS/include fragments are generated from `sw/platform/hello_platform_contract.json`; MMIO smoke asserts device behavior. | `make software-bsp-check` plus boot smoke |
-| Complete gap | No checked-in boot transcript proves Android or Linux boot on hello hardware. | Serial logs, kernel config, rootfs/image manifests, and command transcript are archived. | Boot evidence gate |
+| Untested | Linux drivers and DTS paths need generated contract consumption and runtime smoke against real or emulated device nodes. | DTS/include fragments are generated from `sw/platform/e1_platform_contract.json`; MMIO smoke asserts device behavior. | `make software-bsp-check` plus boot smoke |
+| Complete gap | No checked-in boot transcript proves Android or Linux boot on e1 hardware. | Serial logs, kernel config, rootfs/image manifests, and command transcript are archived. | Boot evidence gate |
 | LARP risk | Echo scripts or missing-tool status can look like boot validation. | Scaffold checks report BLOCK when QEMU/Renode/external trees are missing. | `make mvp-status` |
 
 Done means boot claims are tied to a real target, a transcript, and reproducible
@@ -111,7 +111,7 @@ specific physical target being claimed.
 
 | Gap class | Inventory | Completion criteria | Gate |
 |---|---|---|---|
-| Stub/scaffold | WiFi/Bluetooth is product-scaffold only and not bonded into hello chip. | SDIO host, Bluetooth transport, firmware loading, regulatory path, DTS, and driver tests exist or remain excluded. | WiFi interface gate |
+| Stub/scaffold | WiFi/Bluetooth is product-scaffold only and not bonded into e1 chip. | SDIO host, Bluetooth transport, firmware loading, regulatory path, DTS, and driver tests exist or remain excluded. | WiFi interface gate |
 | Complete gap | Camera/ISP has no CSI/MIPI, sensor power/reset/I2C, tuning, calibration, image-quality, or HAL3 evidence. | A camera non-implementation contract is added, or a real camera workstream defines sensor, board, drivers, HAL, and IQ gates. | Camera scope gate |
 | Untested | Display has scaffold registers and pattern behavior but lacks release-grade scanout validation. | Framebuffer fetch, pixel formats, vsync, underflow, panel init, DSI/PHY bridge, color/gamma, and driver tests pass. | Display validation gate |
 | Complete gap | Sensor hub, modem, power management, security, and production peripheral policies are not implemented. | Each enters scope only with architecture contract, owner, tests, and release blockers. | Risk gate |
@@ -182,8 +182,8 @@ command and evidence artifact rather than vague future work.
 
 | Blocker class | Current evidence | Required unblock artifact |
 |---|---|---|
-| Regenerated build output | `build/netlist/hello_chip_synth.v`, `build/reports/hello_soc_yosys.log`, `verify/cocotb/results.xml`, `build/verilator/Vhello_chip_top`, formal logs/status files. | Clean rebuild transcript and release manifest checksums. |
-| QEMU software reference | Source scaffold and build script exist. | `build/qemu/hello_qemu_firmware.elf` plus `build/reports/qemu_smoke.log` with the expected serial banner. |
+| Regenerated build output | `build/netlist/e1_chip_synth.v`, `build/reports/e1_soc_yosys.log`, `verify/cocotb/results.xml`, `build/verilator/Ve1_chip_top`, formal logs/status files. | Clean rebuild transcript and release manifest checksums. |
+| QEMU software reference | Source scaffold and build script exist. | `build/qemu/e1_qemu_firmware.elf` plus `build/reports/qemu_smoke.log` with the expected serial banner. |
 | Renode software reference | REPL/RESC scaffold exists. | `build/reports/renode_smoke.log` from an automated, bounded Renode run. |
 | TFLite NPU smoke | Generator script exists, but generated model artifact is absent. | Non-placeholder `benchmarks/models/mobile_smoke.tflite` with sha256 pinned in `benchmarks/configs/benchmark_plan.json`. |
 | Phone-level benchmark claims | Matrix and schema exist. | Executed L4-L6 reports with clocks, memory, thermal, power, unsupported op count, CPU fallback percentage, and raw artifacts. |
@@ -194,8 +194,8 @@ command and evidence artifact rather than vague future work.
    `build/reports/qemu_smoke.log`, keep the temp log only as a fallback, and
    make `make qemu-check` fail in strict mode when the banner is absent.
 2. Implement automated Renode smoke: build or reuse
-   `build/qemu/hello_qemu_firmware.elf`, run Renode headlessly, assert the
-   `openphone hello qemu` banner, and archive `build/reports/renode_smoke.log`.
+   `build/qemu/e1_qemu_firmware.elf`, run Renode headlessly, assert the
+   `openagent e1 qemu` banner, and archive `build/reports/renode_smoke.log`.
 3. Generate or vendor a redistributable `mobile_smoke.tflite`: run
    `benchmarks/models/generate_mobile_smoke_tflite.py` in a TensorFlow
    environment or supply an equivalent model, then pin `sha256` and size in the

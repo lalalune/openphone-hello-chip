@@ -1,9 +1,9 @@
-# Hello demo KiCad planning notes
+# E1 demo KiCad planning notes
 
 Evidence class: `non_release_demo_planning`
 Release use: `prohibited`
 
-`board/kicad/hello-demo` now contains a minimal KiCad project, schematic, PCB,
+`board/kicad/e1-demo` now contains a minimal KiCad project, schematic, PCB,
 and planning footprint so the package pinout can be cross-probed and the board
 can be opened or printed for review. These sources are planning artifacts only.
 They are not board fabrication evidence and are not a substitute for a vendor
@@ -12,20 +12,20 @@ files, assembly package, or DFM review.
 
 See `docs/manufacturing/physical-closure-work-order.yaml` for all acceptance criteria.
 
-- KiCad project source: `board/kicad/hello-demo/hello-demo.kicad_pro`.
-- Planning schematic source: `board/kicad/hello-demo/hello-demo.kicad_sch`.
-- Planning PCB source: `board/kicad/hello-demo/hello-demo.kicad_pcb`.
+- KiCad project source: `board/kicad/e1-demo/e1-demo.kicad_pro`.
+- Planning schematic source: `board/kicad/e1-demo/e1-demo.kicad_sch`.
+- Planning PCB source: `board/kicad/e1-demo/e1-demo.kicad_pcb`.
 - Planning footprint source:
-  `board/kicad/hello-demo/hello_demo_planning.pretty/hello_demo_qfn64_planning.kicad_mod`.
-- Dated KiCad CLI outputs under `board/reports/fab/hello-demo-2026-05-17/`
+  `board/kicad/e1-demo/e1_demo_planning.pretty/e1_demo_qfn64_planning.kicad_mod`.
+- Dated KiCad CLI outputs under `board/reports/fab/e1-demo-2026-05-17/`
   are planning-review evidence only. They do not release the board for
   fabrication.
 - Release still requires reviewed Gerber, drill, BOM, position, fab drawing,
   ERC, DRC, command transcript, and tool-version outputs with vendor/package
   provenance.
-- `package/hello-demo-pinout.yaml` is a placeholder planning pinout and is not sufficient to generate fabrication-ready KiCad artifacts.
+- `package/e1-demo-pinout.yaml` is a placeholder planning pinout and is not sufficient to generate fabrication-ready KiCad artifacts.
 - Required command capture and artifact manifests are documented in
-  `board/kicad/hello-demo/artifact-manifest.yaml`.
+  `board/kicad/e1-demo/artifact-manifest.yaml`.
 
 ## Board Specification
 

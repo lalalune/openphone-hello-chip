@@ -2,7 +2,7 @@
 
 Place redistributable benchmark models in this directory.
 
-The harness expects `mobile_smoke.tflite` for the TensorFlow Lite CPU and hello
+The harness expects `mobile_smoke.tflite` for the TensorFlow Lite CPU and e1
 NPU entries. Do not commit proprietary vendor, app, or benchmark-suite models.
 You can generate the smoke model without network access when TensorFlow is
 already installed:

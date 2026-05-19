@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "software-bsp-evidence.schema.json",
-  "title": "OpenPhone software BSP evidence manifest",
+  "title": "OpenAgent software BSP evidence manifest",
   "type": "object",
   "required": ["schema_version", "claim_boundary", "targets"],
   "additionalProperties": false,

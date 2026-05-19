@@ -16,7 +16,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_OPENLANE_RUN = ROOT / "pd/openlane/runs/RUN_2026-05-18_05-41-42"
 DEFAULT_NPU_REPORT = ROOT / "benchmarks/results/npu-arch-sim-open-2028/report.json"
-DEFAULT_OUT = ROOT / "benchmarks/power/local-estimates/hello-npu-openlane-npu-estimates.json"
+DEFAULT_OUT = ROOT / "benchmarks/power/local-estimates/e1-npu-openlane-npu-estimates.json"
 
 
 def resolve(path: Path) -> Path:
@@ -91,7 +91,7 @@ def main() -> int:
 
     current_a = power_w / voltage_v
     payload = {
-        "schema": "openphone.local_power_estimates.v1",
+        "schema": "openagent.local_power_estimates.v1",
         "status": "local_estimate_only",
         "release_use": "prohibited",
         "claim_boundary": "not_measured_silicon_not_sustained_power_not_thermal_evidence",

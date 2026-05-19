@@ -1,9 +1,9 @@
-# Hello Demo Local DFM Draft Review
+# E1 Demo Local DFM Draft Review
 
 Status: draft local review, not vendor DFM signoff
 Board revision: `r0-nonrelease`
-KiCad source: `board/kicad/hello-demo`
-Fab export: `board/reports/fab/hello-demo-2026-05-17`
+KiCad source: `board/kicad/e1-demo`
+Fab export: `board/reports/fab/e1-demo-2026-05-17`
 Review date: 2026-05-18
 Reviewer: local manufacturing preflight
 Disposition: blocked for fabrication release
@@ -16,16 +16,16 @@ DFM, package-vendor land-pattern approval, or first-article inspection.
 
 Inputs reviewed:
 
-- `board/kicad/hello-demo/hello-demo.kicad_sch`
-- `board/kicad/hello-demo/hello-demo.kicad_pcb`
-- `board/kicad/hello-demo/hello_demo_planning.pretty/hello_demo_qfn64_planning.kicad_mod`
-- `board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt`
-- `board/reports/fab/hello-demo-2026-05-17/hello-demo-drc-report.txt`
-- `board/reports/fab/hello-demo-2026-05-17/gerbers/`
-- `board/reports/fab/hello-demo-2026-05-17/drill/`
-- `board/reports/fab/hello-demo-2026-05-17/hello-demo-bom.csv`
-- `board/reports/fab/hello-demo-2026-05-17/hello-demo-position.csv`
-- `board/reports/fab/hello-demo-2026-05-17/pdf/hello-demo-fab-drawing.pdf`
+- `board/kicad/e1-demo/e1-demo.kicad_sch`
+- `board/kicad/e1-demo/e1-demo.kicad_pcb`
+- `board/kicad/e1-demo/e1_demo_planning.pretty/e1_demo_qfn64_planning.kicad_mod`
+- `board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt`
+- `board/reports/fab/e1-demo-2026-05-17/e1-demo-drc-report.txt`
+- `board/reports/fab/e1-demo-2026-05-17/gerbers/`
+- `board/reports/fab/e1-demo-2026-05-17/drill/`
+- `board/reports/fab/e1-demo-2026-05-17/e1-demo-bom.csv`
+- `board/reports/fab/e1-demo-2026-05-17/e1-demo-position.csv`
+- `board/reports/fab/e1-demo-2026-05-17/pdf/e1-demo-fab-drawing.pdf`
 
 ## Local Findings
 

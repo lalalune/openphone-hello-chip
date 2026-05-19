@@ -8,7 +8,7 @@ Date: 2026-05-17
 
 The project commits to a two-stage FPGA prototyping strategy:
 
-1. **Stage 1 (now, hello-demo MMIO):** Lattice ECP5 on a **Radiona/FER ULX3S 85F** board.
+1. **Stage 1 (now, e1-demo MMIO):** Lattice ECP5 on a **Radiona/FER ULX3S 85F** board.
    Bring-up runs entirely on the open-source toolchain (Yosys / nextpnr-ecp5 /
    ecppack / openFPGALoader). No vendor license, no NDA, no closed binary in
    the bitstream path.
@@ -18,17 +18,17 @@ The project commits to a two-stage FPGA prototyping strategy:
    the SoC RTL is identical.
 
 The two stages are sequential, not exclusive. The ECP5 platform stays in the
-lab for hello-demo and small regression bring-up even after the VCU118 / F1
+lab for e1-demo and small regression bring-up even after the VCU118 / F1
 flow comes online for the Rocket+Gemmini SoC.
 
 ## Why two stages
 
-The hello-demo MMIO chip and the Rocket+Gemmini SoC have resource budgets
+The e1-demo MMIO chip and the Rocket+Gemmini SoC have resource budgets
 that differ by roughly two orders of magnitude. Forcing both onto a single
-platform either over-pays for hello-demo (waiting on a VCU118 just to blink
+platform either over-pays for e1-demo (waiting on a VCU118 just to blink
 an LED) or under-provisions for Rocket+Gemmini (Rocket alone barely fits an
 ECP5-85F; Gemmini does not fit at all). Splitting the platform decision lets
-hello-demo bring-up run today on cheap, fully open silicon while the heavier
+e1-demo bring-up run today on cheap, fully open silicon while the heavier
 SoC stays on a path with realistic capacity headroom.
 
 ## Resource budget comparison
@@ -39,7 +39,7 @@ Chipyard FPGA reports (Rocket small-config) and Gemmini paper datapoints
 
 | Design                | LUT (k) | FF (k) | BRAM (Mb) | DSP   | Off-chip DRAM | Fits ECP5-85F | Fits Zynq-7020 | Fits VCU118 (XCVU9P) |
 |-----------------------|--------:|-------:|----------:|------:|---------------|:-------------:|:--------------:|:--------------------:|
-| hello-demo MMIO       |   < 10  |   < 8  |    < 0.5  |    0  | none (BRAM)   | yes           | yes            | overkill             |
+| e1-demo MMIO       |   < 10  |   < 8  |    < 0.5  |    0  | none (BRAM)   | yes           | yes            | overkill             |
 | Rocket small (1 core) |    35   |   20   |     4     |   10  | 256 MB DDR    | tight, no DDR | tight, no DSP  | yes                  |
 | Rocket + Gemmini 16x16|  ~150   |  ~100  |    ~20    |  ~200 | >= 1 GB DDR4  | **no**        | **no**         | yes                  |
 

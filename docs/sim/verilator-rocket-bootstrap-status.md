@@ -8,7 +8,7 @@ Date: 2026-05-18
 ## Pinned Chipyard revision
 
 The Chipyard SHA is sourced from
-`docs/generators/chipyard/openphone-rocket-manifest.json`:
+`docs/generators/chipyard/openagent-rocket-manifest.json`:
 
 - repo: `https://github.com/ucb-bar/chipyard.git`
 - tag: `1.13.0`
@@ -18,7 +18,7 @@ Note: the task brief referenced SHA `404c8d361de98a98967f5d7a9bf51cbe8434d4c9`,
 but `scripts/bootstrap_chipyard.sh` reads the manifest and pins
 `69eba860...`. The script enforces this with a tag/SHA equality check that
 would have aborted on any mismatch. The manifest SHA is the truthful pin
-for the OpenPhoneRocketConfig overlay in this repo; no override was attempted.
+for the OpenAgentRocketConfig overlay in this repo; no override was attempted.
 
 ## What succeeded
 
@@ -30,16 +30,16 @@ for the OpenPhoneRocketConfig overlay in this repo; no override was attempted.
      (`rocket-chip`, `tools/cde`, `tools/firrtl2`, `tools/install-circt`,
      `tools/rocket-dsp-utils`, `generators/bar-fetchers`,
      `generators/rocc-acc-utils`, `sims/verilator`, `software/firemarshal`)
-   - copied the OpenPhone config overlay
-     (`generators/chipyard/src/main/scala/openphone/OpenPhoneRocketConfig.scala`)
+   - copied the OpenAgent config overlay
+     (`generators/chipyard/src/main/scala/openagent/OpenAgentRocketConfig.scala`)
    - ran `scripts/check_chipyard_import_preflight.py` with no errors
 2. Pre-existing generated artifacts from a prior Linux build are already
    present in the Chipyard working tree (kept by Chipyard's own `make`;
    NOT committed because `external/chipyard/` is gitignored):
    - Generated Verilog tree:
-     `external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.OpenPhoneRocketConfig/`
+     `external/chipyard/sims/verilator/generated-src/chipyard.harness.TestHarness.OpenAgentRocketConfig/`
    - Verilator simulator binary:
-     `external/chipyard/sims/verilator/simulator-chipyard.harness-OpenPhoneRocketConfig`
+     `external/chipyard/sims/verilator/simulator-chipyard.harness-OpenAgentRocketConfig`
      - `file(1)` reports: `ELF 64-bit LSB pie executable, x86-64, ..., for GNU/Linux 3.2.0`
      - 29,461,832 bytes, mode 0755
      - **Not runnable on this macOS arm64 host.** It must either be
@@ -69,7 +69,7 @@ for the OpenPhoneRocketConfig overlay in this repo; no override was attempted.
    - `sims/verilator/Makefile` assumes GNU make semantics and a verilator
      linked with glibc-style flags; macOS verilator from Homebrew works,
      but the prebuilt simulator binary cannot be reused.
-4. `make CONFIG=RocketConfig` (or `OpenPhoneRocketConfig`) was **not**
+4. `make CONFIG=RocketConfig` (or `OpenAgentRocketConfig`) was **not**
    attempted in this session because (a) without `env.sh` populated by
    `build-setup.sh` the SBT classpath is undefined, and (b) the time-box
    would not cover the 30+ minute Scala/Verilator build even on a primed
@@ -81,8 +81,8 @@ for the OpenPhoneRocketConfig overlay in this repo; no override was attempted.
 
 ```sh
 # On a Linux x86_64 host with >= 80 GB free disk, >= 32 GB RAM:
-git clone <this-repo> openphone-hello-chip
-cd openphone-hello-chip
+git clone <this-repo> openagent-e1-chip
+cd openagent-e1-chip
 git checkout ws/chipyard-rocket-verilator
 
 # 1. Clone Chipyard at pinned SHA and install full env (conda + SBT +
@@ -90,16 +90,16 @@ git checkout ws/chipyard-rocket-verilator
 CHIPYARD_RUN_SETUP=1 bash scripts/bootstrap_chipyard.sh
 
 # 2. Generate Verilog and build the Verilator simulator for
-#    OpenPhoneRocketConfig. Expect 60-180 min on first run (Scala
+#    OpenAgentRocketConfig. Expect 60-180 min on first run (Scala
 #    compile + FIRRTL elaboration + Verilator C++ compile).
 CHIPYARD_RUN_SETUP=1 CHIPYARD_GENERATE_VERILOG=1 \
   bash scripts/bootstrap_chipyard.sh
 
 # 3. Resulting simulator binary:
-ls external/chipyard/sims/verilator/simulator-chipyard.harness-OpenPhoneRocketConfig
+ls external/chipyard/sims/verilator/simulator-chipyard.harness-OpenAgentRocketConfig
 
 # 4. Smoke test with a RISC-V ELF (e.g. an OpenSBI/BBL payload):
-external/chipyard/sims/verilator/simulator-chipyard.harness-OpenPhoneRocketConfig \
+external/chipyard/sims/verilator/simulator-chipyard.harness-OpenAgentRocketConfig \
   +verbose path/to/kernel.elf 2>&1 | tee build/reports/sim-smoke.log
 ```
 
@@ -124,7 +124,7 @@ cd external/chipyard
 # Hand-author env.sh entries for SBT, CIRCT, RISC-V toolchain.
 source env.sh
 cd sims/verilator
-make CONFIG=OpenPhoneRocketConfig PACKAGE=openphone -j$(sysctl -n hw.ncpu)
+make CONFIG=OpenAgentRocketConfig PACKAGE=openagent -j$(sysctl -n hw.ncpu)
 ```
 
 Expect to debug Makefile assumptions and CIRCT/firtool packaging for

@@ -1,7 +1,7 @@
 # CPU/AP Evidence Capture
 
 This directory documents CPU/AP evidence expectations. Linux-capable AP evidence
-for the generated Chipyard `OpenPhoneRocketConfig` target is archived under
+for the generated Chipyard `OpenAgentRocketConfig` target is archived under
 `build/evidence/cpu_ap/`, not committed here.
 
 QEMU `virt` boot logs are software-reference evidence only. They do not satisfy
@@ -9,11 +9,11 @@ the generated AP OpenSBI/Linux/trap/cache/benchmark gates.
 
 Required generated-target evidence paths:
 
-- `build/evidence/cpu_ap/openphone_hello_opensbi_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_linux_boot.log`
-- `build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log`
-- `build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log`
-- `build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log`
+- `build/evidence/cpu_ap/openagent_e1_opensbi_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_linux_boot.log`
+- `build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log`
+- `build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log`
+- `build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log`
 
 Use these commands to see the marker checklist, archive real generated-AP logs,
 and check the result:
@@ -33,7 +33,7 @@ Each command must run the generated AP simulator or generated-target test and
 print the real transcript to stdout/stderr. The wrapper keeps raw output in
 `build/evidence/cpu_ap/raw/` and only writes accepted evidence after the intake
 validator sees the required markers and binds the transcript to
-`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`.
+`build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json`.
 
 ## Pass criteria
 
@@ -43,7 +43,7 @@ logs:
 1. OpenSBI reset, CSR, timer, interrupt-controller, UART, DRAM, and next-stage
    handoff markers.
 2. Linux early console, generated DTS hash, DT boot nodes, `CONFIG_MMU`,
-   initramfs start, and hello MMIO smoke result markers.
+   initramfs start, and e1 MMIO smoke result markers.
 3. Trap, timer, software IRQ, PLIC external IRQ claim/complete, `mret`, and
    `sret` markers.
 4. RV64GC, `misa`, `riscv_hwprobe`, `Zicsr`, `Zifencei`, Sv39, cache, TLB, and
@@ -54,7 +54,7 @@ logs:
 ## Linux Host Flow
 
 On the Linux host, first generate/build the pinned Chipyard target and create
-`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`. Then
+`build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json`. Then
 derive the command variables that can be backed by checked-in generated-AP
 runners:
 
@@ -64,12 +64,12 @@ eval "$(python3 scripts/wire_cpu_ap_capture_commands.py --format shell)"
 scripts/capture_chipyard_linux_evidence.sh preflight
 ```
 
-The generated wiring exports `OPENPHONE_OPENSBI_BOOT_CMD` and
-`OPENPHONE_LINUX_BOOT_CMD` from the real
-`scripts/run_chipyard_openphone_linux_smoke.sh` path when the generated
+The generated wiring exports `OPENAGENT_OPENSBI_BOOT_CMD` and
+`OPENAGENT_LINUX_BOOT_CMD` from the real
+`scripts/run_chipyard_openagent_linux_smoke.sh` path when the generated
 manifest and FireMarshal payload are present. It deliberately leaves
-`OPENPHONE_TRAP_TIMER_IRQ_CMD`, `OPENPHONE_ISA_CACHE_MMU_CMD`, and
-`OPENPHONE_AP_BENCHMARKS_CMD` unset until real generated-AP test or benchmark
+`OPENAGENT_TRAP_TIMER_IRQ_CMD`, `OPENAGENT_ISA_CACHE_MMU_CMD`, and
+`OPENAGENT_AP_BENCHMARKS_CMD` unset until real generated-AP test or benchmark
 commands exist. Do not replace those with marker echo scripts, copied
 reference logs, or edited transcripts.
 
@@ -88,8 +88,8 @@ scripts/capture_chipyard_linux_evidence.sh preflight
 ```
 
 `preflight` does not run the simulator or create evidence. It checks that
-`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json` exists
-and that every `OPENPHONE_*_CMD` variable is set.
+`build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json` exists
+and that every `OPENAGENT_*_CMD` variable is set.
 
 After all captures pass, copy the printed `artifact_sha256.*` and
 `evidence_sha256.*` values from `python3 scripts/capture_cpu_ap_evidence.py

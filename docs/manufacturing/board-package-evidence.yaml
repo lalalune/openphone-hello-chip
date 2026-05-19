@@ -1,4 +1,4 @@
-schema: openphone.board_package_evidence.v1
+schema: openagent.board_package_evidence.v1
 evidence_manifest: board_package_vendor_fab_evidence
 status: release_blocked
 owner: product_physical_closure
@@ -41,23 +41,23 @@ next_commands:
   product_release_gate: python3 scripts/product_check.py --release
   hash_artifact: shasum -a 256 <real-evidence-file>
 source_contracts:
-  package_pinout: package/hello-demo-pinout.yaml
-  padframe_contract: pd/padframe/hello_demo_padframe.yaml
-  board_cross_probe: docs/board/kicad/hello-demo/package-pinout-cross-probe.yaml
-  board_fab_notes: docs/board/kicad/hello-demo/fab-notes.md
+  package_pinout: package/e1-demo-pinout.yaml
+  padframe_contract: pd/padframe/e1_demo_padframe.yaml
+  board_cross_probe: docs/board/kicad/e1-demo/package-pinout-cross-probe.yaml
+  board_fab_notes: docs/board/kicad/e1-demo/fab-notes.md
 placeholder_blockers:
   - id: placeholder_package_pinout
-    file: package/hello-demo-pinout.yaml
+    file: package/e1-demo-pinout.yaml
     required_text:
-      - hello_demo_qfn64_planning_r0
+      - e1_demo_qfn64_planning_r0
       - Non-release demo package contract
   - id: draft_package_contract
-    file: docs/package/hello-demo-package.md
+    file: docs/package/e1-demo-package.md
     required_text:
       - local planning data only
       - package vendor/foundry evidence
   - id: kicad_placeholder_notes
-    file: docs/board/kicad/hello-demo/fab-notes.md
+    file: docs/board/kicad/e1-demo/fab-notes.md
     required_text:
       - "Evidence class: `non_release_demo_planning`"
       - Footprint is not derived from a package vendor drawing
@@ -111,25 +111,25 @@ artifact_groups:
         release_blocker: KiCad project is draft planning source, not release-checked fabrication evidence.
         status: draft
         globs:
-          - board/kicad/hello-demo/*.kicad_pro
+          - board/kicad/e1-demo/*.kicad_pro
       - name: kicad_schematic
         release_blocker_id: kicad_schematic
         release_blocker: KiCad schematic is draft planning source, not release-checked fabrication evidence.
         status: draft
         globs:
-          - board/kicad/hello-demo/*.kicad_sch
+          - board/kicad/e1-demo/*.kicad_sch
       - name: kicad_pcb
         release_blocker_id: kicad_pcb
         release_blocker: KiCad PCB is draft planning source, not release-checked fabrication evidence.
         status: draft
         globs:
-          - board/kicad/hello-demo/*.kicad_pcb
+          - board/kicad/e1-demo/*.kicad_pcb
       - name: vendor_derived_footprint
         release_blocker_id: vendor_derived_footprint
         release_blocker: Vendor-derived KiCad footprint is missing; the local planning footprint is not fabrication evidence.
         status: draft
         globs:
-          - board/kicad/hello-demo/**/*.pretty/*.kicad_mod
+          - board/kicad/e1-demo/**/*.pretty/*.kicad_mod
         required_metadata:
           - source_drawing_revision
           - source_sha256
@@ -142,8 +142,8 @@ artifact_groups:
         release_blocker: KiCad ERC transcript is draft planning evidence only; release requires rerun after vendor-derived footprint and final schematic.
         status: draft
         globs:
-          - board/kicad/hello-demo/reports/*erc*.txt
-          - board/kicad/hello-demo/reports/*erc*.log
+          - board/kicad/e1-demo/reports/*erc*.txt
+          - board/kicad/e1-demo/reports/*erc*.log
           - board/reports/fab/**/*erc*.txt
           - board/reports/fab/**/*erc*.log
       - name: drc_transcript
@@ -151,8 +151,8 @@ artifact_groups:
         release_blocker: KiCad DRC transcript is draft planning evidence only; release requires rerun after vendor-derived footprint and final board rules.
         status: draft
         globs:
-          - board/kicad/hello-demo/reports/*drc*.txt
-          - board/kicad/hello-demo/reports/*drc*.log
+          - board/kicad/e1-demo/reports/*drc*.txt
+          - board/kicad/e1-demo/reports/*drc*.log
           - board/reports/fab/**/*drc*.txt
           - board/reports/fab/**/*drc*.log
       - name: gerbers
@@ -160,8 +160,8 @@ artifact_groups:
         release_blocker: Gerber outputs exist as draft planning exports only; release requires vendor-footprint regeneration and DFM acceptance.
         status: draft
         globs:
-          - board/kicad/hello-demo/fab/gerbers/*.gbr
-          - board/kicad/hello-demo/fab/gerbers/*.gbrjob
+          - board/kicad/e1-demo/fab/gerbers/*.gbr
+          - board/kicad/e1-demo/fab/gerbers/*.gbrjob
           - board/reports/fab/**/gerbers/*.g*
           - board/reports/fab/**/gerbers/*.gbrjob
       - name: drill
@@ -169,8 +169,8 @@ artifact_groups:
         release_blocker: Drill outputs exist as draft planning exports only; release requires final board stackup and fabrication review.
         status: draft
         globs:
-          - board/kicad/hello-demo/fab/drill/*.drl
-          - board/kicad/hello-demo/fab/drill/*.xln
+          - board/kicad/e1-demo/fab/drill/*.drl
+          - board/kicad/e1-demo/fab/drill/*.xln
           - board/reports/fab/**/drill/*.drl
           - board/reports/fab/**/drill/*.xln
       - name: bom
@@ -178,8 +178,8 @@ artifact_groups:
         release_blocker: BOM export exists as draft planning evidence only; release requires approved MPNs and package-derived U1 footprint.
         status: draft
         globs:
-          - board/kicad/hello-demo/fab/bom/*.csv
-          - board/kicad/hello-demo/fab/bom/*.xml
+          - board/kicad/e1-demo/fab/bom/*.csv
+          - board/kicad/e1-demo/fab/bom/*.xml
           - board/reports/fab/**/*bom*.csv
           - board/reports/fab/**/*bom*.xml
       - name: pick_and_place
@@ -187,8 +187,8 @@ artifact_groups:
         release_blocker: Pick-and-place export exists as draft planning evidence only; release requires final footprints and assembly review.
         status: draft
         globs:
-          - board/kicad/hello-demo/fab/position/*.pos
-          - board/kicad/hello-demo/fab/position/*.csv
+          - board/kicad/e1-demo/fab/position/*.pos
+          - board/kicad/e1-demo/fab/position/*.csv
           - board/reports/fab/**/*position*.pos
           - board/reports/fab/**/*position*.csv
   release_reviews:

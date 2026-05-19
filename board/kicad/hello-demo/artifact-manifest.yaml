@@ -1,4 +1,4 @@
-manifest: hello_demo_kicad_board_evidence
+manifest: e1_demo_kicad_board_evidence
 schema: docs/manufacturing/schemas/artifact-manifest.schema.yaml
 status: scaffold
 release_gate: board_fabrication_release
@@ -19,7 +19,7 @@ artifact_groups:
           - source_revision
           - package_manifest_checksum
         globs:
-          - board/kicad/hello-demo/*.kicad_pro
+          - board/kicad/e1-demo/*.kicad_pro
       - name: schematic
         status: draft
         metadata:
@@ -29,7 +29,7 @@ artifact_groups:
           - source_revision
           - package_pinout_checksum
         globs:
-          - board/kicad/hello-demo/*.kicad_sch
+          - board/kicad/e1-demo/*.kicad_sch
       - name: pcb
         status: draft
         metadata:
@@ -41,7 +41,7 @@ artifact_groups:
           - schematic_checksum
           - footprint_source_checksum
         globs:
-          - board/kicad/hello-demo/*.kicad_pcb
+          - board/kicad/e1-demo/*.kicad_pcb
       - name: vendor_derived_footprint
         status: draft
         release_note: planning footprint only; not vendor-derived release evidence
@@ -51,23 +51,23 @@ artifact_groups:
           - package_drawing_checksum
           - footprint_review_owner
         globs:
-          - board/kicad/hello-demo/**/*.pretty/*.kicad_mod
+          - board/kicad/e1-demo/**/*.pretty/*.kicad_mod
   kicad_cli_outputs:
     owner: board_closure
     status: draft
     cli_commands:
-      erc: kicad-cli sch erc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
-      drc: kicad-cli pcb drc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-drc-report.txt board/kicad/hello-demo/hello-demo.kicad_pcb
-      gerbers: kicad-cli pcb export gerbers --output board/reports/fab/hello-demo-2026-05-17/gerbers board/kicad/hello-demo/hello-demo.kicad_pcb
-      drill: kicad-cli pcb export drill --output board/reports/fab/hello-demo-2026-05-17/drill board/kicad/hello-demo/hello-demo.kicad_pcb
-      bom: kicad-cli sch export bom --output board/reports/fab/hello-demo-2026-05-17/hello-demo-bom.csv board/kicad/hello-demo/hello-demo.kicad_sch
-      position: kicad-cli pcb export pos --output board/reports/fab/hello-demo-2026-05-17/hello-demo-position.csv board/kicad/hello-demo/hello-demo.kicad_pcb
+      erc: kicad-cli sch erc --output board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt board/kicad/e1-demo/e1-demo.kicad_sch
+      drc: kicad-cli pcb drc --output board/reports/fab/e1-demo-2026-05-17/e1-demo-drc-report.txt board/kicad/e1-demo/e1-demo.kicad_pcb
+      gerbers: kicad-cli pcb export gerbers --output board/reports/fab/e1-demo-2026-05-17/gerbers board/kicad/e1-demo/e1-demo.kicad_pcb
+      drill: kicad-cli pcb export drill --output board/reports/fab/e1-demo-2026-05-17/drill board/kicad/e1-demo/e1-demo.kicad_pcb
+      bom: kicad-cli sch export bom --output board/reports/fab/e1-demo-2026-05-17/e1-demo-bom.csv board/kicad/e1-demo/e1-demo.kicad_sch
+      position: kicad-cli pcb export pos --output board/reports/fab/e1-demo-2026-05-17/e1-demo-position.csv board/kicad/e1-demo/e1-demo.kicad_pcb
     artifacts:
       - name: erc_report
         status: draft
         metadata:
           kicad_version: 10.0.2
-          command: kicad-cli sch erc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-erc-report.txt board/kicad/hello-demo/hello-demo.kicad_sch
+          command: kicad-cli sch erc --output board/reports/fab/e1-demo-2026-05-17/e1-demo-erc-report.txt board/kicad/e1-demo/e1-demo.kicad_sch
           schematic_checksum: e2ec1b8bec733c9162fb7e36cd90ecb145f8f6532e1a610abded05700e6aeea5
         required_metadata:
           - kicad_version
@@ -76,13 +76,13 @@ artifact_groups:
         clean_regex: "(?i)(0\\s+errors?|erc\\s+(clean|pass(?:ed)?))"
         fail_regex: "(?i)(errors?\\s*[:=]\\s*[1-9][0-9]*|fail(?:ed|ure)?|violations?\\s*[:=]\\s*[1-9][0-9]*|found\\s+[1-9][0-9]*\\s+violations?)"
         globs:
-          - board/reports/fab/**/hello-demo-erc-report.txt
-          - board/kicad/hello-demo/reports/erc*.txt
+          - board/reports/fab/**/e1-demo-erc-report.txt
+          - board/kicad/e1-demo/reports/erc*.txt
       - name: drc_report
         status: draft
         metadata:
           kicad_version: 10.0.2
-          command: kicad-cli pcb drc --output board/reports/fab/hello-demo-2026-05-17/hello-demo-drc-report.txt board/kicad/hello-demo/hello-demo.kicad_pcb
+          command: kicad-cli pcb drc --output board/reports/fab/e1-demo-2026-05-17/e1-demo-drc-report.txt board/kicad/e1-demo/e1-demo.kicad_pcb
           pcb_checksum: 71d6ec29bef190b3041ebdd90c6882a1578668085bdb0c144e31afe4264250e6
         required_metadata:
           - kicad_version
@@ -91,13 +91,13 @@ artifact_groups:
         clean_regex: "(?i)(0\\s+(drc\\s+)?violations?|drc\\s+(clean|pass(?:ed)?))"
         fail_regex: "(?i)(errors?\\s*[:=]\\s*[1-9][0-9]*|fail(?:ed|ure)?|violations?\\s*[:=]\\s*[1-9][0-9]*|found\\s+[1-9][0-9]*\\s+violations?)"
         globs:
-          - board/reports/fab/**/hello-demo-drc-report.txt
-          - board/kicad/hello-demo/reports/drc*.txt
+          - board/reports/fab/**/e1-demo-drc-report.txt
+          - board/kicad/e1-demo/reports/drc*.txt
       - name: gerbers
         status: draft
         metadata:
           kicad_version: 10.0.2
-          command: kicad-cli pcb export gerbers --output board/reports/fab/hello-demo-2026-05-17/gerbers board/kicad/hello-demo/hello-demo.kicad_pcb
+          command: kicad-cli pcb export gerbers --output board/reports/fab/e1-demo-2026-05-17/gerbers board/kicad/e1-demo/e1-demo.kicad_pcb
           pcb_checksum: 71d6ec29bef190b3041ebdd90c6882a1578668085bdb0c144e31afe4264250e6
         required_metadata:
           - kicad_version
@@ -105,12 +105,12 @@ artifact_groups:
           - pcb_checksum
         globs:
           - board/reports/fab/**/gerbers/*.g*
-          - board/kicad/hello-demo/fab/gerbers/*.gbr
+          - board/kicad/e1-demo/fab/gerbers/*.gbr
       - name: drill
         status: draft
         metadata:
           kicad_version: 10.0.2
-          command: kicad-cli pcb export drill --output board/reports/fab/hello-demo-2026-05-17/drill board/kicad/hello-demo/hello-demo.kicad_pcb
+          command: kicad-cli pcb export drill --output board/reports/fab/e1-demo-2026-05-17/drill board/kicad/e1-demo/e1-demo.kicad_pcb
           pcb_checksum: 71d6ec29bef190b3041ebdd90c6882a1578668085bdb0c144e31afe4264250e6
         required_metadata:
           - kicad_version
@@ -118,12 +118,12 @@ artifact_groups:
           - pcb_checksum
         globs:
           - board/reports/fab/**/drill/*.drl
-          - board/kicad/hello-demo/fab/drill/*.drl
+          - board/kicad/e1-demo/fab/drill/*.drl
       - name: bom
         status: draft
         metadata:
           kicad_version: 10.0.2
-          command: kicad-cli sch export bom --output board/reports/fab/hello-demo-2026-05-17/hello-demo-bom.csv board/kicad/hello-demo/hello-demo.kicad_sch
+          command: kicad-cli sch export bom --output board/reports/fab/e1-demo-2026-05-17/e1-demo-bom.csv board/kicad/e1-demo/e1-demo.kicad_sch
           schematic_checksum: e2ec1b8bec733c9162fb7e36cd90ecb145f8f6532e1a610abded05700e6aeea5
         required_metadata:
           - kicad_version
@@ -131,13 +131,13 @@ artifact_groups:
           - schematic_checksum
         globs:
           - board/reports/fab/**/*bom*.csv
-          - board/kicad/hello-demo/fab/bom/*.csv
-          - board/kicad/hello-demo/fab/bom/*.xml
+          - board/kicad/e1-demo/fab/bom/*.csv
+          - board/kicad/e1-demo/fab/bom/*.xml
       - name: pick_and_place
         status: draft
         metadata:
           kicad_version: 10.0.2
-          command: kicad-cli pcb export pos --output board/reports/fab/hello-demo-2026-05-17/hello-demo-position.csv board/kicad/hello-demo/hello-demo.kicad_pcb
+          command: kicad-cli pcb export pos --output board/reports/fab/e1-demo-2026-05-17/e1-demo-position.csv board/kicad/e1-demo/e1-demo.kicad_pcb
           pcb_checksum: 71d6ec29bef190b3041ebdd90c6882a1578668085bdb0c144e31afe4264250e6
         required_metadata:
           - kicad_version
@@ -145,8 +145,8 @@ artifact_groups:
           - pcb_checksum
         globs:
           - board/reports/fab/**/*position*.csv
-          - board/kicad/hello-demo/fab/position/*.pos
-          - board/kicad/hello-demo/fab/position/*.csv
+          - board/kicad/e1-demo/fab/position/*.pos
+          - board/kicad/e1-demo/fab/position/*.csv
   board_reviews:
     owner: board_closure
     status: draft

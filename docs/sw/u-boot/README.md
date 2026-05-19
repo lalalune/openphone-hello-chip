@@ -2,7 +2,7 @@
 
 U-Boot starts after the Chipyard/Rocket software reference can boot OpenSBI and
 expose RAM, UART, timer, and interrupt devices tied to
-`sw/platform/hello_platform_contract.json`.
+`sw/platform/e1_platform_contract.json`.
 
 Repo-local command:
 
@@ -15,18 +15,18 @@ Expected output:
 
 ```text
 buildroot BSP check failed:
-  - buildroot BSP BLOCKED: missing evidence for external Buildroot image build plus hello MMIO smoke transcript: docs/evidence/buildroot/openphone_hello_defconfig.log, docs/evidence/buildroot/openphone_hello_image_manifest.txt, docs/evidence/buildroot/hello-mmio-smoke.log
+  - buildroot BSP BLOCKED: missing evidence for external Buildroot image build plus e1 MMIO smoke transcript: docs/evidence/buildroot/openagent_e1_defconfig.log, docs/evidence/buildroot/openagent_e1_image_manifest.txt, docs/evidence/buildroot/e1-mmio-smoke.log
 linux BSP check failed:
-  - linux BSP BLOCKED: missing evidence for external Linux kernel build, DTB validation, and runtime driver smoke transcript: docs/evidence/linux/openphone_hello_kernel_build.log, docs/evidence/linux/openphone_hello_dtb_check.log, docs/evidence/linux/hello-mmio-smoke.log
+  - linux BSP BLOCKED: missing evidence for external Linux kernel build, DTB validation, and runtime driver smoke transcript: docs/evidence/linux/openagent_e1_kernel_build.log, docs/evidence/linux/openagent_e1_dtb_check.log, docs/evidence/linux/e1-mmio-smoke.log
 aosp BSP check failed:
   - aosp BSP BLOCKED: evidence for external AOSP lunch/vendorimage/VINTF logs, Cuttlefish or equivalent boot transcript, and Android compatibility subset transcripts is incomplete or invalid
 opensbi BSP check failed:
   - opensbi BSP BLOCKED: evidence for external OpenSBI build and fw_dynamic handoff transcript is incomplete or invalid
-  - missing docs/evidence/linux/opensbi_openphone_build.log
+  - missing docs/evidence/linux/opensbi_openagent_build.log
   - missing docs/evidence/linux/opensbi_fw_dynamic_handoff.log
 u-boot BSP check failed:
   - u-boot BSP BLOCKED: evidence for external U-Boot build and OpenSBI-to-U-Boot boot-chain transcript is incomplete or invalid
-  - missing docs/evidence/linux/u_boot_openphone_build.log
+  - missing docs/evidence/linux/u_boot_openagent_build.log
   - missing docs/evidence/linux/u_boot_opensbi_boot_chain.log
 boot: scaffold audit
   local command: make software-bsp-check

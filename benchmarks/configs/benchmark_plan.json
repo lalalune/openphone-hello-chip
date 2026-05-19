@@ -101,7 +101,7 @@
     },
     {
       "name": "npu_arch_sim_open_2028",
-      "suite": "OpenPhone deterministic NPU architecture simulator",
+      "suite": "OpenAgent deterministic NPU architecture simulator",
       "version": "local/open-scale-v1",
       "command": [
         "python3",
@@ -113,7 +113,7 @@
       "input_dataset": "deterministic GEMM/conv/attention sweep",
       "primary_metric": "modeled dense INT8 TOPS",
       "units": "TOPS",
-      "parser": "openphone_npu_scale_sim_v1",
+      "parser": "openagent_npu_scale_sim_v1",
       "provenance": "simulator",
       "required_metrics": ["min_observed_tops", "max_observed_tops", "min_utilization_percent"],
       "timeout_seconds": 60
@@ -163,27 +163,27 @@
       "timeout_seconds": 600
     },
     {
-      "name": "tflite_hello_npu",
+      "name": "tflite_e1_npu",
       "suite": "TensorFlow Lite benchmark_model",
       "version": "upstream/local",
       "command": [
         "benchmark_model",
         "--graph=benchmarks/models/mobile_smoke.tflite",
         "--use_nnapi=true",
-        "--nnapi_accelerator_name=hello-npu"
+        "--nnapi_accelerator_name=e1-npu"
       ],
       "requires": ["benchmark_model"],
       "capability_artifacts": [
         {
-          "path": "benchmarks/capabilities/hello_npu_nnapi.proof.json",
-          "blocker_id": "HELLO_NPU_NNAPI_ACCELERATOR_MISSING",
-          "blocked_reason": "missing_hello_npu_nnapi_accelerator",
+          "path": "benchmarks/capabilities/e1_npu_nnapi.proof.json",
+          "blocker_id": "E1_NPU_NNAPI_ACCELERATOR_MISSING",
+          "blocked_reason": "missing_e1_npu_nnapi_accelerator",
           "pipeline_visible": true,
           "release_blocking": true,
-          "resolution": "Run this benchmark only on an Android/Linux target exposing a real hello-npu NNAPI accelerator or delegate; create the proof JSON and transcripts from the hardware validation job, not by hand.",
+          "resolution": "Run this benchmark only on an Android/Linux target exposing a real e1-npu NNAPI accelerator or delegate; create the proof JSON and transcripts from the hardware validation job, not by hand.",
           "proof": {
-            "schema": "openphone.hello_npu_nnapi_capability.v1",
-            "accelerator_name": "hello-npu",
+            "schema": "openagent.e1_npu_nnapi_capability.v1",
+            "accelerator_name": "e1-npu",
             "max_cpu_fallback_percent": 0,
             "max_unsupported_op_count": 0,
             "required_json_fields": [
@@ -215,13 +215,13 @@
             ],
             "required_transcript_markers": {
               "adb_devices": ["device"],
-              "nnapi_accelerator_query": ["hello-npu"],
+              "nnapi_accelerator_query": ["e1-npu"],
               "benchmark_model_nnapi": [
                 "--use_nnapi=true",
-                "--nnapi_accelerator_name=hello-npu",
+                "--nnapi_accelerator_name=e1-npu",
                 "NNAPI"
               ],
-              "dma_trace": ["hello-npu", "DMA", "bytes_read", "bytes_written"]
+              "dma_trace": ["e1-npu", "DMA", "bytes_read", "bytes_written"]
             }
           }
         }
@@ -265,7 +265,7 @@
     },
     {
       "name": "simulator_arch_metrics",
-      "suite": "OpenPhone simulator metrics",
+      "suite": "OpenAgent simulator metrics",
       "version": "v1",
       "command": ["cat", "benchmarks/results/simulator-arch-metrics.json"],
       "requires": ["cat"],

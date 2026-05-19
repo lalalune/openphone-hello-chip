@@ -1,6 +1,6 @@
 # Interrupt map
 
-The hello chip exposes level-style interrupt outputs. The CPU/interconnect scaffold adds a small PLIC-style interrupt controller contract at `0x0C00_0000`.
+The e1 chip exposes level-style interrupt outputs. The CPU/interconnect scaffold adds a small PLIC-style interrupt controller contract at `0x0C00_0000`.
 
 | Signal | Source | Meaning |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ Source ID 0 is reserved, matching PLIC-style claim semantics. Current source IDs
 | 3 | NPU | NPU command completion |
 | 4 | Display | Vsync or display event |
 
-The current `hello_interrupt_controller` latches asserted source bits into `PENDING`, gates CPU external interrupt with `ENABLE`, returns the lowest enabled pending source ID on claim, and clears a pending source when software writes that source ID to complete. If the physical source remains asserted, it may re-pend after completion.
+The current `e1_interrupt_controller` latches asserted source bits into `PENDING`, gates CPU external interrupt with `ENABLE`, returns the lowest enabled pending source ID on claim, and clears a pending source when software writes that source ID to complete. If the physical source remains asserted, it may re-pend after completion.
 
 The controller target accepts independently arriving AXI-Lite write address and write data channels, then updates registers only after both halves of a write have been captured.
 

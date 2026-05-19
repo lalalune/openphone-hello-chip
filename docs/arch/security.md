@@ -1,8 +1,8 @@
 # Security subsystem
 
-The hello chip has no production security boundary. It only reserves the
+The e1 chip has no production security boundary. It only reserves the
 architectural slot for:
-The hello chip has no security boundary. It only reserves the architectural slot for:
+The e1 chip has no security boundary. It only reserves the architectural slot for:
 
 > **Status note:** The current implementation uses placeholder cryptography
 > (XOR-based hash, static device key). This is a structural scaffold for

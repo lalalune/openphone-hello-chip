@@ -1,4 +1,4 @@
-schema: openphone.product_arch_security_radio_sensors_optimization.v1
+schema: openagent.product_arch_security_radio_sensors_optimization.v1
 status: fail_closed_product_work_order
 date: 2026-05-17
 claim_boundary: >
@@ -63,7 +63,7 @@ domains:
     release_gap_id: regulatory_compliance_release
     current_status: blocked_scaffold_architecture_only
     scale_optimization:
-      - Keep a two-track architecture: open hello demonstrator for flow proof, separate phone AP candidate for performance and Android claims.
+      - Keep a two-track architecture: open e1 demonstrator for flow proof, separate phone AP candidate for performance and Android claims.
       - Prioritize memory bandwidth, DMA isolation, thermal telemetry, and Android HAL evidence before peak NPU arithmetic.
       - Use external modules for RF, PMIC, sensors, storage, display panel, and camera until host interfaces and validation are stable.
     power_size_manufacturing_tradeoff:
@@ -81,7 +81,7 @@ domains:
     current_repo_evidence:
       - docs/arch/security.md
       - docs/arch/boot.md
-      - rtl/bootrom/hello_bootrom.sv
+      - rtl/bootrom/e1_bootrom.sv
       - docs/manufacturing/real-world-verification-gaps.yaml
     release_gap_id: secure_boot_key_debug_policy
     current_status: blocked_no_security_boundary
@@ -219,7 +219,7 @@ domains:
   - id: usb_storage_update
     current_repo_evidence:
       - docs/manufacturing/real-world-verification-gaps.yaml
-      - sw/aosp-device/device/openphone/openphone_ai_soc/fstab.openphone
+      - sw/aosp-device/device/openagent/openagent_ai_soc/fstab.openagent
       - docs/sw/aosp-device/README.md
       - docs/project/workstream-gap-review.md
     release_gap_id: usb_storage_update_stack
@@ -331,8 +331,8 @@ domains:
   - id: mobile_platform_android
     current_repo_evidence:
       - docs/sw/aosp-device/README.md
-      - sw/aosp-device/device/openphone/openphone_ai_soc/manifest.xml
-      - sw/aosp-device/device/openphone/openphone_ai_soc/BoardConfig.mk
+      - sw/aosp-device/device/openagent/openagent_ai_soc/manifest.xml
+      - sw/aosp-device/device/openagent/openagent_ai_soc/BoardConfig.mk
       - docs/android/bsp-critical-gap-audit-2026-05-17.md
     release_gap_id: regulatory_compliance_release
     current_status: blocked_scaffold_no_boot_or_compatibility
@@ -344,7 +344,7 @@ domains:
       - Android power, health, thermal, radio, and sensor services must reflect measured hardware state; synthetic properties create false readiness and bad field diagnostics.
       - Vendor image size and HAL package growth must be tracked against actual implemented features.
     verification_gates:
-      - lunch openphone_ai_soc-userdebug transcript.
+      - lunch openagent_ai_soc-userdebug transcript.
       - vendorimage and installed-files-vendor transcript.
       - checkvintf and SELinux build transcript.
       - Cuttlefish or target boot transcript.

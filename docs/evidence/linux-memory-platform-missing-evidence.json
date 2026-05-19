@@ -1,5 +1,5 @@
 {
-  "schema": "openphone.linux_memory_platform_missing_evidence.v1",
+  "schema": "openagent.linux_memory_platform_missing_evidence.v1",
   "claim_boundary": "missing_evidence_manifest_only_not_linux_boot_or_dram_evidence",
   "status": "blocked_until_all_required_evidence_passes",
   "required_evidence": [
@@ -17,22 +17,22 @@
     {
       "id": "linux_kernel_build",
       "status": "blocked_missing_external_transcript",
-      "path": "docs/evidence/linux/openphone_hello_kernel_build.log",
-      "blocked_marker": "docs/evidence/linux/openphone_hello_kernel_build.log.BLOCKED",
+      "path": "docs/evidence/linux/openagent_e1_kernel_build.log",
+      "blocked_marker": "docs/evidence/linux/openagent_e1_kernel_build.log.BLOCKED",
       "producer": "sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux kernel-build"
     },
     {
       "id": "linux_dtb_check",
       "status": "blocked_missing_external_transcript",
-      "path": "docs/evidence/linux/openphone_hello_dtb_check.log",
-      "blocked_marker": "docs/evidence/linux/openphone_hello_dtb_check.log.BLOCKED",
+      "path": "docs/evidence/linux/openagent_e1_dtb_check.log",
+      "blocked_marker": "docs/evidence/linux/openagent_e1_dtb_check.log.BLOCKED",
       "producer": "sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux dtb-check"
     },
     {
       "id": "linux_serial_boot",
       "status": "blocked_missing_external_transcript",
-      "path": "docs/evidence/linux/openphone_hello_serial_boot.log",
-      "blocked_marker": "docs/evidence/linux/openphone_hello_serial_boot.log.BLOCKED",
+      "path": "docs/evidence/linux/openagent_e1_serial_boot.log",
+      "blocked_marker": "docs/evidence/linux/openagent_e1_serial_boot.log.BLOCKED",
       "producer": "capture the real OpenSBI/Linux UART transcript from the chip or generated AP simulation"
     },
     {
@@ -40,21 +40,21 @@
       "status": "blocked_missing_external_transcript",
       "path": "docs/evidence/linux/opensbi_fw_dynamic_handoff.log",
       "blocked_marker": "docs/evidence/linux/opensbi_fw_dynamic_handoff.log.BLOCKED",
-      "producer": "OPENPHONE_OPENSBI_HANDOFF_CMD='/exact boot command' sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff"
+      "producer": "OPENAGENT_OPENSBI_HANDOFF_CMD='/exact boot command' sw/opensbi/capture-opensbi-evidence.sh /path/to/opensbi handoff"
     },
     {
       "id": "buildroot_image_manifest",
       "status": "blocked_missing_external_transcript",
-      "path": "docs/evidence/buildroot/openphone_hello_image_manifest.txt",
-      "blocked_marker": "docs/evidence/buildroot/openphone_hello_image_manifest.txt.BLOCKED",
+      "path": "docs/evidence/buildroot/openagent_e1_image_manifest.txt",
+      "blocked_marker": "docs/evidence/buildroot/openagent_e1_image_manifest.txt.BLOCKED",
       "producer": "sw/buildroot/scripts/capture-buildroot-evidence.sh /path/to/buildroot image-manifest"
     },
     {
-      "id": "hello_mmio_smoke",
+      "id": "e1_mmio_smoke",
       "status": "blocked_missing_external_transcript",
-      "path": "docs/evidence/linux/hello-mmio-smoke.log",
-      "blocked_marker": "docs/evidence/linux/hello-mmio-smoke.log.BLOCKED",
-      "producer": "HELLO_SMOKE_CMD='ssh root@TARGET /tmp/hello-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke"
+      "path": "docs/evidence/linux/e1-mmio-smoke.log",
+      "blocked_marker": "docs/evidence/linux/e1-mmio-smoke.log.BLOCKED",
+      "producer": "E1_SMOKE_CMD='ssh root@TARGET /tmp/e1-mmio-smoke' sw/linux/scripts/capture-linux-bsp-evidence.sh /path/to/linux smoke"
     }
   ],
   "forbidden_pass_markers": [

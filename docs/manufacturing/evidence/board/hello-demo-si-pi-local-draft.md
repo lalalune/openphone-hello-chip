@@ -1,4 +1,4 @@
-# Hello Demo SI/PI Local Draft Review
+# E1 Demo SI/PI Local Draft Review
 
 Status: draft local review, not SI/PI signoff
 Board revision: `r0-nonrelease`
@@ -14,12 +14,12 @@ measurement.
 
 Reviewed local inputs:
 
-- `board/kicad/hello-demo/hello-demo.kicad_pcb`
-- `board/kicad/hello-demo/power.kicad_sch`
-- `board/kicad/hello-demo/osc_reset.kicad_sch`
-- `board/kicad/hello-demo/debug_io.kicad_sch`
-- `board/reports/fab/hello-demo-2026-05-17/hello-demo-drc-report.txt`
-- `docs/board/kicad/hello-demo/fab-notes.md`
+- `board/kicad/e1-demo/e1-demo.kicad_pcb`
+- `board/kicad/e1-demo/power.kicad_sch`
+- `board/kicad/e1-demo/osc_reset.kicad_sch`
+- `board/kicad/e1-demo/debug_io.kicad_sch`
+- `board/reports/fab/e1-demo-2026-05-17/e1-demo-drc-report.txt`
+- `docs/board/kicad/e1-demo/fab-notes.md`
 
 ## Local Readiness Notes
 

@@ -1,4 +1,4 @@
-schema: openphone.board_package_scaling_assessment.v1
+schema: openagent.board_package_scaling_assessment.v1
 assessment: board_package_2028_scaling_implications
 status: non_release_assessment
 release_use: prohibited
@@ -39,7 +39,7 @@ readiness_matrix:
     blocks_release_gate: board_fabrication_release
   - id: power_rails
     status: blocked
-    product_implication: CPU/NPU/RAM scaling adds peak, average, and transient rail-current requirements beyond the hello-demo placeholder rails.
+    product_implication: CPU/NPU/RAM scaling adds peak, average, and transient rail-current requirements beyond the e1-demo placeholder rails.
     package_implication: Package must define rail count, current capacity, bump/pin allocation, decoupling strategy, and return-current paths.
     board_implication: Board regulators, sequencing, decoupling, current sensing, fault handling, and first-article current limits are required.
     required_evidence:
@@ -59,7 +59,7 @@ readiness_matrix:
     blocks_release_gate: board_fabrication_release
   - id: package_pins
     status: blocked
-    product_implication: Hello QFN64 planning pinout is insufficient evidence for phone-class memory bandwidth, debug, power, test, and high-speed interfaces.
+    product_implication: E1 QFN64 planning pinout is insufficient evidence for phone-class memory bandwidth, debug, power, test, and high-speed interfaces.
     package_implication: Real package must allocate LPDDR, clocks, reset, debug, boot, power, ground, thermal, test, and no-connect pins with pin-1 orientation.
     board_implication: Board symbol, footprint, fanout, DFM, assembly, and cross-probe must derive from package-vendor data.
     required_evidence:

@@ -1,4 +1,4 @@
-schema: openphone.product_feature_evidence.v1
+schema: openagent.product_feature_evidence.v1
 status: release_blocked
 source_gap_manifest: docs/manufacturing/real-world-verification-gaps.yaml
 claim_boundary: >

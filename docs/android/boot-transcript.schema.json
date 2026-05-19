@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "openphone.android_virtual_device_smoke.schema.v1",
-  "title": "OpenPhone Android virtual-device smoke evidence",
+  "$id": "openagent.android_virtual_device_smoke.schema.v1",
+  "title": "OpenAgent Android virtual-device smoke evidence",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,16 +23,16 @@
   ],
   "properties": {
     "schema": {
-      "const": "openphone.android_virtual_device_smoke.v1"
+      "const": "openagent.android_virtual_device_smoke.v1"
     },
     "claim_boundary": {
       "const": "virtual_device_smoke_only_not_boot_or_compatibility_evidence"
     },
     "target": {
-      "const": "openphone_ai_soc"
+      "const": "openagent_ai_soc"
     },
     "environment": {
-      "enum": ["cuttlefish_riscv64", "qemu_riscv64", "renode_hello_soc"]
+      "enum": ["cuttlefish_riscv64", "qemu_riscv64", "renode_e1_soc"]
     },
     "external_tree": {
       "type": "string",
@@ -92,7 +92,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "hello_npu": {
+        "e1_npu": {
           "enum": ["absent_fail_closed", "present_started", "blocked"]
         },
         "graphics_composer": {

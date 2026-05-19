@@ -3,7 +3,7 @@
 Date: 2026-05-17
 
 Purpose: prepare a Linux host to test the generated AP/AOSP path without
-turning qemu-virt or Cuttlefish reference evidence into an OpenPhone chip claim.
+turning qemu-virt or Cuttlefish reference evidence into an OpenAgent chip claim.
 
 ## Current host-independent checks
 
@@ -48,7 +48,7 @@ QEMU_OS_BOOT_SECONDS=30 scripts/run_qemu.sh --check-os
 python3 scripts/check_qemu_linux_payload_status.py
 ```
 
-This is only `qemu_virt_reference_only_not_hello_chip_rtl` evidence.
+This is only `qemu_virt_reference_only_not_e1_chip_rtl` evidence.
 
 2. Prepare Chipyard:
 
@@ -67,7 +67,7 @@ readiness.
 3. Generate the selected AP simulator artifacts:
 
 ```sh
-scripts/run_chipyard_openphone_verilator.sh verilog
+scripts/run_chipyard_openagent_verilator.sh verilog
 python3 scripts/check_chipyard_generator_manifest.py --require-generated
 python3 scripts/check_chipyard_generated_linux_contract.py
 python3 scripts/check_chipyard_payload_path.py
@@ -75,14 +75,14 @@ python3 scripts/check_chipyard_payload_path.py
 
 Generated Verilog, DTS, simulator paths, tool versions, commands, and SHA-256
 values must be recorded in
-`build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json`.
+`build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json`.
 
 4. Run a generated AP OpenSBI/Linux smoke:
 
 ```sh
 python3 scripts/locate_chipyard_linux_payload.py --json
 eval "$(python3 scripts/locate_chipyard_linux_payload.py --export-env)"
-scripts/run_chipyard_openphone_linux_smoke.sh
+scripts/run_chipyard_openagent_linux_smoke.sh
 python3 scripts/check_chipyard_verilator_linux_smoke.py
 ```
 
@@ -99,7 +99,7 @@ cd -
 python3 scripts/locate_chipyard_linux_payload.py --require
 ```
 
-This is the first gate that can start closing an OpenPhone generated-AP Linux
+This is the first gate that can start closing an OpenAgent generated-AP Linux
 claim.
 
 If `check_chipyard_verilator_linux_smoke.py` reports stale `/work/` or other
@@ -116,13 +116,13 @@ That command removes only the generated Verilator config directory and simulator
 binary when the generated driver makefile or filelists contain stale
 container/workspace absolute paths. It does not alter checked-in source or
 create boot evidence. The next
-`scripts/run_chipyard_openphone_verilator.sh ...` or native
-`scripts/run_chipyard_openphone_linux_smoke.sh` invocation must then regenerate
+`scripts/run_chipyard_openagent_verilator.sh ...` or native
+`scripts/run_chipyard_openagent_linux_smoke.sh` invocation must then regenerate
 the driver makefile on the current host. On macOS/arm64, prefer the container
 smoke path so the generated `/work/...` paths match the container mount:
 
 ```sh
-CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh
+CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openagent_linux_smoke.sh
 ```
 
 5. Archive CPU/AP evidence:
@@ -133,8 +133,8 @@ eval "$(python3 scripts/wire_cpu_ap_capture_commands.py --format shell)"
 scripts/capture_chipyard_linux_evidence.sh preflight
 ```
 
-The wiring helper derives `OPENPHONE_OPENSBI_BOOT_CMD` and
-`OPENPHONE_LINUX_BOOT_CMD` from the generated AP Linux smoke runner when the
+The wiring helper derives `OPENAGENT_OPENSBI_BOOT_CMD` and
+`OPENAGENT_LINUX_BOOT_CMD` from the generated AP Linux smoke runner when the
 payload and generated manifest are present. It does not invent the
 trap/timer/IRQ, ISA/cache/MMU, or benchmark commands; those must be real
 generated-target tests and must remain blocked until supplied.
@@ -191,7 +191,7 @@ virtual-device sequence and keeps failing until real transcripts satisfy
 `docs/android/bsp-log-evidence-manifest.json`.
 
 Cuttlefish remains Android reference evidence unless it is tied to the
-generated OpenPhone AP simulator by a separate manifest-bound transcript.
+generated OpenAgent AP simulator by a separate manifest-bound transcript.
 
 7. Re-run the top-level handoff/MVP checks:
 

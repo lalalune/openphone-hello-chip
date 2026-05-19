@@ -27,40 +27,40 @@ record_opensbi_command() {
 	log=$2
 	command=$3
 	{
-		echo "openphone-evidence: target=opensbi artifact=$artifact"
-		echo "openphone-evidence: command=$command"
-		echo "openphone-evidence: started_utc=$(timestamp_utc)"
-		echo "openphone-evidence: opensbi=$opensbi"
+		echo "openagent-evidence: target=opensbi artifact=$artifact"
+		echo "openagent-evidence: command=$command"
+		echo "openagent-evidence: started_utc=$(timestamp_utc)"
+		echo "openagent-evidence: opensbi=$opensbi"
 	} > "$log"
 	set +e
 	(cd "$opensbi" && sh -c "$command") >> "$log" 2>&1
 	rc=$?
 	set -e
 	if [ "$rc" -eq 0 ]; then
-		echo "openphone-evidence: status=PASS" >> "$log"
+		echo "openagent-evidence: status=PASS" >> "$log"
 	else
-		echo "openphone-evidence: status=FAIL rc=$rc" >> "$log"
+		echo "openagent-evidence: status=FAIL rc=$rc" >> "$log"
 	fi
-	echo "openphone-evidence: ended_utc=$(timestamp_utc)" >> "$log"
+	echo "openagent-evidence: ended_utc=$(timestamp_utc)" >> "$log"
 	exit "$rc"
 }
 
 case "$mode" in
 	build)
 		record_opensbi_command \
-			opensbi_openphone_build \
-			"$evidence_dir/opensbi_openphone_build.log" \
-			"${OPENPHONE_OPENSBI_CMD:-make PLATFORM=generic FW_DYNAMIC=y}"
+			opensbi_openagent_build \
+			"$evidence_dir/opensbi_openagent_build.log" \
+			"${OPENAGENT_OPENSBI_CMD:-make PLATFORM=generic FW_DYNAMIC=y}"
 		;;
 	handoff)
-		if [ -z "${OPENPHONE_OPENSBI_HANDOFF_CMD:-}" ]; then
-			echo "error: set OPENPHONE_OPENSBI_HANDOFF_CMD to the external boot command" >&2
+		if [ -z "${OPENAGENT_OPENSBI_HANDOFF_CMD:-}" ]; then
+			echo "error: set OPENAGENT_OPENSBI_HANDOFF_CMD to the external boot command" >&2
 			exit 2
 		fi
 		record_opensbi_command \
 			opensbi_fw_dynamic_handoff \
 			"$evidence_dir/opensbi_fw_dynamic_handoff.log" \
-			"$OPENPHONE_OPENSBI_HANDOFF_CMD"
+			"$OPENAGENT_OPENSBI_HANDOFF_CMD"
 		;;
 	*)
 		echo "error: unknown mode $mode" >&2

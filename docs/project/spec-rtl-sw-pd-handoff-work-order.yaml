@@ -1,4 +1,4 @@
-schema: openphone.pipeline_handoff_work_order.v1
+schema: openagent.pipeline_handoff_work_order.v1
 status: fail_closed_open_work
 source_goal: Android-capable RISC-V AI phone SoC with WiFi, NPU/GPU/display, FPGA/prototype, and tapeout path.
 handoffs:
@@ -7,7 +7,7 @@ handoffs:
     to: machine_readable_contract
     current_artifacts:
       - docs/arch/soc.md
-      - sw/platform/hello_platform_contract.json
+      - sw/platform/e1_platform_contract.json
       - docs/project/phone-soc-minimum-blocks.yaml
     missing_artifacts:
       - generated phone SoC feature matrix consumed by checks
@@ -20,8 +20,8 @@ handoffs:
     from: machine_readable_contract
     to: synthesizable_rtl
     current_artifacts:
-      - rtl/top/hello_chip_top.sv
-      - rtl/top/hello_soc_top.sv
+      - rtl/top/e1_chip_top.sv
+      - rtl/top/e1_soc_top.sv
       - verify/rtl_gap_work_order.yaml
     missing_artifacts:
       - RV64GC CPU integration
@@ -64,7 +64,7 @@ handoffs:
       - U-Boot board port
       - kernel build and DTB validation logs
       - AOSP vendorimage and VINTF logs
-      - HAL implementations for hello_npu and hwcomposer
+      - HAL implementations for e1_npu and hwcomposer
     fail_closed_gate: make software-bsp-evidence-check
     next_tasks:
       - Keep scaffold checks separate from evidence checks.
@@ -88,8 +88,8 @@ handoffs:
     from: rtl_prototype
     to: fpga_evidence
     current_artifacts:
-      - board/fpga/hello_demo_fpga.yaml
-      - board/fpga/constraints/hello_demo_ulx3s.lpf
+      - board/fpga/e1_demo_fpga.yaml
+      - board/fpga/constraints/e1_demo_ulx3s.lpf
     missing_artifacts:
       - selected board revision
       - assigned pins and IO standards
@@ -103,7 +103,7 @@ handoffs:
     to: tapeout_release
     current_artifacts:
       - pd/signoff/manifest.yaml
-      - docs/package/hello-demo-package.md
+      - docs/package/e1-demo-package.md
       - docs/manufacturing/release-manifest.yaml
     missing_artifacts:
       - final GDS/DEF/netlist/SPEF/SDF/STA/DRC/LVS/power reports

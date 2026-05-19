@@ -2,22 +2,22 @@
 
 ## Selection
 
-The hello chip v0 NPU is a wrapped **Gemmini** generator instance from the
+The e1 chip v0 NPU is a wrapped **Gemmini** generator instance from the
 default Chipyard configuration (`GemminiCustomConfigs.defaultConfig`):
 `16x16` systolic array of `INT8` MACs with an output stage that supports
 `INT8`/`INT32` accumulation and ReLU. Gemmini is selected because it is the
 only open-source accelerator that already ships with a Rocket/BOOM-integrated
 driver, a documented descriptor (RoCC + virtual address) interface, and an
-existing Chipyard build flow that matches the rest of the hello chip CPU
+existing Chipyard build flow that matches the rest of the e1 chip CPU
 selection in `docs/rtl/cpu-config-selection.md`.
 
 The Gemmini instance is presented to the rest of the SoC through an
-**MMIO-fronted command-queue wrapper** (`rtl/npu/hello_npu_gemmini_wrapper.sv`,
+**MMIO-fronted command-queue wrapper** (`rtl/npu/e1_npu_gemmini_wrapper.sv`,
 to be added) rather than through the RoCC tightly-coupled port, so that
 software can program the accelerator from any master on the AXI-Lite contract
 fabric and the CPU choice can be re-evaluated independently.
 
-The legacy `rtl/npu/hello_npu.sv` MMIO datapath remains as a fallback target
+The legacy `rtl/npu/e1_npu.sv` MMIO datapath remains as a fallback target
 for the small-op contract path (`ADD`/`MUL`/`MAC`/`DOT4`/`MAX`/`MIN` and the
 bounded `GEMM_S8` scratchpad) and is selected when the Gemmini wrapper
 reports `caps.gemmini_present == 0` at boot.

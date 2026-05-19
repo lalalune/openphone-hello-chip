@@ -2,7 +2,7 @@
 
 The project uses two tool tiers:
 
-1. Fast hello-chip tools in `Dockerfile` and `flake.nix`.
+1. Fast e1-chip tools in `Dockerfile` and `flake.nix`.
 2. Heavy SoC/PD/software stacks bootstrapped under `external/` only when needed.
 
 ## Local validation entry points
@@ -42,14 +42,14 @@ python -m pip install -r requirements.txt
 
 Do not rely on the user Python site for evidence. User-site packages are allowed
 only as a temporary unblocker and must be called out in validation notes. The
-Docker image uses `/opt/openphone-venv` for the same reason: cocotb, pytest,
+Docker image uses `/opt/openagent-venv` for the same reason: cocotb, pytest,
 NumPy, and PyYAML should not perturb the host Python installation.
 
 ## Fast default image
 
 ```sh
-docker build -t openphone-soc-tools .
-docker run --rm -it -v "$PWD:/work" -w /work openphone-soc-tools make smoke cocotb verilator formal
+docker build -t openagent-soc-tools .
+docker run --rm -it -v "$PWD:/work" -w /work openagent-soc-tools make smoke cocotb verilator formal
 ```
 
 This image currently installs:
@@ -131,17 +131,17 @@ path" names the command path that `scripts/check_tools.sh` and
 
 | Tool | Command-line entrypoint | Install path | Current repo command | GUI-free status | Missing dependencies / blockers | Next automation step |
 | --- | --- | --- | --- | --- | --- | --- |
-| KiCad / `kicad-cli` | `kicad-cli` | `PATH`, `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`, distro package, or Homebrew cask | No make target; only `docs/board/kicad/hello-demo/fab-notes.md` placeholder is referenced | Headless-capable for ERC/DRC/plot/export once a real project exists | No checked-in `.kicad_pro`, schematic, PCB, or fab outputs | Add a `scripts/check_kicad_project.sh` gate after package pins and board revision are assigned. |
+| KiCad / `kicad-cli` | `kicad-cli` | `PATH`, `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`, distro package, or Homebrew cask | No make target; only `docs/board/kicad/e1-demo/fab-notes.md` placeholder is referenced | Headless-capable for ERC/DRC/plot/export once a real project exists | No checked-in `.kicad_pro`, schematic, PCB, or fab outputs | Add a `scripts/check_kicad_project.sh` gate after package pins and board revision are assigned. |
 | Yosys | `yosys`, `yosys-smtbmc` | Docker apt, Nix shell, OSS CAD Suite, or `PATH` | `make synth`, `scripts/run_yosys.sh`; fallback formal in `scripts/run_formal.sh` | Headless-ready and part of smoke when installed | Optional locally; release evidence needs exact version and input hashes | Keep synthesis/formal logs under `build/reports` and pin OSS CAD Suite or Docker inputs. |
 | Verilator | `verilator` | Docker apt, Nix shell, OSS CAD Suite, or `PATH` | `make rtl-check`, `make verilator`, cocotb via `scripts/run_cocotb.sh` | Headless-ready and part of fast RTL evidence | Optional locally; cocotb prefers Verilator and falls back to Icarus | Archive lint/elaboration logs and promote version capture into release manifest. |
-| cocotb | `cocotb-config`, Python import `cocotb` | repo `.venv/bin`, Docker `/opt/openphone-venv/bin`, Nix Python env, or user `PATH` | `make cocotb`, `make cocotb-contract`, `make cocotb-cpu` | Headless-ready through make and simulator backends | Repo-local `.venv` may be missing; needs Verilator or Icarus | Make `.venv` the default local evidence path and archive `results.xml`. |
+| cocotb | `cocotb-config`, Python import `cocotb` | repo `.venv/bin`, Docker `/opt/openagent-venv/bin`, Nix Python env, or user `PATH` | `make cocotb`, `make cocotb-contract`, `make cocotb-cpu` | Headless-ready through make and simulator backends | Repo-local `.venv` may be missing; needs Verilator or Icarus | Make `.venv` the default local evidence path and archive `results.xml`. |
 | SymbiYosys | `sby` | Nix, OSS CAD Suite, distro package, or `PATH` | `make formal`; `make ci-strict` sets `REQUIRE_SBY=1` | Headless-ready | Not required by fast Docker; requires solver stack (`z3`/`boolector`) and `.sby` support | Add strict formal transcript capture once `sby` is pinned. |
 | OpenROAD | `openroad` | OpenLane container, OpenROAD build, Nix/OSS CAD Suite where available, or `PATH` | `make openroad`, `scripts/run_openroad.sh` | Headless-ready through Tcl | Missing local install/PDK in normal smoke | Add preflight that records PDK root, OpenROAD version, and output report list before signoff. |
 | OpenLane | `openlane`, legacy `flow.tcl`, or `docker run ... openlane` | `PATH` or pinned Docker image `ghcr.io/efabless/openlane2:2.4.0.dev1` | `make openlane`, `scripts/run_openlane.sh`, `scripts/install_openlane_image.sh` | Headless-ready through CLI/container | Requires Docker or OpenLane install, PDK, Magic, Netgen, OpenROAD, and real run artifacts | Replace floating bootstrap clone with a pinned OpenLane2 ref and capture image digest per run. |
 | MVP status report | `python3 scripts/check_mvp_status.py` | Repo Python | `make mvp-status`, `make mvp-status-strict` | Headless-ready; emits one `PASS`, `BLOCK`, or `FAIL` row per subsystem with evidence and next command | `--strict` exits non-zero for any block; default mode is a readable gap report | Keep new subsystem checks wired into this report before marking workstream gates complete. |
-| QEMU | `qemu-system-riscv64` | Docker apt, Nix shell, distro package, or `PATH` | `make qemu`, `make qemu-check`, `scripts/run_qemu.sh --check` | Headless-ready with `-nographic`; reports `STATUS: PASS`, `STATUS: BLOCKED`, or `STATUS: FAIL` per stage | Executable smoke also needs a RISC-V ELF compiler for `hello_qemu_firmware.S` | Add CI artifact for the built ELF and bounded serial transcript. |
-| Renode | `renode` | `PATH` from an official Renode install | `make renode`, `scripts/run_renode.sh --check`, `scripts/run_renode.sh --check --transcript PATH`, `make renode-check` | CLI-capable; check mode reports `BLOCKED` when Renode, firmware, or a real transcript is absent unless `REQUIRE_RENODE=1`; transcript intake archives `build/reports/renode_smoke.log` only after the expected banner is found | No real hello hardware model; only qemu-virt reference `.repl/.resc` exists | Automate bounded Renode console capture and keep release claims tied to the archived transcript manifest. |
-| Renode | `renode` | `PATH` from local Renode install | `make renode`, `scripts/run_renode.sh --check`, `make renode-check` | CLI-capable; check mode reports `BLOCKED` when Renode is absent unless `REQUIRE_RENODE=1` | No real hello hardware model; only qemu-virt reference `.repl/.resc` exists | Add a bounded console transcript check after the model is upgraded. |
+| QEMU | `qemu-system-riscv64` | Docker apt, Nix shell, distro package, or `PATH` | `make qemu`, `make qemu-check`, `scripts/run_qemu.sh --check` | Headless-ready with `-nographic`; reports `STATUS: PASS`, `STATUS: BLOCKED`, or `STATUS: FAIL` per stage | Executable smoke also needs a RISC-V ELF compiler for `e1_qemu_firmware.S` | Add CI artifact for the built ELF and bounded serial transcript. |
+| Renode | `renode` | `PATH` from an official Renode install | `make renode`, `scripts/run_renode.sh --check`, `scripts/run_renode.sh --check --transcript PATH`, `make renode-check` | CLI-capable; check mode reports `BLOCKED` when Renode, firmware, or a real transcript is absent unless `REQUIRE_RENODE=1`; transcript intake archives `build/reports/renode_smoke.log` only after the expected banner is found | No real e1 hardware model; only qemu-virt reference `.repl/.resc` exists | Automate bounded Renode console capture and keep release claims tied to the archived transcript manifest. |
+| Renode | `renode` | `PATH` from local Renode install | `make renode`, `scripts/run_renode.sh --check`, `make renode-check` | CLI-capable; check mode reports `BLOCKED` when Renode is absent unless `REQUIRE_RENODE=1` | No real e1 hardware model; only qemu-virt reference `.repl/.resc` exists | Add a bounded console transcript check after the model is upgraded. |
 | Buildroot | external `make` in a Buildroot checkout | External Buildroot tree plus host `make`, `rsync`, compiler toolchain | `make buildroot-check`; external commands documented in `docs/sw/buildroot/README.md` | Headless-ready in external tree | Buildroot source is not vendored; no kernel/rootfs build is run in repo | Add a dry-run import checker that validates `BR2_EXTERNAL` wiring against a provided checkout. |
 | Linux kernel | external `make ARCH=riscv ...` | External Linux tree plus `make`, `dtc`, `bc`, `flex`, `bison`, cross compiler | `make linux-bsp-check`; external import helper in `sw/linux/scripts/import-linux-bsp.sh` | Headless-ready in external tree | Kernel source is not vendored; drivers/DTS are not compiled by repo checks | Add optional compile smoke for modules and DTS when `LINUX_TREE` is set. |
 | AOSP / Cuttlefish | `repo`, `source build/envsetup.sh`, `lunch`, `m`, `cvd`/`launch_cvd` | External AOSP checkout on Linux host with KVM/Cuttlefish | `make aosp-bsp-check`; external import helper in `sw/aosp-device/import-aosp-device.sh` | Mostly headless; AOSP build and Cuttlefish launch are CLI-driven | AOSP checkout, Java/build deps, KVM/Cuttlefish, kernel artifact, and HAL binaries are absent | Add transcript parser for `lunch`, `m vendorimage`, and first Cuttlefish boot once an external checkout exists. |
@@ -207,7 +207,7 @@ make pd-signoff-check
 `make pd-signoff-check` must only pass against real OpenLane/OpenROAD run output under `pd/openlane/runs/*` or `runs/*`; do not add placeholder GDS/DEF/report files.
 
 `scripts/run_openlane.sh` creates a repo-local lock at `.openlane-run.lock`,
-labels Docker containers with `openphone.openlane=1` and the absolute repo
+labels Docker containers with `openagent.openlane=1` and the absolute repo
 path, and writes a Docker CID file for cleanup. If a run times out or is
 interrupted, the launcher removes its own container before clearing the lock.
 `scripts/check_openlane_run_preflight.py` reports stale locks or active labeled
@@ -215,7 +215,7 @@ containers so duplicate runs are visible before another long PD job starts.
 
 ## FPGA scaffold
 
-The owned FPGA target is documented in `docs/board/fpga/README.md` with contract data in `board/fpga/hello_demo_fpga.yaml`.
+The owned FPGA target is documented in `docs/board/fpga/README.md` with contract data in `board/fpga/e1_demo_fpga.yaml`.
 
 Run:
 

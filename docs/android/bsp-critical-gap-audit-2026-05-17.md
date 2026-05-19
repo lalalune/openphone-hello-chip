@@ -2,7 +2,7 @@
 
 Scope: `sw/**`, `docs/arch/android-contract.md`, `docs/android/riscv-bringup.md`,
 `scripts/check_software_bsp.py`, `sw/check_bsp_scaffolds.py`, and the AOSP
-product files under `sw/aosp-device/device/openphone/openphone_ai_soc`.
+product files under `sw/aosp-device/device/openagent/openagent_ai_soc`.
 
 ## Executive status
 
@@ -20,11 +20,11 @@ marker validation.
 
 | Area | Checked-in state | Gap |
 |---|---|---|
-| Platform contract | `sw/platform/hello_platform_contract.json` still has `hello_chip.has_cpu=false` and `boot_vector_placeholder`. | No CPU-capable hello-chip boot target exists. |
+| Platform contract | `sw/platform/e1_platform_contract.json` still has `e1_chip.has_cpu=false` and `boot_vector_placeholder`. | No CPU-capable e1-chip boot target exists. |
 | OpenSBI | `docs/sw/opensbi/README.md` is documentation-only. | No platform code, `fw_dynamic` handoff, RAM map, UART, timer, or interrupt proof. |
 | U-Boot | `docs/sw/u-boot/README.md` is documentation-only. | No board port, defconfig, SPL/U-Boot image, boot media, or device-tree handoff. |
 | Buildroot | `sw/buildroot` is a `BR2_EXTERNAL` skeleton with defconfig, fragment, and rootfs smoke script. | No external Buildroot checkout, no `linux-external.tar.xz`, no kernel/rootfs image, no runtime log. |
-| Linux | `sw/linux` has importable NPU/DMA driver sources and DTS. | No external kernel checkout integration, no compiled modules, no DTB build, no boot log, no `/dev/hello-npu` smoke. |
+| Linux | `sw/linux` has importable NPU/DMA driver sources and DTS. | No external kernel checkout integration, no compiled modules, no DTB build, no boot log, no `/dev/e1-npu` smoke. |
 | AOSP | `sw/aosp-device` has product, BoardConfig, device makefile, init, VINTF, fstab, sepolicy, kernel fragment, and DTS scaffolds. | No external AOSP checkout build, no `vendor.img`, no VINTF result, no SELinux build/neverallow result, and no Cuttlefish/QEMU/Renode smoke transcript accepted by the strict gate. |
 | Android compatibility | `sw/aosp-device/evidence_manifest.json` lists CTS/VTS scope-intake evidence requirements. | No CTS, VTS, CDD, or Android compatibility logs are checked in; no Android compatibility claim is allowed. |
 | WiFi/Bluetooth | Linux DTS has disabled SDIO/UART nodes for a Murata/CYW4343W-class shape. | No SDIO host, UART, GPIO/pinctrl, power sequencing, RF path, firmware loading, or runtime evidence. |
@@ -33,27 +33,27 @@ marker validation.
 
 | HAL/surface | File evidence | Gap to close |
 |---|---|---|
-| NPU HAL | `device.mk` declares `hello_npu.default`; `manifest.xml` declares `vendor.openphone.hello_npu@1.0`; init starts it only when `vendor.hello_npu.ready=1`; repo-local HAL source exists under `sw/aosp-device/device/openphone/openphone_ai_soc/hal/hello_npu`. | No external AOSP build has produced the HAL binary; no HIDL/AIDL interface build, VTS result, runtime probe, or fail-closed device smoke transcript is checked in. |
-| Graphics composer | `device.mk` declares `android.hardware.graphics.composer@2.4-service` and `hwcomposer.openphone_ai_soc`; `manifest.xml` declares composer 2.4; repo-local framebuffer-only HWC source exists under `sw/aosp-device/device/openphone/openphone_ai_soc/hal/hwcomposer`. | No external AOSP build has produced `hwcomposer.openphone_ai_soc`; no framebuffer or DRM node proof, SurfaceFlinger log, HWC2 validation, or home-screen evidence is checked in. |
-| Input | Runbook allows Cuttlefish/evdev only. | No hello_soc touch/input DTS, driver, HAL policy, or CTS input evidence. |
+| NPU HAL | `device.mk` declares `e1_npu.default`; `manifest.xml` declares `vendor.openagent.e1_npu@1.0`; init starts it only when `vendor.e1_npu.ready=1`; repo-local HAL source exists under `sw/aosp-device/device/openagent/openagent_ai_soc/hal/e1_npu`. | No external AOSP build has produced the HAL binary; no HIDL/AIDL interface build, VTS result, runtime probe, or fail-closed device smoke transcript is checked in. |
+| Graphics composer | `device.mk` declares `android.hardware.graphics.composer@2.4-service` and `hwcomposer.openagent_ai_soc`; `manifest.xml` declares composer 2.4; repo-local framebuffer-only HWC source exists under `sw/aosp-device/device/openagent/openagent_ai_soc/hal/hwcomposer`. | No external AOSP build has produced `hwcomposer.openagent_ai_soc`; no framebuffer or DRM node proof, SurfaceFlinger log, HWC2 validation, or home-screen evidence is checked in. |
+| Input | Runbook allows Cuttlefish/evdev only. | No e1_soc touch/input DTS, driver, HAL policy, or CTS input evidence. |
 | Audio/camera/radio/GNSS/NFC | Explicitly excluded in docs. | No manifest entries or implementation; must remain excluded from claims. |
-| SELinux | `file_contexts` and `hello_npu.te` label the NPU path and HAL domain. | Policy has not been compiled in AOSP, no `checkpolicy`/Soong output, no `avc` log review. |
-| Fstab/storage | `fstab.openphone` names vendor and userdata by partition name. | No partition table, boot/vendor/userdata images, AVB chain, or mount log. |
+| SELinux | `file_contexts` and `e1_npu.te` label the NPU path and HAL domain. | Policy has not been compiled in AOSP, no `checkpolicy`/Soong output, no `avc` log review. |
+| Fstab/storage | `fstab.openagent` names vendor and userdata by partition name. | No partition table, boot/vendor/userdata images, AVB chain, or mount log. |
 
 ## Missing external trees and images
 
 Required but absent:
 
-- External Linux tree with `drivers/misc/openphone-hello` imported.
+- External Linux tree with `drivers/misc/openagent-e1` imported.
 - External Buildroot checkout using `sw/buildroot` as `BR2_EXTERNAL`.
-- External AOSP checkout with `device/openphone/openphone_ai_soc` imported.
+- External AOSP checkout with `device/openagent/openagent_ai_soc` imported.
 - Cuttlefish host setup with KVM, `launch_cvd`, `adb`, and riscv64 product.
-- External AOSP build output proving `hello_npu.default` compiles, installs, and
+- External AOSP build output proving `e1_npu.default` compiles, installs, and
   passes the repo contract/runtime smoke.
-- External AOSP build output proving `hwcomposer.openphone_ai_soc` compiles,
+- External AOSP build output proving `hwcomposer.openagent_ai_soc` compiles,
   installs, and reaches SurfaceFlinger with the framebuffer contract.
 - Built Linux `Image`, DTB, modules, and boot log.
-- Built Buildroot rootfs/kernel image and `hello-mmio-smoke` transcript.
+- Built Buildroot rootfs/kernel image and `e1-mmio-smoke` transcript.
 - Built AOSP `vendor.img`, installed-files manifest, VINTF output, SELinux
   policy output, neverallow output, CTS/VTS scope-intake log, and virtual-device
   smoke logs.
@@ -62,19 +62,19 @@ Required but absent:
 
 | Target | Current evidence | Required evidence before PASS |
 |---|---|---|
-| AOSP Cuttlefish riscv64 | Legacy `cuttlefish_riscv64_boot.log` may exist from capture tooling, but it is not the strict gate file. | `docs/evidence/android/cuttlefish_riscv64_smoke.log` with provenance, no boot/compatibility claim markers, `ro.product.cpu.abi=riscv64`, `openphone_ai_soc`, and real Cuttlefish/adb smoke output. |
-| OpenPhone AOSP product | Product files only plus any archived lunch log. | `openphone_ai_soc_lunch.log`, `openphone_ai_soc_vendorimage.log`, `openphone_ai_soc_checkvintf.log`, `openphone_ai_soc_sepolicy_build.log`, `openphone_ai_soc_selinux_neverallow.log`, and installed-files/policy evidence. |
-| Android compatibility scope | Manifest only; legacy `cts_virtual_device_subset.log` and `vts_virtual_device_subset.log` are aliases when capture tooling creates them. | `openphone_ai_soc_cts_vts_plan.log` from real CTS/VTS build, list, or bounded smoke-scope intake commands; this is still not full CDD/CTS/VTS certification. |
-| QEMU virt | Semantic qemu-virt checks and optional smoke path exist, but qemu-virt is not hello-chip ABI proof. | Bounded QEMU UART transcript for software reference, plus separate hello-chip MMIO proof before hardware claims. |
+| AOSP Cuttlefish riscv64 | Legacy `cuttlefish_riscv64_boot.log` may exist from capture tooling, but it is not the strict gate file. | `docs/evidence/android/cuttlefish_riscv64_smoke.log` with provenance, no boot/compatibility claim markers, `ro.product.cpu.abi=riscv64`, `openagent_ai_soc`, and real Cuttlefish/adb smoke output. |
+| OpenAgent AOSP product | Product files only plus any archived lunch log. | `openagent_ai_soc_lunch.log`, `openagent_ai_soc_vendorimage.log`, `openagent_ai_soc_checkvintf.log`, `openagent_ai_soc_sepolicy_build.log`, `openagent_ai_soc_selinux_neverallow.log`, and installed-files/policy evidence. |
+| Android compatibility scope | Manifest only; legacy `cts_virtual_device_subset.log` and `vts_virtual_device_subset.log` are aliases when capture tooling creates them. | `openagent_ai_soc_cts_vts_plan.log` from real CTS/VTS build, list, or bounded smoke-scope intake commands; this is still not full CDD/CTS/VTS certification. |
+| QEMU virt | Semantic qemu-virt checks and optional smoke path exist, but qemu-virt is not e1-chip ABI proof. | Bounded QEMU UART transcript for software reference, plus separate e1-chip MMIO proof before hardware claims. |
 | Renode | Reference platform/check path only; docs state executable smoke is blocked without transcript. | Renode serial transcript loading the real firmware ELF and capturing the expected banner. |
-| hello_soc RTL/Linux | No CPU-capable hello_soc boot path. | CPU, RAM, UART, timer, interrupt controller, OpenSBI handoff, Linux boot log, and MMIO smoke. |
+| e1_soc RTL/Linux | No CPU-capable e1_soc boot path. | CPU, RAM, UART, timer, interrupt controller, OpenSBI handoff, Linux boot log, and MMIO smoke. |
 
 ## Kernel driver gaps
 
 Implemented as importable source only:
 
-- `openphone,hello-npu` misc char driver reads `HELLO_NPU_RESULT_OFFSET`.
-- `openphone,hello-dma` platform driver exports a sysfs contract string.
+- `openagent,e1-npu` misc char driver reads `E1_NPU_RESULT_OFFSET`.
+- `openagent,e1-dma` platform driver exports a sysfs contract string.
 
 Still missing:
 
@@ -97,11 +97,11 @@ Still missing:
 
 | Target | Evidence files |
 |---|---|
-| Buildroot | `docs/evidence/buildroot/openphone_hello_defconfig.log`, `docs/evidence/buildroot/openphone_hello_image_manifest.txt`, `docs/evidence/buildroot/hello-mmio-smoke.log` |
-| Linux | `docs/evidence/linux/openphone_hello_kernel_build.log`, `docs/evidence/linux/openphone_hello_dtb_check.log`, `docs/evidence/linux/hello-mmio-smoke.log` |
-| OpenSBI | `docs/evidence/linux/opensbi_openphone_build.log`, `docs/evidence/linux/opensbi_fw_dynamic_handoff.log` |
-| U-Boot | `docs/evidence/linux/u_boot_openphone_build.log`, `docs/evidence/linux/u_boot_opensbi_boot_chain.log` |
-| AOSP / Android | `docs/evidence/android/openphone_ai_soc_lunch.log`, `docs/evidence/android/openphone_ai_soc_vendorimage.log`, `docs/evidence/android/openphone_ai_soc_checkvintf.log`, `docs/evidence/android/openphone_ai_soc_sepolicy_build.log`, `docs/evidence/android/openphone_ai_soc_selinux_neverallow.log`, `docs/evidence/android/openphone_ai_soc_cts_vts_plan.log`, `docs/evidence/android/cuttlefish_riscv64_smoke.log`, `docs/evidence/android/qemu_riscv64_smoke.log`, `docs/evidence/android/renode_hello_soc_smoke.log` |
+| Buildroot | `docs/evidence/buildroot/openagent_e1_defconfig.log`, `docs/evidence/buildroot/openagent_e1_image_manifest.txt`, `docs/evidence/buildroot/e1-mmio-smoke.log` |
+| Linux | `docs/evidence/linux/openagent_e1_kernel_build.log`, `docs/evidence/linux/openagent_e1_dtb_check.log`, `docs/evidence/linux/e1-mmio-smoke.log` |
+| OpenSBI | `docs/evidence/linux/opensbi_openagent_build.log`, `docs/evidence/linux/opensbi_fw_dynamic_handoff.log` |
+| U-Boot | `docs/evidence/linux/u_boot_openagent_build.log`, `docs/evidence/linux/u_boot_opensbi_boot_chain.log` |
+| AOSP / Android | `docs/evidence/android/openagent_ai_soc_lunch.log`, `docs/evidence/android/openagent_ai_soc_vendorimage.log`, `docs/evidence/android/openagent_ai_soc_checkvintf.log`, `docs/evidence/android/openagent_ai_soc_sepolicy_build.log`, `docs/evidence/android/openagent_ai_soc_selinux_neverallow.log`, `docs/evidence/android/openagent_ai_soc_cts_vts_plan.log`, `docs/evidence/android/cuttlefish_riscv64_smoke.log`, `docs/evidence/android/qemu_riscv64_smoke.log`, `docs/evidence/android/renode_e1_soc_smoke.log` |
 
 Until those files exist with real command transcripts, `make software-bsp-check`
 prints BLOCKED status and `make software-bsp-evidence-check` fails. Placeholder

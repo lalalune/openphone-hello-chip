@@ -1,17 +1,17 @@
 # QEMU qemu-virt reference target
 
-QEMU is the qemu-virt software reference only tier. It is not the hello-chip hardware ABI.
+QEMU is the qemu-virt software reference only tier. It is not the e1-chip hardware ABI.
 
-The hello chip has no CPU and is driven through the package debug nibble bridge into the MMIO contract recorded in `sw/platform/hello_platform_contract.json`. By contrast, `make qemu` launches `qemu-system-riscv64 -machine virt` with RAM at `0x8000_0000` and a qemu-virt UART at `0x1000_0000`.
+The e1 chip has no CPU and is driven through the package debug nibble bridge into the MMIO contract recorded in `sw/platform/e1_platform_contract.json`. By contrast, `make qemu` launches `qemu-system-riscv64 -machine virt` with RAM at `0x8000_0000` and a qemu-virt UART at `0x1000_0000`.
 
-The checked-in qemu-virt firmware source is `sw/bootrom/hello_qemu_firmware.S`.
+The checked-in qemu-virt firmware source is `sw/bootrom/e1_qemu_firmware.S`.
 Build it with a local bare-metal RISC-V toolchain:
 
 ```sh
 scripts/run_qemu.sh --build-firmware
 ```
 
-That writes `build/qemu/hello_qemu_firmware.elf`. `scripts/run_qemu.sh`
+That writes `build/qemu/e1_qemu_firmware.elf`. `scripts/run_qemu.sh`
 launches that ELF by default. The compatibility alias
 `scripts/run_qemu.sh --build-stub` is still accepted, but no checked-in ELF is
 used as boot evidence.
@@ -22,7 +22,7 @@ and documentation. If `riscv64-unknown-elf-gcc`, `riscv64-elf-gcc`,
 and runs a bounded QEMU smoke that expects the UART banner:
 
 ```text
-openphone hello qemu
+openagent e1 qemu
 ```
 
 On a passing executable smoke, the captured serial transcript is archived at
@@ -49,7 +49,7 @@ DMA/NPU/display MMIO smoke tests using the central contract
 ## Linux Payload Smoke
 
 `scripts/run_qemu.sh --check-os` is a bounded qemu-virt Linux payload smoke. It
-is not hello-chip hardware or generated AP evidence. The shortest prebuilt path
+is not e1-chip hardware or generated AP evidence. The shortest prebuilt path
 is Debian's riscv64 netboot installer kernel and initrd:
 
 ```sh
@@ -66,7 +66,7 @@ manifest at `build/reports/qemu_os_boot_attempt.json` with the required claim
 boundary:
 
 ```text
-qemu_virt_reference_only_not_hello_chip_rtl
+qemu_virt_reference_only_not_e1_chip_rtl
 ```
 
 The default OS smoke memory is `2G` because the Debian riscv64 installer initrd
@@ -82,7 +82,7 @@ python3 scripts/check_qemu_linux_payload_status.py
 ```
 
 This path may prove that local QEMU can execute a real riscv64 Linux payload on
-`-machine virt`; it still cannot be used as OpenPhone AP, OpenSBI/U-Boot chain,
+`-machine virt`; it still cannot be used as OpenAgent AP, OpenSBI/U-Boot chain,
 BSP driver, or Android evidence.
 
 The smallest next BSP import step is the external Linux BSP import preflight:
@@ -93,6 +93,6 @@ LINUX_DIR=/path/to/linux python3 scripts/check_bsp_next_import_step.py
 ```
 
 Linux comes before Buildroot because the Buildroot target needs a kernel
-tree/tarball that already contains the OpenPhone Linux drivers and DTS. OpenSBI
+tree/tarball that already contains the OpenAgent Linux drivers and DTS. OpenSBI
 and U-Boot remain blocked on a CPU-capable SoC handoff with RAM, UART, timer,
 interrupt controller, and boot handoff.

@@ -1,4 +1,4 @@
-# Hello demo pad-ring contract
+# E1 demo pad-ring contract
 
 Evidence class: `non_release_demo_planning`
 Release use: `prohibited`
@@ -6,7 +6,7 @@ Planning revision: `2026-05-17-r0`
 
 The current RTL exposes a chip-level digital interface but does not instantiate
 foundry IO cells. This document records the concrete pad-ring planning contract
-for `hello_demo_qfn64_planning_r0` so package, KiCad, FPGA, and physical-design
+for `e1_demo_qfn64_planning_r0` so package, KiCad, FPGA, and physical-design
 work can use the same signal names before a foundry pad library is selected.
 
 This is not foundry padframe release evidence. Tapeout and board release must
@@ -29,7 +29,7 @@ bonding, and padframe-inclusive signoff reports are archived.
   vendor bond diagram assigns a different disposition.
 
 The package pinout remains the machine-readable contract:
-`package/hello-demo-pinout.yaml`.
+`package/e1-demo-pinout.yaml`.
 
 ## Planning placement intent
 

@@ -9,8 +9,8 @@ remains blocked by a missing host executable and missing real transcript.
 Software BSP evidence remains blocked by missing external Buildroot, Linux,
 OpenSBI, U-Boot, AOSP, CTS, and VTS logs. Benchmarks now reject repo-local
 smoke shims as real tools; fio host runs pass, while CoreMark, STREAM,
-lmbench, TensorFlow Lite `benchmark_model`, and hello-NPU NNAPI remain blocked
-until real target executables and `benchmarks/capabilities/hello_npu_nnapi.proof.json`
+lmbench, TensorFlow Lite `benchmark_model`, and e1-NPU NNAPI remain blocked
+until real target executables and `benchmarks/capabilities/e1_npu_nnapi.proof.json`
 capability evidence exist.
 
 Heartbeat update 2026-05-17 04:33 PDT: CPU/AP is now an explicit MVP blocker,
@@ -35,14 +35,14 @@ claim.
 
 ## Critical architecture boundary
 
-The current hello chip is a debug-MMIO hardware ABI, not a bootable phone SoC. `hello_chip_top` exposes a package debug nibble bridge into `hello_soc_top`. The Linux-capable AXI-Lite scaffold is separate under `rtl/interconnect`, `rtl/memory`, and `rtl/interrupts`; the CPU subsystem is intentionally non-bootable.
+The current e1 chip is a debug-MMIO hardware ABI, not a bootable phone SoC. `e1_chip_top` exposes a package debug nibble bridge into `e1_soc_top`. The Linux-capable AXI-Lite scaffold is separate under `rtl/interconnect`, `rtl/memory`, and `rtl/interrupts`; the CPU subsystem is intentionally non-bootable.
 
 Prototype success in three weeks should therefore be defined as one of two tracks:
 
-1. A stronger hello-chip demonstrator: debug bridge drives DMA/NPU/display contract behavior, with RTL/formal/cocotb/synthesis/PD artifact evidence.
+1. A stronger e1-chip demonstrator: debug bridge drives DMA/NPU/display contract behavior, with RTL/formal/cocotb/synthesis/PD artifact evidence.
 2. A Linux-capable scaffold prototype: integrate a real or simulated RV64 path, DRAM, interrupt/timer/UART, generated DTS, and boot smoke tests.
 
-Treating QEMU/Renode success as proof of the hello-chip ABI is invalid until an emulator model exists for the hello hardware map.
+Treating QEMU/Renode success as proof of the e1-chip ABI is invalid until an emulator model exists for the e1 hardware map.
 
 ## Workstream A: RTL and formal
 
@@ -61,12 +61,12 @@ Immediate work:
 - Add protocol assertions or an open AXI-Lite property set for interconnect, DRAM, and interrupt controller.
 - Add coverage summaries for opcodes, MMIO regions, response codes, IRQs, and AXI timing permutations.
 - Keep `make formal` fallback evidence labeled as fallback unless `REQUIRE_SBY=1` is set, and require `REQUIRE_DEEP_FORMAL=1` before treating top-level BMC as more than routine structural coverage.
-- Decide whether week-one RTL work targets the hello debug-MMIO demonstrator or the Linux-capable scaffold; they are different prototypes.
+- Decide whether week-one RTL work targets the e1 debug-MMIO demonstrator or the Linux-capable scaffold; they are different prototypes.
 
 2026-05-17 05:10 PDT heartbeat update:
 
 - Ran the broad local validation stack: `make ci-local`, `make verify-all`, `make smoke`, `make qemu-check-strict`, host-capable `make benchmarks`, strict benchmark planning, and deep formal.
-- Fixed a stale top-level formal address-map predicate: `hello_soc_top` now exposes a CLINT window at `0x0200_0000`, and `verify/formal/hello_soc_top_formal.sv` now treats that window as mapped instead of expecting unmapped `32'hDEAD_BEEF`.
+- Fixed a stale top-level formal address-map predicate: `e1_soc_top` now exposes a CLINT window at `0x0200_0000`, and `verify/formal/e1_soc_top_formal.sv` now treats that window as mapped instead of expecting unmapped `32'hDEAD_BEEF`.
 - `REQUIRE_DEEP_FORMAL=1 make formal` passed after the CLINT predicate fix. This is local formal evidence only, not silicon/FPGA/OS boot evidence.
 - Remaining RTL/verification priorities are protocol-property expansion, coverage reporting, and replacement of the tiny CPU scaffold with generated CPU/AP artifacts plus boot evidence before claiming Linux-capable completion.
 
@@ -77,7 +77,7 @@ Primary gaps:
 - Platform contract had drifted behind extended DMA/NPU RTL registers. This report run updated the JSON/header and checker to catch future undocumented readable RTL offsets.
 - Linux drivers now consume the generated platform contract import header, and the platform-contract checker rejects stale generated/imported headers.
 - DTS is not bootable: no CPU, memory, timer, interrupt-parent, UART, or complete RISC-V platform shape.
-- `qemu-check` now builds/runs the qemu-virt software-reference firmware and archives `build/reports/qemu_smoke.log`; this is still not hello-chip hardware boot proof.
+- `qemu-check` now builds/runs the qemu-virt software-reference firmware and archives `build/reports/qemu_smoke.log`; this is still not e1-chip hardware boot proof.
 - `renode-check` remains a semantic scaffold plus explicit BLOCK until `renode` is installed and a transcript is archived.
 - Buildroot/AOSP/OpenSBI/U-Boot paths are placeholders around external trees.
 - CPU/AP completion is blocked until the selected Chipyard Rocket path produces
@@ -85,10 +85,10 @@ Primary gaps:
 
 Immediate work:
 
-- Generate DTS/include fragments from `sw/platform/hello_platform_contract.json`.
-- Keep `sw/platform/hello_platform_contract.json` at `has_cpu=false` until the
+- Generate DTS/include fragments from `sw/platform/e1_platform_contract.json`.
+- Keep `sw/platform/e1_platform_contract.json` at `has_cpu=false` until the
   CPU/AP generated-artifact and boot-evidence gates pass.
-- Keep QEMU transcript evidence in `build/reports/qemu_smoke.log` and prevent qemu-virt success from being described as hello-chip hardware boot.
+- Keep QEMU transcript evidence in `build/reports/qemu_smoke.log` and prevent qemu-virt success from being described as e1-chip hardware boot.
 - Split software checks into scaffold checks versus real boot/image checks.
 - Produce external Linux, Buildroot, and AOSP logs before allowing `make software-bsp-evidence-check` to pass.
 
@@ -150,7 +150,7 @@ Immediate work:
   `build/reports/openlane_bounded_attempt.txt`.
 - The run was stopped intentionally during long synthesis/ABC to avoid leaving
   a runaway heartbeat job active. The current blocker is no longer missing PDK
-  setup; it is that the hello-chip scaffold is too large/unstructured for a
+  setup; it is that the e1-chip scaffold is too large/unstructured for a
   fast PD smoke target. Next PD work should add a smaller PD smoke top or
   parameterized synthesis configuration before asking OpenLane for full
   placement/routing evidence.

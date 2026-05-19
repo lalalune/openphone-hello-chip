@@ -1,7 +1,7 @@
 # 2028 NPU Target
 
-This is the OpenPhone performance target for a best-in-class 2028 Android
-phone NPU. It is intentionally higher than the current `hello_npu` RTL, which
+This is the OpenAgent performance target for a best-in-class 2028 Android
+phone NPU. It is intentionally higher than the current `e1_npu` RTL, which
 remains an L0 unit demonstrator. The target is used to steer architecture,
 verification, compiler, Android HAL, and benchmark work without pretending the
 current repo has phone-class silicon.
@@ -72,7 +72,7 @@ The NPU is only real when the software stack can use it:
 
 ## Current Repo Gap
 
-`rtl/npu/hello_npu.sv` is currently a scalar datapath plus a 64-byte scratchpad
+`rtl/npu/e1_npu.sv` is currently a scalar datapath plus a 64-byte scratchpad
 GEMM prototype. It now includes a packed signed INT4 dot-product opcode as the
 first low-precision primitive, but it is still missing the actual tensor NPU
 structure:
@@ -104,16 +104,16 @@ until a target report supplies all of the following:
 | Descriptor queue | Queue depth, descriptor head/tail completion, timeout/error behavior, and host runtime submission proof |
 | DMA | Hardware tensor-streaming DMA path and bytes read/written by the NPU workload |
 | Runtime counters | Cycles, MACs, ops, errors, unsupported ops, DMA read bytes, and DMA written bytes from the measured path |
-| Android HAL / NNAPI | AIDL HAL service proof, fail-closed SELinux policy, VTS/CTS results, `hello-npu` accelerator query, total/delegated node counts, zero CPU fallback, and zero unsupported ops |
+| Android HAL / NNAPI | AIDL HAL service proof, fail-closed SELinux policy, VTS/CTS results, `e1-npu` accelerator query, total/delegated node counts, zero CPU fallback, and zero unsupported ops |
 | Model binding | Exact model SHA-256 and transcript hashes |
 | Power/thermal | Calibrated power trace, thermal trace, frequency trace, calibration record, throttle state, and perf/W calculation with exact SHA-256 values |
 
 The Android gate starts from
-`docs/benchmarks/capabilities/hello_npu_android_proof_manifest.template.json`.
+`docs/benchmarks/capabilities/e1_npu_android_proof_manifest.template.json`.
 It stays blocked until an external AOSP validation job fills real HAL, VINTF,
 SELinux, VTS, CTS, NNAPI query, and absent-device fail-closed artifacts with
 matching hashes. The sustained efficiency gate starts from
-`docs/benchmarks/capabilities/hello_npu_power_thermal_manifest.template.json`
+`docs/benchmarks/capabilities/e1_npu_power_thermal_manifest.template.json`
 and stays blocked until calibrated trace artifacts exist.
 
 For review, TOPS is bounded by the counter evidence:
@@ -131,6 +131,6 @@ keeps this distinction explicit; it does not mean the 2028 target is met.
 ```sh
 python3 scripts/check_npu_2028_targets.py
 python3 scripts/check_platform_contract.py
-python3 benchmarks/run_benchmarks.py plan --bench tflite_hello_npu --strict-missing
+python3 benchmarks/run_benchmarks.py plan --bench tflite_e1_npu --strict-missing
 make npu-2028-target-check platform-contract-check
 ```

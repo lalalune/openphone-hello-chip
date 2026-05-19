@@ -19,17 +19,17 @@
       "2028 phone competitive",
       "Android compatible",
       "production silicon",
-      "Linux-capable hello chip hardware"
+      "Linux-capable e1 chip hardware"
     ]
   },
-  "selected_manifest": "generators/chipyard/openphone-rocket-manifest.json",
-  "generated_manifest": "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
+  "selected_manifest": "generators/chipyard/openagent-rocket-manifest.json",
+  "generated_manifest": "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json",
   "capture_helper": "scripts/capture_cpu_ap_evidence.py",
   "linux_capable_gate_matrix": [
     {
       "gate": "rv64gc_isa",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log",
       "pass_requires": [
         "ISA profile",
         "RV64GC",
@@ -46,7 +46,7 @@
     {
       "gate": "s_mode_privilege",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_opensbi_boot.log",
       "pass_requires": [
         "mstatus",
         "medeleg",
@@ -63,7 +63,7 @@
     {
       "gate": "mmu_sv39_or_stronger",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log",
       "pass_requires": [
         "Sv39",
         "satp",
@@ -80,7 +80,7 @@
     {
       "gate": "clint_timer_software_irq",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log",
       "pass_requires": [
         "mtime",
         "mtimecmp",
@@ -97,7 +97,7 @@
     {
       "gate": "plic_external_irq",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log",
       "pass_requires": [
         "PLIC",
         "external interrupt claim/complete",
@@ -112,7 +112,7 @@
     {
       "gate": "uart_console",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_linux_boot.log",
       "pass_requires": [
         "UART console",
         "Linux early console",
@@ -127,7 +127,7 @@
     {
       "gate": "dtb_linux_boot_contract",
       "status": "blocked",
-      "evidence": "build/chipyard/openphone_rocket/openphone-hello.dts",
+      "evidence": "build/chipyard/openagent_rocket/openagent-e1.dts",
       "pass_requires": [
         "CPU node",
         "memory node",
@@ -145,7 +145,7 @@
     {
       "gate": "opensbi_handoff",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_opensbi_boot.log",
       "pass_requires": [
         "OpenSBI next-stage handoff",
         "DRAM base",
@@ -161,11 +161,11 @@
     {
       "gate": "linux_initramfs_smoke",
       "status": "blocked",
-      "evidence": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+      "evidence": "build/evidence/cpu_ap/openagent_e1_linux_boot.log",
       "pass_requires": [
         "Linux early console",
         "initramfs start",
-        "hello MMIO smoke result"
+        "e1 MMIO smoke result"
       ],
       "fail_if": [
         "missing Linux transcript",
@@ -187,25 +187,25 @@
   },
   "generated_artifacts": {
     "generated_src": {
-      "path": "build/chipyard/openphone_rocket/generated-src",
+      "path": "build/chipyard/openagent_rocket/generated-src",
       "manifest_key": "generated_src",
       "sha256_key": "generated_src_tree_sha256",
       "kind": "directory",
       "claim": "Recursive generated source tree from the pinned Chipyard checkout."
     },
     "verilog": {
-      "path": "build/chipyard/openphone_rocket/openphone_rocket_ap.v",
+      "path": "build/chipyard/openagent_rocket/openagent_rocket_ap.v",
       "manifest_key": "verilog",
       "sha256_key": "verilog_sha256",
       "kind": "file",
       "min_bytes": 1024,
       "required_strings": [
-        "module openphone_rocket_ap"
+        "module openagent_rocket_ap"
       ],
       "claim": "Generated Rocket RV64GC AP wrapper Verilog."
     },
     "dts": {
-      "path": "build/chipyard/openphone_rocket/openphone-hello.dts",
+      "path": "build/chipyard/openagent_rocket/openagent-e1.dts",
       "manifest_key": "dts",
       "sha256_key": "dts_sha256",
       "kind": "file",
@@ -220,7 +220,7 @@
       "claim": "Generated DTS matching the AP integration being booted."
     },
     "simulator": {
-      "path": "build/chipyard/openphone_rocket/simulator",
+      "path": "build/chipyard/openagent_rocket/simulator",
       "manifest_key": "simulator",
       "sha256_key": "simulator_sha256",
       "kind": "file_or_directory",
@@ -231,7 +231,7 @@
   "transcripts": {
     "opensbi_boot_log": {
       "artifact": "OpenSBI AP boot transcript",
-      "path": "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
+      "path": "build/evidence/cpu_ap/openagent_e1_opensbi_boot.log",
       "manifest_key": "opensbi_boot_log",
       "sha256_key": "opensbi_boot_log_sha256",
       "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake opensbi-boot --source /path/to/opensbi-serial.log --command '/exact/external/boot command'",
@@ -252,9 +252,9 @@
         "OpenSBI next-stage handoff"
       ],
       "required_strings": [
-        "openphone-evidence: target=cpu_ap artifact=openphone_hello_opensbi_boot",
-        "openphone-evidence: command=",
-        "openphone-evidence: generated_manifest=",
+        "openagent-evidence: target=cpu_ap artifact=openagent_e1_opensbi_boot",
+        "openagent-evidence: command=",
+        "openagent-evidence: generated_manifest=",
         "Reset PC",
         "hart ID",
         "misa",
@@ -268,7 +268,7 @@
         "UART console",
         "DRAM base",
         "OpenSBI next-stage handoff",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: status=PASS"
       ],
       "forbidden_strings": [
         "software reference only",
@@ -278,7 +278,7 @@
     },
     "linux_boot_log": {
       "artifact": "Linux AP boot transcript",
-      "path": "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
+      "path": "build/evidence/cpu_ap/openagent_e1_linux_boot.log",
       "manifest_key": "linux_boot_log",
       "sha256_key": "linux_boot_log_sha256",
       "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake linux-boot --source /path/to/linux-serial.log --command '/exact/external/boot command'",
@@ -294,12 +294,12 @@
         "chosen stdout",
         "Linux CONFIG_MMU",
         "initramfs start",
-        "hello MMIO smoke result"
+        "e1 MMIO smoke result"
       ],
       "required_strings": [
-        "openphone-evidence: target=cpu_ap artifact=openphone_hello_linux_boot",
-        "openphone-evidence: command=",
-        "openphone-evidence: generated_manifest=",
+        "openagent-evidence: target=cpu_ap artifact=openagent_e1_linux_boot",
+        "openagent-evidence: command=",
+        "openagent-evidence: generated_manifest=",
         "Linux early console",
         "generated DTS hash",
         "memory node",
@@ -310,8 +310,8 @@
         "chosen stdout",
         "Linux CONFIG_MMU",
         "initramfs start",
-        "hello MMIO smoke result",
-        "openphone-evidence: status=PASS"
+        "e1 MMIO smoke result",
+        "openagent-evidence: status=PASS"
       ],
       "forbidden_strings": [
         "software reference only",
@@ -321,7 +321,7 @@
     },
     "trap_timer_irq_log": {
       "artifact": "Trap, timer, and interrupt transcript",
-      "path": "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
+      "path": "build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log",
       "manifest_key": "trap_timer_irq_log",
       "sha256_key": "trap_timer_irq_log_sha256",
       "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake trap-timer-irq --source /path/to/trap-timer-irq.log --command '/exact/external/test command'",
@@ -343,9 +343,9 @@
         "sret"
       ],
       "required_strings": [
-        "openphone-evidence: target=cpu_ap artifact=openphone_hello_trap_timer_irq",
-        "openphone-evidence: command=",
-        "openphone-evidence: generated_manifest=",
+        "openagent-evidence: target=cpu_ap artifact=openagent_e1_trap_timer_irq",
+        "openagent-evidence: command=",
+        "openagent-evidence: generated_manifest=",
         "mcause",
         "mepc",
         "mtval",
@@ -360,7 +360,7 @@
         "external interrupt claim/complete",
         "mret",
         "sret",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: status=PASS"
       ],
       "forbidden_strings": [
         "software reference only",
@@ -370,7 +370,7 @@
     },
     "isa_cache_mmu_log": {
       "artifact": "ISA, cache, coherency, and MMU transcript",
-      "path": "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
+      "path": "build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log",
       "manifest_key": "isa_cache_mmu_log",
       "sha256_key": "isa_cache_mmu_log_sha256",
       "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake isa-cache-mmu --source /path/to/isa-cache-mmu.log --command '/exact/external/isa-cache-mmu command'",
@@ -392,9 +392,9 @@
         "page table"
       ],
       "required_strings": [
-        "openphone-evidence: target=cpu_ap artifact=openphone_hello_isa_cache_mmu",
-        "openphone-evidence: command=",
-        "openphone-evidence: generated_manifest=",
+        "openagent-evidence: target=cpu_ap artifact=openagent_e1_isa_cache_mmu",
+        "openagent-evidence: command=",
+        "openagent-evidence: generated_manifest=",
         "ISA profile",
         "RV64GC",
         "misa",
@@ -409,7 +409,7 @@
         "cache line",
         "TLB",
         "page table",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: status=PASS"
       ],
       "forbidden_strings": [
         "software reference only",
@@ -419,7 +419,7 @@
     },
     "ap_benchmark_log": {
       "artifact": "CPU/AP benchmark transcript",
-      "path": "build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log",
+      "path": "build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log",
       "manifest_key": "ap_benchmark_log",
       "sha256_key": "ap_benchmark_log_sha256",
       "capture_command": "python3 scripts/capture_cpu_ap_evidence.py intake ap-benchmarks --source /path/to/ap-benchmarks.log --command '/exact/external/benchmark command'",
@@ -437,9 +437,9 @@
         "power method"
       ],
       "required_strings": [
-        "openphone-evidence: target=cpu_ap artifact=openphone_hello_ap_benchmarks",
-        "openphone-evidence: command=",
-        "openphone-evidence: generated_manifest=",
+        "openagent-evidence: target=cpu_ap artifact=openagent_e1_ap_benchmarks",
+        "openagent-evidence: command=",
+        "openagent-evidence: generated_manifest=",
         "claim_level=L3",
         "benchmark report sha256",
         "CoreMark/MHz",
@@ -450,7 +450,7 @@
         "run count",
         "thermal state",
         "power method",
-        "openphone-evidence: status=PASS"
+        "openagent-evidence: status=PASS"
       ],
       "forbidden_strings": [
         "software reference only",

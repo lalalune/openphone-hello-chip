@@ -1,4 +1,4 @@
-# Hello-NPU Thermal Capture Plan
+# E1-NPU Thermal Capture Plan
 
 Status: `blocked`
 Release use: `prohibited_until_measured_sustained_evidence_passes`
@@ -13,7 +13,7 @@ filled manifest with:
 
 ```sh
 python3 benchmarks/power/scripts/check_sustained_run_evidence.py \
-  benchmarks/power/manifests/hello-npu-sustained-capture.<run-id>.json
+  benchmarks/power/manifests/e1-npu-sustained-capture.<run-id>.json
 ```
 
 Minimum requirements:

@@ -1,8 +1,8 @@
-package openphone
+package openagent
 
 import org.chipsalliance.cde.config.Config
 
-class OpenPhoneRocketConfig extends Config(
+class OpenAgentRocketConfig extends Config(
   new chipyard.harness.WithBlockDeviceModel ++
   new testchipip.iceblk.WithBlockDevice ++
   new chipyard.config.WithPeripheryTimer ++

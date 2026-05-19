@@ -64,7 +64,7 @@ class NpuStreamDescriptor:
 
     def words(self) -> tuple[int, int, int, int]:
         return (
-            HelloNpuRuntime.pack_stream_descriptor_word0(
+            E1NpuRuntime.pack_stream_descriptor_word0(
                 self.opcode,
                 self.scratch_offset,
                 self.byte_count,
@@ -89,8 +89,8 @@ class NpuTimeoutError(TimeoutError):
         self.status = status
 
 
-class HelloNpuRuntime:
-    """Reference runtime for the hello NPU MMIO contract."""
+class E1NpuRuntime:
+    """Reference runtime for the e1 NPU MMIO contract."""
 
     OP_A = 0x1002_0000
     OP_B = 0x1002_0004
@@ -148,7 +148,7 @@ class HelloNpuRuntime:
             "INT8",
             NpuPrecisionState.SUPPORTED,
             "DOT4_S8 and bounded GEMM_S8 through 64-byte MMIO scratchpad",
-            "runtime tests plus hello-npu-runtime-contract.json",
+            "runtime tests plus e1-npu-runtime-contract.json",
         ),
         NpuPrecisionSupport(
             "INT4",
@@ -222,7 +222,7 @@ class HelloNpuRuntime:
         self.write32(self.OPCODE, opcode & 0xF)
         self.write32(self.CTRL_STATUS, 2)
         self.write32(self.CTRL_STATUS, 1)
-        self._poll_status(timeout_polls, "hello NPU command")
+        self._poll_status(timeout_polls, "e1 NPU command")
         return self.read32(self.RESULT)
 
     def add(self, a: int, b: int) -> int:
@@ -287,7 +287,7 @@ class HelloNpuRuntime:
         self.write32(self.CTRL_STATUS, 2)
         self.write32(self.CTRL_STATUS, 1)
         runtime_status = self._poll_status(
-            submission.timeout_polls, "hello NPU descriptor submission"
+            submission.timeout_polls, "e1 NPU descriptor submission"
         )
         desc_status = self.read32(self.DESC_STATUS)
         runtime_status = NpuRuntimeStatus(
@@ -301,7 +301,7 @@ class HelloNpuRuntime:
         )
         if not runtime_status.ok:
             raise NpuRuntimeError(
-                f"hello NPU descriptor submission failed: desc_status=0x{desc_status:08x}",
+                f"e1 NPU descriptor submission failed: desc_status=0x{desc_status:08x}",
                 runtime_status,
             )
         return runtime_status
@@ -407,7 +407,7 @@ class HelloNpuRuntime:
         self.write32(self.OPCODE, self.OP_GEMM_S8)
         self.write32(self.CTRL_STATUS, 2)
         self.write32(self.CTRL_STATUS, 1)
-        self._poll_status(1024, "hello NPU GEMM command")
+        self._poll_status(1024, "e1 NPU GEMM command")
         raw = self.read_scratch(c_base, c_bytes)
         return [
             [

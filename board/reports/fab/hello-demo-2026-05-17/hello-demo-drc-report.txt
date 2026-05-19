@@ -1,4 +1,4 @@
-** Drc report for hello-demo.kicad_pcb **
+** Drc report for e1-demo.kicad_pcb **
 ** Created on 2026-05-17T17:58:30 **
 ** Report includes: Errors, Warnings, Exclusions **
 

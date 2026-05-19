@@ -5,7 +5,7 @@ device (`aosp_cf_riscv64_phone`). It is the fastest available Android-on-RISC-V
 path and is the pre-silicon validation surface for this repo's Android claims.
 
 This recipe is for the **simulator track only**. A successful Cuttlefish boot
-does not prove anything about `hello_soc` silicon, drivers, or HALs.
+does not prove anything about `e1_soc` silicon, drivers, or HALs.
 
 ## Scope
 
@@ -14,7 +14,7 @@ does not prove anything about `hello_soc` silicon, drivers, or HALs.
   Android bring-up evidence.
 - Provide deterministic `launch_cvd` flags for shell-first and home-screen runs.
 
-Out of scope: device-tree integration (`device/openphone`), CTS/VTS execution,
+Out of scope: device-tree integration (`device/openagent`), CTS/VTS execution,
 NPU HAL integration. See `docs/android/cts-vts-smoke-plan.md` and
 `docs/arch/android-contract.md`.
 
@@ -44,7 +44,7 @@ The preflight checks `AOSP_DIR`, `build/envsetup.sh`, `/dev/kvm`, `repo`,
 `adb`, and `launch_cvd`/`cvd` visibility. It may write
 `build/reports/aosp_linux_preflight.json`, but it does not create
 `docs/evidence/android/*.log` and is not AOSP build, boot, CTS, VTS, or
-hello-chip hardware evidence.
+e1-chip hardware evidence.
 
 ## Repo Init and Sync
 
@@ -65,8 +65,8 @@ repo sync -c -j"$(nproc)" --fail-fast --no-clone-bundle --no-tags
 Record the manifest snapshot for the boot report:
 
 ```sh
-repo manifest -r -o "$PWD/openphone-cf-manifest.xml"
-sha256sum openphone-cf-manifest.xml
+repo manifest -r -o "$PWD/openagent-cf-manifest.xml"
+sha256sum openagent-cf-manifest.xml
 ```
 
 ## Lunch and Build

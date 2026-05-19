@@ -1,15 +1,15 @@
 {
-  "schema": "openphone.sustained_power_thermal_evidence.v1",
+  "schema": "openagent.sustained_power_thermal_evidence.v1",
   "status": "blocked",
   "claim_boundary": "template_and_local_estimate_only_not_measured_silicon",
   "target": {
-    "name": "openphone-hello-npu",
+    "name": "openagent-e1-npu",
     "substrate": "local_estimate_only",
     "board_serial": "blocked_until_first_article_or_silicon_target_exists",
     "soc_revision": "blocked_until_measured_silicon_exists"
   },
   "workload": {
-    "plan_id": "hello-npu-sustained-int8-v1",
+    "plan_id": "e1-npu-sustained-int8-v1",
     "duration_seconds": 1800,
     "warmup_seconds": 120,
     "commands": [
@@ -19,7 +19,7 @@
         "benchmark_model",
         "--graph=/data/local/tmp/mobile_smoke.tflite",
         "--use_nnapi=true",
-        "--nnapi_accelerator_name=hello-npu",
+        "--nnapi_accelerator_name=e1-npu",
         "--enable_op_profiling=true",
         "--num_threads=1",
         "--min_secs=1800"
@@ -65,7 +65,7 @@
     ],
     "frequency": [
       {
-        "domain": "hello-npu",
+        "domain": "e1-npu",
         "source": "blocked_until_clock_frequency_trace_or_register_dump",
         "sample_hz": 1
       }
@@ -73,27 +73,27 @@
   },
   "artifacts": {
     "power_trace": {
-      "path": "docs/manufacturing/evidence/power/hello-npu/power-trace.csv",
+      "path": "docs/manufacturing/evidence/power/e1-npu/power-trace.csv",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "sample_count": 0
     },
     "thermal_trace": {
-      "path": "docs/manufacturing/evidence/thermal/hello-npu/thermal-trace.csv",
+      "path": "docs/manufacturing/evidence/thermal/e1-npu/thermal-trace.csv",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "sample_count": 0
     },
     "frequency_trace": {
-      "path": "docs/manufacturing/evidence/power/hello-npu/frequency-trace.csv",
+      "path": "docs/manufacturing/evidence/power/e1-npu/frequency-trace.csv",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "sample_count": 0
     },
     "workload_transcript": {
-      "path": "docs/manufacturing/evidence/power/hello-npu/workload-transcript.txt",
+      "path": "docs/manufacturing/evidence/power/e1-npu/workload-transcript.txt",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "sample_count": 0
     },
     "calibration_record": {
-      "path": "docs/manufacturing/evidence/power/hello-npu/power-thermal-calibration.json",
+      "path": "docs/manufacturing/evidence/power/e1-npu/power-thermal-calibration.json",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "sample_count": 0
     }

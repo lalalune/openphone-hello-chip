@@ -2,15 +2,15 @@ Full-chip FPGA closure blocker
 Generated: 2026-05-18T03:49:00Z
 
 Attempted command:
-  PATH="$PWD/external/oss-cad-suite/bin:$PATH" scripts/fpga/build_hello_demo.sh
+  PATH="$PWD/external/oss-cad-suite/bin:$PATH" scripts/fpga/build_e1_demo.sh
 
 Observed before abort:
-  - hello_chip_top Yosys synthesis reached ABC9 mapping.
-  - ABC reported 106895 LUT cells after mapping the full hello_chip_top cone.
+  - e1_chip_top Yosys synthesis reached ABC9 mapping.
+  - ABC reported 106895 LUT cells after mapping the full e1_chip_top cone.
   - Yosys resident memory was about 3.9 GB after more than six minutes on the MacBook.
   - The run was stopped before JSON/place/route because this is not a bounded local closure loop.
 
 Interpretation:
   - The full-chip FPGA bitstream remains blocked.
-  - The local MacBook FPGA evidence path now uses hello_fpga_smoke_top to validate the open ECP5 toolchain, LPF, timing, routing, packing, and artifact capture.
-  - Full hello_chip_top FPGA closure needs partitioning, smaller FPGA-specific memories, or a larger emulation/prototyping target before release evidence can be produced.
+  - The local MacBook FPGA evidence path now uses e1_fpga_smoke_top to validate the open ECP5 toolchain, LPF, timing, routing, packing, and artifact capture.
+  - Full e1_chip_top FPGA closure needs partitioning, smaller FPGA-specific memories, or a larger emulation/prototyping target before release evidence can be produced.

@@ -1,5 +1,5 @@
 {
-  "schema": "openphone.cpu_ap_roadmap.v1",
+  "schema": "openagent.cpu_ap_roadmap.v1",
   "current_phase": "L0_tiny_cpu_scaffold",
   "selected_next_phase": "L1_chipyard_rocket_import",
   "claim_policy": {
@@ -13,13 +13,13 @@
       "id": "L0_tiny_cpu_scaffold",
       "name": "repo-local tiny CPU scaffold",
       "claim_allowed": "tiny_cpu_contract_scaffold_only",
-      "entry_state": "rtl/cpu/hello_cpu_subsystem_stub.sv exists and remains non-Linux",
+      "entry_state": "rtl/cpu/e1_cpu_subsystem_stub.sv exists and remains non-Linux",
       "exit_gates": [
         "python3 scripts/check_cpu_ap_evidence.py",
         "make cocotb-cpu"
       ],
       "exit_artifacts": [
-        "rtl/cpu/hello_cpu_subsystem_stub.sv",
+        "rtl/cpu/e1_cpu_subsystem_stub.sv",
         "verify/cocotb/test_tiny_cpu_execution.py",
         "docs/evidence/cpu-ap-2028-target-deltas.json"
       ],
@@ -33,19 +33,19 @@
       "id": "L1_chipyard_rocket_import",
       "name": "pinned Chipyard Rocket import preflight",
       "claim_allowed": "pinned_generator_import_plan_only",
-      "entry_state": "generators/chipyard/openphone-rocket-manifest.json pins Chipyard and OpenPhoneRocketConfig",
+      "entry_state": "generators/chipyard/openagent-rocket-manifest.json pins Chipyard and OpenAgentRocketConfig",
       "exit_gates": [
         "python3 scripts/check_chipyard_import_preflight.py --require-checkout",
         "python3 scripts/check_chipyard_generator_manifest.py --require-generated"
       ],
       "exit_artifacts": [
         "external/chipyard",
-        "build/chipyard/openphone_rocket/bootstrap-preflight.json",
-        "build/chipyard/openphone_rocket/OpenPhoneRocketConfig.manifest.json",
-        "build/chipyard/openphone_rocket/generated-src",
-        "build/chipyard/openphone_rocket/openphone_rocket_ap.v",
-        "build/chipyard/openphone_rocket/openphone-hello.dts",
-        "build/chipyard/openphone_rocket/simulator"
+        "build/chipyard/openagent_rocket/bootstrap-preflight.json",
+        "build/chipyard/openagent_rocket/OpenAgentRocketConfig.manifest.json",
+        "build/chipyard/openagent_rocket/generated-src",
+        "build/chipyard/openagent_rocket/openagent_rocket_ap.v",
+        "build/chipyard/openagent_rocket/openagent-e1.dts",
+        "build/chipyard/openagent_rocket/simulator"
       ],
       "must_remain_blocked": [
         "linux_capable_claim",
@@ -63,11 +63,11 @@
         "python3 scripts/check_cpu_ap_completion_gate.py --require-complete"
       ],
       "exit_artifacts": [
-        "build/evidence/cpu_ap/openphone_hello_opensbi_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_linux_boot.log",
-        "build/evidence/cpu_ap/openphone_hello_trap_timer_irq.log",
-        "build/evidence/cpu_ap/openphone_hello_isa_cache_mmu.log",
-        "build/evidence/cpu_ap/openphone_hello_ap_benchmarks.log"
+        "build/evidence/cpu_ap/openagent_e1_opensbi_boot.log",
+        "build/evidence/cpu_ap/openagent_e1_linux_boot.log",
+        "build/evidence/cpu_ap/openagent_e1_trap_timer_irq.log",
+        "build/evidence/cpu_ap/openagent_e1_isa_cache_mmu.log",
+        "build/evidence/cpu_ap/openagent_e1_ap_benchmarks.log"
       ],
       "must_remain_blocked": [
         "rva23_claim",
