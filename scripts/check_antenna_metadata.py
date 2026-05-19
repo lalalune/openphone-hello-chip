@@ -12,6 +12,12 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "pd/openlane/runs"
 PADFRAME = ROOT / "pd/padframe/hello_demo_padframe.yaml"
+RELEASE_PADFRAME_STEPS = (
+    "select a foundry IO library with input, output, bidirectional, power, ground, ESD, corner, and filler cells",
+    "instantiate those pad cells around hello_chip_top instead of using the padless core wrapper as the release top",
+    "connect JTAG_TCK, JTAG_TDI, JTAG_TMS, TEST_MODE, DBG_READY, and JTAG_TDO either to real IO pads and tested internal logic or remove them from the release top",
+    "archive padframe-inclusive KLayout/Magic DRC, LVS, antenna, and ESD evidence from one selected run",
+)
 
 
 def latest_report() -> Path | None:
@@ -85,6 +91,9 @@ def main() -> int:
             "  - padframe release remains blocked, so this is documented as a "
             "non-release core-wrapper limitation until real IO/pad cells are instantiated"
         )
+        print("  - release requires real padcell integration steps:")
+        for step in RELEASE_PADFRAME_STEPS:
+            print(f"    * {step}")
 
     return 1 if args.release or not padframe_release_blocked() else 0
 

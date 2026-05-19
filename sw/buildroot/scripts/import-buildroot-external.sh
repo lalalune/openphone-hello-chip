@@ -31,17 +31,21 @@ printf 'Run from the Buildroot checkout:\n'
 printf '  make BR2_EXTERNAL=%s openphone_hello_defconfig\n' "$external"
 printf '  make BR2_EXTERNAL=%s\n' "$external"
 printf 'Capture real evidence back in this repository:\n'
-# shellcheck disable=SC2016
-printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=make BR2_EXTERNAL=%s openphone_hello_defconfig\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; make BR2_EXTERNAL=%s openphone_hello_defconfig; rc=$?; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/buildroot/openphone_hello_defconfig.log\n' "$buildroot" "$external" "$external" "$repo_root"
-# shellcheck disable=SC2016
-printf '  { printf "EXTERNAL_TREE=%s\\nCOMMAND=find output/images -maxdepth 1 -type f -print\\nSTART_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\n"; find output/images -maxdepth 1 -type f -print; rc=$?; printf "END_UTC=$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)\\nRESULT=$rc\\n"; exit $rc; } 2>&1 | tee %s/docs/evidence/buildroot/openphone_hello_image_manifest.txt\n' "$buildroot" "$repo_root"
+printf '  %s/sw/buildroot/scripts/capture-buildroot-evidence.sh %s defconfig\n' "$repo_root" "$buildroot"
+printf '  (cd %s && make BR2_EXTERNAL=%s)\n' "$buildroot" "$external"
+printf '  %s/sw/buildroot/scripts/capture-buildroot-evidence.sh %s image-manifest\n' "$repo_root" "$buildroot"
+printf '  HELLO_SMOKE_CMD='\''ssh root@TARGET /usr/bin/hello-mmio-smoke'\'' %s/sw/buildroot/scripts/capture-buildroot-evidence.sh %s smoke\n' "$repo_root" "$buildroot"
+printf '  HELLO_NPU_ML_SMOKE_CMD='\''ssh root@TARGET /usr/bin/hello-npu-ml-smoke --device /dev/hello-npu'\'' %s/sw/buildroot/scripts/capture-buildroot-evidence.sh %s ml-smoke\n' "$repo_root" "$buildroot"
 
 if [ "$check_only" -eq 1 ]; then
 	missing=0
 	for path in \
 		"$external/configs/openphone_hello_defconfig" \
 		"$external/board/openphone/hello/linux.fragment" \
-		"$external/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke"; do
+		"$external/board/openphone/hello/rootfs_overlay/usr/bin/hello-mmio-smoke" \
+		"$external/package/hello-mmio-smoke/hello-mmio-smoke.mk" \
+		"$external/package/hello-npu-ml-smoke/hello-npu-ml-smoke.mk" \
+		"$external/package/hello-npu-ml-smoke/src/hello-npu-ml-smoke.c"; do
 		if [ ! -f "$path" ]; then
 				echo "FAIL: missing repo artifact ${path#"$repo_root"/}" >&2
 			missing=1

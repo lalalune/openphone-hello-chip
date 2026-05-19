@@ -24,3 +24,10 @@ pd/reports/*
 pd/openlane/runs/
 benchmarks/results/*
 !benchmarks/results/.gitkeep
+
+# Tier 2 build artifacts (large; reproducible via docker build)
+external/linux/
+external/busybox/
+build/sim/tier2/Image
+build/sim/tier2/busybox
+build/sim/tier2/rootfs/

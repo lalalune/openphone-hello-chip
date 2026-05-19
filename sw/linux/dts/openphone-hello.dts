@@ -28,6 +28,11 @@
 		stdout-path = &uart0;
 	};
 
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x80000000 0x08000000>;
+	};
+
 		wifi_pwrseq: wifi-pwrseq {
 			compatible = "mmc-pwrseq-simple";
 			status = "disabled";
@@ -81,9 +86,9 @@
 			interrupts-extended = <&cpu0_intc 11>;
 		};
 
-		uart0: uart@10003000 {
+		uart0: serial@10001000 {
 			compatible = "hello,uart-1.0";
-			reg = <0x10003000 0x00001000>;
+			reg = <0x10001000 0x00001000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <1>;
 			clock-frequency = <10000000>;

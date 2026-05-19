@@ -66,6 +66,7 @@ if [ "$check_only" -eq 1 ]; then
 		"$bsp/drivers/hello/hello-npu-uapi.h" \
 		"$bsp/drivers/hello/hello-npu.c" \
 		"$bsp/drivers/hello/hello-dma.c" \
+		"$bsp/tests/hello-npu-smoke.c" \
 		"$bsp/dts/openphone-hello.dts" \
 		"$bsp/dts/Makefile" \
 		"$generated/hello-platform.dtsi" \

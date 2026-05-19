@@ -407,7 +407,21 @@ module hello_npu (
                             end
                         end
                         DESC_LAUNCH: begin
-                            if (!opcode_valid(desc_opcode)) begin
+                            if (!desc_valid) begin
+                                desc_busy <= 1'b0;
+                                desc_state <= DESC_IDLE;
+                                status <= 32'h0000_0006;
+                                desc_status <= 32'h0000_0044;
+                                perf_errors <= perf_errors + 32'd1;
+                                perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                            end else if (desc_writeback_enable) begin
+                                desc_busy <= 1'b0;
+                                desc_state <= DESC_IDLE;
+                                status <= 32'h0000_0006;
+                                desc_status <= 32'h0000_0084;
+                                perf_errors <= perf_errors + 32'd1;
+                                perf_unsupported_ops <= perf_unsupported_ops + 32'd1;
+                            end else if (!opcode_valid(desc_opcode)) begin
                                 desc_busy <= 1'b0;
                                 desc_state <= DESC_IDLE;
                                 status <= 32'h0000_0006;
@@ -509,6 +523,10 @@ module hello_npu (
                             perf_errors <= 32'h0;
                             perf_ops <= 32'h0;
                             perf_unsupported_ops <= 32'h0;
+                            desc_bytes_read <= 32'h0;
+                            desc_bytes_written <= 32'h0;
+                            desc_read_beats <= 32'h0;
+                            desc_write_beats <= 32'h0;
                         end
                     end
                     6'h03: begin
@@ -533,6 +551,9 @@ module hello_npu (
                                     desc_fetch_word <= 2'h0;
                                     desc_timeout_count <= 32'h0;
                                     desc_bytes_read <= 32'h0;
+                                    desc_bytes_written <= 32'h0;
+                                    desc_read_beats <= 32'h0;
+                                    desc_write_beats <= 32'h0;
                                     desc_stream_done <= 6'h0;
                                 end
                             end else if (opcode == OP_GEMM_S8) begin

@@ -139,7 +139,7 @@ def generated_path_blockers() -> list[str]:
             "`CHIPYARD_LINUX_SMOKE_USE_DOCKER=1 scripts/run_chipyard_openphone_linux_smoke.sh` "
             "inside the /work-mounted container path"
         )
-    elif (SIM_DIR / "generated-src").exists():
+    elif GENERATED_CONFIG_DIR.exists() or GENERATED_SIMULATOR.exists():
         blockers.append(
             "partial generated Verilator output is missing the driver makefile after generation: "
             f"{rel(GENERATED_DRIVER_MAKEFILE)}; remove the generated config directory and rerun "
@@ -635,6 +635,8 @@ def main() -> int:
         blockers.append(f"missing Chipyard Verilator directory: {rel(SIM_DIR)}")
 
     blockers.extend(generated_path_blockers())
+    simulator_metadata = simulator_artifact_metadata()
+    blockers.extend(simulator_artifact_blockers(simulator_metadata))
 
     for artifact in REQUIRED_GENERATED_ARTIFACTS:
         if not artifact.is_file():
