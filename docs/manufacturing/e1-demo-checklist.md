@@ -35,11 +35,11 @@ archived and the corresponding gate is intentionally unblocked.
 - PDN/current budget archived for `VDDCORE` and `VDDIO`, including post-route power, IR-drop/EM, decoupling, and board current limits.
 - Local-only SI/PI gap evidence is archived in
   `pd/signoff/si-pi/local-evidence.yaml` and
-  `pd/signoff/si-pi/local-gap-report.md`; it is not release evidence until
+  `docs/pd/signoff/si-pi/local-gap-report.md`; it is not release evidence until
   package, board-stackup, SI, and PI reviews are externally closed.
 - Local-only PDN/current evidence is archived in
   `pd/signoff/pdn-current/local-budget.yaml` and
-  `pd/signoff/pdn-current/local-budget.md`; it is not release evidence until
+  `docs/pd/signoff/pdn-current/local-budget.md`; it is not release evidence until
   vector-calibrated power, EM, VDDIO load, regulator, and first-article reviews
   are externally closed.
 - Every gap in `docs/manufacturing/real-world-verification-gaps.yaml` is closed by archived evidence and the linked release gate is unblocked.

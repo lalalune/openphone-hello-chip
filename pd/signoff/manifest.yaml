@@ -69,14 +69,14 @@ si_pi:
       globs:
         - "board/reports/si/**/*"
         - "pd/signoff/si-pi/board-si/**/*"
-        - "pd/signoff/si-pi/local-gap-report.md"
+        - "docs/pd/signoff/si-pi/local-gap-report.md"
         - "pd/signoff/si-pi/local-evidence.yaml"
     - name: power_integrity_report
       status: draft
       globs:
         - "board/reports/pi/**/*"
         - "pd/signoff/si-pi/power-integrity/**/*"
-        - "pd/signoff/si-pi/local-gap-report.md"
+        - "docs/pd/signoff/si-pi/local-gap-report.md"
         - "pd/signoff/si-pi/local-evidence.yaml"
 pdn_current_budget:
   status: blocked
@@ -104,7 +104,7 @@ pdn_current_budget:
         - "pd/openlane/runs/*/reports/power/**/*"
         - "runs/*/reports/power/**/*"
         - "pd/signoff/pdn-current/local-budget.yaml"
-        - "pd/signoff/pdn-current/local-budget.md"
+        - "docs/pd/signoff/pdn-current/local-budget.md"
     - name: ir_drop_em_report
       status: draft
       globs:
@@ -113,14 +113,14 @@ pdn_current_budget:
         - "runs/*/reports/pdn/**/*"
         - "pd/openlane/runs/*/*-openroad-irdropreport/irdrop.rpt"
         - "pd/signoff/pdn-current/local-budget.yaml"
-        - "pd/signoff/pdn-current/local-budget.md"
+        - "docs/pd/signoff/pdn-current/local-budget.md"
     - name: board_current_limit_plan
       status: draft
       globs:
         - "docs/board/kicad/e1-demo/fab-notes.md"
         - "docs/manufacturing/e1-demo-checklist.md"
         - "pd/signoff/pdn-current/local-budget.yaml"
-        - "pd/signoff/pdn-current/local-budget.md"
+        - "docs/pd/signoff/pdn-current/local-budget.md"
 thermal_package_board:
   status: blocked
   release_blocking: true

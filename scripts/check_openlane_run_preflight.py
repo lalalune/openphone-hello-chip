@@ -114,6 +114,32 @@ def run_orchestration_blockers() -> list[str]:
     return blockers
 
 
+def numbered_step_dirs(run_dir: Path) -> list[Path]:
+    return sorted(
+        path for path in run_dir.iterdir() if path.is_dir() and re.match(r"^[0-9]+-", path.name)
+    )
+
+
+def latest_run_blockers(run_dirs: list[Path]) -> list[str]:
+    if not run_dirs:
+        return []
+    latest = max(run_dirs, key=lambda path: path.stat().st_mtime)
+    rel_latest = latest.relative_to(ROOT)
+    if (latest / "final").is_dir():
+        return []
+    steps = numbered_step_dirs(latest)
+    if not steps:
+        return [f"latest OpenLane run has no numbered steps and no final outputs: {rel_latest}"]
+    incomplete = [step for step in steps if not (step / "state_out.json").is_file()]
+    if incomplete:
+        last_complete = next(
+            (step for step in reversed(steps) if (step / "state_out.json").is_file()), None
+        )
+        detail = f"; last completed step: {last_complete.name}" if last_complete else ""
+        return [f"latest OpenLane run is incomplete at {rel_latest}/{incomplete[0].name}{detail}"]
+    return [f"latest OpenLane run has completed steps but no final outputs: {rel_latest}"]
+
+
 def validate_openlane_config(config_path: Path, failures: list[str]) -> dict:
     if not config_path.is_file():
         failures.append(f"missing OpenLane config: {config_path.relative_to(ROOT)}")
@@ -259,6 +285,8 @@ def main() -> int:
         ]
         if not run_dirs:
             blockers.append("no OpenLane/OpenROAD run directories exist under configured run_roots")
+        else:
+            blockers.extend(latest_run_blockers(run_dirs))
 
     if args.release:
         blockers.extend(release_config_blockers(configs))

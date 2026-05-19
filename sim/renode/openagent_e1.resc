@@ -1,5 +1,5 @@
-mach create "openphone-hello"
-machine LoadPlatformDescription @sim/renode/openphone_hello.repl
+mach create "openagent-e1"
+machine LoadPlatformDescription @sim/renode/openagent_e1.repl
 sysbus LoadELF @build/qemu/e1_qemu_firmware.elf
 showAnalyzer uart
 start

@@ -29,9 +29,9 @@ The machine-readable artifact gate is `pd/signoff/manifest.yaml`. The per-run ma
 
 Local-only SI/PI and PDN/current triage evidence lives in
 `pd/signoff/si-pi/local-evidence.yaml`,
-`pd/signoff/si-pi/local-gap-report.md`,
+`docs/pd/signoff/si-pi/local-gap-report.md`,
 `pd/signoff/pdn-current/local-budget.yaml`, and
-`pd/signoff/pdn-current/local-budget.md`. These files document what can be
+`docs/pd/signoff/pdn-current/local-budget.md`. These files document what can be
 produced from local OpenLane and board-planning artifacts; they intentionally
 keep tapeout and board-fabrication gates blocked until package models, board
 stackup, SI/PI reviews, EM reports, VDDIO load data, and first-article current

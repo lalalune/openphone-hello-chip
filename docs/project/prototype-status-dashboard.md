@@ -6,7 +6,7 @@ Snapshot: generated during the 2026-05-17 fail-closed evidence pass.
 
 | Subsystem | Status | Evidence class | Next action |
 | --- | --- | --- | --- |
-| docs-and-project-plan | `FAIL` | `command_fail` | `make project-plan-check` |
+| docs-and-project-plan | `PASS` | `command_pass` | `none` |
 | architecture-docs | `PASS` | `command_pass` | `none` |
 | toolchain-fast-path | `PASS` | `tool_available` | `none` |
 | platform-contract | `PASS` | `command_pass` | `none` |

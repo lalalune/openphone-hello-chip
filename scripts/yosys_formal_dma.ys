@@ -1,5 +1,5 @@
-read_verilog -sv -formal rtl/dma/hello_dma.sv verify/formal/hello_dma_formal.sv
-prep -top hello_dma_formal
+read_verilog -sv -formal rtl/dma/e1_dma.sv verify/formal/e1_dma_formal.sv
+prep -top e1_dma_formal
 async2sync
 dffunmap
 flatten
