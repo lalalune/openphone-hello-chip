@@ -1,20 +1,48 @@
+// openphone-hello — hello_chip_cpu_variant Renode platform
+// Source of truth: sw/platform/hello_platform_contract.json (hello_chip_cpu_variant)
+// All addresses, sizes, and IRQs must match the contract exactly.
+
 cpu: CPU.RiscV64 @ sysbus
     cpuType: "rv64gc_zicsr_zifencei"
     privilegedArchitecture: PrivilegedArchitecture.Priv1_10
     timeProvider: clint
     hartId: 0
 
-mem: Memory.MappedMemory @ sysbus 0x80000000
-    size: 0x100000
+// Boot ROM: 4 KiB at 0x0, reset vector = 0x00001000
+rom: Memory.MappedMemory @ sysbus 0x00000000
+    size: 0x00001000
 
-uart: UART.NS16550 @ sysbus 0x10000000
-    IRQ -> plic@3
+// Main DRAM: 256 MiB at 0x80000000 (SBI entry 0x80000000, kernel entry 0x80200000)
+dram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x10000000
 
-plic: IRQControllers.PlatformLevelInterruptController @ sysbus 0x0C000000
-    0 -> cpu@11
-    numberOfSources: 52
-    numberOfContexts: 1
-
+// CLINT @ 0x02000000, frequency = timebase_frequency_hz (10 MHz)
 clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x02000000
     [0,1] -> cpu@[3,7]
     frequency: 10000000
+
+// PLIC @ 0x0C000000, 32 sources, 2 contexts (M+S on hart 0)
+plic: IRQControllers.PlatformLevelInterruptController @ sysbus 0x0C000000
+    [0,1] -> cpu@[11,9]
+    numberOfSources: 32
+    numberOfContexts: 2
+
+// 16550 UART @ 0x10001000, IRQ_UART = 1 (per contract)
+uart0: UART.NS16550 @ sysbus 0x10001000
+    IRQ -> plic@1
+
+// Openphone DMA stub @ 0x10010000, IRQ 2 — modeled as passthrough memory window
+dma: Memory.MappedMemory @ sysbus 0x10010000
+    size: 0x00001000
+
+// Openphone NPU stub @ 0x10020000, IRQ 3
+npu: Memory.MappedMemory @ sysbus 0x10020000
+    size: 0x00001000
+
+// Openphone display stub @ 0x10030000, IRQ 4
+display: Memory.MappedMemory @ sysbus 0x10030000
+    size: 0x00001000
+
+// Peripheral control window @ 0x10000000 (ID/SCRATCH/GPIO/timer)
+periph: Memory.MappedMemory @ sysbus 0x10000000
+    size: 0x00001000
