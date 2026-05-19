@@ -325,7 +325,7 @@ def repair_stale_generated_paths() -> int:
         if replacements:
             print(
                 "STATUS: REPAIR chipyard.verilator_generated_paths - rewrote "
-                f"{replacements} stale /work path occurrence(s)"
+                f"{replacements} stale generated path occurrence(s)"
             )
             if not destructive_repair_needed:
                 print("  next: rerun python3 scripts/check_chipyard_verilator_linux_smoke.py")
@@ -560,6 +560,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
     allow_container_paths = os.environ.get(CONTAINER_PATH_ENV) == "1"
     log_metadata = parse_log_metadata()
     instruction_trace = parse_instruction_trace(payload)
+    simulator_artifact = simulator_artifact_metadata()
     log_text = LOG.read_text(encoding="utf-8", errors="replace") if LOG.is_file() else ""
     progress = classify_smoke_progress(log_text, instruction_trace, log_metadata)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -582,6 +583,7 @@ def write_report(status: str, blockers: list[str], payload: str | None) -> None:
         "active_chipyard_containers": active_chipyard_containers(),
         "allow_container_generated_paths": allow_container_paths,
         "generated_driver_makefile": rel(GENERATED_DRIVER_MAKEFILE),
+        "simulator_artifact": simulator_artifact,
         "required_log_markers": list(REQUIRED_LOG_MARKERS),
         "next_command": next_command(),
         "blockers": blockers,

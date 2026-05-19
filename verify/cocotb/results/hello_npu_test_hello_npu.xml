@@ -1,0 +1,14 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1779157598" />
+    <testcase name="npu_scalar_opcodes_match_expected_results" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="193" time="0.012405872344970703" sim_time_ns="911.001" ratio_time="73433.04643702194" />
+    <testcase name="npu_rejects_invalid_opcode_and_clears_error_irq" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="240" time="0.0035979747772216797" sim_time_ns="121.00099999999998" ratio_time="33630.30801828904" />
+    <testcase name="npu_busy_launch_is_ignored_until_current_operation_completes" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="257" time="0.002046823501586914" sim_time_ns="221.00099999999998" ratio_time="107972.67074012812" />
+    <testcase name="npu_gemm_invalid_config_reports_error_without_touching_scratch" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="284" time="0.0012221336364746094" sim_time_ns="141.00099999999998" ratio_time="115372.81668045257" />
+    <testcase name="npu_descriptor_timeout_engine_faults_stalled_memory_fetch" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="301" time="0.017447233200073242" sim_time_ns="1511.0010000000002" ratio_time="86604.04676620344" />
+    <testcase name="npu_descriptor_empty_and_unaligned_base_report_specific_status" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="330" time="0.0029380321502685547" sim_time_ns="191.00099999999975" ratio_time="65009.83999870153" />
+    <testcase name="npu_descriptor_fetch_launches_scalar_op_and_advances_tail" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="354" time="0.004623889923095703" sim_time_ns="331.0010000000002" ratio_time="71584.96536578328" />
+    <testcase name="npu_descriptor_streams_tensor_tile_into_scratchpad_and_runs_gemm" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="388" time="0.010035276412963867" sim_time_ns="731.0009999999997" ratio_time="72843.13554688648" />
+    <testcase name="npu_runtime_abi_sequence_matches_rtl_and_writes_coverage" classname="test_hello_npu" file="/Users/shawwalters/Desktop/npu_experiment/verify/cocotb/test_hello_npu.py" lineno="445" time="0.02819371223449707" sim_time_ns="2181.001" ratio_time="77357.7094729436" />
+  </testsuite>
+</testsuites>

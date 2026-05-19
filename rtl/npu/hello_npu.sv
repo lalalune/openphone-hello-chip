@@ -367,6 +367,7 @@ module hello_npu (
                                 end else begin
                                     desc_words[desc_fetch_word] <= m_axil_rdata;
                                     desc_bytes_read <= desc_bytes_read + 32'd4;
+                                    desc_read_beats <= desc_read_beats + 32'd1;
                                     if (desc_fetch_word == 2'd3) begin
                                         desc_fetch_word <= 2'h0;
                                         desc_state <= DESC_LAUNCH;
@@ -394,6 +395,7 @@ module hello_npu (
                                 end else begin
                                     scratch_stream_write_word(desc_stream_word_addr, m_axil_rdata);
                                     desc_bytes_read <= desc_bytes_read + 32'd4;
+                                    desc_read_beats <= desc_read_beats + 32'd1;
                                     if ((desc_stream_done + 6'd4) >= desc_stream_len) begin
                                         desc_stream_done <= desc_stream_done + 6'd4;
                                         desc_state <= DESC_LAUNCH;
